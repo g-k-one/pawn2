@@ -126,10 +126,10 @@ $('walletGo').onclick = async () => {
       if (res.error === 'relayer'){ INV.unshift(...list.slice(i)); haptic('rigid');   // релеер не получил сообщение — дальше не выводим, всё остаётся у игрока
         notify({ type: 'err', icon: 'err', ms: 6000, title: `${$t("Сначала напиши")} ${RELAYER}`, text: $t("Без сообщения релееру вывод не пройдёт. NFT остались у тебя, комиссия не списана"), action: { label: $t("Написать"), fn: () => tgOpen('https://t.me/' + RELAYER.slice(1)) } }); break; }
       if (!res.ok){ INV.unshift(g); haptic('rigid');                                  // этот не прошёл — вернулся в инвентарь
-        notify({ type: 'err', img: g.nft.src, ms: 5000, title: `${g.nft.name} ${$t("не выведен")}`, text: $t("NFT остался в инвентаре, комиссия не списана — попробуй ещё раз") }); continue; }
+        notify({ type: 'err', key: 'out' + g.id, img: g.nft.src, ms: 5000, title: `${g.nft.name} #${g.num} ${$t("не выведен")}`, text: $t("NFT остался в инвентаре, комиссия не списана — попробуй ещё раз") }); continue; }
       S.hist.wallet.unshift({ type: 'nft', t: Date.now(), name: g.nft.name, img: g.nft.src, bg: [g.a, g.b], value: g.value, fee: OUT_FEE, method: `${$t("в Telegram · комиссия {0} GRAM", OUT_FEE)}`, status: $t("в пути") });
       setBalance(Math.round((S.balance - OUT_FEE) * 100) / 100);
-      notify({ type: 'ok', img: g.nft.src, title: `${g.nft.name} ${$t("отправлен")}`, text: `${$t("Придёт в профиль Telegram · комиссия {0} GRAM", fmt(OUT_FEE))}` });
+      notify({ type: 'ok', key: 'out' + g.id, img: g.nft.src, title: `${g.nft.name} #${g.num} ${$t("отправлен")}`, text: `${$t("Придёт в профиль Telegram · комиссия {0} GRAM", fmt(OUT_FEE))}` });
     }
     checkAch();
   }

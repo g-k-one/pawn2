@@ -204,7 +204,7 @@ function notesFlip(fn){
 }
 function notify(o){
   if (typeof o === 'string') o = { title: o };
-  const type = o.type || 'info', c = o.color || NCOL[type] || NCOL.info, ms = o.ms || 3400, key = o.title + '|' + (o.text || '');
+  const type = o.type || 'info', c = o.color || NCOL[type] || NCOL.info, ms = o.ms || 3400, key = o.key || o.title + '|' + (o.text || '');   // одинаковые уведомления склеиваются; key — чтобы не склеивать
   const dup = [...notesEl.children].find(n => n.dataset.key === key && !n.classList.contains('bye'));
   if (dup){ dup.restart(); dup.animate([{ scale: 1.03 }, { scale: 1 }], { duration: 240 }); return; }
   const el = document.createElement('div'); el.className = 'note'; el.dataset.key = key; el.setAttribute('role', 'status');

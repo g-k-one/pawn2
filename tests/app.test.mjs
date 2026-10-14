@@ -25,7 +25,6 @@ async function open({ lang = 'ru', ctx } = {}){
 }
 const saved = page => page.evaluate(() => JSON.parse(localStorage.getItem('pawn-state-v1')));
 const waitSave = async (page, fn) => { for (let i = 0; i < 40; i++){ const s = await saved(page); if (s && fn(s)) return s; await page.waitForTimeout(250); } throw new Error('state not saved'); };
-const notes = page => page.$$eval('#notes .note:not(.bye) b', a => a.map(x => x.textContent));
 async function craftOnce(page){
   await page.click('[data-add="1"]'); await page.click('#craft');
   await page.waitForSelector('#fx.done', { timeout: 20000 }); await page.waitForTimeout(400);
@@ -79,10 +78,11 @@ test('вывод NFT: по одному, уведомление на кажды�
   await page.click('#menuBtn'); await page.waitForTimeout(400); await page.click('[data-go="withdraw"]'); await page.waitForTimeout(600);   // пункт «Вывод NFT» в меню
   assert.equal(await page.textContent('#walletTabs .tab.on'), 'Вывести NFT');
   for (let i = 0; i < 3; i++) await page.click(`#onft .cell >> nth=${i}`);
+  // считаем появления уведомлений (а не тексты): у подарков одной коллекции текст может совпасть
+  await page.evaluate(() => { window.__notes = 0; new MutationObserver(m => m.forEach(r => r.addedNodes.forEach(n => { if (/отправлен/.test(n.textContent)) window.__notes++; }))).observe(document.getElementById('notes'), { childList: true }); });
   await page.click('#walletGo');
-  const seen = new Set();
-  for (let t = 0; t < 40; t++){ (await notes(page)).forEach(n => seen.add(n)); await page.waitForTimeout(100); }
-  assert.equal([...seen].filter(n => /отправлен/.test(n)).length, 3);
+  await page.waitForTimeout(4000);
+  assert.equal(await page.evaluate(() => window.__notes), 3);
   const s1 = await waitSave(page, s => s.inv.length === s0.inv.length - 3);
   assert.equal(Math.round((s0.balance - s1.balance) * 100) / 100, 0.9);
   assert.deepEqual(errors, []); await ctx.close();
