@@ -177,7 +177,7 @@ async function caseRun(c, again, m = 1){
 function caseDrop(c, it, r, g){
   const drop = $('fxDrop'); $('fx').style.setProperty('--tc', itemColor(it));
   if (g){ drop.innerHTML = `<div class="pz" id="pz">${cardHTML(g, 266, true)}</div>`; dropCard(g);
-    $('fxWin').innerHTML = `<span>${c.name} · стоимость ${fmt(g.value)} GRAM</span>`; }
+    $('fxWin').innerHTML = ''; }                                // цена уже на кнопке «Продать за …»
   else { const src = itemImg(it);
     drop.innerHTML = `<div class="pz"><div class="tw${it.t === 'xp' ? ' xpw' : ''}" id="pz"><img src="${src}" alt=""><span class="gl" style="--m:url('${src}')"><i></i></span></div></div>`;
     Tilt.add($('pz'), $('pz').querySelector('img'), $('pz').querySelector('.gl i'), 1.4);

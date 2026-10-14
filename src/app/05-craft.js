@@ -559,7 +559,7 @@ function fillDrop(r){
       $('fxWin').innerHTML = `<span>в демо призы не выдаются</span>`;
       $('fxBtns').innerHTML = `<button class="btn-main" id="fxTake">Ещё раз</button>` + PF_LINK;
     } else {
-      $('fxWin').innerHTML = `<span>${r.change > 0 ? `и на баланс +${fmt(r.change)} GRAM` : `стоимость ${fmt(r.nft.value)} GRAM`}</span>`;
+      $('fxWin').innerHTML = r.change > 0 ? `<span>и на баланс +${fmt(r.change)} GRAM</span>` : '';   // цена NFT — на кнопке «Продать за …»
       $('fxBtns').innerHTML = `<button class="btn-main" id="fxSell">Продать за ${fmt(r.nft.value)} GRAM</button><button class="btn-ghost" id="fxTake">Забрать</button>` + PF_LINK;
     }
   } else {
