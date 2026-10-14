@@ -1380,11 +1380,11 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
    ДАННЫЕ
    ========================================================= */
 const TIERS = [
-  { name: 'База',    c: '#ffb835', a: '#ffbd4a', b: '#c06a00', chance: 56.563, min: .4,  max: .8,  glow: ['#ffb835', '#ff8a1e', '#d6d33a', '#ffe08a'] },
-  { name: 'Удача',   c: '#12d53d', a: '#4cff30', b: '#00a07a', chance: 27,     min: .8,  max: 1.2, glow: ['#12d53d', '#11b89a', '#9cc23a', '#4fe39a'] },
-  { name: 'Мега',    c: '#00d9ff', a: '#2bd8ff', b: '#4a6bff', chance: 12.99,  min: 1.5, max: 2,   glow: ['#00d9ff', '#2f7bff', '#16d3b0', '#8ff0ff'] },
-  { name: 'Ультра',  c: '#eb57b0', a: '#ff6ae0', b: '#c9306e', chance: 3.247,  min: 2,   max: 3.5, glow: ['#eb57b0', '#a24bff', '#ff4f7a', '#ff9ad8'] },
-  { name: 'Джекпот', c: '#ff4c35', a: '#ff4c4c', b: '#a0103e', chance: 0.2,    min: 10,  max: 14,  glow: ['#ff4c35', '#ff9a1e', '#e5246b', '#ffb08a'] },
+  { name: 'База', key: 'base', zone: 'base', c: '#ffb835', a: '#ffbd4a', b: '#c06a00', chance: 56.563, min: .4,  max: .8,  glow: ['#ffb835', '#ff8a1e', '#d6d33a', '#ffe08a'] },
+  { name: 'Удача', key: 'luck', zone: 'luck', c: '#12d53d', a: '#4cff30', b: '#00a07a', chance: 27,     min: .8,  max: 1.2, glow: ['#12d53d', '#11b89a', '#9cc23a', '#4fe39a'] },
+  { name: 'Мега', key: 'mega_low', zone: 'mega', c: '#00d9ff', a: '#2bd8ff', b: '#4a6bff', chance: 12.99,  min: 1.5, max: 2,   glow: ['#00d9ff', '#2f7bff', '#16d3b0', '#8ff0ff'] },
+  { name: 'Ультра', key: 'mega_high', zone: 'mega', c: '#eb57b0', a: '#ff6ae0', b: '#c9306e', chance: 3.247,  min: 2,   max: 3.5, glow: ['#eb57b0', '#a24bff', '#ff4f7a', '#ff9ad8'] },
+  { name: 'Джекпот', key: 'jackpot', zone: 'jackpot', c: '#ff4c35', a: '#ff4c4c', b: '#a0103e', chance: 0.2,    min: 10,  max: 14,  glow: ['#ff4c35', '#ff9a1e', '#e5246b', '#ffb08a'] },
 ];
 /* гифты, которые можно положить в крафт (заглушки из макета): добавляются по одному кнопкой «+», убираются тапом по карточке */
 const MAX_GIFTS = 2;
@@ -1395,6 +1395,16 @@ TIERS.reduce((from, t) => { t.from = from; t.to = from + Math.round(t.chance / 1
 // джекпот — всегда верхние тикеты (99 800–99 999); Ультра заканчивается прямо под ним
 const JP = TIERS[TIERS.length - 1], JN = JP.to - JP.from + 1; JP.to = TICKETS - 1; JP.from = TICKETS - JN;
 TIERS[TIERS.length - 2].to = JP.from - 1;
+/* правила крафта в формате pawn-pf-v1 — тот же снимок, что отдаёт бэкенд (mega_low и mega_high — обе в зоне mega) */
+const RTP_PPM = '949996';
+const CRAFT_RULES = { version: 'pawn-pf-v1', target_rtp_ppm: RTP_PPM, base_rtp_ppm: RTP_PPM, multiplier_scale: '1000000',
+  segments: TIERS.map(t => ({ key: t.key, zone: t.zone, start: t.from, end: t.to, min_multiplier_ppm: Math.round(t.min * 1e6), max_multiplier_ppm: Math.round(t.max * 1e6) })) };
+/* множитель в ppm: линейно внутри сегмента, целочисленно — как в fair-verify.js */
+function craftPpm(rules, roll){
+  const sg = rules.segments.find(x => roll >= x.start && roll <= x.end), min = BigInt(sg.min_multiplier_ppm), max = BigInt(sg.max_multiplier_ppm), w = BigInt(sg.end - sg.start);
+  const base = min + (w ? (max - min) * BigInt(roll - sg.start) / w : 0n), t = BigInt(rules.target_rtp_ppm), ref = BigInt(rules.base_rtp_ppm);
+  return t === ref ? base : (base * t + ref / 2n) / ref;
+}
 const tierOfTicket = n => Math.max(0, TIERS.findIndex(t => n >= t.from && n <= t.to));
 const AUTO_MS = 5000;
 
@@ -1883,7 +1893,7 @@ const Tilt = (() => {
    ЛЕНТА «ЛАЙВ»: новые выигрыши въезжают слева
    ========================================================= */
 const liveEl = $('live');
-const multOf = n => { const t = TIERS[tierOfTicket(n)]; return Math.round((t.min + (n - t.from) / Math.max(1, t.to - t.from) * (t.max - t.min)) * 100) / 100; };
+const multOf = n => Math.round(Number(craftPpm(CRAFT_RULES, n)) / 1e4) / 100;
 const NICKS = ['durov_fan', 'tonmaxi', 'giftlord', 'kira.ton', 'mr_snow', 'pepe2009', 'nftqueen', 'whale77', 'luckyfox', 'b0ris', 'anya_g', 'cryptocat'];
 /* дроп ленты: ставка × множитель по тикету → GRAM-гем или NFT (как в настоящем крафте) */
 function liveHTML(n, o = {}){
@@ -1927,15 +1937,44 @@ setInterval(() => { if (!document.hidden) pushLive(); }, 3200);
    КРАФТ
    ========================================================= */
 /* заглушка: удар молота, вспышка цветом тира, тост. Настоящий крафт подключится сюда */
-/* ---------- Provably Fair: HMAC-SHA256(serverSeed, clientSeed:nonce) → первые 8 hex → mod 100 000 ---------- */
+/* ---------- Provably Fair: протокол pawn-pf-v1 (как в бэкенде и на сайте проверки) ----------
+   До игры показываем commitment = SHA-256 от 32 байт server seed. Ролл: HMAC-SHA256(зерно, JSON ["pawn-pf-v1", эпоха, домен, client seed, nonce, блок]),
+   восемь 32-битных чисел big-endian, первое < 4 294 900 000 → mod 100 000; не подошло ни одно — следующий блок.
+   В прототипе каждая игра — своя эпоха: зерно раскрывается сразу после игры, и тут же загадывается следующее */
+const PF_VER = 'pawn-pf-v1';
 const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
 const enc = t => new TextEncoder().encode(t);
+const unhex = h => Uint8Array.from(h.match(/../g).map(x => parseInt(x, 16)));
+const sha = async b => hex(await crypto.subtle.digest('SHA-256', b));
+const uuid = () => { if (crypto.randomUUID) return crypto.randomUUID(); const b = crypto.getRandomValues(new Uint8Array(16)); b[6] = b[6] & 15 | 64; b[8] = b[8] & 63 | 128; const h = hex(b); return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`; };
+const nano = v => BigInt(Math.round(v * 100)) * 10000000n;          // суммы в прототипе — с точностью до сотых
 S.clientSeed = 'gk-' + hex(crypto.getRandomValues(new Uint8Array(4)));
 S.nonce = 0;
-async function ticketFrom(serverSeed, clientSeed, nonce){
-  const key = await crypto.subtle.importKey('raw', enc(serverSeed), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const h = hex(await crypto.subtle.sign('HMAC', key, enc(`${clientSeed}:${nonce}`)));
-  return { h, ticket: parseInt(h.slice(0, 8), 16) % TICKETS };
+async function rollOf(seed, epoch, domain, clientSeed, nonce){
+  const key = await crypto.subtle.importKey('raw', unhex(seed), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  for (let block = 0; ; block++){
+    const dv = new DataView(await crypto.subtle.sign('HMAC', key, enc(JSON.stringify([PF_VER, epoch, domain, clientSeed, String(nonce), String(block)]))));
+    for (let i = 0; i < 8; i++){ const w = dv.getUint32(i * 4, false); if (w < 4294900000) return { roll: w % TICKETS, block }; }
+  }
+}
+async function newEpoch(){ const seed = hex(crypto.getRandomValues(new Uint8Array(32))); return { id: uuid(), seed, commitment: await sha(unhex(seed)) }; }
+let nextEpoch = newEpoch();                                    // зерно следующей игры: его хеш виден до игры
+async function takeEpoch(){ const e = await nextEpoch; nextEpoch = newEpoch(); return e; }
+const proofBase = (ep, nonce, domain, block, roll) => ({ version: PF_VER, reference: String(nonce), request_id: uuid(), epoch_id: ep.id, commitment: ep.commitment,
+  client_seed: S.clientSeed, server_seed: ep.seed, nonce: String(nonce), domain, block_counter: String(block), roll });
+/* подтверждение хеша до игры — его сверяет сайт проверки */
+async function receiptNow(){ const e = await nextEpoch; return { version: PF_VER, reference: String(S.nonce + 1), epoch_id: e.id, commitment: e.commitment, client_seed: S.clientSeed }; }
+/* проверка доказательства прямо в приложении — тот же алгоритм, что в fair-verify.js */
+async function checkProof(p){
+  const hashOk = await sha(unhex(p.server_seed)) === p.commitment;
+  const { roll, block } = await rollOf(p.server_seed, p.epoch_id, p.domain, p.client_seed, p.nonce);
+  const ticketOk = hashOk && roll === p.roll && String(block) === p.block_counter;
+  let rule = await sha(enc(JSON.stringify(p.rules))) === p.rules_hash;
+  if (p.domain === 'craft'){
+    const ppm = craftPpm(p.rules, p.roll), sg = p.rules.segments.find(x => p.roll >= x.start && p.roll <= x.end), pay = BigInt(p.inputs.bet_nano) * ppm / BigInt(p.rules.multiplier_scale);
+    rule = rule && p.result.zone === sg.zone && BigInt(p.result.multiplier_ppm) === ppm && BigInt(p.result.payout_nano) === pay && BigInt(p.result.ton_payout_nano) + BigInt(p.result.gift_payout_value_nano) === pay;
+  } else { let tot = 0; const rw = p.rules.rewards.find(x => (tot += x.weight) > p.roll); rule = rule && rw.kind === p.result.kind && rw.amount === p.result.amount; }
+  return { hash: hashOk, ticket: ticketOk, rule: ticketOk && rule };
 }
 /* ---------- дебаг: выбрать исход следующего крафта ---------- */
 S.dbg = { tier: -1, near: false, keep: false, prevDelay: null, freeCases: false, ticket: null, fail: null };
@@ -1958,7 +1997,7 @@ function renderDbg(){
     `<div class="dbg-l">Сбой (один раз)</div><div class="dbg-g">${chip('fail', null, 'Нет')}${chip('fail', 'craft', 'Неудачный крафт', '#FF4C35')}${chip('fail', 'case', 'Кейс не открылся', '#FF4C35')}</div>` +
     `<div class="dbg-l">Супер дроп</div><div class="dbg-g"><button class="dbg-c${d.ticket === SUPER.target ? ' on' : ''}" data-k="super" data-v="1" style="--c:#EB57B0">Выбить супер дроп · тикет ${SUPER.target}</button></div>` +
     `<div class="dbg-l">Кейсы</div><div class="dbg-g">${chip('freeCases', false, 'По условиям')}${chip('freeCases', true, 'Без условий')}</div>` +
-    `<p class="dbg-n">Для ранга подбирается настоящий server seed — проверка честности сходится. Точный тикет подставляется напрямую, проверка для него не сойдётся. Только для тестов прототипа.</p>`;
+    `<p class="dbg-n">Для ранга подбирается настоящий server seed — проверка честности сходится, но хеш до игры будет другим. Точный тикет подставляется напрямую, проверка для него не сойдётся. Только для тестов прототипа.</p>`;
 }
 $('dbgBody').addEventListener('input', e => { if (e.target.id !== 'dbgTicket') return; const v = e.target.value.trim(); S.dbg.ticket = v === '' ? null : Math.max(0, Math.min(TICKETS - 1, Math.floor(+v) || 0)); if (S.dbg.ticket != null) S.dbg.tier = -1; });
 $('dbgBody').addEventListener('click', e => {
@@ -1978,28 +2017,28 @@ $('dbgDone').onclick = () => {
   else if (S.dbg.tier >= 0) notify({ type: 'warn', icon: 'bug', color: TIERS[S.dbg.tier].c, title: `Дебаг: ${TIERS[S.dbg.tier].name}${S.dbg.near ? ' у порога' : ''}`, text: S.dbg.keep ? 'для каждого крафта' : 'только для следующего крафта' });
   else notify({ type: 'info', icon: 'bug', title: 'Дебаг выключен', text: 'Исход снова случайный' });
 };
-async function fair(stake){
-  const nonce = ++S.nonce, want = dbgWant();
-  let serverSeed = null, h, ticket, tries = 0;
-  // дебаг: перебираем настоящие server seed, пока тикет не попадёт в нужный диапазон — проверка честности при этом сходится
-  do {
-    const batch = await Promise.all(Array.from({ length: want ? 64 : 1 }, async () => { const sd = hex(crypto.getRandomValues(new Uint8Array(32))); return { sd, ...(await ticketFrom(sd, S.clientSeed, nonce)) }; }));
-    const hit = want ? batch.find(b => want(b.ticket)) : batch[0];
-    if (hit){ serverSeed = hit.sd; h = hit.h; ticket = hit.ticket; }
-    tries += batch.length;
-  } while (!serverSeed && tries < 60000);
-  if (!serverSeed){ serverSeed = hex(crypto.getRandomValues(new Uint8Array(32))); ({ h, ticket } = await ticketFrom(serverSeed, S.clientSeed, nonce)); }
+async function fair(stake, gifts = [], tonStake = stake){
+  const nonce = ++S.nonce, want = dbgWant(), domain = 'craft';
+  let ep = await takeEpoch(), { roll, block } = await rollOf(ep.seed, ep.id, domain, S.clientSeed, nonce), tries = 0;
+  // дебаг: перебираем настоящие зерна, пока ролл не попадёт в нужный диапазон — проверка сходится, но хеш до игры был другим
+  while (want && !want(roll) && tries < 60000){
+    const batch = await Promise.all(Array.from({ length: 64 }, async () => { const e = await newEpoch(); return { e, ...(await rollOf(e.seed, e.id, domain, S.clientSeed, nonce)) }; }));
+    const hit = batch.find(b => want(b.roll)); tries += batch.length;
+    if (hit) ({ e: ep, roll, block } = hit);
+  }
   let debug = !!want, manual = false; if (want && !S.dbg.keep) S.dbg.tier = -1;
-  if (S.dbg.ticket != null){ ticket = S.dbg.ticket; manual = debug = true; if (!S.dbg.keep) S.dbg.ticket = null; }   // тикет задан вручную
-  const serverHash = hex(await crypto.subtle.digest('SHA-256', enc(serverSeed)));
-  const ti = tierOfTicket(ticket), t = TIERS[ti];
-  // множитель — позиция тикета внутри диапазона тира (тоже проверяемо)
-  const mult = Math.round((t.min + (ticket - t.from) / Math.max(1, t.to - t.from) * (t.max - t.min)) * 100) / 100;
-  const win = Math.round(stake * mult * 100) / 100;
-  let nft = null, change = win;
+  if (S.dbg.ticket != null){ roll = S.dbg.ticket; manual = debug = true; if (!S.dbg.keep) S.dbg.ticket = null; }   // тикет задан вручную
+  const ti = tierOfTicket(roll), ppm = craftPpm(CRAFT_RULES, roll);
+  const giftsIn = gifts.map(g => ({ id: g.id, value_nano: String(nano(g.value)) })), tonNano = nano(tonStake);
+  const bet = tonNano + giftsIn.reduce((a, g) => a + BigInt(g.value_nano), 0n), payout = bet * ppm / 1000000n, win = Number(payout) / 1e9;
+  let nft = null, giftPay = 0n;
   if (win >= NFT_FROM){ const n = NFTS.filter(x => x.price <= win).slice(-1)[0], bg = n.bg;
-    nft = { id: 'w' + Date.now(), num: n.num, nft: n, a: bg[0], b: bg[1], p: bg[2], value: n.price }; change = Math.round((win - n.price) * 100) / 100; }
-  return S.lastFair = { serverSeed, serverHash, clientSeed: S.clientSeed, nonce, h, ticket, ti, mult, stake, win, nft, change, debug, manual };
+    nft = { id: 'w' + Date.now(), num: n.num, nft: n, a: bg[0], b: bg[1], p: bg[2], value: n.price }; giftPay = nano(n.price); }
+  const tonPay = payout - giftPay;
+  const proof = { ...proofBase(ep, nonce, domain, block, roll), rules_hash: await sha(enc(JSON.stringify(CRAFT_RULES))), rules: CRAFT_RULES,
+    inputs: { bet_nano: String(bet), gifts: giftsIn, ton_bet_nano: String(tonNano) },
+    result: { gift_payout_value_nano: String(giftPay), multiplier_ppm: String(ppm), payout_nano: String(payout), segment: TIERS[ti].key, ton_payout_nano: String(tonPay), zone: TIERS[ti].zone } };
+  return S.lastFair = { kind: 'craft', proof, ticket: roll, ti, mult: Math.round(Number(ppm) / 1e4) / 100, stake, win: Math.round(win * 100) / 100, nft, change: Math.floor(Number(tonPay) / 1e7) / 100, debug, manual };
 }
 
 /* ---------- настройки: быстрый крафт, звук, экономный режим, демо ---------- */
@@ -2133,7 +2172,7 @@ $('craft').onclick = async () => {
   if (!S.demo && S.ton > S.balance){ notify({ type: 'err', icon: 'coin', title: 'Недостаточно GRAM', text: `На балансе ${fmt(S.balance)} GRAM` }); haptic('rigid'); return; }
   S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto);
   const stake = total(), used = S.gifts.slice(), tonStake = S.ton, fast = S.fast || S.lite;
-  const pf = fair(stake);
+  const pf = fair(stake, used, tonStake);
   if (S.ton > 0) setBalance(S.balance - S.ton);
   if (fast){ Sfx.lock(); await strike(.8, REST + 10); INV = INV.filter(g => !used.includes(g)); S.gifts = []; await openFx(true); }
   else { INV = INV.filter(g => !used.includes(g)); S.gifts = []; await bigStrike(); }
@@ -2535,35 +2574,38 @@ function pfHTML(r){
   const col = isCase ? itemColor(it) : t.c, res = isCase ? itemName(it) : `${t.name} · x${r.mult}`;
   const rng = isCase ? `«${itemName(it)}» в кейсе — это тикеты от ${tk(it.from)} до ${tk(it.to)}. Тикет ${tk(r.ticket)} внутри — значит, приз верный.`
                      : `Ранг «${t.name}» — это тикеты от ${tk(t.from)} до ${tk(t.to)}. Тикет ${tk(r.ticket)} внутри — значит, ранг и множитель x${r.mult} верные.`;
-  let tech = pfRow('Server seed — секретный ключ сервера', r.serverSeed) + pfRow('SHA-256 от server seed — показан до игры', r.serverHash) +
-    pfRow('Client seed — твой ключ', r.clientSeed) + pfRow('Nonce — номер игры', r.nonce) + pfRow('HMAC-SHA256(server seed, client seed:nonce)', r.h) +
-    pfRow('Тикет = первые 8 hex → число mod 100 000', `${parseInt(r.h.slice(0, 8), 16)} mod 100000 = ${r.ticket}`);
+  const P = r.proof;
+  let tech = pfRow('Server seed — секретное зерно сервера', P.server_seed) + pfRow('Commitment — SHA-256 зерна, показан до игры', P.commitment) +
+    pfRow('Client seed — твой ключ', P.client_seed) + pfRow('Эпоха', P.epoch_id) + pfRow('Nonce · домен · блок', `${P.nonce} · ${P.domain} · ${P.block_counter}`) + pfRow('Ролл', P.roll);
   return `<div class="pfres" style="--c:${col}"><small>Результат · тикет</small><b>${tk(r.ticket)}</b><span>${res}</span></div>` +
     `<div class="pfc" data-k="hash"><i></i><div><b>Результат не подменили</b><p>До игры мы показали «отпечаток» секретного ключа сервера. Теперь ключ открыт — сверим, что отпечаток тот же.</p><em>ждёт проверки</em></div></div>` +
-    `<div class="pfc" data-k="ticket"><i></i><div><b>Тикет посчитан по формуле</b><p>Ключ сервера + твой ключ + номер игры (${r.nonce}) по открытой формуле дают тикет ${tk(r.ticket)}.</p><em>ждёт проверки</em></div></div>` +
+    `<div class="pfc" data-k="ticket"><i></i><div><b>Тикет посчитан по формуле</b><p>Ключ сервера + твой ключ + номер игры (${r.proof.nonce}) по открытой формуле дают тикет ${tk(r.ticket)}.</p><em>ждёт проверки</em></div></div>` +
     `<div class="pfc" data-k="rule"><i></i><div><b>Приз выдан по правилам</b><p>${rng}</p><em>ждёт проверки</em></div></div>` +
     (r.manual ? '<p class="pfnote">Дебаг: тикет задан вручную, поэтому проверка не сойдётся. Это нормально.</p>' : r.debug ? '<p class="pfnote">Дебаг: исход выбран в настройках, ключ сервера подобран перебором — проверка сходится.</p>' : '') +
-    `<button class="btn-main pf-check">Проверить здесь</button><button class="btn-ghost pf-copy">Скопировать доказательство</button>` + PF_EXT +
+    `<button class="btn-main pf-check">Проверить здесь</button><button class="btn-ghost pf-copy">Скачать доказательство</button>` + PF_EXT +
     `<details class="rules pftech"><summary>Технические данные</summary><div>${tech}</div></details>`;
 }
 function bindPF(root, r){
   root.querySelector('.pf-check').onclick = async e => {
     const btn = e.currentTarget; if (btn.classList.contains('wait')) return;
     btn.classList.add('wait'); btn.textContent = 'Проверяем…'; haptic();
-    const [{ ticket }, hash] = await Promise.all([ticketFrom(r.serverSeed, r.clientSeed, r.nonce), crypto.subtle.digest('SHA-256', enc(r.serverSeed)).then(hex)]);
-    const rg = r.kind === 'case' ? caseById(r.caseId).items[r.idx] : TIERS[r.ti];
-    const res = { hash: hash === r.serverHash, ticket: ticket === r.ticket, rule: ticket === r.ticket && ticket >= rg.from && ticket <= rg.to };
+    const res = await checkProof(r.proof);
     const cards = [...root.querySelectorAll('.pfc')];
     for (const el of cards){ await wait(S.lite ? 0 : 280); const ok = res[el.dataset.k];
       el.classList.add(ok ? 'ok' : 'no'); el.querySelector('em').textContent = ok ? 'проверено' : 'не совпало'; haptic(ok ? 'light' : 'rigid'); }
     const all = Object.values(res).every(Boolean);
     btn.classList.remove('wait'); btn.classList.add(all ? 'done' : 'bad'); btn.textContent = all ? 'Всё честно ✓' : 'Проверка не сошлась';
   };
-  root.querySelector('.pf-copy').onclick = () => {
-    const proof = JSON.stringify({ game: r.kind === 'case' ? 'case:' + r.caseId : 'craft', serverSeed: r.serverSeed, serverHash: r.serverHash, clientSeed: r.clientSeed, nonce: r.nonce, ticket: r.ticket }, null, 2);
-    try { navigator.clipboard.writeText(proof); } catch(_){}
-    haptic(); notify({ type: 'ok', icon: 'ok', title: 'Доказательство скопировано', text: 'Его можно проверить в любом калькуляторе HMAC-SHA256' });
-  };
+  root.querySelector('.pf-copy').onclick = () => saveJson(`pawn-proof-${r.proof.reference}.json`, r.proof, 'Доказательство');
+}
+/* сохранить JSON: в браузере — файлом (и в буфер), в Telegram файл из blob не скачать — только в буфер.
+   В бою файл отдаёт бэкенд по ссылке через Telegram.WebApp.downloadFile */
+function saveJson(name, obj, what){
+  const txt = JSON.stringify(obj, null, 2); let saved = false;
+  try { navigator.clipboard.writeText(txt).catch(() => {}); } catch(_){}
+  try { if (!window.Telegram?.WebApp?.initData){ const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'application/json' })); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); saved = true; } } catch(_){}
+  haptic(); notify({ type: 'ok', icon: 'ok', title: saved ? `${what}: файл сохранён` : `${what} скопировано`, text: saved ? `${name} · JSON ещё и в буфере` : 'Вставь JSON на сайте проверки' });
 }
 function openPF(r = S.lastFair){
   if (!r){ $('pfBody').innerHTML = '<p class="muted">Сделай первый крафт — здесь появятся данные для проверки.</p>'; showDrawer('pfDrawer'); return; }
@@ -2586,10 +2628,14 @@ function renderPFInfo(){
     steps.map(([c, t, d], i) => `<div class="pfi-step" style="--c:${c}"><i>${i + 1}</i><div><b>${t}</b><p>${d}</p></div></div>`).join('') +
     `<div class="pfi-t">Тикет и ранги</div><p class="pfi-p">Каждая игра даёт тикет — число от 0 до 99 999. В какой диапазон он попал, такой и ранг. Шанс ранга — ровно доля его диапазона.</p>` +
     `<div class="rng">${TIERS.map(t => `<div style="--c:${t.c}"><b>${t.name}</b><span>${tk(t.from)}–${tk(t.to)}</span><em>${t.chance}%</em></div>`).join('')}</div>` +
+    `<div class="pfi-t">Хеш следующей игры</div><p class="pfi-p">Зерно следующей игры уже загадано — вот его отпечаток. Сохрани подтверждение до игры: после игры сайт проверки сверит его с доказательством.</p>` +
+    `<div class="pf-row"><small>Игра № ${S.nonce + 1} · commitment</small><code id="nextHash">…</code></div><button class="btn-ghost" id="saveReceipt">Сохранить подтверждение</button>` +
     `<div class="pfi-t">Твой ключ</div><div class="cseed"><code id="cseedV">${S.clientSeed}</code><button class="pill-btn" id="cseedNew">Сменить</button></div>` +
-    `<details class="rules"><summary>Формула для разработчиков</summary><ol><li>HMAC-SHA256(server seed, «client seed:nonce»)</li><li>Первые 8 символов хэша → число</li><li>Остаток от деления на 100 000 = тикет</li><li>SHA-256(server seed) должен совпасть с отпечатком, показанным до игры</li></ol></details>` +
+    `<details class="rules"><summary>Формула для разработчиков</summary><ol><li>Ключ HMAC-SHA256 — 32 байта server seed, сообщение — JSON ["pawn-pf-v1", эпоха, домен, client seed, nonce, блок]</li><li>Из хеша по очереди берутся восемь 32-битных чисел; первое меньше 4 294 900 000 по модулю 100 000 = тикет</li><li>Не подошло ни одно — номер блока +1</li><li>SHA-256(server seed) должен совпасть с отпечатком, показанным до игры</li></ol></details>` +
     `<div class="pfi-btns"><button class="btn-main" id="pfiLast">Проверить последний крафт</button><button class="btn-ghost" id="pfiHist">Вся история</button></div>` + PF_EXT;
-  $('cseedNew').onclick = () => { S.clientSeed = 'gk-' + hex(crypto.getRandomValues(new Uint8Array(4))); $('cseedV').textContent = S.clientSeed; haptic(); notify({ type: 'ok', icon: 'ok', title: 'Ключ обновлён', text: 'Следующие игры пойдут с новым client seed' }); };
+  nextEpoch.then(e => { if ($('nextHash')) $('nextHash').textContent = e.commitment; });
+  $('saveReceipt').onclick = async () => saveJson(`pawn-receipt-${S.nonce + 1}.json`, await receiptNow(), 'Подтверждение');
+  $('cseedNew').onclick = () => { S.clientSeed = 'gk-' + hex(crypto.getRandomValues(new Uint8Array(4))); $('cseedV').textContent = S.clientSeed; haptic(); notify({ type: 'ok', icon: 'ok', title: 'Ключ обновлён', text: 'Следующие игры пойдут с новым client seed — сохрани подтверждение заново' }); };
   $('pfiLast').onclick = () => swapDrawer('pfDrawer', () => { const r = S.lastFair || S.hist.crafts[0]?.r; if (r){ $('pfBody').innerHTML = pfHTML(r); bindPF($('pfBody'), r); } });
   $('pfiHist').onclick = () => openHistory('crafts');
 }
@@ -3071,10 +3117,14 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-act]
 });
 
 /* честный ролл кейса: тот же HMAC, тикет → предмет по диапазону */
+const caseRules = c => ({ kind: c.id, price_nano: String(nano(c.price)), rewards: c.items.map(it => ({ kind: it.t, amount: String(it.t === 'gram' ? nano(it.v) : it.t === 'xp' ? it.v : 0),
+  ...(it.t === 'nft' ? { nft_rarity: it.rare ? 'rare' : 'common' } : {}), weight: it.to - it.from + 1 })) });
 async function rollCase(c){
-  const nonce = ++S.nonce, serverSeed = hex(crypto.getRandomValues(new Uint8Array(32)));
-  const serverHash = hex(await crypto.subtle.digest('SHA-256', enc(serverSeed))), { h, ticket } = await ticketFrom(serverSeed, S.clientSeed, nonce);
-  return { kind: 'case', caseId: c.id, serverSeed, serverHash, clientSeed: S.clientSeed, nonce, h, ticket, idx: c.items.findIndex(it => ticket >= it.from && ticket <= it.to) };
+  const nonce = ++S.nonce, domain = 'case:' + c.id, ep = await takeEpoch(), { roll, block } = await rollOf(ep.seed, ep.id, domain, S.clientSeed, nonce);
+  const rules = caseRules(c), idx = c.items.findIndex(it => roll >= it.from && roll <= it.to), rw = rules.rewards[idx];
+  const proof = { ...proofBase(ep, nonce, domain, block, roll), rules_hash: await sha(enc(JSON.stringify(rules))), rules, inputs: { price_nano: rules.price_nano },
+    result: { kind: rw.kind, amount: rw.amount, ...(rw.nft_rarity ? { nft_rarity: rw.nft_rarity } : {}) } };
+  return { kind: 'case', caseId: c.id, proof, ticket: roll, idx };
 }
 const weighted = c => { let x = Math.random() * 100; return c.items.find(it => (x -= it.ch) < 0) || c.items[c.items.length - 1]; };
 const tileFoot = it => it.t === 'nft' ? (it.rare ? `${RARE_FROM}–${RARE_TO} GRAM` : `флор ${NFT_FLOOR}`) : it.t === 'gram' ? 'GRAM' : 'опыт';
@@ -3156,8 +3206,9 @@ syncBalBtn();
 /* ---------- стартовая история: настоящие seed, чтобы проверка работала и на старых записях ---------- */
 (async () => {
   const stakes = [1, 2, .5, 5, 1, 3, 2, 10];
-  for (let i = 0; i < stakes.length; i++){ const r = await fair(stakes[i]);
-    if (stakes[i] >= 3){ const n = pick(NFTS.slice(0, 5)), bg = n.bg, v = Math.round(stakes[i] * .7 * 100) / 100; r.gifts = [{ id: 's' + i, num: n.num, nft: n, a: bg[0], b: bg[1], p: bg[2], value: v }]; r.tonStake = Math.round((stakes[i] - v) * 100) / 100; } else { r.gifts = []; r.tonStake = stakes[i]; }
+  for (let i = 0; i < stakes.length; i++){ let gifts = [], ton = stakes[i];
+    if (stakes[i] >= 3){ const n = pick(NFTS.slice(0, 5)), bg = n.bg, v = Math.round(stakes[i] * .7 * 100) / 100; gifts = [{ id: 's' + i, num: n.num, nft: n, a: bg[0], b: bg[1], p: bg[2], value: v }]; ton = Math.round((stakes[i] - v) * 100) / 100; }
+    const r = await fair(stakes[i], gifts, ton); r.gifts = gifts; r.tonStake = ton;
     S.hist.crafts.push({ kind: 'craft', t: Date.now() - (i + 1) * 47 * 60000, r, how: r.nft ? (i % 2 ? 'sell' : 'take') : 'gram' }); }
   for (let i = 0; i < 3; i++){ const c = CASES[i % 2], r = await rollCase(c), it = c.items[r.idx]; S.hist.cases.push({ kind: 'case', t: Date.now() - (i + 1) * 5 * 3600000, r, label: it.t === 'nft' ? (it.rare ? NFTS[9].name : NFTS[1].name) : null, img: it.t === 'nft' ? (it.rare ? NFTS[9].src : NFTS[1].src) : null }); }
   S.lastFair = null;

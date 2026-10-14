@@ -18,6 +18,8 @@ Telegram mini-app с крафт-механикой: игрок ставит GRAM
 
 ## Честность (обязательно)
 - Provably fair: HMAC-SHA256, хеш server seed показывается ДО раскрытия, проверка воспроизводима прямо в браузере.
+- Протокол — `pawn-pf-v1`, эталон проверки: https://pawn-frontend.onrender.com/verify/fair-verify.js. Доказательства из приложения должны проходить этот сайт.
+- Под капотом сегменты: base, luck, mega_low, mega_high, jackpot (mega_low и mega_high — zone `mega`); в UI — Мега и Ультра.
 - Анимации раскрытия честные: никаких фейковых «почти выиграл» (near-miss).
 - Показывать RTP.
 
