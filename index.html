@@ -1370,17 +1370,17 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 const TIERS = [
   { name: 'База',    c: '#ffb835', a: '#ffbd4a', b: '#c06a00', chance: 56.563, min: .4,  max: .8,  glow: ['#ffb835', '#ff8a1e', '#d6d33a', '#ffe08a'] },
   { name: 'Удача',   c: '#12d53d', a: '#4cff30', b: '#00a07a', chance: 27,     min: .8,  max: 1.2, glow: ['#12d53d', '#11b89a', '#9cc23a', '#4fe39a'] },
-  { name: 'Мега',    c: '#00d9ff', a: '#2bd8ff', b: '#4a6bff', chance: 12.437, min: 1.2, max: 2,   glow: ['#00d9ff', '#2f7bff', '#16d3b0', '#8ff0ff'] },
-  { name: 'Ультра',  c: '#eb57b0', a: '#ff6ae0', b: '#c9306e', chance: 3.5,    min: 2,   max: 3.5, glow: ['#eb57b0', '#a24bff', '#ff4f7a', '#ff9ad8'] },
+  { name: 'Мега',    c: '#00d9ff', a: '#2bd8ff', b: '#4a6bff', chance: 12.99,  min: 1.5, max: 2,   glow: ['#00d9ff', '#2f7bff', '#16d3b0', '#8ff0ff'] },
+  { name: 'Ультра',  c: '#eb57b0', a: '#ff6ae0', b: '#c9306e', chance: 3.247,  min: 2,   max: 3.5, glow: ['#eb57b0', '#a24bff', '#ff4f7a', '#ff9ad8'] },
   { name: 'Джекпот', c: '#ff4c35', a: '#ff4c4c', b: '#a0103e', chance: 0.2,    min: 10,  max: 14,  glow: ['#ff4c35', '#ff9a1e', '#e5246b', '#ffb08a'] },
 ];
 /* гифты, которые можно положить в крафт (заглушки из макета): добавляются по одному кнопкой «+», убираются тапом по карточке */
 const MAX_GIFTS = 2;
 /* PF-система: тикет 0…99 999, тир определяется диапазоном (накопленные шансы):
-   База 0–56 562 · Удача 56 563–83 562 · Мега 83 563–95 999 · Ультра 96 000–99 799 · Джекпот 99 800–99 999 */
+   База 0–56 562 · Удача 56 563–83 562 · Мега 83 563–96 552 · Ультра 96 553–99 799 · Джекпот 99 800–99 999 (в сумме 100%) */
 const TICKETS = 100000;
 TIERS.reduce((from, t) => { t.from = from; t.to = from + Math.round(t.chance / 100 * TICKETS) - 1; return t.to + 1; }, 0);
-// джекпот — всегда верхние тикеты (99 800–99 999). Шансы в сумме дают 99.7%, поэтому «дырку» 99 500–99 799 пока отдаём Ультре
+// джекпот — всегда верхние тикеты (99 800–99 999); Ультра заканчивается прямо под ним
 const JP = TIERS[TIERS.length - 1], JN = JP.to - JP.from + 1; JP.to = TICKETS - 1; JP.from = TICKETS - JN;
 TIERS[TIERS.length - 2].to = JP.from - 1;
 const tierOfTicket = n => Math.max(0, TIERS.findIndex(t => n >= t.from && n <= t.to));
