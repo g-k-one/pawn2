@@ -67,7 +67,7 @@ const DRAWER_NAMES = { menuDrawer: 'Меню', casesDrawer: 'Бонусы', hist
 function setBack(dr){
   dr.querySelector('.dr-back')?.remove(); const prev = drawerStack[drawerStack.length - 1]; if (!prev) return;
   const b = document.createElement('button'); b.className = 'dr-back'; b.textContent = '‹ ' + (DRAWER_NAMES[prev] || 'Назад');
-  b.onclick = e => { e.stopPropagation(); drawerBack(); }; dr.appendChild(b);
+  b.onclick = e => { e.stopPropagation(); drawerBack(); }; dr.querySelector('.dr-h').prepend(b);
 }
 function drawerBack(){ const id = drawerStack.pop(); if (!id) return hideDrawer(); swapDrawer(id, id === 'menuDrawer' ? renderMenu : id === 'casesDrawer' ? renderCases : null, true); }
 $('backdrop').onclick = hideDrawer;
