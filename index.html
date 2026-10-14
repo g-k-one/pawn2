@@ -1240,6 +1240,10 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 .seg{margin-left:auto;display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(255,255,255,.08)}
 .seg button{padding:4px 12px;border-radius:999px;font-size:16px;font-weight:700;color:rgba(255,255,255,.55);transition:background .2s,color .2s}
 .seg button.on{background:#fff;color:#000}
+/* ореол приза не должен перехватывать нажатия — на низких экранах он налезал на кнопки */
+.fx-drop::before{pointer-events:none}
+.fx-win,.fx-btns{position:relative;z-index:2}
+.live-tag span{font-size:16px;line-height:20px;padding:10px 0 20px}
 .credit{margin:18px 0 4px;text-align:center;font:400 11.5px/1.4 var(--serif);color:rgba(255,255,255,.3)}
 .credit a{color:inherit}
 .gin .steps1{margin:0 0 14px;font-family:var(--serif);font-size:12.5px;color:rgba(255,255,255,.55)}
@@ -1381,16 +1385,17 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
     for (;;){ const { done, value } = await rd.read(); if (done) break; parts.push(value); got += value.length; set(w0 + (w1 - w0) * Math.min(1, got / total)); }
     return JSON.parse(new TextDecoder().decode(await new Blob(parts).arrayBuffer()));
   }
-  window.GIMG = {};
+  window.GIMG = {}; window.GSYM = {};
   window.CDN = await new Promise(res => { const im = new Image(), t = setTimeout(() => res(false), 2500);
     im.onload = () => { clearTimeout(t); res(true); }; im.onerror = () => { clearTimeout(t); res(false); };
     im.src = 'https://api.changes.tg/model/Berry%20Box/Original.png?size=64'; });
   if (!CDN) try {
     const [m, s] = await Promise.all([load('assets/g/models.json', 0, .85), load('assets/g/syms.json', .85, 1)]);
-    for (const [k, v] of Object.entries(Object.assign(m, s))){
+    // модели и символы — в разных словарях: ключ считается по имени, и модель с символом могут совпасть (Watermelon)
+    const blobs = (src, dst) => { for (const [k, v] of Object.entries(src)){
       const bin = atob(v), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-      GIMG[k] = URL.createObjectURL(new Blob([u8], { type: 'image/webp' }));
-    }
+      dst[k] = URL.createObjectURL(new Blob([u8], { type: 'image/webp' })); } };
+    blobs(m, GIMG); blobs(s, GSYM);
   } catch (e){ console.warn('gift images not loaded', e); }
   const app = document.createElement('script'); app.textContent = document.getElementById('app').textContent; document.body.appendChild(app);
   const b = document.getElementById('boot'); b.classList.add('off'); setTimeout(() => b.remove(), 500);
@@ -1441,13 +1446,14 @@ const FB = {};
 const hashStr = t => [...t].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);
 // картинки моделей и символов скачаны с changes.tg и лежат в assets/g (модели 220px, символы 72px)
 // с CDN: src — 128 px (лента, кейсы, история), card — 256 px (карточки), символ узора — 64 px; не загрузилось — локальная заглушка
+const HI_PACKS = 20;                                          // запасные чёткие картинки разложены по стольким файлам
 const apiImg = (kind, gift, name, size) => `https://api.changes.tg/${kind}/${encodeURIComponent(gift.replace(/’/g, "'"))}/${encodeURIComponent(name.replace(/’/g, "'"))}.png?size=${size}`;
 const NFTS = RELAY.g.map(([ci, num, model, bi, sym, price, mf, sf]) => {
   const name = RELAY.c[ci], bd = RELAY.b[bi], local = `assets/nft/${LOCAL_NFT[hashStr(name) % LOCAL_NFT.length]}.webp`;
   let src, card, symSrc;
   if (CDN){ src = apiImg('model', name, model, 128); card = apiImg('model', name, model, 256); symSrc = apiImg('symbol', name, sym, 64); FB[src] = FB[card] = local; }
-  else { src = card = mf && GIMG[mf] ? GIMG[mf] : local; symSrc = sf && GIMG[sf] ? GIMG[sf] : ''; }
-  return { name, num, model, backdrop: bd[0], bg: [bd[1], bd[2], bd[3]], symbol: sym, sym: symSrc, price, src, card };
+  else { src = card = mf && GIMG[mf] ? GIMG[mf] : local; symSrc = sf && GSYM[sf] ? GSYM[sf] : ''; }
+  return { name, num, model, backdrop: bd[0], bg: [bd[1], bd[2], bd[3]], symbol: sym, sym: symSrc, price, src, card, mf, pack: ci % HI_PACKS };
 });
 /* крупные картинки (приз на главной, экран дропа, супер дроп) — чёткие с CDN changes.tg.
    Сначала показываем лёгкую 220 px, чёткую подменяем, когда она загрузилась и раскодировалась; не загрузилась — остаётся 220 px */
@@ -1455,10 +1461,19 @@ const HI_FMT = 'png', HI = {};   // PNG 1024: раскодируется за ~0
 const hiSrc = n => `https://cdn.changes.tg/gifts/models/${encodeURIComponent(n.name.replace(/’/g, "'"))}/${HI_FMT}/${encodeURIComponent(n.model.replace(/’/g, "'"))}.${HI_FMT}`;
 function upgradeImg(img, n, gl){
   if (!img || !n?.model) return;
-  if (!CDN) return;                                             // CDN закрыт — остаёмся на запасных картинках
+  const swap = u => { if (!u) return; const im = new Image(); im.src = u;
+    return im.decode().then(() => { if (img.isConnected){ img.src = u; gl?.style.setProperty('--m', `url('${u}')`); } }); };
+  if (!CDN) return void packImg(n).then(swap).catch(() => {});  // CDN закрыт (artifact) — берём 768 px из своих пачек
   const u = hiSrc(n); if (HI[u] === 0) return;
-  const im = new Image(); im.src = u;
-  im.decode().then(() => { HI[u] = 1; if (!img.isConnected) return; img.src = u; gl?.style.setProperty('--m', `url('${u}')`); }).catch(() => { HI[u] = 0; });
+  swap(u).then(() => { HI[u] = 1; }, () => { HI[u] = 0; });
+}
+/* запасные чёткие картинки: 768 px webp, разложены по коллекциям в HI_PACKS файлов — грузится только пачка нужного приза */
+const PACK = {};
+function packImg(n){
+  PACK[n.pack] ||= fetch(`assets/g/hi/p${n.pack}.json`).then(r => r.ok ? r.json() : {}).catch(() => ({}));
+  return PACK[n.pack].then(m => { const v = m[n.mf]; if (!v || v.startsWith('blob:')) return v || null;
+    const bin = atob(v), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    return m[n.mf] = URL.createObjectURL(new Blob([u8], { type: 'image/webp' })); });
 }
 document.addEventListener('error', e => { const t = e.target; if (t.tagName === 'IMG' && FB[t.getAttribute('src')]) t.src = FB[t.getAttribute('src')]; }, true);
 /* узор карточки — символ коллекции кольцами вокруг центра; пока символ не загрузился (или без сети) — звёздочки */
