@@ -1256,7 +1256,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .pfi-hero>i,.pfi-env>i,.pfi-rtp>b{flex:none;width:48px;height:48px;margin:0}
 .pfi-hero>i{display:grid;place-items:center;border-radius:14px;background:#00D9FF;color:#06121a}
 .pfi-hero>i svg{width:26px;height:26px}
-.pfi-rtp>b{font-size:25px;line-height:48px;text-align:center;letter-spacing:-.5px}
+.pfi-rtp>b{border-radius:14px;background:#12D53D;color:#06121a;font-size:19px;line-height:48px;text-align:center;letter-spacing:-.3px}   /* 95% — плашка как иконки соседних карточек */
 .pfi-step>i{width:32px;height:32px;margin:0 8px}
 /* онбординг */
 .onb{position:absolute;inset:0;z-index:80}
