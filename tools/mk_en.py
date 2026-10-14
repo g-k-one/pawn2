@@ -44,7 +44,7 @@ phrases = {
 # кейсы
 'Кейс Павла Дурова':"Pavel Durov's Case",'Павел Дуров':'Pavel Durov','Кейс Сатоши Накамото':"Satoshi Nakamoto's Case",'Сатоши':'Satoshi','Кейс Мистера Биста':"MrBeast's Case",'Мистер Бист':'MrBeast','Кейс Илона Маска':"Elon Musk's Case",'Илон Маск':'Elon Musk',
 'Бесплатно':'Free','бесплатно':'free','Открыть':'Open','Закрыт':'Locked','закрыт':'is locked','Пока закрыт':'Locked for now','Открыть за':'Open for','Ещё раз ·':'Again ·',
-'Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за всю неделю.':"Paid cases open for GRAM. Free ones — for tasks: MrBeast for a day, Elon Musk for the whole week.",
+'Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить: открытые разом, они умножают награду.':"Paid cases open for GRAM. Free ones — for tasks: MrBeast for a day, Elon Musk for a week. You can stack them: opened together, they multiply the reward.",
 'Что внутри':"What's inside",'Редкий NFT':'Rare NFT','Обычный NFT':'Common NFT','редкий NFT':'rare NFT','обычный NFT':'common NFT','Редкий':'Rare','Обычный':'Common','случайный подарок':'random gift','по флору, сейчас':'at floor, now','флор':'floor',
 'Когда придёт':'When it arrives','GRAM, XP и NFT — сразу':'GRAM, XP and NFT — instantly','Честно':'Fair','каждое открытие проверяется в истории':'every opening is verifiable in History','‹ Бонусы':'‹ Bonuses','опыт':'XP',
 'Ждём честный результат…':'Waiting for a fair result…','Кейсы — только на GRAM':'Cases are GRAM-only','Выключи демо в меню':'Turn off demo in the menu','стоимость открытия':'opening price','Выпало':'Dropped',
@@ -130,7 +130,7 @@ phrases = {
 'и на баланс':'plus to balance','до':'to','из':'of','и':'and','за':'for','от':'from','в':'in','на':'on','NFT до':'NFT up to',
 }
 rules = [
- [r'^3 задания дня · (\d+) из (\d+)$', '3 daily tasks · $1 of $2'], [r'^Задания 7 дней подряд · (\d+) из 7$', 'Tasks 7 days in a row · $1 of 7'],
+ [r'^3 задания дня · (\d+) из (\d+)$', '3 daily tasks · $1 of $2'], [r'^7 дней заданий · (\d+) из 7$', '7 days of tasks · $1 of 7'],
  [r'^Ещё (\d+) задани[ея] до кейса$', '$1 more tasks to unlock the case'],
  [r'^Ещё 1 задание до кейса$', '1 more task to unlock the case'],
  [r'^(\d+) друзей$', '$1 friends'], [r'^(\d+) крафтов$', '$1 crafts'], [r'^(\d+) подарка$', '$1 gifts'],
