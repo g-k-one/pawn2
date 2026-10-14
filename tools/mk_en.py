@@ -123,6 +123,9 @@ phrases = {
 'Жми на наковальню. Исход честный: тикет можно проверить после игры':'Tap the anvil. The outcome is fair: the ticket can be verified after the game',
 'Здесь бонусы, история игр и проверка честности':'Bonuses, game history and fairness checks live here',
 'TON Connect не загрузился':'TON Connect failed to load','Проверь интернет и попробуй ещё раз':'Check your connection and try again','Адрес для пополнений не задан':'Deposit address is not set','Прототип: впиши DEPOSIT_ADDR в коде':'Prototype: set DEPOSIT_ADDR in the code','Платёж отменён':'Payment cancelled',
+'Играй ответственно':'Play responsibly','Ставь только то, что готов потерять, и делай перерывы. Если игра перестала быть развлечением — остановись.':'Only bet what you can afford to lose and take breaks. If it stops being fun — stop.',
+'в запасе':'in stock','Открой сейчас или копи — награда умножится на число кейсов':'Open now or stack them — the reward multiplies by the number of cases','награда':'reward','Кейс за сегодня уже открыт':"Today's case is already opened",
+'Запас бесплатных кейсов':'Free case stock','Бист':'Beast','Маск':'Musk',
 # общие связки
 'и на баланс':'plus to balance','до':'to','из':'of','и':'and','за':'for','от':'from','в':'in','на':'on','NFT до':'NFT up to',
 }

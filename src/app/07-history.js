@@ -1,0 +1,114 @@
+/* =========================================================
+   ИСТОРИЯ: крафты, кейсы, кошелёк, статистика
+   ========================================================= */
+S.hist = { crafts: [], cases: [], wallet: [], refs: [], rewards: [] };
+const logReward = (kind, title, rw) => S.hist.rewards.unshift({ kind, title, rw, t: Date.now() });   // награды заданий и достижений
+// начисления за друзей: 5% от активности — каждый день в 00:00 МСК, 10% от первого депозита друга — сразу
+(() => { const day = 864e5, mid = new Date(); mid.setHours(0, 0, 0, 0);
+  [.84, 1.12, .37, 2.05, .66, .91, 1.48].forEach((v, i) => S.hist.refs.push({ type: 'act', t: mid - i * day, amount: v, n: 7 - (i > 3 ? 2 : 0) }));
+  S.hist.refs.splice(2, 0, { type: 'first', t: mid - 1.4 * day, amount: .5, name: 'kira.ton' });
+  S.hist.refs.splice(6, 0, { type: 'first', t: mid - 4.6 * day, amount: .21, name: 'b0ris' }); })();
+S.xp = 340;
+const tAgo = ms => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? 'только что' : m < 60 ? `${m} мин назад` : m < 1440 ? `${Math.round(m / 60)} ч назад` : `${Math.round(m / 1440)} д назад`; };
+let histTab = 'crafts';
+function openHistory(tab = histTab){ histTab = tab; swapDrawer('histDrawer', () => renderHist()); }
+function renderHist(detail){
+  const tabs = [['crafts', 'Крафты'], ['cases', 'Кейсы'], ['rewards', 'Награды'], ['wallet', 'Кошелёк'], ['refs', 'Рефералка'], ['stats', 'Статистика']];
+  $('histTabs').innerHTML = tabs.map(([k, t]) => `<button class="tab${k === histTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
+  const b = $('histBody');
+  if (detail){
+    const rec = detail;
+    b.innerHTML = `<button class="back" id="hBack">‹ Назад</button>` + (rec.kind === 'case' ? caseRecHead(rec) : craftRecHead(rec)) + pfHTML(rec.r);
+    bindPF(b, rec.r); $('hBack').onclick = () => renderHist(); b.scrollTop = 0; return;
+  }
+  if (histTab === 'crafts'){
+    const L = S.hist.crafts;
+    b.innerHTML = L.length ? L.map((c, i) => craftCard(c, i)).join('') : '<p class="hempty">Крафтов пока нет</p>';
+  } else if (histTab === 'cases'){
+    const L = S.hist.cases;
+    b.innerHTML = L.length ? L.map((c, i) => caseCard2(c, i)).join('') : '<p class="hempty">Кейсы ещё не открывались</p>';
+  } else if (histTab === 'refs'){
+    const L = S.hist.refs, sum = L.reduce((a, x) => a + x.amount, 0);
+    b.innerHTML = `<div class="hstat-hero one"><div style="--c:#30A5FF"><small>Получено за друзей</small><b>+${fmt(sum)}</b><span>GRAM · начисляется само в 00:00 МСК</span></div></div>` +
+      L.map(x => { const act = x.type === 'act', c = act ? '#30A5FF' : '#12D53D';
+        return `<div class="hcard w" style="--c:${c}"><span class="hk-ic">${svg(act ? IC.users : '<path d="M12 5v14M5 12l7 7 7-7"/>')}</span><span class="hk-v"><b>${act ? '5% от активности' : '10% от депозита @' + x.name}</b><small>${act ? `${x.n} друзей · ` : 'первый депозит · '}${new Date(x.t).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}${act ? ', 00:00' : ''}</small></span><b class="hk-amt" style="color:${c}">+${fmt(x.amount)}</b></div>`; }).join('');
+  } else if (histTab === 'rewards'){
+    const L = S.hist.rewards;
+    b.innerHTML = L.length ? L.map(x => { const g = x.rw.g != null, c = g ? '#30A5FF' : '#F57A37';
+      return `<div class="hcard w" style="--c:${c}">${hpic(g ? 'assets/gem-small.svg' : 'assets/xp.webp')}<span class="hk-v"><b>${x.title}</b><small>${x.kind === 'task' ? 'Задание дня' : 'Достижение'} · ${tAgo(x.t)}</small></span>` +
+        `<b class="hk-amt" style="color:${c}">${g ? '+' + fmt(x.rw.g) + ' GRAM' : '+' + x.rw.xp + ' XP'}</b></div>`; }).join('') : '<p class="hempty">Наград пока нет</p>';
+  } else if (histTab === 'wallet'){
+    const L = S.hist.wallet, lab = { dep: 'Пополнение', out: 'Вывод GRAM', nft: 'Вывод NFT', sell: 'Продажа NFT' };
+    b.innerHTML = L.length ? L.map(w => { const dep = w.type === 'dep' || w.type === 'sell', c = dep ? '#12D53D' : '#F57A37';
+      return `<div class="hcard w" style="--c:${c}">${w.img ? hpic(w.img, w.bg) : `<span class="hk-ic">${svg(dep ? '<path d="M12 5v14M5 12l7 7 7-7"/>' : '<path d="M12 19V5M5 12l7-7 7 7"/>')}</span>`}` +
+        `<span class="hk-v"><b>${w.name || lab[w.type]}</b><small>${w.name ? lab[w.type] + ' · ' : ''}${w.status && w.status !== 'выполнено' ? `<i class="pend">${w.status}</i> · ` : ''}${tAgo(w.t)}</small></span>` +
+        `<b class="hk-amt" style="color:${c}">${w.amount != null ? (dep ? '+' : '−') + fmt(w.amount) : 'NFT'}</b></div>`; }).join('') : '<p class="hempty">Операций пока нет</p>';
+  } else {
+    const C = S.hist.crafts, n = C.length, staked = C.reduce((a, c) => a + c.r.stake, 0), won = C.reduce((a, c) => a + c.r.win, 0);
+    const best = C.reduce((a, c) => c.r.mult > a.mult ? c.r : a, { mult: 0 }), dep = S.hist.wallet.filter(w => w.type === 'dep').reduce((a, w) => a + w.amount, 0);
+    const nftOut = S.hist.wallet.filter(w => w.type === 'nft').length;
+    const by = TIERS.map((t, i) => C.filter(c => c.r.ti === i).length);
+    b.innerHTML = `<div class="hstat-hero"><div style="--c:#12D53D"><small>Выиграно</small><b>${fmt(won)}</b><span>GRAM</span></div><div style="--c:#30A5FF"><small>Поставлено</small><b>${fmt(staked)}</b><span>GRAM</span></div></div>` +
+      `<div class="hstat">${[['Крафтов', n, '#FFB835'], ['Твой RTP', n ? Math.round(won / staked * 100) + '%' : '—', '#00D9FF'], ['Лучший', best.mult ? 'x' + best.mult : '—', '#EB57B0'], ['Кейсов', S.hist.cases.length, '#F57A37'],
+        ['Пополнено', fmt(dep), '#12D53D'], ['NFT выведено', nftOut, '#FF4C35'], ['Опыт', xpFmt(S.xp), '#F57A37'], ['Подарков', INV.length, '#AE3FC4']]
+        .map(([k, v, c]) => `<div style="--c:${c}"><small>${k}</small><b>${v}</b></div>`).join('')}</div>` +
+      `<div class="hsec">Ранги в твоих крафтах</div><div class="bars">${TIERS.map((t, i) => { const pc = n ? by[i] / n * 100 : 0;
+        return `<div style="--c:${t.c}"><span>${t.name}</span><i><b style="width:${Math.max(pc, 1.5).toFixed(1)}%"></b><em style="left:${t.chance}%"></em></i><small>${by[i]} · ${pc.toFixed(0)}%</small></div>`; }).join('')}</div>` +
+      `<p class="hnote">Белая черта — честный шанс ранга. Чем больше крафтов, тем ближе к ней твои доли.</p>`;
+  }
+}
+const ARW = '<path d="M5 12h14M13 6l6 6-6 6"/>';
+const hpic = (src, bg) => { const g = /gem/.test(src), x = /xp\.webp/.test(src); if (x) src = 'assets/xp-w.svg'; return `<span class="hp${g ? ' g' : x ? ' x' : ''}"${bg ? ` style="background:linear-gradient(160deg,${bg[0]},${bg[1]})"` : ''}><img src="${g ? 'assets/gem-small.svg' : src}" alt=""></span>`; };
+const giftBg = g => [g.a, g.b];
+function stakeOf(r){ const g = r.gifts || [], ton = r.tonStake != null ? r.tonStake : r.stake; return { g, ton }; }
+// карточка крафта: ранг сверху, ниже «что поставил → что получил» крупно
+function craftCard(c, i){
+  const r = c.r, t = TIERS[r.ti], { g, ton } = stakeOf(r);
+  const sp = g.map(x => hpic(x.nft.src, giftBg(x))).join('') + (ton > 0 || !g.length ? hpic('assets/gem-small.svg') : '');
+  const wp = (r.super ? hpic(r.super.nft.src, giftBg(r.super)) : '') + (r.nft ? hpic(r.nft.nft.src, giftBg(r.nft)) : hpic('assets/hero-gem.webp'));
+  return `<button class="hcard" data-i="${i}" style="--c:${t.c}"><span class="hk-h"><em>${t.name} · x${r.mult}</em>${r.super ? '<em class="sd">Супер дроп</em>' : ''}<small>${tAgo(c.t)}</small></span>` +
+    `<span class="hk-b"><span class="hk-s"><span class="hps">${sp}</span><span class="hk-v"><b>${fmt(r.stake)}</b><small>${g.length ? `${g.length} NFT${ton > 0 ? ' + GRAM' : ''}` : 'GRAM'}</small></span></span>` +
+    `<i class="hk-ar">${svg(ARW)}</i>` +
+    `<span class="hk-s win"><span class="hps">${wp}</span><span class="hk-v"><b class="pos">+${fmt(r.win)}</b><small>${r.nft ? (c.how === 'sell' ? 'NFT продан' : 'NFT забран') : 'GRAM'}</small></span></span></span></button>`;
+}
+function caseCard2(c, i){
+  const cs = caseById(c.r.caseId), it = cs.items[c.r.idx], col = itemColor(it);
+  const m = c.r.mult || 1, val = it.t === 'gram' ? '+' + fmt(it.v * m) : it.t === 'xp' ? '+' + it.v * m : (c.label || itemName(it));
+  return `<button class="hcard" data-i="${i}" style="--c:${cs.c}"><span class="hk-h"><em>${cs.short}</em><small>${tAgo(c.t)}</small></span>` +
+    `<span class="hk-b"><span class="hk-s">${caseArt(cs, 'xs')}<span class="hk-v"><b>${cs.price ? fmt(cs.price) : '0'}</b><small>${cs.price ? 'GRAM' : 'бесплатно'}</small></span></span>` +
+    `<i class="hk-ar">${svg(ARW)}</i>` +
+    `<span class="hk-s win">${hpic(c.img || itemImg(it))}<span class="hk-v"><b style="color:${col}">${val}</b><small>${it.t === 'nft' ? (it.rare ? 'редкий NFT' : 'обычный NFT') : it.t === 'gram' ? 'GRAM' : 'XP'}</small></span></span></span></button>`;
+}
+$('histTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; histTab = t.dataset.k; haptic(); renderHist(); $('histBody').scrollTop = 0; });
+$('histBody').addEventListener('click', e => {
+  const r = e.target.closest('button.hcard'); if (!r) return; haptic();
+  renderHist((histTab === 'cases' ? S.hist.cases : S.hist.crafts)[+r.dataset.i]);
+});
+// что было в ставке: NFT-подарки (картинка, название, оценка) и GRAM
+function stakeChips(r){
+  const g = r.gifts || [], ton = r.tonStake != null ? r.tonStake : r.stake;
+  return g.map(x => `<span class="hchip nft"><img src="${x.nft.src}" alt=""><span><b>${x.nft.name}</b><small>NFT · ${fmt(x.value)} GRAM</small></span></span>`).join('') +
+    (ton > 0 || !g.length ? `<span class="hchip"><img src="assets/gem-small.svg" alt="" class="gm"><span><b>${fmt(ton)} GRAM</b></span></span>` : '');
+}
+// что получено: NFT (забран или продан) и/или GRAM на баланс
+function winChips(r, how){
+  if (!r.nft) return `<span class="hchip"><img src="assets/gem-small.svg" alt="" class="gm"><span><b class="pos">+${fmt(r.win)} GRAM</b><small>на баланс</small></span></span>`;
+  return `<span class="hchip nft"><img src="${r.nft.nft.src}" alt=""><span><b>${r.nft.nft.name}</b><small>${how === 'sell' ? `продан за ${fmt(r.nft.value)} GRAM` : `NFT · ${fmt(r.nft.value)} GRAM`}</small></span></span>` +
+    (r.change > 0 ? `<span class="hchip"><img src="assets/gem-small.svg" alt="" class="gm"><span><b class="pos">+${fmt(r.change)} GRAM</b><small>сдача на баланс</small></span></span>` : '');
+}
+const hdRow = (src, bg, name, sub, val, pos) => `<div class="hd-row">${hpic(src, bg)}<span><b>${name}</b>${sub ? `<small>${sub}</small>` : ''}</span><em${pos ? ' class="pos"' : ''}>${val}</em></div>`;
+function craftRecHead(c){ const r = c.r, t = TIERS[r.ti], { g, ton } = stakeOf(r);
+  const st = g.map(x => hdRow(x.nft.src, giftBg(x), x.nft.name, 'NFT · #' + x.num, fmt(x.value))).join('') + (ton > 0 || !g.length ? hdRow('assets/gem-small.svg', null, 'GRAM', '', fmt(ton)) : '');
+  let wn = r.nft ? hdRow(r.nft.nft.src, giftBg(r.nft), r.nft.nft.name, c.how === 'sell' ? 'продан' : 'в инвентаре', fmt(r.nft.value), 1) + (r.change > 0 ? hdRow('assets/hero-gem.webp', null, 'Сдача на баланс', '', '+' + fmt(r.change), 1) : '')
+    : hdRow('assets/hero-gem.webp', null, 'На баланс', '', '+' + fmt(r.win), 1);
+  if (r.super) wn = hdRow(r.super.nft.src, giftBg(r.super), r.super.nft.name, 'Супер дроп', fmt(r.super.value), 1) + wn;
+  return `<div class="hdet" style="--c:${t.c}"><div class="hk-h"><em>${t.name} · x${r.mult}</em><small>${tAgo(c.t)}</small></div>` +
+    `<div class="hd-sec"><span>Ставка</span><b>${fmt(r.stake)} GRAM</b></div>${st}<div class="hd-sec"><span>Выигрыш</span><b class="pos">+${fmt(r.win)} GRAM</b></div>${wn}</div>`;
+}
+function caseRecHead(c){ const cs = caseById(c.r.caseId), it = cs.items[c.r.idx];
+  return `<div class="hdet" style="--c:${cs.c}"><div class="hk-h"><em>${cs.name}</em><small>${tAgo(c.t)}</small></div>` +
+    `<div class="hd-case">${caseArt(cs, 'sm')}<span><b>${cs.price ? fmt(cs.price) + ' GRAM' : 'Бесплатно'}</b><small>стоимость открытия</small></span></div>` +
+    `<div class="hd-sec"><span>Выпало</span></div>${hdRow(c.img || itemImg(it), null, c.label || itemName(it), it.t === 'nft' ? (it.rare ? 'редкий NFT' : 'обычный NFT') : '', it.t === 'gram' ? '+' + fmt(it.v) : it.t === 'xp' ? '+' + it.v + ' XP' : '', 1)}</div>`;
+}
+function logCraft(r, how){ S.hist.crafts.unshift({ kind: 'craft', t: Date.now(), r, how }); }
+

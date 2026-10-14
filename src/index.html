@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Black Market Craft</title>
+<script>/* SDK Telegram грузим только внутри Telegram */if (/tgWebApp/.test(location.hash + location.search) || window.TelegramWebviewProxy) document.write('<script src="https://telegram.org/js/telegram-web-app.js"><\/script>');</script>
+<style>
+/*CSS*/
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="scene" id="scene">
+
+  <!-- лента лайв -->
+  <div class="abs sheet">
+    <div class="abs live-tag"><span class="up">лайв</span></div>
+    <div class="abs live"><div class="live-row" id="live"></div></div>
+  </div>
+
+  <!-- панель крафта -->
+  <div class="abs panel" id="panel">
+    <canvas id="glow"></canvas>
+    <div class="abs tiers" id="tiers"></div>
+    <div class="abs range" id="range">x0.4 — x0.8</div>
+  </div>
+
+  <div class="abs chance" id="chance"><small>шанс</small><b id="chanceVal">27%</b></div>
+
+  <!-- приз -->
+  <div class="abs prize empty" id="prize">???</div>
+  <div class="abs drops" id="drops"></div>
+  <!-- гифты, которые кладутся в крафт -->
+  <div class="abs" id="slots" style="inset:0;pointer-events:none"></div>
+
+  <!-- ставка -->
+  <div class="abs bet" id="bet"></div>
+
+  <!-- нижняя панель -->
+  <div class="abs bar">
+    <button class="round" id="giftBtn" aria-label="Добавить гифты"><img id="giftIco" src="assets/gift-add.svg" alt=""><span class="cnt" id="giftCnt" hidden></span></button>
+    <div class="chips">
+      <button class="pill trash" id="trash" aria-label="Сбросить ставку"><img src="assets/trash.svg" width="21" height="24" alt=""></button>
+      <button class="pill" data-add="0.1"><b>+0.1</b></button>
+      <button class="pill" data-add="0.5"><b>+0.5</b></button>
+      <button class="pill" data-add="1"><b>+1</b></button>
+      <button class="pill" data-add="5"><b>+5</b></button>
+    </div>
+    <button class="round" id="menuBtn" aria-label="Меню"><svg class="menu-ico" viewBox="0 0 20 16" aria-hidden="true"><path d="M2 2h16M2 8h16M2 14h16" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></button>
+  </div>
+
+  <!-- крафт -->
+  <button class="abs craft" id="craft" aria-label="Скрафтить">
+    <span class="cb" id="cb">
+      <img class="orb" src="assets/orb.webp" alt="">
+      <span class="core"></span>
+      <img class="anvil" id="anvil" src="assets/anvil.svg" alt="">
+      <span class="hammer" id="hammer"><img src="assets/hammer.svg" alt=""></span>
+      <span class="glint"></span>
+    </span>
+  </button>
+
+
+  <div class="abs flash" id="flash"></div>
+
+
+  </div>
+
+  <!-- экран крафта -->
+  <section class="fx" id="fx" aria-live="polite">
+    <canvas id="fxGlow"></canvas>
+    <div class="fx-in" id="fxIn">
+      <div class="fx-top" id="fxTop">
+      <div class="digits" id="digits"><span><u class="win"><i></i></u></span><span><u class="win"><i></i></u></span><span><u class="win"><i></i></u></span><span><u class="win"><i></i></u></span><span><u class="win"><i></i></u></span></div>
+      <div class="fx-tier" id="fxTier">&nbsp;</div>
+      <div class="ladder" id="ladder"></div>
+      <div class="fx-need" id="fxNeed"></div>
+      </div>
+      <div class="fx-case" id="fxCase"><div class="fxc-art" id="fxCaseArt"></div><h4 id="fxCaseT"></h4><div class="croul"><div class="rstrip" id="fxStrip"></div><i class="mline"></i></div><p id="fxCaseS"></p></div>
+      <div class="fx-drop" id="fxDrop"></div>
+      <div class="fx-win" id="fxWin"></div>
+      <div class="fx-btns" id="fxBtns"></div>
+    </div>
+  </section>
+
+    <div class="fx-intro" id="fxIntro" aria-hidden="true"><img class="fi-orb" src="assets/orb.webp" alt=""><span class="fi-heat"></span><span class="fi-ring"></span><img class="fi-a" src="assets/anvil.svg" alt=""><span class="fi-h"><img src="assets/hammer.svg" alt=""></span></div>
+  <!-- шторки -->
+  <div class="backdrop" id="backdrop"></div>
+  <section class="drawer" id="giftsDrawer" aria-label="Подарки">
+    <div class="dr-h"><h3>Подарки <small id="selCnt"></small></h3><p class="dr-sub" id="selHint"></p></div>
+    <div class="dr-b"><div class="inv" id="inv"></div></div>
+    <div class="dr-f three" id="giftsF"></div>
+  </section>
+  <section class="drawer" id="pfDrawer" aria-label="Проверка честности">
+    <div class="dr-h"><h3>Provably Fair</h3></div>
+    <div class="dr-b" id="pfBody"></div>
+  </section>
+  <section class="drawer" id="dbgDrawer" aria-label="Дебаг">
+    <div class="dr-h"><h3>Дебаг</h3></div>
+    <div class="dr-b" id="dbgBody"></div>
+    <div class="dr-f"><button class="btn-main" id="dbgDone">Готово</button></div>
+  </section>
+  <section class="drawer tall" id="histDrawer" aria-label="История"><div class="dr-h"><div class="tabs scroll" id="histTabs"></div></div><div class="dr-b" id="histBody"></div></section>
+  <section class="drawer tall" id="pfiDrawer" aria-label="Provably Fair"><div class="dr-h"><h3>Provably Fair</h3></div><div class="dr-b" id="pfiBody"></div></section>
+  <section class="drawer" id="walletDrawer" aria-label="Кошелёк"><div class="dr-h"><div class="tabs" id="walletTabs"></div></div><div class="dr-b" id="walletBody"></div><div class="dr-f"><button class="btn-main" id="walletGo"></button></div></section>
+  <section class="drawer tall" id="casesDrawer" aria-label="Бонусы"><div class="dr-h"><div class="tabs scroll" id="casesTabs"></div></div><div class="dr-b" id="casesBody"></div></section>
+  <section class="drawer tall" id="caseDrawer" aria-label="Кейс"><div class="dr-h"><button class="back" id="caseBack">‹ Бонусы</button></div><div class="dr-b" id="caseBody"></div><div class="dr-f"><button class="btn-main" id="caseGo"></button></div></section>
+  <section class="drawer tall" id="menuDrawer" aria-label="Меню">
+    <div class="dr-h bare"></div>
+    <div class="dr-b" id="menuBody"></div>
+  </section>
+
+  <!-- баланс -->
+  <div class="abs balance cx">
+    <img class="ava" src="assets/avatar.webp" alt="">
+    <div class="pill"><span class="demo-tag">демо</span><img id="balIco" src="assets/gem-balance.svg" width="23" height="20" alt=""><b id="bal">345.56</b><button class="bal-add" id="balAdd" aria-label="Пополнить"></button></div>
+  </div>
+  <div class="modal" id="modal"><div class="mbox" id="modalBox"></div></div>
+  <!-- уведомления -->
+  <div class="notes" id="notes" aria-live="polite"></div>
+</div>
+
+<div id="boot"><div class="boot-in"><img src="assets/gift-box.svg" alt=""><b>Загружаем подарки</b><i><u id="bootBar"></u></i></div></div>
+<script>
+/*BOOT*/
+</script>
+<script type="text/plain" id="app">
+/*APP*/
+</script>
+</body>
+</html>
