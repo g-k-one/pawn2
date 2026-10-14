@@ -115,10 +115,19 @@ phrases = {
 'Подписаться на канал':'Subscribe to','д назад':'d ago','мин назад':'min ago','ч назад':'h ago',
 'Награды':'Rewards','Наград пока нет':'No rewards yet','Задание дня':'Daily task','Достижение':'Achievement','Сначала напиши':'First message','Написать':'Message',
 'Перед выводом обязательно отправь любое сообщение релееру':'Before withdrawing, you must send any message to the relayer','в Telegram — и только потом выводи.':'in Telegram — only then withdraw.',
+'Поделиться':'Share','Целевой RTP':'Target RTP','На длинной дистанции игрокам возвращается 95% от суммы ставок. Это значение записано в правилах каждого доказательства — target_rtp_ppm.':'In the long run, 95% of all bets go back to players. This value is written into the rules of every proof — target_rtp_ppm.',
+'18+ · Играй ответственно: ставь только то, что готов потерять, и делай перерывы. Если игра перестала быть развлечением — остановись.':'18+ · Play responsibly: only bet what you can afford to lose and take breaks. If it stops being fun — stop.',
+'Онбординг':'Onboarding','Показывать':'Show','Выключен':'Off','Показать сейчас':'Show now','Пропустить':'Skip','Далее':'Next','Понятно':'Got it','Ранги':'Ranks','Крафт':'Craft',
+'Свайпай по экрану или жми на ранг — увидишь, что можно выбить и с каким шансом':'Swipe or tap a rank to see what you can win and the odds',
+'Добавь GRAM кнопками или положи NFT-подарок — ставка растёт, растёт и приз':'Add GRAM with the buttons or drop in an NFT gift — a bigger bet means a bigger prize',
+'Жми на наковальню. Исход честный: тикет можно проверить после игры':'Tap the anvil. The outcome is fair: the ticket can be verified after the game',
+'Здесь бонусы, история игр и проверка честности':'Bonuses, game history and fairness checks live here',
+'TON Connect не загрузился':'TON Connect failed to load','Проверь интернет и попробуй ещё раз':'Check your connection and try again','Адрес для пополнений не задан':'Deposit address is not set','Прототип: впиши DEPOSIT_ADDR в коде':'Prototype: set DEPOSIT_ADDR in the code','Платёж отменён':'Payment cancelled',
 # общие связки
 'и на баланс':'plus to balance','до':'to','из':'of','и':'and','за':'for','от':'from','в':'in','на':'on','NFT до':'NFT up to',
 }
 rules = [
+ [r'^3 задания дня · (\d+) из (\d+)$', '3 daily tasks · $1 of $2'], [r'^Задания 7 дней подряд · (\d+) из 7$', 'Tasks 7 days in a row · $1 of 7'],
  [r'^Ещё (\d+) задани[ея] до кейса$', '$1 more tasks to unlock the case'],
  [r'^Ещё 1 задание до кейса$', '1 more task to unlock the case'],
  [r'^(\d+) друзей$', '$1 friends'], [r'^(\d+) крафтов$', '$1 crafts'], [r'^(\d+) подарка$', '$1 gifts'],

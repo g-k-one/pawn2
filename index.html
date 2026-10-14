@@ -321,8 +321,7 @@ img{display:block;-webkit-user-drag:none}
 .round{position:relative;width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,.55);display:grid;place-items:center}
 .round img{position:absolute;inset:0;width:48px;height:48px}
 .round .cnt{position:absolute;left:0;right:0;top:12px;text-align:center;font-weight:700;font-size:19.67px;line-height:24px}
-.menu-ico{width:19.2px;display:grid;gap:4.2px}
-.menu-ico span{height:3.2px;border-radius:2px;background:#fff}
+.menu-ico{width:20px;height:16px;display:block}
 .chips{display:flex;gap:4px;align-items:stretch}
 .chips .pill{color:var(--teal);transition:transform .12s;-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(255,255,255,.1)}
 .chips .pill:active{transform:scale(.9)}
@@ -1230,9 +1229,6 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 /* без полос прокрутки */
 *{scrollbar-width:none}
 *::-webkit-scrollbar{display:none}
-/* содержимое шторки прокручивается в скруглённом контейнере — карточки уходят под шапку по дуге, а не по прямой */
-.dr-b{margin:0 12px;padding:4px 8px 20px;border-radius:22px 22px 0 0}
-.drawer:has(.dr-f) .dr-b{border-radius:22px}
 /* в прокручиваемых табах полоска не должна обрезаться */
 .tabs.scroll .tab.on::after{bottom:0}
 .banner.amb img{width:156px;margin:-28px -10px -28px -10px}
@@ -1255,6 +1251,24 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .wwarn b{font-size:21px;line-height:1.1;text-transform:uppercase;color:#FFB835}
 .wwarn small{font:400 13px/1.4 var(--serif);color:rgba(255,255,255,.85)}
 .wwarn .pill-btn{margin-top:6px;background:#FFB835;color:#2a1a08}
+.chk svg{width:62%;height:62%;stroke-width:3.4}
+.rkbar[data-go]{cursor:pointer}
+.fx-links{display:flex;justify-content:center;gap:4px;margin-top:2px}
+.pfi-rtp{display:flex;align-items:center;gap:14px;margin-top:10px;padding:14px;border-radius:22px;background:linear-gradient(135deg,rgba(18,213,61,.22),rgba(18,213,61,.06));box-shadow:inset 0 0 22px rgba(18,213,61,.35)}
+.pfi-rtp>b{flex:none;font-size:44px;line-height:1;color:#12D53D}
+.pfi-rtp span{display:flex;flex-direction:column;gap:3px}
+.pfi-rtp span b{font-size:20px;text-transform:uppercase}
+.pfi-rtp small{font:400 12.5px/1.4 var(--serif);color:rgba(255,255,255,.75)}
+/* онбординг */
+.onb{position:absolute;inset:0;z-index:80}
+.onb-hole{position:absolute;border-radius:22px;box-shadow:0 0 0 9999px rgba(0,0,0,.72),0 0 0 2px rgba(255,255,255,.5);transition:all .35s cubic-bezier(.25,.9,.3,1);pointer-events:none}
+.onb-card{position:absolute;left:16px;right:16px;padding:16px;border-radius:22px;background:#1b1b1f;box-shadow:0 14px 40px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.08);animation:tipIn .35s cubic-bezier(.25,1.3,.4,1) both}
+.onb-card small{font-size:13px;color:rgba(255,255,255,.45)}
+.onb-card b{display:block;margin:2px 0 4px;font-size:26px;text-transform:uppercase}
+.onb-card p{margin:0;font:400 14px/1.4 var(--serif);color:rgba(255,255,255,.8)}
+.onb-card span{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+.onb-skip{font-size:17px;color:rgba(255,255,255,.5);padding:6px 4px}
+.onb-next{padding:9px 22px;border-radius:999px;background:linear-gradient(#24a0ff,#005ec9);font-size:19px;font-weight:700;text-transform:uppercase}
 .credit{margin:18px 0 4px;text-align:center;font:400 11.5px/1.4 var(--serif);color:rgba(255,255,255,.3)}
 .credit a{color:inherit}
 .gin .steps1{margin:0 0 14px;font-family:var(--serif);font-size:12.5px;color:rgba(255,255,255,.55)}
@@ -1308,7 +1322,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
       <button class="pill" data-add="1"><b>+1</b></button>
       <button class="pill" data-add="5"><b>+5</b></button>
     </div>
-    <button class="round" id="menuBtn" aria-label="Меню"><span class="menu-ico"><span></span><span></span><span></span></span></button>
+    <button class="round" id="menuBtn" aria-label="Меню"><svg class="menu-ico" viewBox="0 0 20 16" aria-hidden="true"><path d="M2 2h16M2 8h16M2 14h16" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></button>
   </div>
 
   <!-- крафт -->
@@ -1400,7 +1414,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
   window.GIMG = {}; window.GSYM = {};
   window.CDN = await new Promise(res => { const im = new Image(), t = setTimeout(() => res(false), 2500);
     im.onload = () => { clearTimeout(t); res(true); }; im.onerror = () => { clearTimeout(t); res(false); };
-    im.src = 'https://api.changes.tg/model/Berry%20Box/Original.png?size=64'; });
+    im.src = 'https://pawn-backend.onrender.com/api/media/gift?path=%2Fgifts%2Fmodels%2FBerry%2520Box%2Fpng%2FOriginal.png&size=128'; });
   if (!CDN) try {
     const [m, s] = await Promise.all([load('assets/g/models.json', 0, .85), load('assets/g/syms.json', .85, 1)]);
     // модели и символы — в разных словарях: ключ считается по имени, и модель с символом могут совпасть (Watermelon)
@@ -1459,11 +1473,13 @@ const hashStr = t => [...t].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0,
 // картинки моделей и символов скачаны с changes.tg и лежат в assets/g (модели 220px, символы 72px)
 // с CDN: src — 128 px (лента, кейсы, история), card — 256 px (карточки), символ узора — 64 px; не загрузилось — локальная заглушка
 const HI_PACKS = 20;                                          // запасные чёткие картинки разложены по стольким файлам
+// свой CDN Pawn: модели 128/256/512 (узоры не отдаёт — их берём с api.changes.tg)
+const mediaImg = (gift, model, size) => `https://pawn-backend.onrender.com/api/media/gift?path=${encodeURIComponent(`/gifts/models/${encodeURIComponent(gift.replace(/’/g, "'"))}/png/${encodeURIComponent(model.replace(/’/g, "'"))}.png`)}&size=${size}`;
 const apiImg = (kind, gift, name, size) => `https://api.changes.tg/${kind}/${encodeURIComponent(gift.replace(/’/g, "'"))}/${encodeURIComponent(name.replace(/’/g, "'"))}.png?size=${size}`;
 const NFTS = RELAY.g.map(([ci, num, model, bi, sym, price, mf, sf]) => {
   const name = RELAY.c[ci], bd = RELAY.b[bi], local = `assets/nft/${LOCAL_NFT[hashStr(name) % LOCAL_NFT.length]}.webp`;
   let src, card, symSrc;
-  if (CDN){ src = apiImg('model', name, model, 128); card = apiImg('model', name, model, 256); symSrc = apiImg('symbol', name, sym, 64); FB[src] = FB[card] = local; }
+  if (CDN){ src = mediaImg(name, model, 128); card = mediaImg(name, model, 256); symSrc = apiImg('symbol', name, sym, 64); FB[src] = FB[card] = local; }
   else { src = card = mf && GIMG[mf] ? GIMG[mf] : local; symSrc = sf && GSYM[sf] ? GSYM[sf] : ''; }
   return { name, num, model, backdrop: bd[0], bg: [bd[1], bd[2], bd[3]], symbol: sym, sym: symSrc, price, src, card, mf, pack: ci % HI_PACKS };
 });
@@ -1640,7 +1656,7 @@ const selHaptic = () => { if (S.vibro === false) return; try { Telegram.WebApp.H
   addEventListener('pointerup', end); addEventListener('pointercancel', end);
 })();
 let auto = 0;
-function restartAuto(){ clearInterval(auto); auto = setInterval(() => { if (!S.busy && !openDrawer && !document.hidden) setTier((S.tier + 1) % TIERS.length, { dir: 1 }); }, AUTO_MS); }
+function restartAuto(){ clearInterval(auto); auto = setInterval(() => { if (!S.busy && !openDrawer && !S.onb && !document.hidden) setTier((S.tier + 1) % TIERS.length, { dir: 1 }); }, AUTO_MS); }
 
 /* ---------- что может выпасть ----------
    ставка 0 → «???» и пустой светящийся гем;
@@ -1819,7 +1835,7 @@ function renderInv(){
   updSel();
   if (!INV.length){ inv.innerHTML = giftInHTML(); return; }
   inv.classList.toggle('selling', sellMode);
-  inv.innerHTML = INV.map(g => `<button class="cell${(sellMode ? sellSel.has(g.id) : S.gifts.includes(g)) ? ' sel' : ''}" data-id="${g.id}"><span class="chk">✓</span>${cardHTML(g, 104)}</button>`).join('');
+  inv.innerHTML = INV.map(g => `<button class="cell${(sellMode ? sellSel.has(g.id) : S.gifts.includes(g)) ? ' sel' : ''}" data-id="${g.id}"><span class="chk">${svg(NICON.ok)}</span>${cardHTML(g, 104)}</button>`).join('');
   fitCards(inv, 104, 10); inv.querySelectorAll('.cell').forEach(c => tiltCard(c, .6));
 }
 $('inv').addEventListener('click', e => {
@@ -1896,13 +1912,14 @@ function renderMenu(){
       `<div class="mrow" style="--c:#AE3FC4"><i>${svg(IC.globe)}</i>Язык<span class="seg">${[['ru', 'RU'], ['en', 'EN']].map(([k, t]) => `<button data-lang="${k}"${S.lang === k ? ' class="on"' : ''}>${t}</button>`).join('')}</span></div>` +
       row(IC.chat, 'Поддержка', '#12D53D', '') +
       `<button class="mrow" id="dbgRow" style="--c:#EB57B0"><i>${svg(NICON.bug)}</i>Дебаг<em>${dbgLabel()}</em></button></div>` +
-    `<p class="credit">Картинки подарков — powered by <a href="https://t.me/GiftChanges" target="_blank" rel="noopener">@GiftChanges</a> (api.changes.tg)</p>`;
+    `<p class="credit">Картинки подарков — powered by <a href="https://t.me/GiftChanges" target="_blank" rel="noopener">@GiftChanges</a> (api.changes.tg)</p>` +
+    `<p class="credit">18+ · Играй ответственно: ставь только то, что готов потерять, и делай перерывы. Если игра перестала быть развлечением — остановись.</p>`;
 }
 $('menuBtn').onclick = () => { renderMenu(); showDrawer('menuDrawer'); };
 $('menuBody').addEventListener('click', e => {
   if (e.target.closest('.menu-top')){ openWallet('dep'); return; }
   const go = e.target.closest('[data-go]')?.dataset.go;
-  if (go){ haptic(); if (go === 'cases') openCases('tasks'); else if (go === 'refs') openCases('refs'); else if (go === 'hist') openHistory(); else if (go === 'pfi') swapDrawer('pfiDrawer', renderPFInfo); return; }
+  if (go){ haptic(); if (go === 'cases') openCases('tasks'); else if (go === 'top') openCases('top'); else if (go === 'refs') openCases('refs'); else if (go === 'hist') openHistory(); else if (go === 'pfi') swapDrawer('pfiDrawer', renderPFInfo); return; }
   const lg = e.target.closest('[data-lang]');
   if (lg){ if (S.lang === lg.dataset.lang) return; S.lang = lg.dataset.lang; try { localStorage.setItem('bm-lang', S.lang); } catch(_){} haptic();
     lg.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === lg));
@@ -2058,7 +2075,7 @@ async function checkProof(p){
   return { hash: hashOk, ticket: ticketOk, rule: ticketOk && rule };
 }
 /* ---------- дебаг: выбрать исход следующего крафта ---------- */
-S.dbg = { tier: -1, near: false, keep: false, prevDelay: null, freeCases: false, ticket: null, fail: null };
+S.dbg = { tier: -1, near: false, keep: false, prevDelay: null, freeCases: false, ticket: null, fail: null, noOnb: (() => { try { return localStorage.getItem('bm-onb-off') === '1'; } catch(_){ return false; } })() };
 function dbgWant(){
   const d = S.dbg; if (d.tier < 0 || d.ticket != null) return null;
   const t = TIERS[d.tier];
@@ -2077,6 +2094,7 @@ function renderDbg(){
     `<div class="dbg-l">NFT на главной при смене ставки</div><div class="dbg-g">${chip('prevDelay', null, 'Сразу')}${chip('prevDelay', 1500, 'Ответ 1.5 с')}${chip('prevDelay', 4000, 'Ответ 4 с')}</div>` +
     `<div class="dbg-l">Сбой (один раз)</div><div class="dbg-g">${chip('fail', null, 'Нет')}${chip('fail', 'craft', 'Неудачный крафт', '#FF4C35')}${chip('fail', 'case', 'Кейс не открылся', '#FF4C35')}</div>` +
     `<div class="dbg-l">Супер дроп</div><div class="dbg-g"><button class="dbg-c${d.ticket === SUPER.target ? ' on' : ''}" data-k="super" data-v="1" style="--c:#EB57B0">Выбить супер дроп · тикет ${SUPER.target}</button></div>` +
+    `<div class="dbg-l">Онбординг</div><div class="dbg-g">${chip('noOnb', false, 'Показывать')}${chip('noOnb', true, 'Выключен')}<button class="dbg-c" data-k="onbNow" data-v="1">Показать сейчас</button></div>` +
     `<div class="dbg-l">Кейсы</div><div class="dbg-g">${chip('freeCases', false, 'По условиям')}${chip('freeCases', true, 'Без условий')}</div>` +
     `<p class="dbg-n">Для ранга подбирается настоящий server seed — проверка честности сходится, но хеш до игры будет другим. Точный тикет подставляется напрямую, проверка для него не сойдётся. Только для тестов прототипа.</p>`;
 }
@@ -2085,6 +2103,8 @@ $('dbgBody').addEventListener('click', e => {
   const c = e.target.closest('.dbg-c'); if (!c || c.disabled) return;
   const k = c.dataset.k, v = c.dataset.v;
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
+  if (k === 'onbNow'){ hideDrawer(); setTimeout(() => Onb.start(true), 300); return; }
+  if (k === 'noOnb'){ S.dbg.noOnb = v === 'true'; try { localStorage.setItem('bm-onb-off', S.dbg.noOnb ? '1' : '0'); } catch(_){} haptic(); renderDbg(); return; }
   if (k === 'super'){ S.dbg.ticket = SUPER.target; S.dbg.tier = -1; haptic(); renderDbg(); return; }
   S.dbg[k] = k === 'tier' ? +v : k === 'prevDelay' ? (v === 'null' ? null : +v) : k === 'fail' ? (v === 'null' ? null : v) : v === 'true';
   if (k === 'tier') S.dbg.ticket = null;
@@ -2456,7 +2476,9 @@ function climbSim(pf){
 }
 function spin(r, D, L){
   const digits = String(r.ticket).padStart(5, '0').split('').map(Number), pf = ticketToP(r.ticket);
-  const path = climbSim(pf), T0 = 900, Tstop = T0 + (path.length - 1) / 120 * 1000;
+  // путь шкалы растягиваем минимум до 2.2–2.8 с: иначе при низком тикете шкала замирала в первую секунду и исход был виден заранее
+  const path0 = climbSim(pf), N = Math.max(path0.length, Math.round((2.2 + Math.random() * .6) * 120)),
+    path = Array.from({ length: N }, (_, i) => path0[Math.round(i / (N - 1) * (path0.length - 1))]), T0 = 900, Tstop = T0 + (path.length - 1) / 120 * 1000;
   const TB = [650, 760, 720, 680, 640], P = [3, 3, 3, 3, 3];
   const END = [Math.max(Tstop, 2700) + 650, 2600, 2050, 1500, 1000];      // младшие встают справа налево, старшая — после остановки шкалы
   const V = [22, 22, 20, 18, 16];
@@ -2540,7 +2562,15 @@ async function reveal(r, fast){
 const nftLink = n => `https://t.me/nft/${n.name.replace(/[^A-Za-z0-9]/g, '')}-${n.num}`;
 function openNft(g){ haptic(); const url = nftLink(g.nft); try { Telegram.WebApp.openTelegramLink(url); } catch(_){ window.open(url, '_blank'); } }
 const dropCard = g => { tiltCard($('pz'), 1.4); upgradeImg($('pz').querySelector('.nc-img'), g.nft); Tilt.grab($('pz').querySelector('.nc-t'), () => openNft(g)); };
-const PF_LINK = '<button class="btn-link pf" id="fxPfIn">Проверить честность</button>';
+const PF_LINK = '<div class="fx-links"><button class="btn-link pf" id="fxPfIn">Проверить честность</button><button class="btn-link pf" id="fxShare">Поделиться</button></div>';
+/* поделиться выигрышем: в Telegram — окно «Поделиться» с реф-ссылкой, в браузере — системное или копирование */
+function shareWin(text){
+  haptic(); const url = REF.link;
+  try { Telegram.WebApp.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text)); return; } catch(_){}
+  if (navigator.share) return void navigator.share({ text, url }).catch(() => {});
+  try { navigator.clipboard.writeText(text + ' ' + url).catch(() => {}); } catch(_){}
+  notify({ type: 'ok', icon: 'ok', title: 'Ссылка скопирована', text: 'Отправь её друзьям' });
+}
 function fillDrop(r){
   const drop = $('fxDrop');
   if (false){
@@ -2564,6 +2594,7 @@ function fillDrop(r){
   $('fxTop').querySelector('.sdtip')?.remove();
   if (r.superMiss) $('fxTop').insertAdjacentHTML('beforeend', `<div class="sdtip"><b>Тикет супер дропа!</b> ${S.demo ? 'В демо не разыгрывается' : `Нужна ставка от ${SUPER.min} GRAM`}</div>`);
   $('fxPfIn').onclick = () => openPF(r);
+  $('fxShare').onclick = () => shareWin(r.nft ? `Скрафтил ${r.nft.nft.name} #${r.nft.num} в Pawn` : `Скрафтил +${fmt(r.win)} GRAM (x${r.mult}) в Pawn`);
   $('fxTake').onclick = () => finish(r, 'take');
   if ($('fxSell')) $('fxSell').onclick = () => finish(r, 'sell');
 }
@@ -2748,6 +2779,7 @@ function renderPFInfo(){
     ['#12D53D', 'Раскрытие', 'Когда ты меняешь свой ключ, секретное зерно за всю эпоху раскрывается. Отпечаток совпал — значит, результаты не меняли. Любую игру эпохи можно пересчитать прямо здесь, в браузере.'],
   ];
   $('pfiBody').innerHTML = `<div class="pfi-hero"><h4>Что такое Provably Fair</h4><p>Это способ доказать, что мы не подкручиваем результат. Любой крафт и кейс можно проверить самому — без доверия к нам.</p></div>` +
+    `<div class="pfi-rtp"><b>${(+RTP_PPM / 1e4).toFixed(0)}%</b><span><b>Целевой RTP</b><small>На длинной дистанции игрокам возвращается 95% от суммы ставок. Это значение записано в правилах каждого доказательства — target_rtp_ppm.</small></span></div>` +
     `<div class="pfi-env"><i>${svg(ENV)}</i><div><b>Как запечатанный конверт</b><p>Перед игрой мы кладём результат в конверт и отдаём его тебе. После игры конверт вскрывают — внутри то же, что было до игры.</p></div></div>` +
     `<div class="pfi-t">Как это работает</div>` +
     steps.map(([c, t, d], i) => `<div class="pfi-step" style="--c:${c}"><i>${i + 1}</i><div><b>${t}</b><p>${d}</p></div></div>`).join('') +
@@ -2890,7 +2922,8 @@ S.wallet = null;
 const WALLETS = [['Tonkeeper', '#45aef5', 'T'], ['Telegram Wallet', '#2aabee', 'W'], ['MyTonWallet', '#0098ea', 'M'], ['Tonhub', '#6c63ff', 'H']];
 const OUT_FEE = .3, RELAYER = '@pawngift';
 let walletTab = 'dep', depAmount = 10, outSel = new Set();
-const PARTNER = `<a class="partner" data-act="partner"><span class="pst">★</span><span><b>Купить и продать Stars</b><small>бот партнёра @StarsMarketBot</small></span><em>›</em></a>`;
+const PARTNER = '';                                         // баннер партнёра (Stars) пока скрыт
+const PARTNER_HTML = `<a class="partner" data-act="partner"><span class="pst">★</span><span><b>Купить и продать Stars</b><small>бот партнёра @StarsMarketBot</small></span><em>›</em></a>`;
 const WICO = '<path fill="currentColor" stroke="none" fill-rule="evenodd" d="M6 4h10.5A1.5 1.5 0 0118 5.5V7H6a1 1 0 000 2h13a2 2 0 012 2v7a2 2 0 01-2 2H6a3 3 0 01-3-3V7a3 3 0 013-3zm11 9a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"/>';
 // как завести NFT: передать подарок релееру
 const giftInHTML = (title = 'Подарков пока нет') => `<div class="gin"><span class="gin-i"><img src="assets/gift-box.svg" alt=""></span><b>${title}</b>` +
@@ -2912,7 +2945,7 @@ function renderWallet(){
     b.innerHTML = `<div class="wcon"><span class="wico">${svg(WICO)}</span><b>Подключи TON-кошелёк</b><p>Пополнение — только в GRAM, с твоего кошелька. Ключи остаются у тебя: каждую транзакцию ты подтверждаешь сам.</p></div>` +
       `<details class="gdet"><summary>Или пополни NFT-подарком</summary>${giftInHTML('Передай подарок')}</details>` + PARTNER;
   } else if (walletTab === 'dep'){
-    b.innerHTML = `<div class="wchip"><i style="--c:${WALLETS.find(w => w[0] === S.wallet.name)[1]}">${S.wallet.name[0]}</i><span><b>${S.wallet.name}</b><small>${S.wallet.addr}</small></span><button data-act="off">Отключить</button></div>` +
+    b.innerHTML = `<div class="wchip"><i style="--c:${(WALLETS.find(w => w[0] === S.wallet.name) || [, '#0098ea'])[1]}">${S.wallet.name[0]}</i><span><b>${S.wallet.name}</b><small>${S.wallet.addr}</small></span><button data-act="off">Отключить</button></div>` +
       `<label class="amt"><input id="depIn" type="number" inputmode="decimal" min="1" step="1" value="${depAmount}"><span>GRAM</span></label>` +
       `<div class="presets">${[5, 10, 25, 50, 100].map(v => `<button class="pill-btn${v === depAmount ? ' on' : ''}" data-v="${v}">${v}</button>`).join('')}</div>` +
       `<p class="muted small center">На балансе ${fmt(S.balance)} GRAM · пополнение только в GRAM</p>` +
@@ -2920,7 +2953,7 @@ function renderWallet(){
   } else {
     b.innerHTML = `<div class="wwarn"><i>!</i><span><b>Сначала напиши ${RELAYER}</b><small>Перед выводом обязательно отправь любое сообщение релееру <span class="acc">${RELAYER}</span> в Telegram — и только потом выводи.</small>` +
       `<button class="pill-btn" data-act="relayerMsg">Написать ${RELAYER}</button></span></div>` + (INV.length ? `<p class="muted small" style="margin:6px 0 12px">Подарок придёт в твой профиль Telegram. Комиссия сети — <b style="color:#fff">${OUT_FEE} GRAM</b> за каждый NFT.</p>` +
-      `<div class="onft" id="onft">${INV.map(g => `<button class="cell${outSel.has(g.id) ? ' sel' : ''}" data-id="${g.id}"><span class="chk">✓</span>${cardHTML(g, 76)}</button>`).join('')}</div>` + PARTNER
+      `<div class="onft" id="onft">${INV.map(g => `<button class="cell${outSel.has(g.id) ? ' sel' : ''}" data-id="${g.id}"><span class="chk">${svg(NICON.ok)}</span>${cardHTML(g, 76)}</button>`).join('')}</div>` + PARTNER
       : giftInHTML() + PARTNER);
     b.querySelectorAll('.cell').forEach(c => tiltCard(c, .5));
   }
@@ -2945,7 +2978,7 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-act]
   else if (a.dataset.act === 'verify'){ haptic(); try { Telegram.WebApp.openLink(VERIFY_URL); e.preventDefault(); } catch(_){} } });
 $('walletBody').addEventListener('click', e => {
   const p = e.target.closest('.presets .pill-btn'), c = e.target.closest('.onft .cell');
-  if (e.target.closest('[data-act="off"]')){ S.wallet = null; syncBalBtn(); haptic(); renderWallet(); return; }
+  if (e.target.closest('[data-act="off"]')){ haptic(); tcUI ? tcUI.disconnect().catch(() => {}) : (S.wallet = null, renderWallet()); syncBalBtn(); return; }
   if (p){ depAmount = +p.dataset.v; haptic(); $('walletBody').querySelectorAll('.presets .pill-btn').forEach(x => x.classList.toggle('on', x === p)); $('depIn').value = depAmount; fitAmt(); walletBtn(); }
   // выбор подарка — без перерисовки, чтобы карточки не дёргались
   if (c){ const id = c.dataset.id; outSel.has(id) ? outSel.delete(id) : outSel.add(id); c.classList.toggle('sel', outSel.has(id)); haptic(); walletBtn(); }
@@ -2956,24 +2989,37 @@ function fitAmt(){ const el = $('depIn'); if (!el) return; const cs = getCompute
   el.style.width = Math.ceil(amtCtx.measureText(el.value || '0').width + 4) + 'px'; }
 $('walletBody').addEventListener('input', e => { if (e.target.id === 'depIn'){ fitAmt(); depAmount = Math.max(0, Math.round(+e.target.value * 100) / 100 || 0); walletBtn(); } });
 /* TON Connect (макет): выбор кошелька в отдельном окне */
-function tonConnect(){
-  modal(`<div class="tcx"><span class="tc-logo">${svg('<path d="M12 3l9 5-9 13L3 8z"/><path d="M12 3v18M3 8h18"/>')}</span><h4>TON Connect</h4><p class="muted small center" style="margin:-6px 0 14px">Выбери кошелёк для подключения</p>` +
-    `<div class="wlist">${WALLETS.map(([n, c, l]) => `<button class="wrow" data-w="${n}" style="--c:${c}"><i>${l}</i><b>${n}</b><em>›</em></button>`).join('')}</div></div>`, '#30a5ff');
-  $('modalBox').querySelectorAll('.wrow').forEach(w => w.onclick = async () => {
-    const name = w.dataset.w; haptic(); w.querySelector('em').textContent = 'подтверди…'; $('modal').dataset.lock = 1;
-    await wait(1100); delete $('modal').dataset.lock;
-    S.wallet = { name, addr: 'UQ' + hex(crypto.getRandomValues(new Uint8Array(2))).toUpperCase() + '…' + hex(crypto.getRandomValues(new Uint8Array(2))) };
-    closeModal(); syncBalBtn(); renderWallet(); notify({ type: 'ok', icon: 'ok', title: 'Кошелёк подключён', text: `${name} · ${S.wallet.addr}` });
-  });
+/* TON Connect — настоящий: @tonconnect/ui с CDN. Манифест должен лежать по TC_MANIFEST (файл tonconnect-manifest.json в корне репозитория),
+   DEPOSIT_ADDR — кошелёк Pawn для пополнений. Подключение восстанавливается само при следующем запуске */
+const TC_MANIFEST = 'https://pawn-frontend.onrender.com/tonconnect-manifest.json';
+const DEPOSIT_ADDR = '';                                     // TODO: адрес кошелька Pawn для пополнений
+let tcUI = null;
+const shortAddr = a => a.slice(0, 6) + '…' + a.slice(-4);
+function tcLoad(){
+  return tcLoad.p ||= new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'https://unpkg.com/@tonconnect/ui@2.0.9/dist/tonconnect-ui.min.js'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); })
+    .then(() => { const T = window.TON_CONNECT_UI; tcUI = new T.TonConnectUI({ manifestUrl: TC_MANIFEST });
+      tcUI.onStatusChange(w => { const was = S.wallet;
+        S.wallet = w ? { name: w.device.appName, addr: shortAddr(T.toUserFriendlyAddress(w.account.address)) } : null;
+        syncBalBtn(); if (openDrawer === $('walletDrawer')) renderWallet();
+        if (S.wallet && !was) notify({ type: 'ok', icon: 'ok', title: 'Кошелёк подключён', text: `${S.wallet.name} · ${S.wallet.addr}` }); });
+      return tcUI; })
+    .catch(e => { tcLoad.p = null; throw e; });
 }
+async function tonConnect(){
+  try { await (await tcLoad()).openModal(); }
+  catch(_){ notify({ type: 'err', icon: 'err', title: 'TON Connect не загрузился', text: 'Проверь интернет и попробуй ещё раз' }); }
+}
+setTimeout(() => tcLoad().catch(() => {}), 3000);              // заранее: восстановить прошлое подключение
 $('walletGo').onclick = async () => {
   const btn = $('walletGo'); if (btn.disabled) return;
   if (walletTab === 'dep' && !S.wallet){ tonConnect(); return; }
   if (walletTab === 'dep'){
     if (depAmount < 1){ notify({ type: 'err', icon: 'coin', title: 'Минимум 1 GRAM' }); return; }
+    if (!DEPOSIT_ADDR){ notify({ type: 'warn', icon: 'warn', title: 'Адрес для пополнений не задан', text: 'Прототип: впиши DEPOSIT_ADDR в коде' }); return; }
     btn.disabled = true; btn.classList.add('wait'); btn.textContent = `Подтверди в ${S.wallet.name}…`;
-    await wait(1500);
-    btn.disabled = false; btn.classList.remove('wait'); hideDrawer();
+    try { await tcUI.sendTransaction({ validUntil: Math.floor(Date.now() / 1000) + 300, messages: [{ address: DEPOSIT_ADDR, amount: String(nano(depAmount)) }] }); }
+    catch(_){ btn.disabled = false; btn.classList.remove('wait'); walletBtn(); notify({ type: 'err', icon: 'err', title: 'Платёж отменён' }); return; }
+    btn.disabled = false; btn.classList.remove('wait'); hideDrawer();   // в бою баланс зачисляет бэкенд после подтверждения в сети
     S.hist.wallet.unshift({ type: 'dep', t: Date.now(), amount: depAmount, method: S.wallet.name });
     setTimeout(() => { setBalance(S.balance + depAmount); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(depAmount)} GRAM`, text: `Пополнение с ${S.wallet.name}` }); checkAch(); }, 250);
   } else {
@@ -3009,7 +3055,7 @@ function addXp(v){
 }
 function rankBar(xp){
   const i = rankOf(xp), nx = RANKS[i + 1], k = nx ? (xp - RANKS[i][1]) / (nx[1] - RANKS[i][1]) : 1;
-  return `<div class="rkbar">${XPI}<div><span><b>${RANKS[i][0]}</b>${nx ? `${xpFmt(xp)} / ${xpFmt(nx[1])} XP` : `${xpFmt(xp)} XP · максимум`}</span><i><b style="width:${(k * 100).toFixed(1)}%"></b></i>${nx ? `<small>до звания «${nx[0]}»</small>` : ''}</div></div>`;
+  return `<div class="rkbar" data-go="top">${XPI}<div><span><b>${RANKS[i][0]}</b>${nx ? `${xpFmt(xp)} / ${xpFmt(nx[1])} XP` : `${xpFmt(xp)} XP · максимум`}</span><i><b style="width:${(k * 100).toFixed(1)}%"></b></i>${nx ? `<small>до звания «${nx[0]}»</small>` : ''}</div></div>`;
 }
 const rewHTML = rw => rw.g != null ? `<img src="assets/gem-small.svg" alt="">${rw.g}` : `${XPI}+${rw.xp}`;
 const rewText = rw => rw.g != null ? `+${rw.g} GRAM` : `+${rw.xp} XP`;
@@ -3153,8 +3199,8 @@ const TOP_RULES = ['Место в топе и звание зависят от �
    ========================================================= */
 let casesTab = 'tasks';
 function openCases(tab){ if (tab) casesTab = tab; swapDrawer('casesDrawer', renderCases); }
-const caseState = c => !c.need ? { ok: true } : c.need === 'daily' ? { ok: dailyDone(), txt: `задания дня · ${tasksDone()}/${TASKS.length}`, k: tasksDone() / TASKS.length }
-  : { ok: weekDone(), txt: `неделя · ${dayIdx() - S.week.missed.filter(d => d < dayIdx()).length}/7 дней`, k: (dayIdx() - S.week.missed.length) / 7 };
+const caseState = c => !c.need ? { ok: true } : c.need === 'daily' ? { ok: dailyDone(), txt: `3 задания дня · ${tasksDone()} из ${TASKS.length}`, k: tasksDone() / TASKS.length }
+  : { ok: weekDone(), txt: `Задания 7 дней подряд · ${dayIdx() - S.week.missed.filter(d => d < dayIdx()).length} из 7`, k: (dayIdx() - S.week.missed.length) / 7 };
 function caseCard(c){
   const st = caseState(c), free = !c.price;
   return `<div class="bcase${free ? ' free' : ''}" style="--c:${c.c}" data-info="${c.id}">${caseArt(c)}<b>${c.short}</b>` +
@@ -3320,6 +3366,7 @@ function caseDrop(c, it, r, g){
   $('fxBtns').innerHTML = (g ? `<button class="btn-main" id="cSell">Продать за ${fmt(g.value)} GRAM</button><button class="btn-ghost" id="cTake">Забрать</button>` : `<button class="btn-main" id="cTake">Забрать</button>`) +
     (c.price ? `<button class="btn-ghost" id="cAgain">Ещё раз · ${fmt(c.price)} GRAM</button>` : '') + PF_LINK;
   $('fxPfIn').onclick = () => openPF(r);
+  $('fxShare').onclick = () => shareWin(`Открыл ${c.name} и выбил ${g ? g.nft.name : itemName(it)} в Pawn`);
   const take = async how => {
     if (caseDrop.on) return; caseDrop.on = true;
     if (g){ if (how === 'sell') setTimeout(() => setBalance(S.balance + g.value), 900); else INV = [g, ...INV]; }
@@ -3619,6 +3666,30 @@ renderBet();
 requestAnimationFrame(() => setTier(1));
 document.fonts?.ready.then(() => setTier(S.tier, { keepPrize: true }));
 restartAuto();
+/* ---------- онбординг: 4 подсказки при первом запуске. Выключается в дебаге ---------- */
+const Onb = (() => {
+  const STEPS = [
+    ['#tiers', 'Ранги', 'Свайпай по экрану или жми на ранг — увидишь, что можно выбить и с каким шансом'],
+    ['.chips', 'Ставка', 'Добавь GRAM кнопками или положи NFT-подарок — ставка растёт, растёт и приз'],
+    ['#craft', 'Крафт', 'Жми на наковальню. Исход честный: тикет можно проверить после игры'],
+    ['#menuBtn', 'Меню', 'Здесь бонусы, история игр и проверка честности'],
+  ];
+  let i = 0, el = null;
+  function show(){
+    const [sel, t, d] = STEPS[i], tg = document.querySelector(sel); if (!tg) return end();
+    const st = stage.getBoundingClientRect(), r = tg.getBoundingClientRect(), pad = 8;
+    const x = (r.left - st.left) / K - pad, y = (r.top - st.top) / K - pad, w = r.width / K + pad * 2, h = r.height / K + pad * 2, below = y + h / 2 < stage.offsetHeight / 2;
+    el.innerHTML = `<i class="onb-hole" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"></i>` +
+      `<div class="onb-card" style="${below ? `top:${y + h + 14}px` : `bottom:${stage.offsetHeight - y + 14}px`}"><small>${i + 1} / ${STEPS.length}</small><b>${t}</b><p>${d}</p>` +
+      `<span><button class="onb-skip">Пропустить</button><button class="onb-next">${i < STEPS.length - 1 ? 'Далее' : 'Понятно'}</button></span></div>`;
+    el.querySelector('.onb-next').onclick = () => { haptic(); i++; i < STEPS.length ? show() : end(); };
+    el.querySelector('.onb-skip').onclick = () => { haptic(); end(); };
+  }
+  function end(){ S.onb = false; el?.remove(); el = null; LSset('bm-onb-done', true); restartAuto(); }
+  return { start(force){ if (el || (!force && (S.dbg.noOnb || LS('bm-onb-done', false)))) return; S.onb = true; clearInterval(auto); i = 0;
+    el = document.createElement('div'); el.className = 'onb'; stage.appendChild(el); show(); } };
+})();
+setTimeout(() => { if (!S.busy && !openDrawer) Onb.start(); }, 1400);
 addEventListener('resize', () => requestAnimationFrame(placeInd));
 /* если телефон не вытягивает анимации — предлагаем экономный режим */
 if (!S.lite && !LS('bm-lite-asked', false)) setTimeout(() => { let n = 0, t0 = 0;
