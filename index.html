@@ -2598,14 +2598,18 @@ function bindPF(root, r){
   };
   root.querySelector('.pf-copy').onclick = () => saveJson(`pawn-proof-${r.proof.reference}.json`, r.proof, 'Доказательство');
 }
-/* сохранить JSON: в браузере — файлом (и в буфер), в Telegram файл из blob не скачать — только в буфер.
-   В бою файл отдаёт бэкенд по ссылке через Telegram.WebApp.downloadFile */
-function saveJson(name, obj, what){
-  const txt = JSON.stringify(obj, null, 2); let saved = false;
+/* сохранить JSON: в просмотрщике Claude — через его загрузки, в обычном браузере — файлом; всегда ещё и в буфер.
+   В Telegram файл из blob не скачать — только буфер; в бою файл отдаёт бэкенд по ссылке через Telegram.WebApp.downloadFile */
+const DL = window.claude?.use ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+async function saveJson(name, obj, what){
+  const txt = JSON.stringify(obj, null, 2); let saved = false; haptic();
   try { navigator.clipboard.writeText(txt).catch(() => {}); } catch(_){}
-  try { if (!window.Telegram?.WebApp?.initData){ const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'application/json' })); a.download = name;
-    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); saved = true; } } catch(_){}
-  haptic(); notify({ type: 'ok', icon: 'ok', title: saved ? `${what}: файл сохранён` : `${what} скопировано`, text: saved ? `${name} · JSON ещё и в буфере` : 'Вставь JSON на сайте проверки' });
+  if (!window.Telegram?.WebApp?.initData){
+    if (window.claude){ const dl = await DL; if (dl){ try { await dl.save({ filename: name, data: txt }); saved = true; } catch(_){} } }
+    else try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'application/json' })); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); saved = true; } catch(_){}
+  }
+  notify({ type: 'ok', icon: 'ok', title: saved ? `${what}: файл сохранён` : `${what} скопировано`, text: saved ? `${name} · JSON ещё и в буфере` : 'Вставь JSON на сайте проверки' });
 }
 function openPF(r = S.lastFair){
   if (!r){ $('pfBody').innerHTML = '<p class="muted">Сделай первый крафт — здесь появятся данные для проверки.</p>'; showDrawer('pfDrawer'); return; }
