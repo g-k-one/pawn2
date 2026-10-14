@@ -1422,6 +1422,16 @@ const NFTS = RELAY.g.map(([ci, num, model, bi, sym, price, mf, sf]) => {
   const name = RELAY.c[ci], bd = RELAY.b[bi], src = mf && GIMG[mf] ? GIMG[mf] : `assets/nft/${LOCAL_NFT[hashStr(name) % LOCAL_NFT.length]}.webp`;
   return { name, num, model, backdrop: bd[0], bg: [bd[1], bd[2], bd[3]], symbol: sym, sym: sf && GIMG[sf] ? GIMG[sf] : '', price, src };
 });
+/* крупные картинки (приз на главной, экран дропа, супер дроп) — чёткие с CDN changes.tg.
+   Сначала показываем лёгкую 220 px, чёткую подменяем, когда она загрузилась и раскодировалась; не загрузилась — остаётся 220 px */
+const HI_FMT = 'png', HI = {};   // PNG 1024: раскодируется за ~0.2 с вне главного потока; SVG того же качества — 1–2 с и рывки до 50 мс
+const hiSrc = n => `https://cdn.changes.tg/gifts/models/${encodeURIComponent(n.name.replace(/’/g, "'"))}/${HI_FMT}/${encodeURIComponent(n.model.replace(/’/g, "'"))}.${HI_FMT}`;
+function upgradeImg(img, n, gl){
+  if (!img || !n?.model) return;
+  const u = hiSrc(n); if (HI[u] === 0) return;
+  const im = new Image(); im.src = u;
+  im.decode().then(() => { HI[u] = 1; if (!img.isConnected) return; img.src = u; gl?.style.setProperty('--m', `url('${u}')`); }).catch(() => { HI[u] = 0; });
+}
 document.addEventListener('error', e => { const t = e.target; if (t.tagName === 'IMG' && FB[t.getAttribute('src')]) t.src = FB[t.getAttribute('src')]; }, true);
 /* узор карточки — символ коллекции кольцами вокруг центра; пока символ не загрузился (или без сети) — звёздочки */
 const SYM_RINGS = [[27, 8, 10], [39, 12, 8], [51, 16, 6.5]];
@@ -1622,7 +1632,7 @@ function showPrize(dir = 0){
     d.innerHTML = it.skel ? `<div class="sway"><div class="tw dskel"><img src="assets/empty-gem.webp" alt=""></div></div>` : `<div class="sway"><div class="tw"><img src="${it.img}" alt="${it.name || ''}"><span class="gl" style="--m:url('${it.img}')"><i></i></span></div></div>` +
       (it.price ? `<span class="tag"><img src="assets/gem-small.svg" alt="">${it.price}</span>` : '');
     box.appendChild(d);
-    if (!it.skel) Tilt.add(d.querySelector('.tw'), d.querySelector('.tw img'), d.querySelector('.gl i'), .7);
+    if (!it.skel){ Tilt.add(d.querySelector('.tw'), d.querySelector('.tw img'), d.querySelector('.gl i'), .7); if (it.model) upgradeImg(d.querySelector('.tw img'), it, d.querySelector('.gl')); }
   });
 }
 function countValue(to){
@@ -2435,7 +2445,7 @@ async function reveal(r, fast){
 /* NFT-подарок в Telegram: t.me/nft/<коллекция без пробелов и знаков>-<номер> */
 const nftLink = n => `https://t.me/nft/${n.name.replace(/[^A-Za-z0-9]/g, '')}-${n.num}`;
 function openNft(g){ haptic(); const url = nftLink(g.nft); try { Telegram.WebApp.openTelegramLink(url); } catch(_){ window.open(url, '_blank'); } }
-const dropCard = g => { tiltCard($('pz'), 1.4); Tilt.grab($('pz').querySelector('.nc-t'), () => openNft(g)); };
+const dropCard = g => { tiltCard($('pz'), 1.4); upgradeImg($('pz').querySelector('.nc-img'), g.nft); Tilt.grab($('pz').querySelector('.nc-t'), () => openNft(g)); };
 const PF_LINK = '<button class="btn-link pf" id="fxPfIn">Проверить честность</button>';
 function fillDrop(r){
   const drop = $('fxDrop');
@@ -3075,7 +3085,7 @@ function renderCases(){
       `<div class="stats"><div><small>Приз</small><b>${fmt(sd.value)} GRAM</b></div><div><small>Мин. ставка</small><b>${SUPER.min} GRAM</b></div><div><small>Попыток сегодня</small><b>${SUPER.tries.toLocaleString('ru-RU')}</b></div><div><small>Шанс за крафт</small><b>1 из 100 000</b></div></div>` +
       `<div class="sect"><div class="sect-h"><span><b>Прошлые супер дропы</b></span></div>${SUPER.last.map(([n, g, t]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${t}</small></span><span class="tb2">${g}</span></div>`).join('')}</div>` +
       rulesHTML(['Super Drop забирает тот, кто первым выбьет загаданный тикет.', 'Учитываются крафты со ставкой от 0.5 GRAM.', 'Обычный выигрыш крафта при этом тоже зачисляется на баланс.', 'После выпадения загадывается новый тикет и новый NFT.']);
-    tiltCard($('sdCard'), 1.2);
+    tiltCard($('sdCard'), 1.2); upgradeImg($('sdCard').querySelector('.nc-img'), sd.nft);
   } else if (casesTab === 'refs'){
     b.innerHTML = `<div class="refpct"><div><b>10%</b><small>от первого депозита</small></div><div><b>5%</b><small>от активности</small></div></div>` +
       `<a class="banner amb" data-act="amb"><span><b>Программа для амбассадоров</b><small>больше процент для блогеров и комьюнити</small></span><img src="assets/referrals.webp" alt=""></a>` +
