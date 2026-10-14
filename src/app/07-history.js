@@ -38,9 +38,9 @@ function renderHist(detail){
       return `<div class="hcard w" style="--c:${c}">${hpic(g ? 'assets/gem-small.svg' : 'assets/xp.webp')}<span class="hk-v"><b>${x.title}</b><small>${x.kind === 'task' ? 'Задание дня' : 'Достижение'} · ${tAgo(x.t)}</small></span>` +
         `<b class="hk-amt" style="color:${c}">${g ? '+' + fmt(x.rw.g) + ' GRAM' : '+' + x.rw.xp + ' XP'}</b></div>`; }).join('') : '<p class="hempty">Наград пока нет</p>';
   } else if (histTab === 'wallet'){
-    const L = S.hist.wallet, lab = { dep: 'Пополнение', out: 'Вывод GRAM', nft: 'Вывод NFT', sell: 'Продажа NFT' };
+    const L = S.hist.wallet, lab = { dep: 'Пополнение', out: 'Вывод GRAM', nft: 'Вывод NFT', sell: 'Продажа NFT', restore: 'Восстановление дня' };
     b.innerHTML = L.length ? L.map(w => { const dep = w.type === 'dep' || w.type === 'sell', c = dep ? '#12D53D' : '#F57A37';
-      return `<div class="hcard w" style="--c:${c}">${w.img ? hpic(w.img, w.bg) : `<span class="hk-ic">${svg(dep ? '<path d="M12 5v14M5 12l7 7 7-7"/>' : '<path d="M12 19V5M5 12l7-7 7 7"/>')}</span>`}` +
+      return `<div class="hcard w" style="--c:${c}">${w.img ? hpic(w.img, w.bg) : `<span class="hk-ic">${svg(w.type === 'restore' ? '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M9.5 15l2 2 3.5-4"/>' : dep ? '<path d="M12 5v14M5 12l7 7 7-7"/>' : '<path d="M12 19V5M5 12l7-7 7 7"/>')}</span>`}` +
         `<span class="hk-v"><b>${w.name || lab[w.type]}</b><small>${w.name ? lab[w.type] + ' · ' : ''}${w.status && w.status !== 'выполнено' ? `<i class="pend">${w.status}</i> · ` : ''}${tAgo(w.t)}</small></span>` +
         `<b class="hk-amt" style="color:${c}">${w.amount != null ? (dep ? '+' : '−') + fmt(w.amount) : 'NFT'}</b></div>`; }).join('') : '<p class="hempty">Операций пока нет</p>';
   } else {

@@ -126,6 +126,7 @@ phrases = {
 'Играй ответственно':'Play responsibly','Ставь только то, что готов потерять, и делай перерывы. Если игра перестала быть развлечением — остановись.':'Only bet what you can afford to lose and take breaks. If it stops being fun — stop.',
 'в запасе':'in stock','Открой сейчас или копи — награда умножится на число кейсов':'Open now or stack them — the reward multiplies by the number of cases','награда':'reward','Кейс за сегодня уже открыт':"Today's case is already opened",
 'Запас бесплатных кейсов':'Free case stock','Бист':'Beast','Маск':'Musk',
+'Восстановление дня':'Day restore','Пропущенный день:':'Missed day:',
 # общие связки
 'и на баланс':'plus to balance','до':'to','из':'of','и':'and','за':'for','от':'from','в':'in','на':'on','NFT до':'NFT up to',
 }

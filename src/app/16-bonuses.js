@@ -103,7 +103,7 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-act]
   if (act === 'totasks'){ haptic(); openCases('tasks'); }
   if (act === 'refhist'){ haptic(); openHistory('refs'); }
   if (act === 'claimref' && REF.pending){ const v = REF.pending; REF.pending = 0; haptic('medium'); setBalance(S.balance + v); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(v)} GRAM`, text: 'Бонус за друзей' }); renderCases(); }
-  if (act === 'restore'){ if (S.balance < S.week.restorePrice) return notify({ type: 'err', icon: 'coin', title: 'Недостаточно GRAM' }); setBalance(S.balance - S.week.restorePrice); S.week.missed.shift(); haptic('medium'); notify({ type: 'ok', icon: 'ok', title: 'День восстановлен', text: 'Неделя снова идёт к кейсу Маска' }); renderCases(); }
+  if (act === 'restore'){ if (S.balance < S.week.restorePrice) return notify({ type: 'err', icon: 'coin', title: 'Недостаточно GRAM' }); setBalance(S.balance - S.week.restorePrice); S.hist.wallet.unshift({ type: 'restore', t: Date.now(), amount: S.week.restorePrice, name: `Пропущенный день: ${DAYS[S.week.missed[0]]}`, method: 'неделя заданий' }); S.week.missed.shift(); haptic('medium'); notify({ type: 'ok', icon: 'ok', title: 'День восстановлен', text: 'Неделя снова идёт к кейсу Маска' }); renderCases(); }
 });
 
 /* честный ролл кейса: тот же HMAC, тикет → предмет по диапазону */
