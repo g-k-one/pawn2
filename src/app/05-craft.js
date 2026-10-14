@@ -56,22 +56,22 @@ function dbgWant(){
   if (d.near && TIERS[d.tier + 1]){ const m = Math.max(150, Math.floor((t.to - t.from + 1) * .04)); return n => n > t.to - m && n <= t.to; }   // «не хватило совсем чуть-чуть»
   return n => n >= t.from && n <= t.to;
 }
-const dbgLabel = () => S.dbg.ticket != null ? `тикет ${S.dbg.ticket}` : S.dbg.tier < 0 ? 'выкл' : TIERS[S.dbg.tier].name + (S.dbg.near ? ' · у порога' : '') + (S.dbg.keep ? ' · всегда' : '');
+const dbgLabel = () => S.dbg.ticket != null ? `${$t("тикет")} ${S.dbg.ticket}` : S.dbg.tier < 0 ? $t("выкл") : TIERS[S.dbg.tier].name + (S.dbg.near ? (" " + $t("· у порога")) : '') + (S.dbg.keep ? (" " + $t("· всегда")) : '');
 function renderDbg(){
   const d = S.dbg, last = TIERS.length - 1;
   const chip = (k, v, label, c, dis) => `<button class="dbg-c${d[k] === v ? ' on' : ''}" data-k="${k}" data-v="${v}" style="--c:${c || '#fff'}"${dis ? ' disabled' : ''}>${label}</button>`;
   $('dbgBody').innerHTML =
-    `<div class="dbg-l">Точный тикет</div><div class="dbg-t"><input id="dbgTicket" type="number" inputmode="numeric" min="0" max="99999" placeholder="0 – 99 999" value="${d.ticket ?? ''}"><button class="dbg-c" data-k="ticketClear" data-v="1">Сброс</button></div>` +
-    `<div class="dbg-l">Или ранг следующего крафта</div><div class="dbg-g">${chip('tier', -1, 'Случайно')}${TIERS.map((t, i) => chip('tier', i, t.name, t.c)).join('')}</div>` +
-    `<div class="dbg-l">Где в ранге</div><div class="dbg-g">${chip('near', false, 'Любой тикет')}${chip('near', true, 'Почти следующий ранг', '#ffb835', d.tier === last || d.tier < 0)}</div>` +
-    `<div class="dbg-l">Сколько раз</div><div class="dbg-g">${chip('keep', false, 'Один крафт')}${chip('keep', true, 'Каждый крафт')}</div>` +
-    `<div class="dbg-l">NFT на главной при смене ставки</div><div class="dbg-g">${chip('prevDelay', null, 'Сразу')}${chip('prevDelay', 1500, 'Ответ 1.5 с')}${chip('prevDelay', 4000, 'Ответ 4 с')}</div>` +
-    `<div class="dbg-l">Сбой (один раз)</div><div class="dbg-g">${chip('fail', null, 'Нет')}${chip('fail', 'craft', 'Неудачный крафт', '#FF4C35')}${chip('fail', 'case', 'Кейс не открылся', '#FF4C35')}${chip('fail', 'out', 'Вывод NFT не прошёл', '#FF4C35')}${chip('fail', 'relayer', 'Вывод: не написал релееру', '#FF4C35')}</div>` +
-    `<div class="dbg-l">Супер дроп</div><div class="dbg-g"><button class="dbg-c${d.ticket === SUPER.target ? ' on' : ''}" data-k="super" data-v="1" style="--c:#EB57B0">Выбить супер дроп · тикет ${SUPER.target}</button></div>` +
-    `<div class="dbg-l">Онбординг</div><div class="dbg-g">${chip('noOnb', false, 'Показывать')}${chip('noOnb', true, 'Выключен')}<button class="dbg-c" data-k="onbNow" data-v="1">Показать сейчас</button></div>` +
-    `<div class="dbg-l">Запас бесплатных кейсов</div><div class="dbg-g">${[['beast', 'Бист', '#EB57B0'], ['musk', 'Маск', '#FF4C35']].map(([id, n, c]) => [0, 1, 3, 5].map(v => `<button class="dbg-c${S.stock[id] === v ? ' on' : ''}" data-k="stock" data-id="${id}" data-v="${v}" style="--c:${c}">${n} ×${v}</button>`).join('')).join('')}</div>` +
-    `<div class="dbg-l">Кейсы</div><div class="dbg-g">${chip('freeCases', false, 'По условиям')}${chip('freeCases', true, 'Без условий')}</div>` +
-    `<p class="dbg-n">Для ранга подбирается настоящий server seed — проверка честности сходится, но хеш до игры будет другим. Точный тикет подставляется напрямую, проверка для него не сойдётся. Только для тестов прототипа.</p>`;
+    `<div class="dbg-l">${$t("Точный тикет")}</div><div class="dbg-t"><input id="dbgTicket" type="number" inputmode="numeric" min="0" max="99999" placeholder="0 – 99 999" value="${d.ticket ?? ''}"><button class="dbg-c" data-k="ticketClear" data-v="1">${$t("Сброс")}</button></div>` +
+    `<div class="dbg-l">${$t("Или ранг следующего крафта")}</div><div class="dbg-g">${chip('tier', -1, $t("Случайно"))}${TIERS.map((t, i) => chip('tier', i, t.name, t.c)).join('')}</div>` +
+    `<div class="dbg-l">${$t("Где в ранге")}</div><div class="dbg-g">${chip('near', false, $t("Любой тикет"))}${chip('near', true, $t("Почти следующий ранг"), '#ffb835', d.tier === last || d.tier < 0)}</div>` +
+    `<div class="dbg-l">${$t("Сколько раз")}</div><div class="dbg-g">${chip('keep', false, $t("Один крафт"))}${chip('keep', true, $t("Каждый крафт"))}</div>` +
+    `<div class="dbg-l">${$t("NFT на главной при смене ставки")}</div><div class="dbg-g">${chip('prevDelay', null, $t("Сразу"))}${chip('prevDelay', 1500, $t("Ответ 1.5 с"))}${chip('prevDelay', 4000, $t("Ответ 4 с"))}</div>` +
+    `<div class="dbg-l">${$t("Сбой (один раз)")}</div><div class="dbg-g">${chip('fail', null, $t("Нет"))}${chip('fail', 'craft', $t("Неудачный крафт"), '#FF4C35')}${chip('fail', 'case', $t("Кейс не открылся"), '#FF4C35')}${chip('fail', 'out', $t("Вывод NFT не прошёл"), '#FF4C35')}${chip('fail', 'relayer', $t("Вывод: не написал релееру"), '#FF4C35')}</div>` +
+    `<div class="dbg-l">${$t("Супер дроп")}</div><div class="dbg-g"><button class="dbg-c${d.ticket === SUPER.target ? ' on' : ''}" data-k="super" data-v="1" style="--c:#EB57B0">${$t("Выбить супер дроп · тикет")} ${SUPER.target}</button></div>` +
+    `<div class="dbg-l">${$t("Онбординг")}</div><div class="dbg-g">${chip('noOnb', false, $t("Показывать"))}${chip('noOnb', true, $t("Выключен"))}<button class="dbg-c" data-k="onbNow" data-v="1">${$t("Показать сейчас")}</button></div>` +
+    `<div class="dbg-l">${$t("Запас бесплатных кейсов")}</div><div class="dbg-g">${[['beast', $t("Бист"), '#EB57B0'], ['musk', $t("Маск"), '#FF4C35']].map(([id, n, c]) => [0, 1, 3, 5].map(v => `<button class="dbg-c${S.stock[id] === v ? ' on' : ''}" data-k="stock" data-id="${id}" data-v="${v}" style="--c:${c}">${n} ×${v}</button>`).join('')).join('')}</div>` +
+    `<div class="dbg-l">${$t("Кейсы")}</div><div class="dbg-g">${chip('freeCases', false, $t("По условиям"))}${chip('freeCases', true, $t("Без условий"))}</div>` +
+    `<p class="dbg-n">${$t("Для ранга подбирается настоящий server seed — проверка честности сходится, но хеш до игры будет другим. Точный тикет подставляется напрямую, проверка для него не сойдётся. Только для тестов прототипа.")}</p>`;
 }
 $('dbgBody').addEventListener('input', e => { if (e.target.id !== 'dbgTicket') return; const v = e.target.value.trim(); S.dbg.ticket = v === '' ? null : Math.max(0, Math.min(TICKETS - 1, Math.floor(+v) || 0)); if (S.dbg.ticket != null) S.dbg.tier = -1; });
 $('dbgBody').addEventListener('click', e => {
@@ -89,10 +89,10 @@ $('dbgBody').addEventListener('click', e => {
 });
 $('dbgDone').onclick = () => {
   hideDrawer();
-  if (S.dbg.fail) notify({ type: 'warn', icon: 'bug', color: '#FF4C35', title: { craft: 'Дебаг: следующий крафт не удастся', case: 'Дебаг: следующий кейс не откроется', out: 'Дебаг: следующий вывод NFT не пройдёт', relayer: 'Дебаг: вывод без сообщения релееру' }[S.dbg.fail], text: S.dbg.fail === 'out' || S.dbg.fail === 'relayer' ? 'Увидишь уведомление об ошибке' : 'Увидишь экран неудачи' });
-  else if (S.dbg.ticket != null) notify({ type: 'warn', icon: 'bug', color: S.dbg.ticket === SUPER.target ? '#EB57B0' : null, title: S.dbg.ticket === SUPER.target ? 'Дебаг: супер дроп' : `Дебаг: тикет ${S.dbg.ticket}`, text: S.dbg.ticket === SUPER.target ? `Следующий крафт от ${SUPER.min} GRAM выбьет тикет ${SUPER.target}` : 'для следующего крафта' });
-  else if (S.dbg.tier >= 0) notify({ type: 'warn', icon: 'bug', color: TIERS[S.dbg.tier].c, title: `Дебаг: ${TIERS[S.dbg.tier].name}${S.dbg.near ? ' у порога' : ''}`, text: S.dbg.keep ? 'для каждого крафта' : 'только для следующего крафта' });
-  else notify({ type: 'info', icon: 'bug', title: 'Дебаг выключен', text: 'Исход снова случайный' });
+  if (S.dbg.fail) notify({ type: 'warn', icon: 'bug', color: '#FF4C35', title: { craft: $t("Дебаг: следующий крафт не удастся"), case: $t("Дебаг: следующий кейс не откроется"), out: $t("Дебаг: следующий вывод NFT не пройдёт"), relayer: $t("Дебаг: вывод без сообщения релееру") }[S.dbg.fail], text: S.dbg.fail === 'out' || S.dbg.fail === 'relayer' ? $t("Увидишь уведомление об ошибке") : $t("Увидишь экран неудачи") });
+  else if (S.dbg.ticket != null) notify({ type: 'warn', icon: 'bug', color: S.dbg.ticket === SUPER.target ? '#EB57B0' : null, title: S.dbg.ticket === SUPER.target ? $t("Дебаг: супер дроп") : `${$t("Дебаг: тикет")} ${S.dbg.ticket}`, text: S.dbg.ticket === SUPER.target ? `${$t("Следующий крафт от {0} GRAM выбьет тикет", SUPER.min)} ${SUPER.target}` : $t("для следующего крафта") });
+  else if (S.dbg.tier >= 0) notify({ type: 'warn', icon: 'bug', color: TIERS[S.dbg.tier].c, title: `${$t("Дебаг:")} ${TIERS[S.dbg.tier].name}${S.dbg.near ? (" " + $t("у порога")) : ''}`, text: S.dbg.keep ? $t("для каждого крафта") : $t("только для следующего крафта") });
+  else notify({ type: 'info', icon: 'bug', title: $t("Дебаг выключен"), text: $t("Исход снова случайный") });
 };
 async function fair(stake, gifts = [], tonStake = stake){
   const nonce = ++S.nonce, want = dbgWant(), domain = 'craft', forced = !!want || S.dbg.ticket != null;
@@ -126,33 +126,7 @@ const LSset = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0'); } catch(
 S.fast = LS('bm-fast', false);
 S.sound = LS('bm-sound', true);
 S.vibro = LS('bm-vibro', true);
-S.lang = (() => { try { return localStorage.getItem('bm-lang') || 'ru'; } catch(_){ return 'ru'; } })();
-/* ---------- английский: переводим готовый DOM по словарю assets/i18n/en.json (грузится только при выборе EN).
-   Правила — на весь текст узла (числа, склонения), затем фразы целиком, затем подстроки; RU восстанавливается из запомненных оригиналов ---------- */
-const I18N = (() => {
-  const CYR = /[А-Яа-яЁё]/, orig = new WeakMap(), mine = new WeakMap(); let D = null, re = null, obs = null;
-  const load = () => D ? Promise.resolve() : fetch('assets/i18n/en.json').then(r => r.json()).then(d => {
-    const keys = Object.keys(d.phrases).sort((a, b) => b.length - a.length).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-    re = new RegExp(`(^|[^А-Яа-яЁё])(${keys.join('|')})(?![А-Яа-яЁё])`, 'g');   // без lookbehind: на iOS < 16.4 он падает
-    D = { ...d, rules: d.rules.map(([p, r]) => [new RegExp(p), r]), mre: new RegExp(`(\\d+) (${Object.keys(d.months).join('|')})\\.?`, 'g') };
-  });
-  const tr = t => {
-    const core = t.trim(), wrap = x => t.replace(core, () => x);
-    for (const [p, r] of D.rules) if (p.test(core)) return wrap(core.replace(p, r).replace(re, (m, a, w) => a + D.phrases[w]));
-    if (D.phrases[core]) return wrap(D.phrases[core]);
-    return t.replace(D.mre, (m, d, mo) => `${D.months[mo]} ${d}`).replace(re, (m, a, w) => a + D.phrases[w]);
-  };
-  // записываем, только если текст изменился: иначе каждая запись порождает новую мутацию и наблюдатель зацикливается
-  const node = n => { if (mine.get(n) === n.data || !CYR.test(n.data) || /^(SCRIPT|STYLE)$/.test(n.parentNode?.nodeName)) return;
-    const v = tr(n.data); orig.set(n, n.data); mine.set(n, v); if (v !== n.data) n.data = v; };
-  const texts = (root, fn) => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) fn(n); };
-  const onMut = ms => { for (const m of ms){ if (m.type === 'characterData') node(m.target); else m.addedNodes.forEach(a => a.nodeType === 3 ? node(a) : a.nodeType === 1 && texts(a, node)); } };
-  return { async set(lang){
-    document.documentElement.lang = lang;
-    if (lang === 'en'){ await load(); texts(document.body, node); (obs ||= new MutationObserver(onMut)).observe(document.body, { subtree: true, childList: true, characterData: true }); }
-    else { obs?.disconnect(); texts(document.body, n => { if (orig.has(n) && mine.get(n) === n.data){ n.data = orig.get(n); mine.delete(n); } }); }
-  } };
-})();
+S.lang = LANG;
 S.lite = LS('bm-lite', !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches));
 S.demo = false;
 const swOn = (id, on) => { const el = document.querySelector(`#${id} .switch`); if (el) el.classList.toggle('on', on); };
@@ -163,7 +137,7 @@ function applyLite(){ document.body.classList.toggle('lite', S.lite); document.b
 function setLite(on){
   S.lite = on; swOn('liteRow', on); LSset('bm-lite', on); applyLite(); haptic();
   if (!on){ Glow.resize(); FullGlow.resize(); }
-  notify(on ? { type: 'ok', icon: 'leaf', title: 'Экономный режим', text: 'Без свечения и анимаций, крафт сразу показывает итог' } : { type: 'info', icon: 'leaf', title: 'Экономный режим выключен' });
+  notify(on ? { type: 'ok', icon: 'leaf', title: $t("Экономный режим"), text: $t("Без свечения и анимаций, крафт сразу показывает итог") } : { type: 'info', icon: 'leaf', title: $t("Экономный режим выключен") });
 }
 function setDemo(on){
   if (S.busy) return;
@@ -171,10 +145,10 @@ function setDemo(on){
   S.ton = 0; S.gifts = [];
   $('balIco').src = on ? 'assets/fantik.webp' : 'assets/gem-balance.svg';
   $('bal').textContent = on ? '∞' : fmt(S.balance);
-  const mt = document.querySelector('.mprof small'); if (mt) mt.textContent = on ? '∞ фантиков' : fmt(S.balance) + ' GRAM';
+  const mt = document.querySelector('.mprof small'); if (mt) mt.textContent = on ? $t("∞ фантиков") : fmt(S.balance) + ' GRAM';
   renderBet(true);
-  notify(on ? { type: 'demo', img: 'assets/fantik.webp', title: 'Демо-режим', text: 'Играешь на фантики: баланс бесконечный, подарки недоступны' }
-            : { type: 'info', icon: 'coin', title: 'Демо выключено', text: 'Снова играешь на GRAM' });
+  notify(on ? { type: 'demo', img: 'assets/fantik.webp', title: $t("Демо-режим"), text: $t("Играешь на фантики: баланс бесконечный, подарки недоступны") }
+            : { type: 'info', icon: 'coin', title: $t("Демо выключено"), text: $t("Снова играешь на GRAM") });
 }
 
 /* ---------- звук (WebAudio, синтез — без файлов). Включается в меню ---------- */
@@ -277,9 +251,9 @@ function fadeUI(out, dur){
 /* ---------- крафт ---------- */
 $('craft').onclick = async () => {
   if (S.busy) return;
-  if (total() <= 0){ strike(.25, REST + 6).then(settle); notify({ type: 'err', icon: 'coin', title: 'Сначала сделай ставку', text: S.demo ? 'Добавь фантики кнопками внизу' : 'Добавь GRAM или подарки кнопками внизу' }); haptic('rigid'); $('bet').animate([{ translate: '-6px 0' }, { translate: '6px 0' }, { translate: '0 0' }], { duration: 220, iterations: 2 }); return; }
-  if (total() < BET_MIN || total() > BET_MAX){ haptic('rigid'); return notify({ type: 'err', icon: 'coin', title: total() < BET_MIN ? `Минимальная ставка ${BET_MIN} GRAM` : `Максимальная ставка ${BET_MAX} GRAM`, text: 'С учётом подарков в крафте' }); }
-  if (!S.demo && S.ton > S.balance){ notify({ type: 'err', icon: 'coin', title: 'Недостаточно GRAM', text: `На балансе ${fmt(S.balance)} GRAM` }); haptic('rigid'); return; }
+  if (total() <= 0){ strike(.25, REST + 6).then(settle); notify({ type: 'err', icon: 'coin', title: $t("Сначала сделай ставку"), text: S.demo ? $t("Добавь фантики кнопками внизу") : $t("Добавь GRAM или подарки кнопками внизу") }); haptic('rigid'); $('bet').animate([{ translate: '-6px 0' }, { translate: '6px 0' }, { translate: '0 0' }], { duration: 220, iterations: 2 }); return; }
+  if (total() < BET_MIN || total() > BET_MAX){ haptic('rigid'); return notify({ type: 'err', icon: 'coin', title: total() < BET_MIN ? `${$t("Минимальная ставка {0} GRAM", BET_MIN)}` : `${$t("Максимальная ставка {0} GRAM", BET_MAX)}`, text: $t("С учётом подарков в крафте") }); }
+  if (!S.demo && S.ton > S.balance){ notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM"), text: `${$t("На балансе {0} GRAM", fmt(S.balance))}` }); haptic('rigid'); return; }
   S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto);
   const stake = total(), used = S.gifts.slice(), tonStake = S.ton, fast = S.fast || S.lite;
   const pf = fair(stake, used, tonStake);
@@ -290,7 +264,7 @@ $('craft').onclick = async () => {
   if (!r || S.dbg.fail === 'craft'){ S.dbg.fail = null;           // сбой: ставка возвращается, показываем экран неудачи
     if (tonStake > 0 && !S.demo) setBalance(S.balance + tonStake);
     INV = [...used, ...INV];
-    notify({ type: 'err', icon: 'err', title: 'Ошибка крафта', text: S.demo ? 'Попробуй ещё раз' : 'Ставка и подарки вернулись — попробуй ещё раз' });
+    notify({ type: 'err', icon: 'err', title: $t("Ошибка крафта"), text: S.demo ? $t("Попробуй ещё раз") : $t("Ставка и подарки вернулись — попробуй ещё раз") });
     return failScreen('craft', { ton: tonStake, gifts: used });
   }
   r.gifts = used; r.tonStake = tonStake;
@@ -387,7 +361,7 @@ const ticketToP = n => { const i = tierOfTicket(n), t = TIERS[i]; return i + (n 
 const hexMix = (a, b, k) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - k) + parseInt(b.slice(i, i + 2), 16) * k).toString(16).padStart(2, '0')).join('');
 const glowMix = (i, k) => TIERS[i].glow.map((c, j) => k > 0 && TIERS[i + 1] ? hexMix(c, TIERS[i + 1].glow[j], k) : c);
 const EZ = { lin: x => x, in2: x => x * x, out: x => 1 - (1 - x) ** 2, out3: x => 1 - (1 - x) ** 3, out5: x => 1 - (1 - x) ** 5, io: x => x < .5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2 };
-const GEN = ['Базы', 'Удачи', 'Меги', 'Ультры', 'Джекпота'];
+const GEN = [$t("Базы"), $t("Удачи"), $t("Меги"), $t("Ультры"), $t("Джекпота")];
 
 function odoBuild(){
   return [...$('digits').children].map(sp => { const strip = sp.querySelector('i'); strip.getAnimations().forEach(a => a.cancel()); strip.style.filter = ''; sp.className = '';
@@ -424,17 +398,17 @@ function rankUp(ti){
 }
 function needSet(el, tierNow, tk, q, final){
   const nx = TIERS[tierNow + 1];
-  if (!nx){ el.className = 'fx-need'; el.innerHTML = final ? '' : 'максимальный ранг'; return; }
+  if (!nx){ el.className = 'fx-need'; el.innerHTML = final ? '' : $t("максимальный ранг"); return; }
   const rem = nx.from - tk;
   el.style.setProperty('--nc', nx.c);
   if (final){
     const tw = TIERS[tierNow].to - TIERS[tierNow].from + 1;
-    if (rem <= Math.max(500, tw * .14)){ el.className = 'fx-need'; void el.offsetWidth; el.className = 'fx-need miss'; el.innerHTML = `не хватило<b>${rem.toLocaleString('ru-RU')}</b> до ${GEN[tierNow + 1]}`; }
+    if (rem <= Math.max(500, tw * .14)){ el.className = 'fx-need'; void el.offsetWidth; el.className = 'fx-need miss'; el.innerHTML = `${$t("не хватило")}<b>${rem.toLocaleString(LOC)}</b> ${$t("до")} ${GEN[tierNow + 1]}`; }
     else { el.className = 'fx-need'; el.innerHTML = ''; }
     return;
   }
   el.className = 'fx-need' + (q > .45 ? ' hot' : '');
-  el.innerHTML = `до ${GEN[tierNow + 1]}<b>${rem.toLocaleString('ru-RU')}</b>`;
+  el.innerHTML = `${$t("до")} ${GEN[tierNow + 1]}<b>${rem.toLocaleString(LOC)}</b>`;
 }
 /* раскрытие: шкала рангов заполняется как график в краш-игре — всё быстрее и быстрее, у каждого порога
    притормаживает, и может оборваться в любой момент. Цифры тем временем крутятся и встают справа налево,
@@ -495,7 +469,7 @@ function spin(r, D, L){
         dg.style.setProperty('--ds', (1 + .05 * q).toFixed(3));
         // обратный отсчёт до следующего ранга: сколько тикетов осталось шкале до порога — тает по мере подъёма
         const nx = TIERS[tierNow + 1], rem = nx ? Math.max(0, nx.from - Math.floor(pToTicket(p))) : 0;
-        const nt = nx ? `до ${GEN[tierNow + 1]}<b>${rem.toLocaleString('ru-RU')}</b>` : 'максимальный ранг', nc = 'fx-need' + (q > .4 ? ' hot' : '') + (nx ? '' : ' top');
+        const nt = nx ? `${$t("до")} ${GEN[tierNow + 1]}<b>${rem.toLocaleString(LOC)}</b>` : $t("максимальный ранг"), nc = 'fx-need' + (q > .4 ? ' hot' : '') + (nx ? '' : ' top');
         if (nt !== need.dataset.t){ need.dataset.t = nt; need.innerHTML = nt; }
         if (nc !== need.className) need.className = nc;
         if (nx) need.style.setProperty('--nc', nx.c);
@@ -540,14 +514,14 @@ async function reveal(r, fast){
 const nftLink = n => `https://t.me/nft/${n.name.replace(/[^A-Za-z0-9]/g, '')}-${n.num}`;
 function openNft(g){ haptic(); tgOpen(nftLink(g.nft)); }
 const dropCard = g => { tiltCard($('pz'), 1.4); upgradeImg($('pz').querySelector('.nc-img'), g.nft); Tilt.grab($('pz').querySelector('.nc-t'), () => openNft(g)); };
-const PF_LINK = '<div class="fx-links"><button class="btn-link pf" id="fxPfIn">Проверить честность</button><button class="btn-link pf" id="fxShare">Поделиться</button></div>';
+const PF_LINK = `<div class="fx-links"><button class="btn-link pf" id="fxPfIn">${$t("Проверить честность")}</button><button class="btn-link pf" id="fxShare">${$t("Поделиться")}</button></div>`;
 /* поделиться выигрышем: в Telegram — окно «Поделиться» с реф-ссылкой, в браузере — системное или копирование */
 function shareWin(text){
   haptic(); const url = REF.link;
   if (tgOpen('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text))) return;
   if (navigator.share) return void navigator.share({ text, url }).catch(() => {});
   try { navigator.clipboard.writeText(text + ' ' + url).catch(() => {}); } catch(_){}
-  notify({ type: 'ok', icon: 'ok', title: 'Ссылка скопирована', text: 'Отправь её друзьям' });
+  notify({ type: 'ok', icon: 'ok', title: $t("Ссылка скопирована"), text: $t("Отправь её друзьям") });
 }
 function fillDrop(r){
   const drop = $('fxDrop');
@@ -556,23 +530,23 @@ function fillDrop(r){
     drop.innerHTML = `<div class="pz" id="pz">${cardHTML(r.nft, 266, true)}</div>`;
     dropCard(r.nft);
     if (S.demo){
-      $('fxWin').innerHTML = `<span>в демо призы не выдаются</span>`;
-      $('fxBtns').innerHTML = `<button class="btn-main" id="fxTake">Ещё раз</button>` + PF_LINK;
+      $('fxWin').innerHTML = `<span>${$t("в демо призы не выдаются")}</span>`;
+      $('fxBtns').innerHTML = `<button class="btn-main" id="fxTake">${$t("Ещё раз")}</button>` + PF_LINK;
     } else {
-      $('fxWin').innerHTML = r.change > 0 ? `<span>и на баланс +${fmt(r.change)} GRAM</span>` : '';   // цена NFT — на кнопке «Продать за …»
-      $('fxBtns').innerHTML = `<button class="btn-main" id="fxSell">Продать за ${fmt(r.nft.value)} GRAM</button><button class="btn-ghost" id="fxTake">Забрать</button>` + PF_LINK;
+      $('fxWin').innerHTML = r.change > 0 ? `<span>${$t("и на баланс +{0} GRAM", fmt(r.change))}</span>` : '';   // цена NFT — на кнопке «Продать за …»
+      $('fxBtns').innerHTML = `<button class="btn-main" id="fxSell">${$t("Продать за {0} GRAM", fmt(r.nft.value))}</button><button class="btn-ghost" id="fxTake">${$t("Забрать")}</button>` + PF_LINK;
     }
   } else {
     drop.innerHTML = `<div class="pz"><div class="tw" id="pz"><img src="assets/hero-gem.webp" alt=""><span class="gl" style="--m:url('assets/hero-gem.webp')"><i></i></span></div></div>`;
     Tilt.add($('pz'), $('pz').querySelector('img'), $('pz').querySelector('.gl i'), 1.5);
-    $('fxWin').innerHTML = `<b>+${fmt(r.win)}${S.demo ? '<img class="cur" src="assets/fantik.webp" alt=" фантиков">' : ' GRAM'}</b><span>ставка ${fmt(r.stake)} × x${r.mult}</span>`;
-    $('fxBtns').innerHTML = `<button class="btn-main" id="fxTake">Забрать</button>` + PF_LINK;
+    $('fxWin').innerHTML = `<b>+${fmt(r.win)}${S.demo ? `<img class="cur" src="assets/fantik.webp" alt=" ${$t("фантиков")}">` : ' GRAM'}</b><span>${$t("ставка {0} × x", fmt(r.stake))}${r.mult}</span>`;
+    $('fxBtns').innerHTML = `<button class="btn-main" id="fxTake">${$t("Забрать")}</button>` + PF_LINK;
   }
-  if (r.super) $('fxWin').insertAdjacentHTML('beforeend', `<span class="sdnext">★ А после — супер дроп</span>`);
+  if (r.super) $('fxWin').insertAdjacentHTML('beforeend', `<span class="sdnext">${$t("★ А после — супер дроп")}</span>`);
   $('fxTop').querySelector('.sdtip')?.remove();
-  if (r.superMiss) $('fxTop').insertAdjacentHTML('beforeend', `<div class="sdtip"><b>Тикет супер дропа!</b> ${S.demo ? 'В демо не разыгрывается' : `Нужна ставка от ${SUPER.min} GRAM`}</div>`);
+  if (r.superMiss) $('fxTop').insertAdjacentHTML('beforeend', `<div class="sdtip"><b>${$t("Тикет супер дропа!")}</b> ${S.demo ? $t("В демо не разыгрывается") : `${$t("Нужна ставка от {0} GRAM", SUPER.min)}`}</div>`);
   $('fxPfIn').onclick = () => openPF(r);
-  $('fxShare').onclick = () => shareWin(r.nft ? `Скрафтил ${r.nft.nft.name} #${r.nft.num} в Pawn` : `Скрафтил +${fmt(r.win)} GRAM (x${r.mult}) в Pawn`);
+  $('fxShare').onclick = () => shareWin(r.nft ? `${$t("Скрафтил {0} #{1} в Pawn", r.nft.nft.name, r.nft.num)}` : `${$t("Скрафтил +{0} GRAM (x{1}) в Pawn", fmt(r.win), r.mult)}`);
   $('fxTake').onclick = () => finish(r, 'take');
   if ($('fxSell')) $('fxSell').onclick = () => finish(r, 'sell');
 }
@@ -580,8 +554,8 @@ async function showDrop(r){
   const stub = false;                                        // NFT при крафте уже известен — сразу показываем
   if (stub){
     // подбор NFT под сумму идёт на бэкенде — пока ждём, показываем заглушку
-    $('fxDrop').innerHTML = `<div class="pz"><div class="skel"><span class="shim"></span><span class="tq">${GIFT_Q}</span><b>Подбираем NFT</b><small>под выигрыш ${fmt(r.win)} GRAM</small></div></div>`;
-    $('fxWin').innerHTML = `<b>${fmt(r.win)} GRAM</b><span>ищем лучший подарок на эту сумму…</span>`; $('fxBtns').innerHTML = '';
+    $('fxDrop').innerHTML = `<div class="pz"><div class="skel"><span class="shim"></span><span class="tq">${GIFT_Q}</span><b>${$t("Подбираем NFT")}</b><small>${$t("под выигрыш {0} GRAM", fmt(r.win))}</small></div></div>`;
+    $('fxWin').innerHTML = `<b>${fmt(r.win)} GRAM</b><span>${$t("ищем лучший подарок на эту сумму…")}</span>`; $('fxBtns').innerHTML = '';
   } else fillDrop(r);
   const top = $('fxTop'), y0 = top.getBoundingClientRect().top;
   $('fx').classList.add('done');
@@ -618,17 +592,17 @@ async function finish(r, how){
   renderBet();
   if (r.super){                                               // приз крафта получен — и сверху ещё супер дроп
     if (add > 0) setBalance(S.balance + add);
-    notify(r.nft ? { type: 'ok', color: t.c, img: r.nft.nft.src, title: how === 'sell' ? `Продано: +${fmt(add)} GRAM` : `${r.nft.nft.name} в инвентаре`, text: 'Приз крафта' }
-                 : { type: 'ok', color: t.c, img: 'assets/hero-gem.webp', title: `+${fmt(add)} GRAM`, text: 'Приз крафта зачислен' });
+    notify(r.nft ? { type: 'ok', color: t.c, img: r.nft.nft.src, title: how === 'sell' ? `${$t("Продано: +{0} GRAM", fmt(add))}` : `${r.nft.nft.name} ${$t("в инвентаре")}`, text: $t("Приз крафта") }
+                 : { type: 'ok', color: t.c, img: 'assets/hero-gem.webp', title: `+${fmt(add)} GRAM`, text: $t("Приз крафта зачислен") });
     finish.on = false; return superStage(r);
   }
   await closeFx();
   if (add > 0) setBalance(S.balance + add);
-  if (S.demo) notify(r.nft ? { type: 'demo', img: r.nft.nft.src, title: r.nft.nft.name, text: 'В реальном режиме он был бы твоим' }
-                           : { type: 'demo', img: 'assets/fantik.webp', title: `Демо: +${fmt(add)}`, text: 'Фантики не настоящие — просто попробовать' });
-  else if (!r.nft) notify({ type: 'ok', color: t.c, img: 'assets/hero-gem.webp', title: `+${fmt(add)} GRAM`, text: `${t.name} · x${r.mult} · зачислено на баланс` });
-  else if (how === 'sell') notify({ type: 'ok', color: t.c, img: r.nft.nft.src, title: `Продано: +${fmt(add)} GRAM`, text: `${r.nft.nft.name} за ${fmt(r.nft.value)} GRAM${r.change > 0 ? ` и ${fmt(r.change)} GRAM сверху` : ''}` });
-  else notify({ type: 'ok', color: t.c, img: r.nft.nft.src, title: `${r.nft.nft.name} в инвентаре`, text: r.change > 0 ? `На баланс +${fmt(r.change)} GRAM` : 'Можно положить в следующий крафт' });
+  if (S.demo) notify(r.nft ? { type: 'demo', img: r.nft.nft.src, title: r.nft.nft.name, text: $t("В реальном режиме он был бы твоим") }
+                           : { type: 'demo', img: 'assets/fantik.webp', title: `${$t("Демо: +")}${fmt(add)}`, text: $t("Фантики не настоящие — просто попробовать") });
+  else if (!r.nft) notify({ type: 'ok', color: t.c, img: 'assets/hero-gem.webp', title: `+${fmt(add)} GRAM`, text: `${t.name} ${$t("· x{0} · зачислено на баланс", r.mult)}` });
+  else if (how === 'sell') notify({ type: 'ok', color: t.c, img: r.nft.nft.src, title: `${$t("Продано: +{0} GRAM", fmt(add))}`, text: `${r.nft.nft.name} ${$t("за {0} GRAM", fmt(r.nft.value))}${r.change > 0 ? ` ${$t("и {0} GRAM сверху", fmt(r.change))}` : ''}` });
+  else notify({ type: 'ok', color: t.c, img: r.nft.nft.src, title: `${r.nft.nft.name} ${$t("в инвентаре")}`, text: r.change > 0 ? `${$t("На баланс +{0} GRAM", fmt(r.change))}` : $t("Можно положить в следующий крафт") });
   setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win })), 300);
   fitBet(); CRAFT.classList.remove('busy'); S.busy = false; finish.on = false; restartAuto();
 }
@@ -639,14 +613,14 @@ function failScreen(kind, ctx){
   if (craft){
     const dg = $('digits'); dg.className = 'digits'; const D = odoBuild(); odoSet(D, 0, false); D.forEach(d => d.sp.classList.add('lock'));
     dg.classList.add('tiered'); dg.style.setProperty('--tc', '#FF4C35'); dg.style.setProperty('--ds', 1); dg.style.setProperty('--q', 0);
-    const tl = $('fxTier'); tl.className = 'fx-tier on pop'; tl.style.setProperty('--tc', '#FF4C35'); tl.textContent = 'Сбой';
+    const tl = $('fxTier'); tl.className = 'fx-tier on pop'; tl.style.setProperty('--tc', '#FF4C35'); tl.textContent = $t("Сбой");
     ladderBuild(); $('fxNeed').innerHTML = '';
   }
   $('fxDrop').innerHTML = `<div class="pz"><div class="tw failw" id="pz"><img src="assets/fail.svg" alt=""></div></div>`;
   if (!S.lite) $('pz').animate([{ transform: 'scale(.4) rotate(-20deg)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 600, easing: 'cubic-bezier(.3,1.5,.5,1)' });
-  const back = craft ? (S.demo ? 'Фантики остались на месте' : 'Ставка вернулась на баланс') : (ctx.c.price ? `${fmt(ctx.c.price)} GRAM вернулись на баланс` : 'Кейс остался доступным');
-  $('fxWin').innerHTML = `<b class="failt">${craft ? 'Крафт не удался' : 'Кейс не открылся'}</b>${craft ? '' : '<span class="failtk">тикет 00000</span>'}<span>${back}</span>`;
-  $('fxBtns').innerHTML = `<button class="btn-main" id="failRetry">Попробовать ещё раз</button><button class="btn-ghost" id="failBack">Вернуться</button>`;
+  const back = craft ? (S.demo ? $t("Фантики остались на месте") : $t("Ставка вернулась на баланс")) : (ctx.c.price ? `${fmt(ctx.c.price)} ${$t("GRAM вернулись на баланс")}` : $t("Кейс остался доступным"));
+  $('fxWin').innerHTML = `<b class="failt">${craft ? $t("Крафт не удался") : $t("Кейс не открылся")}</b>${craft ? '' : `<span class="failtk">${$t("тикет 00000")}</span>`}<span>${back}</span>`;
+  $('fxBtns').innerHTML = `<button class="btn-main" id="failRetry">${$t("Попробовать ещё раз")}</button><button class="btn-ghost" id="failBack">${$t("Вернуться")}</button>`;
   FullGlow.set(glowOf('#FF4C35')); FullGlow.punch(0, .5); FX.gainTo = .6; Sfx.lock(); haptic('rigid');
   fx.classList.add('done'); setTimeout(() => { FX.hot = false; }, 900);
   const free = () => { CRAFT.classList.remove('busy'); S.busy = false; };
@@ -663,8 +637,8 @@ async function superStage(r){
   if (!S.lite) await Promise.all(ids.map(id => $(id).animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(.96)' }], { duration: 220, easing: 'ease-in', fill: 'forwards' }).finished));
   Tilt.drop($('fxDrop'));
   $('fxDrop').innerHTML = `<div class="pz" id="pz">${cardHTML(g, 266, true)}</div>`; dropCard(g);
-  $('fxWin').innerHTML = `<img class="sdwin" src="assets/superdrop-logo.webp" alt="Super Drop"><span class="sdgot">Ты первым выбил тикет ${tk(r.ticket)}</span>`;
-  $('fxBtns').innerHTML = `<button class="btn-main" id="sdSell">Продать за ${fmt(g.value)} GRAM</button><button class="btn-ghost" id="sdTake">Забрать</button>`;
+  $('fxWin').innerHTML = `<img class="sdwin" src="assets/superdrop-logo.webp" alt="Super Drop"><span class="sdgot">${$t("Ты первым выбил тикет")} ${tk(r.ticket)}</span>`;
+  $('fxBtns').innerHTML = `<button class="btn-main" id="sdSell">${$t("Продать за {0} GRAM", fmt(g.value))}</button><button class="btn-ghost" id="sdTake">${$t("Забрать")}</button>`;
   ids.forEach(id => $(id).getAnimations().forEach(a => a.cancel()));
   if (!S.lite) ids.forEach((id, i) => $(id).animate([{ opacity: 0, transform: id === 'fxDrop' ? 'scale(.7)' : 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 520, delay: i * 120, easing: 'cubic-bezier(.25,1.3,.4,1)', fill: 'backwards' }));
   FullGlow.set(glowOf('#EB57B0')); FullGlow.punch(0, 1); FX.hot = true; Sfx.rank(4); haptic('heavy');
@@ -674,10 +648,10 @@ async function superStage(r){
   const take = async how => {
     if (on) return; on = true; haptic('medium'); Sfx.coin();
     if (how === 'take') INV = [{ ...g, id: 'sd' + Date.now() }, ...INV];
-    SUPER.last.unshift(['gk', g.nft.name, 'только что']); newSuper();
+    SUPER.last.unshift(['gk', g.nft.name, $t("только что")]); newSuper();
     await closeFx();
     if (how === 'sell') setBalance(S.balance + g.value);
-    notify({ type: 'ok', color: '#EB57B0', img: g.nft.src, title: how === 'sell' ? `Супер дроп продан: +${fmt(g.value)} GRAM` : `Супер дроп: ${g.nft.name} твой`, text: 'Новый загаданный тикет уже в бонусах' });
+    notify({ type: 'ok', color: '#EB57B0', img: g.nft.src, title: how === 'sell' ? `${$t("Супер дроп продан: +{0} GRAM", fmt(g.value))}` : `${$t("Супер дроп: {0} твой", g.nft.name)}`, text: $t("Новый загаданный тикет уже в бонусах") });
     setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win })), 300);
     fitBet(); CRAFT.classList.remove('busy'); S.busy = false; restartAuto();
   };

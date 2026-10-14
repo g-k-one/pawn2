@@ -183,7 +183,6 @@ const FullGlow = makeGlow($('fxGlow'), { size: () => [SW, fxH()], active: () => 
     return { m: L(a.m, b.m), x: L(a.x, b.x), y: L(a.y, b.y), w: L(a.w, b.w), h: L(a.h, b.h), r: L(a.r, b.r) }; } });
 
 /* ---------- старт ---------- */
-if (S.lang === 'en') I18N.set('en');
 applyLite();
 renderBet();
 requestAnimationFrame(() => setTier(1));
@@ -192,10 +191,10 @@ restartAuto();
 /* ---------- онбординг: 4 подсказки при первом запуске. Выключается в дебаге ---------- */
 const Onb = (() => {
   const STEPS = [
-    ['#tiers', 'Ранги', 'Свайпай по экрану или жми на ранг — увидишь, что можно выбить и с каким шансом'],
-    ['.chips', 'Ставка', 'Добавь GRAM кнопками или положи NFT-подарок — ставка растёт, растёт и приз'],
-    ['#craft', 'Крафт', 'Жми на наковальню. Исход честный: тикет можно проверить после игры'],
-    ['#menuBtn', 'Меню', 'Здесь бонусы, история игр и проверка честности'],
+    ['#tiers', $t("Ранги"), $t("Свайпай по экрану или жми на ранг — увидишь, что можно выбить и с каким шансом")],
+    ['.chips', $t("Ставка"), $t("Добавь GRAM кнопками или положи NFT-подарок — ставка растёт, растёт и приз")],
+    ['#craft', $t("Крафт"), $t("Жми на наковальню. Исход честный: тикет можно проверить после игры")],
+    ['#menuBtn', $t("Меню"), $t("Здесь бонусы, история игр и проверка честности")],
   ];
   let i = 0, el = null;
   function show(){
@@ -204,7 +203,7 @@ const Onb = (() => {
     const x = (r.left - st.left) / K - pad, y = (r.top - st.top) / K - pad, w = r.width / K + pad * 2, h = r.height / K + pad * 2, below = y + h / 2 < stage.offsetHeight / 2;
     el.innerHTML = `<i class="onb-hole" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"></i>` +
       `<div class="onb-card" style="${below ? `top:${y + h + 14}px` : `bottom:${stage.offsetHeight - y + 14}px`}"><small>${i + 1} / ${STEPS.length}</small><b>${t}</b><p>${d}</p>` +
-      `<span><button class="onb-skip">Пропустить</button><button class="onb-next">${i < STEPS.length - 1 ? 'Далее' : 'Понятно'}</button></span></div>`;
+      `<span><button class="onb-skip">${$t("Пропустить")}</button><button class="onb-next">${i < STEPS.length - 1 ? $t("Далее") : $t("Понятно")}</button></span></div>`;
     el.querySelector('.onb-next').onclick = () => { haptic(); i++; i < STEPS.length ? show() : end(); };
     el.querySelector('.onb-skip').onclick = () => { haptic(); end(); };
   }
@@ -218,5 +217,5 @@ addEventListener('resize', () => requestAnimationFrame(placeInd));
 if (!S.lite && !LS('bm-lite-asked', false)) setTimeout(() => { let n = 0, t0 = 0;
   (function probe(now){ if (document.hidden) return; if (!t0) t0 = now; n++;
     if (now - t0 < 4000) return requestAnimationFrame(probe);
-    if (n / ((now - t0) / 1000) < 40 && !S.lite){ LSset('bm-lite-asked', true); notify({ type: 'warn', icon: 'leaf', ms: 8000, title: 'Телефону тяжеловато', text: 'Включить экономный режим без анимаций?', action: { label: 'Да', fn: () => setLite(true) } }); }
+    if (n / ((now - t0) / 1000) < 40 && !S.lite){ LSset('bm-lite-asked', true); notify({ type: 'warn', icon: 'leaf', ms: 8000, title: $t("Телефону тяжеловато"), text: $t("Включить экономный режим без анимаций?"), action: { label: $t("Да"), fn: () => setLite(true) } }); }
   })(performance.now()); }, 2500);

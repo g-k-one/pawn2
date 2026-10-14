@@ -23,7 +23,7 @@ document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => {
   if (S.busy) return;
   const cap = tonCap();
   if (S.ton >= cap){ haptic('rigid'); $('bet').animate([{ translate: '-5px 0' }, { translate: '5px 0' }, { translate: '0 0' }], { duration: 200, iterations: 2 });
-    return notify(cap >= BET_MAX - giftSum() ? { type: 'warn', icon: 'coin', title: `Максимальная ставка ${BET_MAX} GRAM`, text: 'С учётом подарков в крафте' } : { type: 'warn', icon: 'coin', title: 'Это весь баланс', text: `На балансе ${fmt(S.balance)} GRAM` }); }
+    return notify(cap >= BET_MAX - giftSum() ? { type: 'warn', icon: 'coin', title: `${$t("Максимальная ставка {0} GRAM", BET_MAX)}`, text: $t("С учётом подарков в крафте") } : { type: 'warn', icon: 'coin', title: $t("Это весь баланс"), text: `${$t("На балансе {0} GRAM", fmt(S.balance))}` }); }
   S.ton = Math.min(cap, Math.round((S.ton + +b.dataset.add) * 100) / 100); haptic(); renderBet(true);
 });
 // после крафта: если ставка больше баланса или лимита — ставим всё, что можно
@@ -35,7 +35,7 @@ const SKINS = ['Neon', 'Cactus', 'Midnight', 'Sakura', 'Gold Rush', 'Frost', 'To
 function cardHTML(g, w, big){
   g.skin = g.skin || g.nft.model || pick(SKINS);
   const sy = g.nft.sym; if (sy) symLoad(sy);
-  const num = '#' + g.num.toLocaleString('ru-RU');
+  const num = '#' + g.num.toLocaleString(LOC);
   return `<div class="nc${big ? ' big' : ''}" style="--w:${w}px;--a:${g.a};--b:${g.b};--p:${g.p}"><div class="nc-t"><div class="nc-bg"></div><span class="nc-patw"><span class="nc-pat${sy && SYM_OK.has(sy) ? ' sym' : ''}"${sy ? ` data-sym="${sy}"${SYM_OK.has(sy) ? ` style="--symimg:${symImg(sy).replace(/"/g, '&quot;')}"` : ''}` : ''}></span></span>` +
     (big ? '' : `<span class="nc-num">${num}</span>`) + `<img class="nc-img" src="${g.nft.card || g.nft.src}" alt="${g.nft.name}"><span class="nc-gl"><i></i></span>` +
     (big ? `<span class="nc-cap"><b>${g.nft.name}</b><small>${g.skin} · ${num}</small></span>` : `<span class="nc-pr"><img src="assets/gem-small.svg" alt="">${fmt(g.value)}</span>`) + '</div></div>';
@@ -71,11 +71,11 @@ function hideDrawer(){
   openDrawer.classList.remove('open'); openDrawer.style.transform = ''; $('backdrop').classList.remove('on'); openDrawer = null;
   drawerStack = []; document.querySelectorAll('.dr-back').forEach(b => b.remove());
 }
-const DRAWER_NAMES = { menuDrawer: 'Меню', casesDrawer: 'Бонусы', histDrawer: 'История', pfiDrawer: 'Честность', walletDrawer: 'Кошелёк', pfDrawer: 'Проверка', dbgDrawer: 'Дебаг', giftsDrawer: 'Подарки', caseDrawer: 'Кейс' };
+const DRAWER_NAMES = { menuDrawer: $t("Меню"), casesDrawer: $t("Бонусы"), histDrawer: $t("История"), pfiDrawer: $t("Честность"), walletDrawer: $t("Кошелёк"), pfDrawer: $t("Проверка"), dbgDrawer: $t("Дебаг"), giftsDrawer: $t("Подарки"), caseDrawer: $t("Кейс") };
 // кнопка «‹ Назад» в шторке, открытой из другой шторки
 function setBack(dr){
   dr.querySelector('.dr-back')?.remove(); const prev = drawerStack[drawerStack.length - 1]; if (!prev) return;
-  const b = document.createElement('button'); b.className = 'dr-back'; b.textContent = '‹ ' + (DRAWER_NAMES[prev] || 'Назад');
+  const b = document.createElement('button'); b.className = 'dr-back'; b.textContent = '‹ ' + (DRAWER_NAMES[prev] || $t("Назад"));
   b.onclick = e => { e.stopPropagation(); drawerBack(); }; dr.querySelector('.dr-h').prepend(b);
 }
 function drawerBack(){ const id = drawerStack.pop(); if (!id) return hideDrawer(); swapDrawer(id, id === 'menuDrawer' ? renderMenu : id === 'casesDrawer' ? renderCases : null, true); }
@@ -127,9 +127,9 @@ document.querySelectorAll('.tabs.scroll').forEach(t => {
 
 /* ---------- шторка подарков: инвентарь, выбрать максимум 2 ---------- */
 function updSel(){
-  if (sellMode){ $('selCnt').textContent = INV.length + ' шт'; $('selHint').innerHTML = sellSel.size ? `На продажу <b>${sellSel.size}</b> · <b>${fmt(sellSum())} GRAM</b>` : 'Отметь подарки, которые хочешь продать'; return; }
-  $('selCnt').textContent = INV.length ? INV.length + ' шт' : '';
-  $('selHint').innerHTML = !INV.length ? '' : S.gifts.length ? `В крафте <b>${S.gifts.length} из ${MAX_GIFTS}</b> · тапни ещё раз, чтобы убрать` : `Выбери до ${MAX_GIFTS} подарков для крафта`;
+  if (sellMode){ $('selCnt').textContent = INV.length + (" " + $t("шт")); $('selHint').innerHTML = sellSel.size ? `${$t("На продажу")} <b>${sellSel.size}</b> · <b>${fmt(sellSum())} GRAM</b>` : $t("Отметь подарки, которые хочешь продать"); return; }
+  $('selCnt').textContent = INV.length ? INV.length + (" " + $t("шт")) : '';
+  $('selHint').innerHTML = !INV.length ? '' : S.gifts.length ? `${$t("В крафте")} <b>${S.gifts.length} ${$t("из")} ${MAX_GIFTS}</b> ${$t("· тапни ещё раз, чтобы убрать")}` : `${$t("Выбери до {0} подарков для крафта", MAX_GIFTS)}`;
 }
 // сетка карточек тянется на всю ширину: число колонок по ширине, карточки растут, пустых полей нет
 function fitCards(grid, minW, gap){
@@ -151,22 +151,22 @@ $('inv').addEventListener('click', e => {
   const g = INV.find(x => x.id === c.dataset.id);
   if (sellMode){ sellSel.has(g.id) ? sellSel.delete(g.id) : sellSel.add(g.id); haptic(); c.classList.toggle('sel', sellSel.has(g.id)); updSel(); giftsFoot(); return; }
   if (S.gifts.includes(g)) S.gifts = S.gifts.filter(x => x !== g);
-  else if (S.gifts.length >= MAX_GIFTS){ c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); notify({ type: 'warn', icon: 'gift', title: 'Максимум 2 подарка', text: 'Убери один, чтобы выбрать другой' }); haptic('rigid'); return; }
+  else if (S.gifts.length >= MAX_GIFTS){ c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); notify({ type: 'warn', icon: 'gift', title: $t("Максимум 2 подарка"), text: $t("Убери один, чтобы выбрать другой") }); haptic('rigid'); return; }
   else if (giftSum() + g.value > BET_MAX){ c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); haptic('rigid');
-    return notify({ type: 'warn', icon: 'gift', title: `Максимальная ставка ${BET_MAX} GRAM`, text: 'С этим подарком крафт выйдет дороже лимита' }); }
-  else { S.gifts = [...S.gifts, g]; if (S.ton > tonCap()){ S.ton = tonCap(); notify({ type: 'info', icon: 'coin', title: 'GRAM в ставке уменьшены', text: `Вся ставка — не больше ${BET_MAX} GRAM` }); } }
+    return notify({ type: 'warn', icon: 'gift', title: `${$t("Максимальная ставка {0} GRAM", BET_MAX)}`, text: $t("С этим подарком крафт выйдет дороже лимита") }); }
+  else { S.gifts = [...S.gifts, g]; if (S.ton > tonCap()){ S.ton = tonCap(); notify({ type: 'info', icon: 'coin', title: $t("GRAM в ставке уменьшены"), text: `${$t("Вся ставка — не больше {0} GRAM", BET_MAX)}` }); } }
   haptic(); c.classList.toggle('sel', S.gifts.includes(g)); updSel();
   renderBet('gift');
 });
-$('giftBtn').onclick = () => { if (S.busy) return; sellMode = false; sellSel.clear(); giftsFoot(); if (S.demo){ haptic('rigid'); notify({ type: 'demo', icon: 'gift', title: 'Подарки — только на GRAM', text: 'Выключи демо в меню, чтобы крафтить из NFT' }); return; } renderInv(); showDrawer('giftsDrawer'); };
+$('giftBtn').onclick = () => { if (S.busy) return; sellMode = false; sellSel.clear(); giftsFoot(); if (S.demo){ haptic('rigid'); notify({ type: 'demo', icon: 'gift', title: $t("Подарки — только на GRAM"), text: $t("Выключи демо в меню, чтобы крафтить из NFT") }); return; } renderInv(); showDrawer('giftsDrawer'); };
 /* продажа подарков в любой момент: режим продажи прямо в шторке подарков */
 let sellMode = false; const sellSel = new Set();
 const sellSum = () => INV.filter(g => sellSel.has(g.id)).reduce((a, g) => a + g.value, 0);
 function giftsFoot(){
   const f = $('giftsF'); f.className = 'dr-f ' + (sellMode ? 'two' : 'three');
   f.innerHTML = sellMode
-    ? `<button class="btn-ghost" id="sellCancel">Отмена</button><button class="btn-main${sellSel.size ? '' : ' off'}" id="sellGo">${sellSel.size ? `Продать за ${fmt(sellSum())} GRAM` : 'Выбери подарки'}</button>`
-    : `<button class="btn-ghost" id="giftsSell"${INV.length ? '' : ' disabled'}>Продать</button><button class="btn-ghost" id="giftsOut">Вывести</button><button class="btn-main" id="giftsDone">Готово</button>`;
+    ? `<button class="btn-ghost" id="sellCancel">${$t("Отмена")}</button><button class="btn-main${sellSel.size ? '' : ' off'}" id="sellGo">${sellSel.size ? `${$t("Продать за {0} GRAM", fmt(sellSum()))}` : $t("Выбери подарки")}</button>`
+    : `<button class="btn-ghost" id="giftsSell"${INV.length ? '' : ' disabled'}>${$t("Продать")}</button><button class="btn-ghost" id="giftsOut">${$t("Вывести")}</button><button class="btn-main" id="giftsDone">${$t("Готово")}</button>`;
 }
 $('giftsF').addEventListener('click', e => {
   const id = e.target.closest('button')?.id; if (!id) return;
@@ -179,8 +179,8 @@ $('giftsF').addEventListener('click', e => {
     const list = INV.filter(g => sellSel.has(g.id)), sum = Math.round(sellSum() * 100) / 100;
     INV = INV.filter(g => !sellSel.has(g.id)); S.gifts = S.gifts.filter(g => INV.includes(g));
     setBalance(S.balance + sum); haptic('medium'); Sfx.coin();
-    S.hist.wallet.unshift({ type: 'sell', t: Date.now(), amount: sum, name: list.length > 1 ? `${list.length} NFT` : list[0].nft.name, img: list[0].nft.src, bg: [list[0].a, list[0].b], method: 'продажа' });
-    notify({ type: 'ok', img: list[0].nft.src, color: '#12D53D', title: `Продано: +${fmt(sum)} GRAM`, text: list.length > 1 ? `${list.length} подарка` : list[0].nft.name });
+    S.hist.wallet.unshift({ type: 'sell', t: Date.now(), amount: sum, name: list.length > 1 ? `${list.length} NFT` : list[0].nft.name, img: list[0].nft.src, bg: [list[0].a, list[0].b], method: $t("продажа") });
+    notify({ type: 'ok', img: list[0].nft.src, color: '#12D53D', title: `${$t("Продано: +{0} GRAM", fmt(sum))}`, text: list.length > 1 ? `${list.length} ${$t("подарка")}` : list[0].nft.name });
     sellMode = false; sellSel.clear(); renderInv(); giftsFoot(); renderBet();
   }
 });
@@ -206,24 +206,24 @@ function renderMenu(){
   const sw = (id, c, ic, t, sub, on) => `<button class="mrow" id="${id}" style="--c:${c}"><i>${svg(ic)}</i><span class="mt">${t}${sub ? `<small>${sub}</small>` : ''}</span><span class="switch${on ? ' on' : ''}"></span></button>`;
   const row = (ic, t, c, e, extra = '') => `<button class="mrow" style="--c:${c}"${extra}><i>${svg(ic)}</i>${t}<em>${e}</em></button>`;
   $('menuBody').innerHTML =
-    `<button class="mprof menu-top"><img src="assets/avatar.webp" alt=""><span><b>GK</b><small>${S.demo ? '∞ фантиков' : fmt(S.balance) + ' GRAM'}</small></span>${S.demo ? '' : '<em>Пополнить</em>'}</button>` +
+    `<button class="mprof menu-top"><img src="assets/avatar.webp" alt=""><span><b>GK</b><small>${S.demo ? $t("∞ фантиков") : fmt(S.balance) + ' GRAM'}</small></span>${S.demo ? '' : `<em>${$t("Пополнить")}</em>`}</button>` +
     rankBar(S.xp) +
-    `<button class="mbonus" data-go="cases"><span class="mb-t"><b>Бонусы</b><small>кейсы, задания, супер дроп и друзья</small><span class="mb-chips"><span>Задания ${tasksDone()}/${TASKS.length}</span>${dailyDone() ? '<span class="ok">Кейс готов</span>' : ''}</span></span><span class="mb-art">${caseArt(caseById('satoshi'))}${caseArt(caseById('durov'))}</span></button>` +
-    `<div class="mban2"><button class="mb2 hist" data-go="hist"><span class="mb2-t"><b>История</b><small>игры, кошелёк и бонусы</small></span><span class="mb2-art">${histFan()}</span></button>` +
-    `<button class="mb2 pf" data-go="pfi"><span class="mb2-t"><b>Честность</b><small>проверь любой результат</small></span><span class="mb2-art"><i class="mb2-sh">${svg(IC.shield)}</i><em>00000</em></span></button></div>` +
-    `<div class="mgrp-t">Игра</div><div class="mgrp">` +
-      sw('fastRow', '#FFB835', NICON.bolt, 'Быстрый крафт', 'сразу число и дроп', S.fast) +
-      sw('liteRow', '#12D53D', NICON.leaf, 'Экономный режим', 'без анимаций — для слабых телефонов', S.lite) +
-      sw('demoRow', '#AE3FC4', NICON.candy, 'Демо-режим', 'фантики вместо GRAM', S.demo) +
-      sw('vibroRow', '#30A5FF', NICON.vibro, 'Вибрация', '', S.vibro) +
-      sw('soundRow', '#F57A37', NICON.sound, 'Звук', '', S.sound) + `</div>` +
-    `<div class="mgrp-t">Другое</div><div class="mgrp">` +
-      row(IC.users, 'Рефералка', '#EB57B0', `${REF.friends.length} друзей`, ' data-go="refs"') +
-      `<div class="mrow" style="--c:#AE3FC4"><i>${svg(IC.globe)}</i>Язык<span class="seg">${[['ru', 'RU'], ['en', 'EN']].map(([k, t]) => `<button data-lang="${k}"${S.lang === k ? ' class="on"' : ''}>${t}</button>`).join('')}</span></div>` +
-      row(IC.chat, 'Поддержка', '#12D53D', '', ' data-go="support"') +
-      `<button class="mrow" id="dbgRow" style="--c:#EB57B0"><i>${svg(NICON.bug)}</i>Дебаг<em>${dbgLabel()}</em></button></div>` +
-    `<div class="wwarn rg"><i>18+</i><span><b>Играй ответственно</b><small>Ставь только то, что готов потерять, и делай перерывы. Если игра перестала быть развлечением — остановись.</small></span></div>` +
-    `<p class="credit">Картинки подарков — powered by <a href="https://t.me/GiftChanges" target="_blank" rel="noopener">@GiftChanges</a> (api.changes.tg)</p>`;
+    `<button class="mbonus" data-go="cases"><span class="mb-t"><b>${$t("Бонусы")}</b><small>${$t("кейсы, задания, супер дроп и друзья")}</small><span class="mb-chips"><span>${$t("Задания {0}/", tasksDone())}${TASKS.length}</span>${dailyDone() ? `<span class="ok">${$t("Кейс готов")}</span>` : ''}</span></span><span class="mb-art">${caseArt(caseById('satoshi'))}${caseArt(caseById('durov'))}</span></button>` +
+    `<div class="mban2"><button class="mb2 hist" data-go="hist"><span class="mb2-t"><b>${$t("История")}</b><small>${$t("игры, кошелёк и бонусы")}</small></span><span class="mb2-art">${histFan()}</span></button>` +
+    `<button class="mb2 pf" data-go="pfi"><span class="mb2-t"><b>${$t("Честность")}</b><small>${$t("проверь любой результат")}</small></span><span class="mb2-art"><i class="mb2-sh">${svg(IC.shield)}</i><em>00000</em></span></button></div>` +
+    `<div class="mgrp-t">${$t("Игра")}</div><div class="mgrp">` +
+      sw('fastRow', '#FFB835', NICON.bolt, $t("Быстрый крафт"), $t("сразу число и дроп"), S.fast) +
+      sw('liteRow', '#12D53D', NICON.leaf, $t("Экономный режим"), $t("без анимаций — для слабых телефонов"), S.lite) +
+      sw('demoRow', '#AE3FC4', NICON.candy, $t("Демо-режим"), $t("фантики вместо GRAM"), S.demo) +
+      sw('vibroRow', '#30A5FF', NICON.vibro, $t("Вибрация"), '', S.vibro) +
+      sw('soundRow', '#F57A37', NICON.sound, $t("Звук"), '', S.sound) + `</div>` +
+    `<div class="mgrp-t">${$t("Другое")}</div><div class="mgrp">` +
+      row(IC.users, $t("Рефералка"), '#EB57B0', `${REF.friends.length} ${$t("друзей")}`, ' data-go="refs"') +
+      `<div class="mrow" style="--c:#AE3FC4"><i>${svg(IC.globe)}</i>${$t("Язык")}<span class="seg">${[['ru', 'RU'], ['en', 'EN']].map(([k, t]) => `<button data-lang="${k}"${S.lang === k ? ' class="on"' : ''}>${t}</button>`).join('')}</span></div>` +
+      row(IC.chat, $t("Поддержка"), '#12D53D', '', ' data-go="support"') +
+      `<button class="mrow" id="dbgRow" style="--c:#EB57B0"><i>${svg(NICON.bug)}</i>${$t("Дебаг")}<em>${dbgLabel()}</em></button></div>` +
+    `<div class="wwarn rg"><i>18+</i><span><b>${$t("Играй ответственно")}</b><small>${$t("Ставь только то, что готов потерять, и делай перерывы. Если игра перестала быть развлечением — остановись.")}</small></span></div>` +
+    `<p class="credit">${$t("Картинки подарков — powered by")} <a href="https://t.me/GiftChanges" target="_blank" rel="noopener">@GiftChanges</a> (api.changes.tg)</p>`;
 }
 $('menuBtn').onclick = () => { renderMenu(); showDrawer('menuDrawer'); };
 $('menuBody').addEventListener('click', e => {
@@ -231,9 +231,8 @@ $('menuBody').addEventListener('click', e => {
   const go = e.target.closest('[data-go]')?.dataset.go;
   if (go){ haptic(); if (go === 'cases') openCases('tasks'); else if (go === 'top') openCases('top'); else if (go === 'support') tgOpen(SUPPORT); else if (go === 'refs') openCases('refs'); else if (go === 'hist') openHistory(); else if (go === 'pfi') swapDrawer('pfiDrawer', renderPFInfo); return; }
   const lg = e.target.closest('[data-lang]');
-  if (lg){ if (S.lang === lg.dataset.lang) return; S.lang = lg.dataset.lang; try { localStorage.setItem('bm-lang', S.lang); } catch(_){} haptic();
-    lg.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === lg));
-    I18N.set(S.lang); return; }
+  // язык: запоминаем и перезапускаем — все тексты строятся заново на выбранном языке
+  if (lg){ if (S.lang === lg.dataset.lang) return; haptic(); try { localStorage.setItem('bm-lang', lg.dataset.lang); } catch(_){} location.reload(); return; }
   const r = e.target.closest('.mrow'); if (!r || !r.matches('button')) return;
   if (r.id === 'fastRow') return toggleFast();
   if (r.id === 'vibroRow') return toggleVibro();
@@ -242,6 +241,6 @@ $('menuBody').addEventListener('click', e => {
   if (r.id === 'dbgRow'){ swapDrawer('dbgDrawer', renderDbg); return; }
   if (r.id === 'demoRow'){ if (S.busy) return; return setDemo(!S.demo); }
   haptic();
-  notify({ type: 'info', icon: 'info', title: r.childNodes[1].textContent.trim(), text: 'Скоро будет' });
+  notify({ type: 'info', icon: 'info', title: r.childNodes[1].textContent.trim(), text: $t("Скоро будет") });
 });
 

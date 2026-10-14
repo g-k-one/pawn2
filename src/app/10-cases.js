@@ -2,19 +2,19 @@
    КЕЙСЫ: платные (Дуров, Сатоши) и бесплатные (Бист — за задания дня, Маск — за неделю)
    ========================================================= */
 const CASES = [
-  { id: 'durov', name: 'Кейс Павла Дурова', short: 'Павел Дуров', img: 'assets/chest-durov.webp', who: 'assets/who-durov.webp', c: '#30A5FF', price: 1, items: [
+  { id: 'durov', name: $t("Кейс Павла Дурова"), short: $t("Павел Дуров"), img: 'assets/chest-durov.webp', who: 'assets/who-durov.webp', c: '#30A5FF', price: 1, items: [
     { t: 'nft', rare: 1, ch: 1.48 }, { t: 'nft', ch: 5.69 }, { t: 'gram', v: 1.5, ch: 13.6 }, { t: 'gram', v: .7, ch: 27.2 }, { t: 'gram', v: .3, ch: 33.4 }, { t: 'xp', v: 25, ch: 18.63 }] },
-  { id: 'satoshi', name: 'Кейс Сатоши Накамото', short: 'Сатоши', img: 'assets/chest-satoshi.webp', who: 'assets/who-satoshi.webp', c: '#FFB835', price: 2.5, items: [
+  { id: 'satoshi', name: $t("Кейс Сатоши Накамото"), short: $t("Сатоши"), img: 'assets/chest-satoshi.webp', who: 'assets/who-satoshi.webp', c: '#FFB835', price: 2.5, items: [
     { t: 'nft', rare: 1, ch: 6.7 }, { t: 'nft', ch: 18.8 }, { t: 'gram', v: 25, ch: 2.28 }, { t: 'xp', v: 150, ch: 9.4 }, { t: 'xp', v: 100, ch: 23.1 }, { t: 'xp', v: 50, ch: 39.72 }] },
-  { id: 'beast', name: 'Кейс Мистера Биста', short: 'Мистер Бист', img: 'assets/chest-beast.webp', who: 'assets/who-beast.webp', c: '#EB57B0', price: 0, need: 'daily', items: [
+  { id: 'beast', name: $t("Кейс Мистера Биста"), short: $t("Мистер Бист"), img: 'assets/chest-beast.webp', who: 'assets/who-beast.webp', c: '#EB57B0', price: 0, need: 'daily', items: [
     { t: 'nft', ch: 1 }, { t: 'gram', v: .5, ch: 4 }, { t: 'gram', v: .1, ch: 25 }, { t: 'gram', v: .05, ch: 36 }, { t: 'xp', v: 50, ch: 9 }, { t: 'xp', v: 25, ch: 25 }] },
-  { id: 'musk', name: 'Кейс Илона Маска', short: 'Илон Маск', img: 'assets/chest-musk.webp', who: 'assets/who-musk.webp', c: '#FF4C35', price: 0, need: 'weekly', items: [
+  { id: 'musk', name: $t("Кейс Илона Маска"), short: $t("Илон Маск"), img: 'assets/chest-musk.webp', who: 'assets/who-musk.webp', c: '#FF4C35', price: 0, need: 'weekly', items: [
     { t: 'nft', rare: 1, ch: .5 }, { t: 'nft', ch: 2.5 }, { t: 'gram', v: 1, ch: 25 }, { t: 'gram', v: .5, ch: 35 }, { t: 'xp', v: 250, ch: 12 }, { t: 'xp', v: 100, ch: 25 }] },
 ];
 CASES.forEach(c => { c.items.reduce((from, it) => { it.from = from; it.to = Math.min(TICKETS - 1, from + Math.round(it.ch / 100 * TICKETS) - 1); return it.to + 1; }, 0); c.items[c.items.length - 1].to = TICKETS - 1; });
 const caseById = id => CASES.find(c => c.id === id) || CASES[0];
 const caseArt = (c, cls = '') => `<span class="cart ${cls}" style="--c:${c.c}"><img class="chest" src="${c.img}" alt=""><img class="who" src="${c.who}" alt=""></span>`;
-const itemName = it => it.t === 'nft' ? (it.rare ? 'Редкий NFT' : 'Обычный NFT') : it.t === 'gram' ? `${fmt(it.v)} GRAM` : `+${it.v} XP`;
+const itemName = it => it.t === 'nft' ? (it.rare ? $t("Редкий NFT") : $t("Обычный NFT")) : it.t === 'gram' ? `${fmt(it.v)} GRAM` : `+${it.v} XP`;
 const itemColor = it => it.t === 'nft' ? (it.rare ? '#EB57B0' : '#00D9FF') : it.t === 'gram' ? '#30A5FF' : '#F57A37';
 /* NFT в кейсах: редкий — случайный подарок с релеера ценой 11–14 GRAM, обычный — по флору (сейчас 3.5 GRAM). Выдаётся сразу */
 const NFT_FLOOR = 3.5, RARE_FROM = 11, RARE_TO = 14;
@@ -29,7 +29,7 @@ const GIFT_Q = '';
 function tileHTML(it, foot, g){
   const pool = it.rare ? RARE_POOL() : FLOOR_POOL();
   const img = it.t === 'nft' ? `<img class="tnft" data-pool="${it.rare ? 'rare' : 'floor'}" src="${g ? g.nft.src : pick(pool).src}" alt="">` : `<img src="${itemImg(it)}" alt="">`;
-  return `<div class="ct${it.rare ? ' hi' : ''} is${it.t}${g ? ' fixed' : ''}" style="--c:${itemColor(it)}"><b>${it.t === 'nft' ? (it.rare ? 'Редкий' : 'Обычный') : itemName(it)}</b>${img}<small>${foot}</small>${it.rare ? '<span class="shine"></span>' : ''}</div>`;
+  return `<div class="ct${it.rare ? ' hi' : ''} is${it.t}${g ? ' fixed' : ''}" style="--c:${itemColor(it)}"><b>${it.t === 'nft' ? (it.rare ? $t("Редкий") : $t("Обычный")) : itemName(it)}</b>${img}<small>${foot}</small>${it.rare ? '<span class="shine"></span>' : ''}</div>`;
 }
 // картинка NFT на плитках сама перелистывается — видно, что подарок будет случайный из диапазона
 setInterval(() => {

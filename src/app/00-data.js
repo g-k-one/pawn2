@@ -1,12 +1,26 @@
 /* =========================================================
    ДАННЫЕ
    ========================================================= */
+/* =========================================================
+   ЯЗЫК: $t('русский шаблон {0}', значение) → строка на выбранном языке.
+   Словарь src/i18n/en.json вшивается при сборке; нет перевода — остаётся русский. Смена языка — перезапуск
+   ========================================================= */
+const LANG = (() => { try { return localStorage.getItem('bm-lang') === 'en' ? 'en' : 'ru'; } catch(_){ return 'ru'; } })();
+const EN = __I18N_EN__;
+const LOC = LANG === 'en' ? 'en-US' : 'ru-RU';                // числа и даты — по языку
+function $t(s, ...a){ const r = LANG === 'en' && EN[s] || s; return a.length ? r.replace(/\{(\d+)\}/g, (m, i) => a[i] ?? '') : r; }
+document.documentElement.lang = LANG;
+// Статика из index.html: data-t — первый текстовый узел, aria-label — как есть
+if (LANG === 'en'){
+  for (const el of document.querySelectorAll('[data-t]')){ const n = [...el.childNodes].find(n => n.nodeType === 3 && n.data.trim()); if (n) n.data = n.data.replace(n.data.trim(), $t(n.data.trim())); }
+  for (const el of document.querySelectorAll('[aria-label]')) el.setAttribute('aria-label', $t(el.getAttribute('aria-label')));
+}
 const TIERS = [
-  { name: 'База', key: 'base', zone: 'base', c: '#ffb835', a: '#ffbd4a', b: '#c06a00', chance: 56.563, min: .4,  max: .8,  glow: ['#ffb835', '#ff8a1e', '#d6d33a', '#ffe08a'] },
-  { name: 'Удача', key: 'luck', zone: 'luck', c: '#12d53d', a: '#4cff30', b: '#00a07a', chance: 27,     min: .8,  max: 1.2, glow: ['#12d53d', '#11b89a', '#9cc23a', '#4fe39a'] },
-  { name: 'Мега', key: 'mega_low', zone: 'mega', c: '#00d9ff', a: '#2bd8ff', b: '#4a6bff', chance: 12.99,  min: 1.5, max: 2,   glow: ['#00d9ff', '#2f7bff', '#16d3b0', '#8ff0ff'] },
-  { name: 'Ультра', key: 'mega_high', zone: 'mega', c: '#eb57b0', a: '#ff6ae0', b: '#c9306e', chance: 3.247,  min: 2,   max: 3.5, glow: ['#eb57b0', '#a24bff', '#ff4f7a', '#ff9ad8'] },
-  { name: 'Джекпот', key: 'jackpot', zone: 'jackpot', c: '#ff4c35', a: '#ff4c4c', b: '#a0103e', chance: 0.2,    min: 10,  max: 14,  glow: ['#ff4c35', '#ff9a1e', '#e5246b', '#ffb08a'] },
+  { name: $t("База"), key: 'base', zone: 'base', c: '#ffb835', a: '#ffbd4a', b: '#c06a00', chance: 56.563, min: .4,  max: .8,  glow: ['#ffb835', '#ff8a1e', '#d6d33a', '#ffe08a'] },
+  { name: $t("Удача"), key: 'luck', zone: 'luck', c: '#12d53d', a: '#4cff30', b: '#00a07a', chance: 27,     min: .8,  max: 1.2, glow: ['#12d53d', '#11b89a', '#9cc23a', '#4fe39a'] },
+  { name: $t("Мега"), key: 'mega_low', zone: 'mega', c: '#00d9ff', a: '#2bd8ff', b: '#4a6bff', chance: 12.99,  min: 1.5, max: 2,   glow: ['#00d9ff', '#2f7bff', '#16d3b0', '#8ff0ff'] },
+  { name: $t("Ультра"), key: 'mega_high', zone: 'mega', c: '#eb57b0', a: '#ff6ae0', b: '#c9306e', chance: 3.247,  min: 2,   max: 3.5, glow: ['#eb57b0', '#a24bff', '#ff4f7a', '#ff9ad8'] },
+  { name: $t("Джекпот"), key: 'jackpot', zone: 'jackpot', c: '#ff4c35', a: '#ff4c4c', b: '#a0103e', chance: 0.2,    min: 10,  max: 14,  glow: ['#ff4c35', '#ff9a1e', '#e5246b', '#ffb08a'] },
 ];
 /* гифты, которые можно положить в крафт (заглушки из макета): добавляются по одному кнопкой «+», убираются тапом по карточке */
 const MAX_GIFTS = 2;

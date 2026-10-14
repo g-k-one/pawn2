@@ -3,58 +3,58 @@
    ========================================================= */
 let casesTab = 'tasks';
 function openCases(tab){ if (tab) casesTab = tab; swapDrawer('casesDrawer', renderCases); }
-const caseState = c => !c.need ? { ok: true } : c.need === 'daily' ? { ok: S.stock.beast > 0, n: S.stock.beast, txt: `3 задания дня · ${tasksDone()} из ${TASKS.length}`, k: tasksDone() / TASKS.length }
-  : { ok: S.stock.musk > 0, n: S.stock.musk, txt: `7 дней заданий · ${dayIdx() - S.week.missed.filter(d => d < dayIdx()).length} из 7`, k: (dayIdx() - S.week.missed.length) / 7 };
+const caseState = c => !c.need ? { ok: true } : c.need === 'daily' ? { ok: S.stock.beast > 0, n: S.stock.beast, txt: `${$t("3 задания дня · {0} из", tasksDone())} ${TASKS.length}`, k: tasksDone() / TASKS.length }
+  : { ok: S.stock.musk > 0, n: S.stock.musk, txt: `${$t("7 дней заданий · {0} из 7", dayIdx() - S.week.missed.filter(d => d < dayIdx()).length)}`, k: (dayIdx() - S.week.missed.length) / 7 };
 function caseCard(c){
   const st = caseState(c), free = !c.price;
   return `<div class="bcase${free ? ' free' : ''}" style="--c:${c.c}" data-info="${c.id}">${st.n > 1 ? `<em class="stk">×${st.n}</em>` : ''}${caseArt(c)}<b>${c.short}</b>` +
-    (free ? `<small>${st.txt}</small><i class="prog"><b style="width:${Math.round(st.k * 100)}%"></b></i>` : `<small>NFT до ${RARE_TO} GRAM</small>`) +
-    `<button class="cbuy${free && !st.ok ? ' locked' : ''}" data-open="${c.id}">${free ? (st.ok ? 'Открыть' : 'Закрыт') : `<img src="assets/gem-small.svg" alt="">${fmt(c.price)}`}</button></div>`;
+    (free ? `<small>${st.txt}</small><i class="prog"><b style="width:${Math.round(st.k * 100)}%"></b></i>` : `<small>${$t("NFT до {0} GRAM", RARE_TO)}</small>`) +
+    `<button class="cbuy${free && !st.ok ? ' locked' : ''}" data-open="${c.id}">${free ? (st.ok ? $t("Открыть") : $t("Закрыт")) : `<img src="assets/gem-small.svg" alt="">${fmt(c.price)}`}</button></div>`;
 }
 const achRow = ([id, t, rw, ok, act, prog]) => {
   const done = !!S.ach.got[id], pr = !done && prog ? prog() : null;
   return `<div class="arow${done ? ' ok' : ''}"><i>${done ? svg(NICON.ok) : ''}</i><span>${pr ? `<small>${xpFmt(pr[0])} / ${xpFmt(pr[1])}</small>` : ''}<b>${t.replace('@pawnd', '<span class="acc">@pawnd</span>')}</b>` +
-    `${done ? '' : `<button class="chk-btn" data-claim="${id}">Проверить</button>`}</span><em class="${rw.g != null ? 'g' : 'x'}">${rewHTML(rw)}</em></div>`;
+    `${done ? '' : `<button class="chk-btn" data-claim="${id}">${$t("Проверить")}</button>`}</span><em class="${rw.g != null ? 'g' : 'x'}">${rewHTML(rw)}</em></div>`;
 };
 function renderCases(){
-  $('casesTabs').innerHTML = [['tasks', 'Задания'], ['cases', 'Кейсы'], ['super', 'Супер дроп'], ['refs', 'Рефералка'], ['top', 'Топ']].map(([k, t]) => `<button class="tab${k === casesTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
+  $('casesTabs').innerHTML = [['tasks', $t("Задания")], ['cases', $t("Кейсы")], ['super', $t("Супер дроп")], ['refs', $t("Рефералка")], ['top', $t("Топ")]].map(([k, t]) => `<button class="tab${k === casesTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
   $('casesTabs').querySelector('.on')?.scrollIntoView({ inline: 'center', block: 'nearest' });
   const b = $('casesBody');
   if (casesTab === 'cases'){
     b.innerHTML = `<div class="bgrid">${CASES.map(caseCard).join('')}</div>` +
-      `<p class="bnote">Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить и открывать по одному, когда захочешь.</p>`;
+      `<p class="bnote">${$t("Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить и открывать по одному, когда захочешь.")}</p>`;
   } else if (casesTab === 'tasks'){
     const di = dayIdx(), dd = dailyDone(), td = tasksDone(), beast = caseById('beast'), musk = caseById('musk');
-    b.innerHTML = `<div class="sect"><div class="sect-h hero" style="--c:${beast.c}"><span><b>Задания дня</b><small>Выполни все 3 — откроется кейс Мистера Биста</small><em class="cnt">${td} из ${TASKS.length}</em></span>${caseArt(beast)}</div>` +
+    b.innerHTML = `<div class="sect"><div class="sect-h hero" style="--c:${beast.c}"><span><b>${$t("Задания дня")}</b><small>${$t("Выполни все 3 — откроется кейс Мистера Биста")}</small><em class="cnt">${td} ${$t("из")} ${TASKS.length}</em></span>${caseArt(beast)}</div>` +
       TASKS.map(([k, t, n, rw]) => { const v = Math.min(n, S.tasks[k]), ok = v >= n;
         return `<div class="arow${ok ? ' ok' : ''}"><i>${ok ? svg(NICON.ok) : ''}</i><span>${n > 1 && !ok ? `<small>${fmt(v)} / ${n}</small>` : ''}<b>${t}</b></span><em class="${rw.g != null ? 'g' : 'x'}">${rewHTML(rw)}</em></div>`; }).join('') +
-      `<button class="btn-main${S.stock.beast ? '' : ' off'}" data-open="beast">${S.stock.beast ? `Открыть кейс Биста${S.stock.beast > 1 ? ' ×' + S.stock.beast : ''}` : dd ? 'Кейс за сегодня уже открыт' : `Ещё ${TASKS.length - td} ${TASKS.length - td === 1 ? 'задание' : 'задания'} до кейса`}</button></div>` +
-      `<div class="sect"><div class="sect-h hero" style="--c:${musk.c}"><span><b>Неделя</b><small>Задания каждый день — откроется кейс Илона Маска</small><em class="cnt">${di - S.week.missed.filter(d => d < di).length} из 7 дней</em></span>${caseArt(musk)}</div>` +
+      `<button class="btn-main${S.stock.beast ? '' : ' off'}" data-open="beast">${S.stock.beast ? `${$t("Открыть кейс Биста")}${S.stock.beast > 1 ? ' ×' + S.stock.beast : ''}` : dd ? $t("Кейс за сегодня уже открыт") : `${$t("Ещё {0} {1} до кейса", TASKS.length - td, TASKS.length - td === 1 ? $t("задание") : $t("задания"))}`}</button></div>` +
+      `<div class="sect"><div class="sect-h hero" style="--c:${musk.c}"><span><b>${$t("Неделя")}</b><small>${$t("Задания каждый день — откроется кейс Илона Маска")}</small><em class="cnt">${di - S.week.missed.filter(d => d < di).length} ${$t("из 7 дней")}</em></span>${caseArt(musk)}</div>` +
       `<div class="days">${DAYS.map((d, i) => { const miss = S.week.missed.includes(i) && i < di, ok = (i < di && !miss) || (i === di && dd);
         return `<span class="${miss ? 'miss' : ok ? 'ok' : i === di ? 'now' : ''}">${miss ? svg('<path d="M7 7l10 10M17 7L7 17"/>') : ok ? svg(NICON.ok) : d}</span>`; }).join('')}</div>` +
-      (S.week.missed.length ? `<button class="btn-main" data-act="restore">Восстановить 1 день · ${S.week.restorePrice} GRAM</button>` : `<button class="btn-main${S.stock.musk ? '' : ' off'}" data-open="musk">Открыть кейс Маска${S.stock.musk > 1 ? ' ×' + S.stock.musk : ''}</button>`) + `</div>` +
-      `<div class="sect"><div class="sect-h"><span><b>Достижения</b><small>засчитываются по кнопке «Проверить»</small></span><em class="cnt">${ACH.filter(a => S.ach.got[a[0]]).length}/${ACH.length}</em></div>` + ACH.map(achRow).join('') + `</div>` + rulesHTML(RULES);
+      (S.week.missed.length ? `<button class="btn-main" data-act="restore">${$t("Восстановить 1 день · {0} GRAM", S.week.restorePrice)}</button>` : `<button class="btn-main${S.stock.musk ? '' : ' off'}" data-open="musk">${$t("Открыть кейс Маска")}${S.stock.musk > 1 ? ' ×' + S.stock.musk : ''}</button>`) + `</div>` +
+      `<div class="sect"><div class="sect-h"><span><b>${$t("Достижения")}</b><small>${$t("засчитываются по кнопке «Проверить»")}</small></span><em class="cnt">${ACH.filter(a => S.ach.got[a[0]]).length}/${ACH.length}</em></div>` + ACH.map(achRow).join('') + `</div>` + rulesHTML(RULES);
   } else if (casesTab === 'super'){
     const sd = SUPER.nft;
     b.innerHTML = `<div class="sdhero"><img class="sdlogo" src="assets/superdrop-logo.webp" alt="Super Drop"><div class="sdcard" id="sdCard">${cardHTML(sd, 236, true)}</div></div>` +
-      `<div class="sdtarget"><small>Загаданный тикет</small><div class="sddig">${superDigits()}</div><p>Выбей его первым в крафте — и NFT твой</p></div>` +
-      `<div class="stats"><div><small>Приз</small><b>${fmt(sd.value)} GRAM</b></div><div><small>Мин. ставка</small><b>${SUPER.min} GRAM</b></div><div><small>Попыток сегодня</small><b>${SUPER.tries.toLocaleString('ru-RU')}</b></div><div><small>Шанс за крафт</small><b>1 из 100 000</b></div></div>` +
-      `<div class="sect"><div class="sect-h"><span><b>Прошлые супер дропы</b></span></div>${SUPER.last.map(([n, g, t]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${t}</small></span><span class="tb2">${g}</span></div>`).join('')}</div>` +
-      rulesHTML(['Super Drop забирает тот, кто первым выбьет загаданный тикет.', 'Учитываются крафты со ставкой от 0.5 GRAM.', 'Обычный выигрыш крафта при этом тоже зачисляется на баланс.', 'После выпадения загадывается новый тикет и новый NFT.']);
+      `<div class="sdtarget"><small>${$t("Загаданный тикет")}</small><div class="sddig">${superDigits()}</div><p>${$t("Выбей его первым в крафте — и NFT твой")}</p></div>` +
+      `<div class="stats"><div><small>${$t("Приз")}</small><b>${fmt(sd.value)} GRAM</b></div><div><small>${$t("Мин. ставка")}</small><b>${SUPER.min} GRAM</b></div><div><small>${$t("Попыток сегодня")}</small><b>${SUPER.tries.toLocaleString(LOC)}</b></div><div><small>${$t("Шанс за крафт")}</small><b>${$t("1 из 100 000")}</b></div></div>` +
+      `<div class="sect"><div class="sect-h"><span><b>${$t("Прошлые супер дропы")}</b></span></div>${SUPER.last.map(([n, g, t]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${t}</small></span><span class="tb2">${g}</span></div>`).join('')}</div>` +
+      rulesHTML([$t("Super Drop забирает тот, кто первым выбьет загаданный тикет."), $t("Учитываются крафты со ставкой от 0.5 GRAM."), $t("Обычный выигрыш крафта при этом тоже зачисляется на баланс."), $t("После выпадения загадывается новый тикет и новый NFT.")]);
     tiltCard($('sdCard'), 1.2); upgradeImg($('sdCard').querySelector('.nc-img'), sd.nft); Tilt.grab($('sdCard').querySelector('.nc-t'), () => openNft(sd));   // крутить пальцем, тап — в Telegram
   } else if (casesTab === 'refs'){
-    b.innerHTML = `<div class="refpct"><div><b>10%</b><small>от первого депозита</small></div><div><b>5%</b><small>от активности</small></div></div>` +
-      `<a class="banner amb" data-act="amb"><span><b>Программа для амбассадоров</b><small>больше процент для блогеров и комьюнити</small></span><img src="assets/referrals.webp" alt=""></a>` +
-      `<div class="refbox"><div class="refrow"><span>${svg(IC.users)} Друзей: <b>${REF.friends.length}</b></span><span class="g"><img src="assets/gem-small.svg" alt="">${fmt(REF.total)} GRAM</span></div>` +
-      `<div class="reflink"><code>${REF.link.replace('https://', '')}</code><button class="pill-btn" data-act="copyref">Копировать</button></div></div>` +
-      `<div class="refauto"><span><small>Начисляется само каждый день в 00:00 МСК</small><b><img src="assets/gem-small.svg" alt="">+${fmt(REF.pending)} GRAM</b><em>вчера · 5% от активности друзей</em></span><button class="pill-btn" data-act="refhist">История</button></div>` +
-      `<button class="btn-ghost" data-act="shareref" style="margin-top:8px">Пригласить друга</button>` +
-      `<div class="sect"><div class="sect-h"><span><b>Твои друзья</b></span></div>` + REF.friends.map(([n, cr, g]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${cr ? cr + ' крафтов' : 'ещё не крафтил'}</small></span><span class="tb2 g"><img src="assets/gem-small.svg" alt="">${fmt(g)}</span></div>`).join('') + `</div>` +
+    b.innerHTML = `<div class="refpct"><div><b>10%</b><small>${$t("от первого депозита")}</small></div><div><b>5%</b><small>${$t("от активности")}</small></div></div>` +
+      `<a class="banner amb" data-act="amb"><span><b>${$t("Программа для амбассадоров")}</b><small>${$t("больше процент для блогеров и комьюнити")}</small></span><img src="assets/referrals.webp" alt=""></a>` +
+      `<div class="refbox"><div class="refrow"><span>${svg(IC.users)} ${$t("Друзей:")} <b>${REF.friends.length}</b></span><span class="g"><img src="assets/gem-small.svg" alt="">${fmt(REF.total)} GRAM</span></div>` +
+      `<div class="reflink"><code>${REF.link.replace('https://', '')}</code><button class="pill-btn" data-act="copyref">${$t("Копировать")}</button></div></div>` +
+      `<div class="refauto"><span><small>${$t("Начисляется само каждый день в 00:00 МСК")}</small><b><img src="assets/gem-small.svg" alt="">+${fmt(REF.pending)} GRAM</b><em>${$t("вчера · 5% от активности друзей")}</em></span><button class="pill-btn" data-act="refhist">${$t("История")}</button></div>` +
+      `<button class="btn-ghost" data-act="shareref" style="margin-top:8px">${$t("Пригласить друга")}</button>` +
+      `<div class="sect"><div class="sect-h"><span><b>${$t("Твои друзья")}</b></span></div>` + REF.friends.map(([n, cr, g]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${cr ? cr + (" " + $t("крафтов")) : $t("ещё не крафтил")}</small></span><span class="tb2 g"><img src="assets/gem-small.svg" alt="">${fmt(g)}</span></div>`).join('') + `</div>` +
       rulesHTML(REF_RULES);
   } else {
     const me = 34;
     const ri = rankOf(S.xp), nx = RANKS[ri + 1], kx = nx ? (S.xp - RANKS[ri][1]) / (nx[1] - RANKS[ri][1]) : 1;
-    b.innerHTML = `<div class="tophero"><img class="ava" src="assets/avatar.webp" alt=""><div class="th"><div class="th-n"><b>GK</b><em>${me} место</em></div><span class="th-r">${RANKS[ri][0]}</span>` +
+    b.innerHTML = `<div class="tophero"><img class="ava" src="assets/avatar.webp" alt=""><div class="th"><div class="th-n"><b>GK</b><em>${me} ${$t("место")}</em></div><span class="th-r">${RANKS[ri][0]}</span>` +
       `<div class="th-x">${XPI}<i><b style="width:${(kx * 100).toFixed(1)}%"></b></i><small>${xpFmt(S.xp)} / ${xpFmt((nx || RANKS[ri])[1])}</small></div></div><span class="cupw"><img class="cup" src="assets/top.webp" alt=""></span></div>` +
       `<div class="sect">${TOP.map(([n, xp], i) => `<div class="trow"><em class="${i < 3 ? 'm' + i : ''}">${i + 1}</em><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${RANKS[rankOf(xp)][0]}</small></span><span class="txp">${XPI}${xpFmt(xp)}</span></div>`).join('')}</div>` +
       rulesHTML(TOP_RULES);
@@ -81,11 +81,11 @@ function caseInfo(c){ infoCase = c; swapDrawer('caseDrawer', renderCaseInfo); }
 function renderCaseInfo(){
   const c = infoCase, st = caseState(c);
   $('caseBody').innerHTML = `<div class="cinfo-h" style="--c:${c.c}">${caseArt(c, 'lg')}<b>${c.name}</b>${c.price ? `<span class="cprice"><img src="assets/gem-small.svg" alt="">${fmt(c.price)} GRAM</span>` : `<button class="cprice go" data-act="totasks">${st.txt}<i>›</i></button>`}</div>` +
-    `<div class="sec-t">Что внутри</div><div class="tgrid">${c.items.map(it => tileHTML(it, String(it.ch).replace('.', ',') + '%')).join('')}</div>` +
-    `<div class="wwarn nftw"><i>!</i><span><b>NFT на плитке — для примера</b><small>Выпасть может другой подарок: редкий — случайный за ${RARE_FROM}–${RARE_TO} GRAM, обычный — по флору, сейчас ${NFT_FLOOR} GRAM. Какой именно — узнаешь при открытии.</small></span></div>` +
+    `<div class="sec-t">${$t("Что внутри")}</div><div class="tgrid">${c.items.map(it => tileHTML(it, String(it.ch).replace('.', ',') + '%')).join('')}</div>` +
+    `<div class="wwarn nftw"><i>!</i><span><b>${$t("NFT на плитке — для примера")}</b><small>${$t("Выпасть может другой подарок: редкий — случайный за {0}–{1} GRAM, обычный — по флору, сейчас {2} GRAM. Какой именно — узнаешь при открытии.", RARE_FROM, RARE_TO, NFT_FLOOR)}</small></span></div>` +
     `<div class="facts">` +
-    `<div style="--c:#30A5FF"><b>Когда придёт</b><span>GRAM, XP и NFT — сразу</span></div><div style="--c:#12D53D"><b>Честно</b><span>каждое открытие проверяется в истории</span></div></div>`;
-  $('caseGo').textContent = c.price ? `Открыть за ${fmt(c.price)} GRAM` : st.ok ? (st.n > 1 ? `Открыть 1 из ${st.n}` : 'Открыть') : 'Пока закрыт';
+    `<div style="--c:#30A5FF"><b>${$t("Когда придёт")}</b><span>${$t("GRAM, XP и NFT — сразу")}</span></div><div style="--c:#12D53D"><b>${$t("Честно")}</b><span>${$t("каждое открытие проверяется в истории")}</span></div></div>`;
+  $('caseGo').textContent = c.price ? `${$t("Открыть за {0} GRAM", fmt(c.price))}` : st.ok ? (st.n > 1 ? `${$t("Открыть 1 из")} ${st.n}` : $t("Открыть")) : $t("Пока закрыт");
 
   $('caseGo').classList.toggle('off', !st.ok && !S.dbg.freeCases);
 }
@@ -93,18 +93,18 @@ $('caseGo').onclick = () => tryOpenCase(infoCase);
 function tryOpenCase(c, m = 1){
   if (c.need && !S.dbg.freeCases && !caseState(c).ok){
     haptic('rigid');
-    return notify({ type: 'warn', icon: 'gift', color: c.c, title: `${c.name} закрыт`, text: c.need === 'daily' ? `Выполни все задания дня: ${tasksDone()}/${TASKS.length}` : 'Выполняй задания дня всю неделю' });
+    return notify({ type: 'warn', icon: 'gift', color: c.c, title: `${c.name} ${$t("закрыт")}`, text: c.need === 'daily' ? `${$t("Выполни все задания дня: {0}/", tasksDone())}${TASKS.length}` : $t("Выполняй задания дня всю неделю") });
   }
   caseRun(c, false, m);
 }
 document.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a) return; const act = a.dataset.act;
-  if (act === 'copyref'){ try { navigator.clipboard.writeText(REF.link); } catch(_){} haptic(); notify({ type: 'ok', icon: 'ok', title: 'Ссылка скопирована', text: 'Отправь её друзьям' }); }
-  if (act === 'shareref'){ haptic(); if (!tgOpen('https://t.me/share/url?url=' + encodeURIComponent(REF.link) + '&text=' + encodeURIComponent('Крафти NFT вместе со мной в pawn'))) notify({ type: 'info', title: 'Пригласить друга', text: 'Откроется окно «Поделиться» в Telegram' }); }
+  if (act === 'copyref'){ try { navigator.clipboard.writeText(REF.link); } catch(_){} haptic(); notify({ type: 'ok', icon: 'ok', title: $t("Ссылка скопирована"), text: $t("Отправь её друзьям") }); }
+  if (act === 'shareref'){ haptic(); if (!tgOpen('https://t.me/share/url?url=' + encodeURIComponent(REF.link) + '&text=' + encodeURIComponent($t("Крафти NFT вместе со мной в pawn")))) notify({ type: 'info', title: $t("Пригласить друга"), text: $t("Откроется окно «Поделиться» в Telegram") }); }
   if (act === 'amb'){ haptic(); tgOpen(AMBASSADORS); }
   if (act === 'totasks'){ haptic(); openCases('tasks'); }
   if (act === 'refhist'){ haptic(); openHistory('refs'); }
-  if (act === 'claimref' && REF.pending){ const v = REF.pending; REF.pending = 0; haptic('medium'); setBalance(S.balance + v); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(v)} GRAM`, text: 'Бонус за друзей' }); renderCases(); }
-  if (act === 'restore'){ if (S.balance < S.week.restorePrice) return notify({ type: 'err', icon: 'coin', title: 'Недостаточно GRAM' }); setBalance(S.balance - S.week.restorePrice); S.hist.wallet.unshift({ type: 'restore', t: Date.now(), amount: S.week.restorePrice, name: `Пропущенный день: ${DAYS[S.week.missed[0]]}`, method: 'неделя заданий' }); S.week.missed.shift(); haptic('medium'); notify({ type: 'ok', icon: 'ok', title: 'День восстановлен', text: 'Неделя снова идёт к кейсу Маска' }); renderCases(); }
+  if (act === 'claimref' && REF.pending){ const v = REF.pending; REF.pending = 0; haptic('medium'); setBalance(S.balance + v); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(v)} GRAM`, text: $t("Бонус за друзей") }); renderCases(); }
+  if (act === 'restore'){ if (S.balance < S.week.restorePrice) return notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM") }); setBalance(S.balance - S.week.restorePrice); S.hist.wallet.unshift({ type: 'restore', t: Date.now(), amount: S.week.restorePrice, name: `${$t("Пропущенный день:")} ${DAYS[S.week.missed[0]]}`, method: $t("неделя заданий") }); S.week.missed.shift(); haptic('medium'); notify({ type: 'ok', icon: 'ok', title: $t("День восстановлен"), text: $t("Неделя снова идёт к кейсу Маска") }); renderCases(); }
 });
 
 /* честный ролл кейса: тот же HMAC, тикет → предмет по диапазону */
@@ -120,17 +120,17 @@ async function rollCase(c, m = 1){
   return { kind: 'case', caseId: c.id, proof, ticket: roll, idx, mult: m };
 }
 const weighted = c => { let x = Math.random() * 100; return c.items.find(it => (x -= it.ch) < 0) || c.items[c.items.length - 1]; };
-const tileFoot = it => it.t === 'nft' ? (it.rare ? `${RARE_FROM}–${RARE_TO} GRAM` : `флор ${NFT_FLOOR}`) : it.t === 'gram' ? 'на баланс' : 'опыт';
+const tileFoot = it => it.t === 'nft' ? (it.rare ? `${RARE_FROM}–${RARE_TO} GRAM` : `${$t("флор")} ${NFT_FLOOR}`) : it.t === 'gram' ? $t("на баланс") : $t("опыт");
 /* открытие кейса — на том же чёрном экране с рамкой, что и крафт: лента предметов, затем экран дропа */
 async function caseRun(c, again, m = 1){
-  if (S.demo){ notify({ type: 'demo', icon: 'gift', title: 'Кейсы — только на GRAM', text: 'Выключи демо в меню' }); return; }
-  if (c.price > S.balance){ notify({ type: 'err', icon: 'coin', title: 'Недостаточно GRAM', text: 'Пополни баланс — тапни по нему сверху' }); return; }
+  if (S.demo){ notify({ type: 'demo', icon: 'gift', title: $t("Кейсы — только на GRAM"), text: $t("Выключи демо в меню") }); return; }
+  if (c.price > S.balance){ notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM"), text: $t("Пополни баланс — тапни по нему сверху") }); return; }
   if (!again){ if (S.busy) return; S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto); if (openDrawer){ hideDrawer(); await wait(260); } }
   if (c.price) setBalance(S.balance - c.price);
   const N = 44, WIN = 38, strip = Array.from({ length: N }, () => weighted(c));
   $('fxCaseArt').innerHTML = caseArt(c, 'md'); $('fxCaseT').textContent = c.name + (m > 1 ? ` ×${m}` : ''); $('fxCaseT').style.setProperty('--c', c.c);
   $('fxStrip').innerHTML = strip.map(it => tileHTML(it, tileFoot(it))).join(''); $('fxStrip').style.transform = 'translateX(0)';
-  $('fxCaseS').textContent = 'Ждём честный результат…';
+  $('fxCaseS').textContent = $t("Ждём честный результат…");
   $('fxDrop').innerHTML = ''; $('fxWin').innerHTML = ''; $('fxBtns').innerHTML = '';
   if (!again) await openFx(true, 'case', glowOf(c.c));
   else { $('fx').classList.remove('done', 'fail'); FullGlow.set(glowOf(c.c)); FX.hot = true; $('fxCase').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 }); }
@@ -182,10 +182,10 @@ function caseDrop(c, it, r, g){
     drop.innerHTML = `<div class="pz"><div class="tw${it.t === 'xp' ? ' xpw' : ''}" id="pz"><img src="${src}" alt=""><span class="gl" style="--m:url('${src}')"><i></i></span></div></div>`;
     Tilt.add($('pz'), $('pz').querySelector('img'), $('pz').querySelector('.gl i'), 1.4);
     $('fxWin').innerHTML = `<b>${it.t === 'gram' ? '+' + fmt(it.v) + ' GRAM' : '+' + it.v + ' XP'}</b><span>${c.name}</span>`; }
-  $('fxBtns').innerHTML = (g ? `<button class="btn-main" id="cSell">Продать за ${fmt(g.value)} GRAM</button><button class="btn-ghost" id="cTake">Забрать</button>` : `<button class="btn-main" id="cTake">Забрать</button>`) +
-    (c.price ? `<button class="btn-ghost" id="cAgain">Ещё раз · ${fmt(c.price)} GRAM</button>` : S.stock[c.id] > 0 ? `<button class="btn-ghost" id="cAgain">Ещё один · осталось ${S.stock[c.id]}</button>` : '') + PF_LINK;
+  $('fxBtns').innerHTML = (g ? `<button class="btn-main" id="cSell">${$t("Продать за {0} GRAM", fmt(g.value))}</button><button class="btn-ghost" id="cTake">${$t("Забрать")}</button>` : `<button class="btn-main" id="cTake">${$t("Забрать")}</button>`) +
+    (c.price ? `<button class="btn-ghost" id="cAgain">${$t("Ещё раз · {0} GRAM", fmt(c.price))}</button>` : S.stock[c.id] > 0 ? `<button class="btn-ghost" id="cAgain">${$t("Ещё один · осталось")} ${S.stock[c.id]}</button>` : '') + PF_LINK;
   $('fxPfIn').onclick = () => openPF(r);
-  $('fxShare').onclick = () => shareWin(`Открыл ${c.name} и выбил ${g ? g.nft.name : itemName(it)} в Pawn`);
+  $('fxShare').onclick = () => shareWin(`${$t("Открыл {0} и выбил {1} в Pawn", c.name, g ? g.nft.name : itemName(it))}`);
   const take = async how => {
     if (caseDrop.on) return; caseDrop.on = true;
     if (g){ if (how === 'sell') setTimeout(() => setBalance(S.balance + g.value), 900); else INV = [g, ...INV]; }
@@ -193,14 +193,14 @@ function caseDrop(c, it, r, g){
     else addXp(it.v);
     haptic('medium'); Sfx.coin(); await closeFx(); $('fx').classList.remove('case');
     setTimeout(() => pushLive(liveCaseHTML(c, it, { me: true, img: g ? g.nft.src : null, value: g ? g.value : null, label: g ? g.nft.name : null })), 300);
-    notify({ type: 'ok', color: itemColor(it), img: g ? g.nft.src : itemImg(it), title: g ? (how === 'sell' ? `Продано: +${fmt(g.value)} GRAM` : `${g.nft.name} в инвентаре`) : (it.t === 'gram' ? `+${fmt(it.v)} GRAM` : `+${it.v} XP`), text: c.name });
+    notify({ type: 'ok', color: itemColor(it), img: g ? g.nft.src : itemImg(it), title: g ? (how === 'sell' ? `${$t("Продано: +{0} GRAM", fmt(g.value))}` : `${g.nft.name} ${$t("в инвентаре")}`) : (it.t === 'gram' ? `+${fmt(it.v)} GRAM` : `+${it.v} XP`), text: c.name });
     CRAFT.classList.remove('busy'); S.busy = false; caseDrop.on = false; restartAuto(); checkAch();
     openCases();
   };
   $('cTake').onclick = () => take('take');
   $('cSell') && ($('cSell').onclick = () => take('sell'));
   $('cAgain') && ($('cAgain').onclick = () => {
-    if (c.price > S.balance){ notify({ type: 'err', icon: 'coin', title: 'Недостаточно GRAM' }); return; }
+    if (c.price > S.balance){ notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM") }); return; }
     if (g) INV = [g, ...INV]; else if (it.t === 'gram') setBalance(S.balance + it.v); else addXp(it.v);
     caseRun(c, true);
   });
@@ -220,7 +220,7 @@ syncBalBtn();
   for (let i = 0; i < 3; i++){ const c = CASES[i % 2], r = await rollCase(c), it = c.items[r.idx]; S.hist.cases.push({ kind: 'case', t: Date.now() - (i + 1) * 5 * 3600000, r, label: it.t === 'nft' ? (it.rare ? NFTS[9].name : NFTS[1].name) : null, img: it.t === 'nft' ? (it.rare ? NFTS[9].src : NFTS[1].src) : null }); }
   S.lastFair = null;
   await revealEpoch(false);                                // прошлые игры — в уже раскрытой эпохе
-  S.hist.wallet.push({ type: 'dep', t: Date.now() - 26 * 3600000, amount: 250, method: 'Tonkeeper' }, { type: 'nft', t: Date.now() - 50 * 3600000, name: NFTS[40].name, img: NFTS[40].src, bg: NFTS[40].bg, value: NFTS[40].price, method: 'в Telegram · комиссия 0.3 GRAM' },
+  S.hist.wallet.push({ type: 'dep', t: Date.now() - 26 * 3600000, amount: 250, method: 'Tonkeeper' }, { type: 'nft', t: Date.now() - 50 * 3600000, name: NFTS[40].name, img: NFTS[40].src, bg: NFTS[40].bg, value: NFTS[40].price, method: $t("в Telegram · комиссия 0.3 GRAM") },
     { type: 'nftin', t: Date.now() - 74 * 3600000, name: NFTS[12].name, img: NFTS[12].src, bg: NFTS[12].bg, value: NFTS[12].price, method: '@pawngift' },
     { type: 'dep', t: Date.now() - 98 * 3600000, amount: 150, method: 'Telegram Wallet' });
   S.hist.rewards.push({ kind: 'task', title: TASKS[0][1], rw: TASKS[0][3], t: Date.now() - 3 * 3600000 });   // утреннее задание уже выполнено

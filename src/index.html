@@ -17,7 +17,7 @@
 
   <!-- лента лайв -->
   <div class="abs sheet">
-    <div class="abs live-tag"><span class="up">лайв</span></div>
+    <div class="abs live-tag"><span class="up" data-t>лайв</span></div>
     <div class="abs live"><div class="live-row" id="live"></div></div>
   </div>
 
@@ -28,7 +28,7 @@
     <div class="abs range" id="range">x0.4 — x0.8</div>
   </div>
 
-  <div class="abs chance" id="chance"><small>шанс</small><b id="chanceVal">27%</b></div>
+  <div class="abs chance" id="chance"><small data-t>шанс</small><b id="chanceVal">27%</b></div>
 
   <!-- приз -->
   <div class="abs prize empty" id="prize">???</div>
@@ -90,7 +90,7 @@
   <!-- шторки -->
   <div class="backdrop" id="backdrop"></div>
   <section class="drawer" id="giftsDrawer" aria-label="Подарки">
-    <div class="dr-h"><h3>Подарки <small id="selCnt"></small></h3><p class="dr-sub" id="selHint"></p></div>
+    <div class="dr-h"><h3 data-t>Подарки <small id="selCnt"></small></h3><p class="dr-sub" id="selHint"></p></div>
     <div class="dr-b"><div class="inv" id="inv"></div></div>
     <div class="dr-f three" id="giftsF"></div>
   </section>
@@ -99,9 +99,9 @@
     <div class="dr-b" id="pfBody"></div>
   </section>
   <section class="drawer" id="dbgDrawer" aria-label="Дебаг">
-    <div class="dr-h"><h3>Дебаг</h3></div>
+    <div class="dr-h"><h3 data-t>Дебаг</h3></div>
     <div class="dr-b" id="dbgBody"></div>
-    <div class="dr-f"><button class="btn-main" id="dbgDone">Готово</button></div>
+    <div class="dr-f"><button class="btn-main" id="dbgDone" data-t>Готово</button></div>
   </section>
   <section class="drawer tall" id="histDrawer" aria-label="История"><div class="dr-h"><div class="tabs scroll" id="histTabs"></div></div><div class="dr-b" id="histBody"></div></section>
   <section class="drawer tall" id="pfiDrawer" aria-label="Provably Fair"><div class="dr-h"><h3>Provably Fair</h3></div><div class="dr-b" id="pfiBody"></div></section>
@@ -116,7 +116,7 @@
   <!-- баланс -->
   <div class="abs balance cx">
     <img class="ava" src="assets/avatar.webp" alt="">
-    <div class="pill"><span class="demo-tag">демо</span><img id="balIco" src="assets/gem-balance.svg" width="23" height="20" alt=""><b id="bal">345.56</b><button class="bal-add" id="balAdd" aria-label="Пополнить"></button></div>
+    <div class="pill"><span class="demo-tag" data-t>демо</span><img id="balIco" src="assets/gem-balance.svg" width="23" height="20" alt=""><b id="bal">345.56</b><button class="bal-add" id="balAdd" aria-label="Пополнить"></button></div>
   </div>
   <div class="modal" id="modal"><div class="mbox" id="modalBox"></div></div>
   <!-- уведомления -->
