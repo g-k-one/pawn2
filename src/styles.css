@@ -1334,3 +1334,5 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .refauto .ra-v img{width:auto;height:22px;align-self:center}
 .refauto .ra-v small{font:inherit;font-size:20px}
 .refauto p{margin:6px 0 0;font:400 12.5px/1.4 var(--serif);color:rgba(255,255,255,.72)}
+/* рефералка: все суммы GRAM — бирюзовые, как сумма начисления */
+.refrow .g,.rgap .tb2.g{color:#2EE6C9}
