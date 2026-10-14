@@ -159,7 +159,10 @@ function fit(){
   stage.style.setProperty('--tgTop', tgTop / k + 'px');
   // уведомления — на уровне ленты «лайв»: выше их перекрывают кнопки и шапка Telegram
   stage.style.setProperty('--noteTop', Math.max(tgTop / k + 8, H - 844 + 106) + 'px');
-  stage.style.setProperty('--balTop', (H >= 844 ? 43 + Math.min(40, (H - 844) * .35) : 43 - (844 - H) * .75) + 'px');
+  // +16 px на высоких экранах: на iPhone с Dynamic Island в Telegram баланс иначе подлезает под «остров».
+  // На коротких (SE и т.п., острова нет) прибавка плавно уходит — иначе баланс наедет на ленту
+  const island = Math.max(0, 16 - Math.max(0, 844 - H));
+  stage.style.setProperty('--balTop', (H >= 844 ? 43 + island + Math.min(40, (H - 844) * .35) : 43 + island - (844 - H) * .75) + 'px');
 }
 try { const tg = Telegram.WebApp; tg.ready(); tg.expand(); tg.disableVerticalSwipes?.(); tg.setHeaderColor?.('#0b0b0b'); tg.setBackgroundColor?.('#0b0b0b');
   ['safeAreaChanged', 'contentSafeAreaChanged', 'fullscreenChanged', 'viewportChanged'].forEach(ev => tg.onEvent(ev, () => fit())); } catch(_){}

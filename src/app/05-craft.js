@@ -521,11 +521,14 @@ function openNft(g){ haptic(); tgOpen(nftLink(g.nft)); }
 const dropCard = g => { tiltCard($('pz'), 1.4); upgradeImg($('pz').querySelector('.nc-img'), g.nft); Tilt.grab($('pz').querySelector('.nc-t'), () => openNft(g)); };
 const PF_LINK = `<div class="fx-links"><button class="btn-link pf" id="fxPfIn">${$t("Проверить честность")}</button><button class="btn-link pf" id="fxShare">${$t("Поделиться")}</button></div>`;
 /* поделиться выигрышем: в Telegram — окно «Поделиться» с реф-ссылкой, в браузере — системное или копирование */
-function shareWin(text){
-  haptic(); const url = REF.link;
+// выиграл NFT — сначала ссылка на подарок (Telegram покажет его карточку), затем текст, затем приглашение с реф-ссылкой.
+// Без NFT ссылка одна — реф-ссылка; Telegram всегда ставит её первой строкой, поэтому приглашение ссылается на неё
+function shareWin(text, g){
+  haptic(); const url = g ? nftLink(g.nft) : REF.link;
+  text += '\n' + (g ? `${$t("Забирай бонус 10% на первый деп:")} ${REF.link}` : $t("Забирай бонус 10% на первый деп по ссылке"));
   if (tgOpen('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text))) return;
-  if (navigator.share) return void navigator.share({ text, url }).catch(() => {});
-  try { navigator.clipboard.writeText(text + ' ' + url).catch(() => {}); } catch(_){}
+  if (navigator.share) return void navigator.share({ text: url + '\n' + text }).catch(() => {});
+  try { navigator.clipboard.writeText(url + '\n' + text).catch(() => {}); } catch(_){}
   notify({ type: 'ok', icon: 'ok', title: $t("Ссылка скопирована"), text: $t("Отправь её друзьям") });
 }
 function fillDrop(r){
@@ -551,7 +554,7 @@ function fillDrop(r){
   $('fxTop').querySelector('.sdtip')?.remove();
   if (r.superMiss) $('fxTop').insertAdjacentHTML('beforeend', `<div class="sdtip"><b>${$t("Тикет супер дропа!")}</b> ${S.demo ? $t("В демо не разыгрывается") : `${$t("Нужна ставка от {0} GRAM", SUPER.min)}`}</div>`);
   $('fxPfIn').onclick = () => openPF(r);
-  $('fxShare').onclick = () => shareWin(r.nft ? `${$t("Скрафтил {0} #{1} в Pawn", r.nft.nft.name, r.nft.num)}` : `${$t("Скрафтил +{0} GRAM (x{1}) в Pawn", fmt(r.win), r.mult)}`);
+  $('fxShare').onclick = () => shareWin(r.nft ? `${$t("Скрафтил {0} #{1} в Pawn", r.nft.nft.name, r.nft.num)}` : `${$t("Скрафтил +{0} GRAM (x{1}) в Pawn", fmt(r.win), r.mult)}`, r.nft);
   $('fxTake').onclick = () => finish(r, 'take');
   if ($('fxSell')) $('fxSell').onclick = () => finish(r, 'sell');
 }
