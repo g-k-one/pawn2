@@ -45,11 +45,13 @@ function renderCases(){
   } else if (casesTab === 'refs'){
     b.innerHTML = `<div class="refpct"><div><b>10%</b><small>${$t("от первого депозита")}</small></div><div><b>5%</b><small>${$t("от активности")}</small></div></div>` +
       `<a class="banner amb" data-act="amb"><span><b>${$t("Программа для амбассадоров")}</b><small>${$t("больше процент для блогеров и комьюнити")}</small></span><img src="assets/referrals.webp" alt=""></a>` +
-      `<div class="refbox"><div class="refrow"><span>${svg(IC.users)} ${$t("Друзей:")} <b>${REF.friends.length}</b></span><span class="g"><img src="assets/gem-small.svg" alt="">${fmt(REF.total)} GRAM</span></div>` +
+      `<div class="refbox rgap"><div class="refrow"><span>${svg(IC.users)} ${$t("Друзей:")} <b>${REF.friends.length}</b></span><span class="g"><img src="assets/gem-small.svg" alt="">${fmt(REF.total)} GRAM</span></div>` +
       `<div class="reflink"><code>${REF.link.replace('https://', '')}</code><button class="pill-btn" data-act="copyref">${$t("Копировать")}</button></div></div>` +
-      `<div class="refauto"><span><small>${$t("Начисляется само каждый день в 00:00 МСК")}</small><b><img src="assets/gem-small.svg" alt="">+${fmt(REF.pending)} GRAM</b><em>${$t("вчера · 5% от активности друзей")}</em></span><button class="pill-btn" data-act="refhist">${$t("История")}</button></div>` +
+      // начисление за друзей: заголовок и «История» в одной строке сверху, сумма крупно, ниже — за что и когда следующее
+      `<div class="refauto"><div class="ra-h"><b>${$t("Начислено вчера")}</b><button class="pill-btn" data-act="refhist">${$t("История")}</button></div>` +
+      `<div class="ra-v"><img src="assets/gem-small.svg" alt="">+${fmt(REF.pending)}<small>GRAM</small></div><p>${$t("5% от активности друзей. Начисляется само — каждый день в 00:00 МСК")}</p></div>` +
       `<button class="btn-ghost" data-act="shareref" style="margin-top:8px">${$t("Пригласить друга")}</button>` +
-      `<div class="sect"><div class="sect-h"><span><b>${$t("Твои друзья")}</b></span></div>` + REF.friends.map(([n, cr, g]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${cr ? cr + (" " + $t("крафтов")) : $t("ещё не крафтил")}</small></span><span class="tb2 g"><img src="assets/gem-small.svg" alt="">${fmt(g)}</span></div>`).join('') + `</div>` +
+      `<div class="sect rgap"><div class="sect-h"><span><b>${$t("Твои друзья")}</b></span></div>` + REF.friends.map(([n, cr, g]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${cr ? cr + (" " + $t("крафтов")) : $t("ещё не крафтил")}</small></span><span class="tb2 g"><img src="assets/gem-small.svg" alt="">${fmt(g)}</span></div>`).join('') + `</div>` +
       rulesHTML(REF_RULES);
   } else {
     const me = 34;
@@ -185,7 +187,7 @@ function caseDrop(c, it, r, g){
   $('fxBtns').innerHTML = (g ? `<button class="btn-main" id="cSell">${$t("Продать за {0} GRAM", fmt(g.value))}</button><button class="btn-ghost" id="cTake">${$t("Забрать")}</button>` : `<button class="btn-main" id="cTake">${$t("Забрать")}</button>`) +
     (c.price ? `<button class="btn-ghost" id="cAgain">${$t("Ещё раз · {0} GRAM", fmt(c.price))}</button>` : S.stock[c.id] > 0 ? `<button class="btn-ghost" id="cAgain">${$t("Ещё один · осталось")} ${S.stock[c.id]}</button>` : '') + PF_LINK;
   $('fxPfIn').onclick = () => openPF(r);
-  $('fxShare').onclick = () => shareWin(`${$t("Открыл {0} и выбил {1} в Pawn", c.name, g ? g.nft.name : itemName(it))}`);
+  $('fxShare').onclick = () => shareWin(`${$t("Открыл {0} и выбил {1} в Pawn", c.name, g ? g.nft.name : itemName(it))}`, g);
   const take = async how => {
     if (caseDrop.on) return; caseDrop.on = true;
     if (g){ if (how === 'sell') setTimeout(() => setBalance(S.balance + g.value), 900); else INV = [g, ...INV]; }

@@ -1321,3 +1321,16 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .boot-in b{font-size:22px;text-transform:uppercase;letter-spacing:.02em}
 .boot-in i{display:block;width:180px;height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
 .boot-in u{display:block;width:0;height:100%;border-radius:3px;background:linear-gradient(90deg,#30A5FF,#00D9FF);transition:width .2s}
+
+/* рефералка: три группы — «что получаешь» (проценты + амбассадоры), «твоя ссылка и начисления», «друзья».
+   Внутри группы 8 px, между группами 20 px */
+.refpct+.banner.amb{margin-top:8px}
+.rgap{margin-top:20px}
+.refauto{display:block;margin-top:8px;padding:10px 10px 14px 16px}
+.refauto .ra-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.refauto .ra-h b{font-size:18px;line-height:1.1;text-transform:uppercase;color:#fff}
+.refauto .ra-h .pill-btn{padding:6px 12px;font-size:15px}
+.refauto .ra-v{display:flex;align-items:baseline;gap:6px;margin-top:6px;font-size:34px;line-height:1;font-weight:700;color:#2EE6C9}
+.refauto .ra-v img{width:auto;height:22px;align-self:center}
+.refauto .ra-v small{font:inherit;font-size:20px}
+.refauto p{margin:6px 0 0;font:400 12.5px/1.4 var(--serif);color:rgba(255,255,255,.72)}
