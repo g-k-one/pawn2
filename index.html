@@ -1221,6 +1221,7 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 .fx-drop .nc-t{touch-action:none;cursor:grab}
 .mb-t{max-width:calc(100% - 168px)}
 .item.ixp>img{transform:scale(.78)}
+.pf-ext{display:block;width:max-content;margin:12px auto 0;padding:4px 8px;font-size:15px;color:rgba(255,255,255,.45);text-decoration:underline;text-underline-offset:3px}
 
 #boot{position:fixed;inset:0;z-index:999;display:grid;place-items:center;background:#0b0b0b;transition:opacity .45s}
 #boot.off{opacity:0;pointer-events:none}
@@ -2521,6 +2522,9 @@ async function superStage(r){
 /* =========================================================
    PROVABLY FAIR: данные для проверки любого крафта или кейса
    ========================================================= */
+/* внешний сайт для ручной проверки честности */
+const VERIFY_URL = 'https://pawn-frontend.onrender.com/verify';
+const PF_EXT = `<a class="pf-ext" href="${VERIFY_URL}" target="_blank" rel="noopener" data-act="verify">Проверить самому ↗</a>`;
 const pfRow = (k, v) => `<div class="pf-row"><small>${k}</small><code>${v}</code></div>`;
 const tk = n => n.toLocaleString('ru-RU');
 function pfHTML(r){
@@ -2536,7 +2540,7 @@ function pfHTML(r){
     `<div class="pfc" data-k="ticket"><i></i><div><b>Тикет посчитан по формуле</b><p>Ключ сервера + твой ключ + номер игры (${r.nonce}) по открытой формуле дают тикет ${tk(r.ticket)}.</p><em>ждёт проверки</em></div></div>` +
     `<div class="pfc" data-k="rule"><i></i><div><b>Приз выдан по правилам</b><p>${rng}</p><em>ждёт проверки</em></div></div>` +
     (r.manual ? '<p class="pfnote">Дебаг: тикет задан вручную, поэтому проверка не сойдётся. Это нормально.</p>' : r.debug ? '<p class="pfnote">Дебаг: исход выбран в настройках, ключ сервера подобран перебором — проверка сходится.</p>' : '') +
-    `<button class="btn-main pf-check">Проверить здесь</button><button class="btn-ghost pf-copy">Скопировать доказательство</button>` +
+    `<button class="btn-main pf-check">Проверить здесь</button><button class="btn-ghost pf-copy">Скопировать доказательство</button>` + PF_EXT +
     `<details class="rules pftech"><summary>Технические данные</summary><div>${tech}</div></details>`;
 }
 function bindPF(root, r){
@@ -2581,7 +2585,7 @@ function renderPFInfo(){
     `<div class="rng">${TIERS.map(t => `<div style="--c:${t.c}"><b>${t.name}</b><span>${tk(t.from)}–${tk(t.to)}</span><em>${t.chance}%</em></div>`).join('')}</div>` +
     `<div class="pfi-t">Твой ключ</div><div class="cseed"><code id="cseedV">${S.clientSeed}</code><button class="pill-btn" id="cseedNew">Сменить</button></div>` +
     `<details class="rules"><summary>Формула для разработчиков</summary><ol><li>HMAC-SHA256(server seed, «client seed:nonce»)</li><li>Первые 8 символов хэша → число</li><li>Остаток от деления на 100 000 = тикет</li><li>SHA-256(server seed) должен совпасть с отпечатком, показанным до игры</li></ol></details>` +
-    `<div class="pfi-btns"><button class="btn-main" id="pfiLast">Проверить последний крафт</button><button class="btn-ghost" id="pfiHist">Вся история</button></div>`;
+    `<div class="pfi-btns"><button class="btn-main" id="pfiLast">Проверить последний крафт</button><button class="btn-ghost" id="pfiHist">Вся история</button></div>` + PF_EXT;
   $('cseedNew').onclick = () => { S.clientSeed = 'gk-' + hex(crypto.getRandomValues(new Uint8Array(4))); $('cseedV').textContent = S.clientSeed; haptic(); notify({ type: 'ok', icon: 'ok', title: 'Ключ обновлён', text: 'Следующие игры пойдут с новым client seed' }); };
   $('pfiLast').onclick = () => swapDrawer('pfDrawer', () => { const r = S.lastFair || S.hist.crafts[0]?.r; if (r){ $('pfBody').innerHTML = pfHTML(r); bindPF($('pfBody'), r); } });
   $('pfiHist').onclick = () => openHistory('crafts');
@@ -2752,7 +2756,8 @@ function relayerFlow(){
 }
 function partnerFlow(){ haptic(); try { Telegram.WebApp.openTelegramLink('https://t.me/StarsMarketBot'); } catch(_){ notify({ type: 'info', title: '@StarsMarketBot', text: 'В Telegram откроется бот партнёра' }); } }
 document.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a) return;
-  if (a.dataset.act === 'relayer') relayerFlow(); else if (a.dataset.act === 'partner') partnerFlow(); });
+  if (a.dataset.act === 'relayer') relayerFlow(); else if (a.dataset.act === 'partner') partnerFlow();
+  else if (a.dataset.act === 'verify'){ haptic(); try { Telegram.WebApp.openLink(VERIFY_URL); e.preventDefault(); } catch(_){} } });
 $('walletBody').addEventListener('click', e => {
   const p = e.target.closest('.presets .pill-btn'), c = e.target.closest('.onft .cell');
   if (e.target.closest('[data-act="off"]')){ S.wallet = null; syncBalBtn(); haptic(); renderWallet(); return; }
