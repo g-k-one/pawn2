@@ -127,6 +127,8 @@ phrases = {
 'в запасе':'in stock','Открой сейчас или копи — награда умножится на число кейсов':'Open now or stack them — the reward multiplies by the number of cases','награда':'reward','Кейс за сегодня уже открыт':"Today's case is already opened",
 'Запас бесплатных кейсов':'Free case stock','Бист':'Beast','Маск':'Musk',
 'Восстановление дня':'Day restore','Пропущенный день:':'Missed day:',
+'Твой RTP за':'Your RTP over','На длинной дистанции игрокам возвращается 95% ставок; на коротком отрезке твой может быть выше или ниже.':'In the long run, 95% of bets go back to players; over a short run yours can be higher or lower.','Все':'All','Открыть 1 из':'Open 1 of','Ещё один · осталось':'One more · left','осталось':'left',
+'Депозит GRAM':'GRAM deposits','Депозит NFT':'NFT deposits',
 # общие связки
 'и на баланс':'plus to balance','до':'to','из':'of','и':'and','за':'for','от':'from','в':'in','на':'on','NFT до':'NFT up to',
 }

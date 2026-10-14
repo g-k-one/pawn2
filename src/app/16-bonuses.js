@@ -9,7 +9,7 @@ function caseCard(c){
   const st = caseState(c), free = !c.price;
   return `<div class="bcase${free ? ' free' : ''}" style="--c:${c.c}" data-info="${c.id}">${st.n > 1 ? `<em class="stk">×${st.n}</em>` : ''}${caseArt(c)}<b>${c.short}</b>` +
     (free ? `<small>${st.txt}</small><i class="prog"><b style="width:${Math.round(st.k * 100)}%"></b></i>` : `<small>NFT до ${RARE_TO} GRAM</small>`) +
-    `<button class="cbuy${free && !st.ok ? ' locked' : ''}" data-open="${c.id}">${free ? (st.ok ? (st.n > 1 ? `Открыть ×${st.n}` : 'Открыть') : 'Закрыт') : `<img src="assets/gem-small.svg" alt="">${fmt(c.price)}`}</button></div>`;
+    `<button class="cbuy${free && !st.ok ? ' locked' : ''}" data-open="${c.id}">${free ? (st.ok ? 'Открыть' : 'Закрыт') : `<img src="assets/gem-small.svg" alt="">${fmt(c.price)}`}</button></div>`;
 }
 const achRow = ([id, t, rw, ok, act, prog]) => {
   const done = !!S.ach.got[id], pr = !done && prog ? prog() : null;
@@ -84,17 +84,20 @@ function renderCaseInfo(){
     `<div class="sec-t">Что внутри</div><div class="tgrid">${c.items.map(it => tileHTML(it, String(it.ch).replace('.', ',') + '%')).join('')}</div>` +
     `<div class="facts"><div style="--c:#EB57B0"><b>Редкий NFT</b><span>случайный подарок ${RARE_FROM}–${RARE_TO} GRAM</span></div><div style="--c:#00D9FF"><b>Обычный NFT</b><span>по флору, сейчас ${NFT_FLOOR} GRAM</span></div>` +
     `<div style="--c:#30A5FF"><b>Когда придёт</b><span>GRAM, XP и NFT — сразу</span></div><div style="--c:#12D53D"><b>Честно</b><span>каждое открытие проверяется в истории</span></div></div>`;
-  $('caseGo').textContent = c.price ? `Открыть за ${fmt(c.price)} GRAM` : st.ok ? (st.n > 1 ? `Открыть ×${st.n} · награда ×${st.n}` : 'Открыть') : 'Пока закрыт';
+  $('caseGo').textContent = c.price ? `Открыть за ${fmt(c.price)} GRAM` : st.ok ? (st.n > 1 ? `Открыть 1 из ${st.n}` : 'Открыть') : 'Пока закрыт';
+  // из запаса можно открыть и все разом — награда умножится на их число
+  $('caseAll')?.remove();
+  if (!c.price && st.n > 1){ const a = document.createElement('button'); a.id = 'caseAll'; a.className = 'btn-ghost'; a.innerHTML = `Все ×${st.n}<small>награда ×${st.n}</small>`;
+    a.onclick = () => tryOpenCase(c, st.n); $('caseGo').before(a); $('caseGo').parentElement.classList.add('two'); } else $('caseGo').parentElement.classList.remove('two');
   $('caseGo').classList.toggle('off', !st.ok && !S.dbg.freeCases);
 }
 $('caseGo').onclick = () => tryOpenCase(infoCase);
-$('caseBack').onclick = () => openCases();
-function tryOpenCase(c){
+function tryOpenCase(c, m = 1){
   if (c.need && !S.dbg.freeCases && !caseState(c).ok){
     haptic('rigid');
     return notify({ type: 'warn', icon: 'gift', color: c.c, title: `${c.name} закрыт`, text: c.need === 'daily' ? `Выполни все задания дня: ${tasksDone()}/${TASKS.length}` : 'Выполняй задания дня всю неделю' });
   }
-  caseRun(c);
+  caseRun(c, false, m);
 }
 document.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a) return; const act = a.dataset.act;
   if (act === 'copyref'){ try { navigator.clipboard.writeText(REF.link); } catch(_){} haptic(); notify({ type: 'ok', icon: 'ok', title: 'Ссылка скопирована', text: 'Отправь её друзьям' }); }
@@ -119,14 +122,13 @@ async function rollCase(c, m = 1){
   return { kind: 'case', caseId: c.id, proof, ticket: roll, idx, mult: m };
 }
 const weighted = c => { let x = Math.random() * 100; return c.items.find(it => (x -= it.ch) < 0) || c.items[c.items.length - 1]; };
-const tileFoot = it => it.t === 'nft' ? (it.rare ? `${RARE_FROM}–${RARE_TO} GRAM` : `флор ${NFT_FLOOR}`) : it.t === 'gram' ? 'GRAM' : 'опыт';
+const tileFoot = it => it.t === 'nft' ? (it.rare ? `${RARE_FROM}–${RARE_TO} GRAM` : `флор ${NFT_FLOOR}`) : it.t === 'gram' ? 'на баланс' : 'опыт';
 /* открытие кейса — на том же чёрном экране с рамкой, что и крафт: лента предметов, затем экран дропа */
-async function caseRun(c, again){
+async function caseRun(c, again, m = 1){
   if (S.demo){ notify({ type: 'demo', icon: 'gift', title: 'Кейсы — только на GRAM', text: 'Выключи демо в меню' }); return; }
   if (c.price > S.balance){ notify({ type: 'err', icon: 'coin', title: 'Недостаточно GRAM', text: 'Пополни баланс — тапни по нему сверху' }); return; }
   if (!again){ if (S.busy) return; S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto); if (openDrawer){ hideDrawer(); await wait(260); } }
   if (c.price) setBalance(S.balance - c.price);
-  const m = caseMult(c);
   const N = 44, WIN = 38, strip = Array.from({ length: N }, () => weighted(c));
   $('fxCaseArt').innerHTML = caseArt(c, 'md'); $('fxCaseT').textContent = c.name + (m > 1 ? ` ×${m}` : ''); $('fxCaseT').style.setProperty('--c', c.c);
   $('fxStrip').innerHTML = strip.map(it => tileHTML(it, tileFoot(it))).join(''); $('fxStrip').style.transform = 'translateX(0)';
@@ -140,20 +142,32 @@ async function caseRun(c, again){
     if (c.price) setBalance(S.balance + c.price);
     return failScreen('case', { c });
   }
-  if (c.need) S.stock[c.id] = 0;                                // запас открыт целиком
+  if (c.need) S.stock[c.id] = Math.max(0, S.stock[c.id] - m);   // из запаса уходит столько, сколько открыто
   const it0 = c.items[r.idx], it = m > 1 ? { ...it0, v: it0.v == null ? it0.v : Math.round(it0.v * m * 100) / 100, mult: m } : it0, el = $('fxStrip');
   const g = it.t === 'nft' ? caseNft(it) : null;                // какой именно NFT выпал — известно сразу
   el.children[WIN].outerHTML = tileHTML(it, tileFoot(it), g);
   $('fxCaseS').textContent = '';
+  const cols = strip.map(itemColor); cols[WIN] = itemColor(it);
+  // сундук дрожит и подпрыгивает — ожидание перед прокрутом (только transform)
+  if (!S.lite){ Sfx.whoosh(); haptic('medium');
+    await $('fxCaseArt').animate([{ transform: 'none' }, { transform: 'rotate(-4deg) scale(1.02)' }, { transform: 'rotate(4deg) scale(1.04)' }, { transform: 'rotate(-3deg) scale(1.06)' },
+      { transform: 'rotate(3deg) scale(1.08)' }, { transform: 'translateY(-10px) scale(1.12)' }, { transform: 'none' }], { duration: 700, easing: 'ease-in-out' }).finished; }
   const tw = el.children[1].offsetLeft - el.children[0].offsetLeft, box = el.parentElement.offsetWidth;
   const target = WIN * tw + (tw - 8) / 2 - box / 2 + (Math.random() - .5) * (tw - 8) * .7;
-  let lastI = -1;
-  await tween(5400, k => {
+  let lastI = -1; const line = el.parentElement.querySelector('.mline');
+  await tween(6000, k => {
     const x = target * k; el.style.transform = `translateX(${(-x).toFixed(1)}px)`;
-    const i = Math.floor((x + box / 2) / tw); if (i !== lastI){ lastI = i; Sfx.tick(.6 + .4 * k, k); if (k > .55) haptic('soft'); }
-    FX.gainTo = .45 + .35 * k;
-  }, k => 1 - (1 - k) ** 4);
+    const i = Math.floor((x + box / 2) / tw);
+    if (i !== lastI){                                            // только при смене плитки: класс, щелчок, цвет рамки
+      el.children[lastI]?.classList.remove('cur'); el.children[i]?.classList.add('cur'); lastI = i;
+      Sfx.tick(.6 + .4 * k, k); if (k > .55) haptic('soft');
+      if (k > .5){ FullGlow.set(glowOf(cols[i] || c.c)); if (!S.lite) line.animate([{ transform: 'scaleY(1.08)', opacity: 1 }, { transform: 'none', opacity: .85 }], { duration: 180 }); }
+    }
+    FX.gainTo = .45 + .4 * k;
+  }, k => 1 - (1 - k) ** 5);
+  el.children[lastI]?.classList.remove('cur');
   el.children[WIN].classList.add('win'); haptic('heavy'); Sfx.lock();
+  if (!S.lite) $('fxCase').animate([{ transform: 'scale(1.03)' }, { transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.3,1.4,.5,1)' });
   FullGlow.set(glowOf(itemColor(it))); FullGlow.punch(0, .8); Sfx.rank(it.t === 'nft' ? (it.rare ? 4 : 3) : it.t === 'gram' ? 2 : 1);
   await wait(900);
   /* приз */
@@ -171,7 +185,7 @@ function caseDrop(c, it, r, g){
     Tilt.add($('pz'), $('pz').querySelector('img'), $('pz').querySelector('.gl i'), 1.4);
     $('fxWin').innerHTML = `<b>${it.t === 'gram' ? '+' + fmt(it.v) + ' GRAM' : '+' + it.v + ' XP'}</b><span>${c.name}</span>`; }
   $('fxBtns').innerHTML = (g ? `<button class="btn-main" id="cSell">Продать за ${fmt(g.value)} GRAM</button><button class="btn-ghost" id="cTake">Забрать</button>` : `<button class="btn-main" id="cTake">Забрать</button>`) +
-    (c.price ? `<button class="btn-ghost" id="cAgain">Ещё раз · ${fmt(c.price)} GRAM</button>` : '') + PF_LINK;
+    (c.price ? `<button class="btn-ghost" id="cAgain">Ещё раз · ${fmt(c.price)} GRAM</button>` : S.stock[c.id] > 0 ? `<button class="btn-ghost" id="cAgain">Ещё один · осталось ${S.stock[c.id]}</button>` : '') + PF_LINK;
   $('fxPfIn').onclick = () => openPF(r);
   $('fxShare').onclick = () => shareWin(`Открыл ${c.name} и выбил ${g ? g.nft.name : itemName(it)} в Pawn`);
   const take = async how => {
@@ -209,6 +223,7 @@ syncBalBtn();
   S.lastFair = null;
   await revealEpoch(false);                                // прошлые игры — в уже раскрытой эпохе
   S.hist.wallet.push({ type: 'dep', t: Date.now() - 26 * 3600000, amount: 250, method: 'Tonkeeper' }, { type: 'nft', t: Date.now() - 50 * 3600000, name: NFTS[40].name, img: NFTS[40].src, bg: NFTS[40].bg, method: 'в Telegram · комиссия 0.3 GRAM' },
+    { type: 'nftin', t: Date.now() - 74 * 3600000, name: NFTS[12].name, img: NFTS[12].src, bg: NFTS[12].bg, method: '@pawngift' },
     { type: 'dep', t: Date.now() - 98 * 3600000, amount: 150, method: 'Telegram Wallet' });
   S.hist.rewards.push({ kind: 'task', title: TASKS[0][1], rw: TASKS[0][3], t: Date.now() - 3 * 3600000 });   // утреннее задание уже выполнено
   checkAch(true);                                          // то, что уже было сделано, отмечаем без наград

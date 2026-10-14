@@ -14,6 +14,7 @@ let histTab = 'crafts';
 function openHistory(tab = histTab){ histTab = tab; swapDrawer('histDrawer', () => renderHist()); }
 function renderHist(detail){
   const tabs = [['crafts', 'Крафты'], ['cases', 'Кейсы'], ['rewards', 'Награды'], ['wallet', 'Кошелёк'], ['refs', 'Рефералка'], ['stats', 'Статистика']];
+  requestAnimationFrame(() => $('histTabs').querySelector('.on')?.scrollIntoView({ inline: 'center', block: 'nearest' }));
   $('histTabs').innerHTML = tabs.map(([k, t]) => `<button class="tab${k === histTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
   const b = $('histBody');
   if (detail){
@@ -38,20 +39,21 @@ function renderHist(detail){
       return `<div class="hcard w" style="--c:${c}">${hpic(g ? 'assets/gem-small.svg' : 'assets/xp.webp')}<span class="hk-v"><b>${x.title}</b><small>${x.kind === 'task' ? 'Задание дня' : 'Достижение'} · ${tAgo(x.t)}</small></span>` +
         `<b class="hk-amt" style="color:${c}">${g ? '+' + fmt(x.rw.g) + ' GRAM' : '+' + x.rw.xp + ' XP'}</b></div>`; }).join('') : '<p class="hempty">Наград пока нет</p>';
   } else if (histTab === 'wallet'){
-    const L = S.hist.wallet, lab = { dep: 'Пополнение', out: 'Вывод GRAM', nft: 'Вывод NFT', sell: 'Продажа NFT', restore: 'Восстановление дня' };
-    b.innerHTML = L.length ? L.map(w => { const dep = w.type === 'dep' || w.type === 'sell', c = dep ? '#12D53D' : '#F57A37';
+    const L = S.hist.wallet, lab = { dep: 'Пополнение', nftin: 'Депозит NFT', out: 'Вывод GRAM', nft: 'Вывод NFT', sell: 'Продажа NFT', restore: 'Восстановление дня' };
+    b.innerHTML = L.length ? L.map(w => { const dep = w.type === 'dep' || w.type === 'sell' || w.type === 'nftin', c = dep ? '#12D53D' : '#F57A37';
       return `<div class="hcard w" style="--c:${c}">${w.img ? hpic(w.img, w.bg) : `<span class="hk-ic">${svg(w.type === 'restore' ? '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M9.5 15l2 2 3.5-4"/>' : dep ? '<path d="M12 5v14M5 12l7 7 7-7"/>' : '<path d="M12 19V5M5 12l7-7 7 7"/>')}</span>`}` +
         `<span class="hk-v"><b>${w.name || lab[w.type]}</b><small>${w.name ? lab[w.type] + ' · ' : ''}${w.status && w.status !== 'выполнено' ? `<i class="pend">${w.status}</i> · ` : ''}${tAgo(w.t)}</small></span>` +
         `<b class="hk-amt" style="color:${c}">${w.amount != null ? (dep ? '+' : '−') + fmt(w.amount) : 'NFT'}</b></div>`; }).join('') : '<p class="hempty">Операций пока нет</p>';
   } else {
     const C = S.hist.crafts, n = C.length, staked = C.reduce((a, c) => a + c.r.stake, 0), won = C.reduce((a, c) => a + c.r.win, 0);
     const best = C.reduce((a, c) => c.r.mult > a.mult ? c.r : a, { mult: 0 }), dep = S.hist.wallet.filter(w => w.type === 'dep').reduce((a, w) => a + w.amount, 0);
-    const nftOut = S.hist.wallet.filter(w => w.type === 'nft').length;
+    const nftOut = S.hist.wallet.filter(w => w.type === 'nft').length, nftIn = S.hist.wallet.filter(w => w.type === 'nftin').length;
     const by = TIERS.map((t, i) => C.filter(c => c.r.ti === i).length);
     b.innerHTML = `<div class="hstat-hero"><div style="--c:#12D53D"><small>Выиграно</small><b>${fmt(won)}</b><span>GRAM</span></div><div style="--c:#30A5FF"><small>Поставлено</small><b>${fmt(staked)}</b><span>GRAM</span></div></div>` +
-      `<div class="hstat">${[['Крафтов', n, '#FFB835'], ['Твой RTP', n ? Math.round(won / staked * 100) + '%' : '—', '#00D9FF'], ['Лучший', best.mult ? 'x' + best.mult : '—', '#EB57B0'], ['Кейсов', S.hist.cases.length, '#F57A37'],
-        ['Пополнено', fmt(dep), '#12D53D'], ['NFT выведено', nftOut, '#FF4C35'], ['Опыт', xpFmt(S.xp), '#F57A37'], ['Подарков', INV.length, '#AE3FC4']]
+      `<div class="hstat">${[['Крафтов', n, '#FFB835'], ['Лучший', best.mult ? 'x' + best.mult : '—', '#EB57B0'], ['Кейсов', S.hist.cases.length, '#F57A37'], ['Опыт', xpFmt(S.xp), '#F57A37'],
+        ['Депозит GRAM', fmt(dep), '#12D53D'], ['Депозит NFT', nftIn + ' шт', '#00D9FF'], ['NFT выведено', nftOut + ' шт', '#FF4C35'], ['Подарков', INV.length, '#AE3FC4']]
         .map(([k, v, c]) => `<div style="--c:${c}"><small>${k}</small><b>${v}</b></div>`).join('')}</div>` +
+      `<div class="pfi-rtp"><b>${(+RTP_PPM / 1e4).toFixed(0)}%</b><span><b>Целевой RTP</b><small>${n ? `Твой RTP за ${n} крафтов — ${Math.round(won / staked * 100)}%. ` : ''}На длинной дистанции игрокам возвращается 95% ставок; на коротком отрезке твой может быть выше или ниже.</small></span></div>` +
       `<div class="hsec">Ранги в твоих крафтах</div><div class="bars">${TIERS.map((t, i) => { const pc = n ? by[i] / n * 100 : 0;
         return `<div style="--c:${t.c}"><span>${t.name}</span><i><b style="width:${Math.max(pc, 1.5).toFixed(1)}%"></b><em style="left:${t.chance}%"></em></i><small>${by[i]} · ${pc.toFixed(0)}%</small></div>`; }).join('')}</div>` +
       `<p class="hnote">Белая черта — честный шанс ранга. Чем больше крафтов, тем ближе к ней твои доли.</p>`;

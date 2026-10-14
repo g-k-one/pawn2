@@ -53,20 +53,29 @@ function renderSlots(){
 }
 
 /* ---------- шторки ---------- */
-let openDrawer = null;
+let openDrawer = null, drawerStack = [];   // стек шторок: из бонусов можно вернуться в меню
 function showDrawer(id){
   openDrawer = $(id); openDrawer.classList.add('open'); $('backdrop').classList.add('on'); haptic();
 }
 function hideDrawer(){
   if (!openDrawer) return;
   openDrawer.classList.remove('open'); openDrawer.style.transform = ''; $('backdrop').classList.remove('on'); openDrawer = null;
+  drawerStack = []; document.querySelectorAll('.dr-back').forEach(b => b.remove());
 }
+const DRAWER_NAMES = { menuDrawer: 'Меню', casesDrawer: 'Бонусы', histDrawer: 'История', pfiDrawer: 'Честность', walletDrawer: 'Кошелёк', pfDrawer: 'Проверка', dbgDrawer: 'Дебаг', giftsDrawer: 'Подарки', caseDrawer: 'Кейс' };
+// кнопка «‹ Назад» в шторке, открытой из другой шторки
+function setBack(dr){
+  dr.querySelector('.dr-back')?.remove(); const prev = drawerStack[drawerStack.length - 1]; if (!prev) return;
+  const b = document.createElement('button'); b.className = 'dr-back'; b.textContent = '‹ ' + (DRAWER_NAMES[prev] || 'Назад');
+  b.onclick = e => { e.stopPropagation(); drawerBack(); }; dr.appendChild(b);
+}
+function drawerBack(){ const id = drawerStack.pop(); if (!id) return hideDrawer(); swapDrawer(id, id === 'menuDrawer' ? renderMenu : id === 'casesDrawer' ? renderCases : null, true); }
 $('backdrop').onclick = hideDrawer;
 // тянуть вниз — закрыть: за шапку или за любое место, если содержимое прокручено к началу
 document.querySelectorAll('.drawer').forEach(dr => {
   const body = dr.querySelector('.dr-b');
   let y0 = null, x0 = 0, dy = 0, t0 = 0, armed = false, moved = false;
-  const start = (x, y, target) => { y0 = y; x0 = x; dy = 0; t0 = performance.now(); moved = false; armed = !!target.closest('.dr-h'); };
+  const start = (x, y, target) => { y0 = y; x0 = x; dy = 0; t0 = performance.now(); moved = false; armed = !!target.closest('.dr-h') && !target.closest('.tabs, .dr-back'); };
   // возвращает true, если жест наш (тогда гасим прокрутку)
   const move = (x, y) => {
     if (y0 === null) return false;
@@ -95,6 +104,16 @@ document.querySelectorAll('.drawer').forEach(dr => {
   window.addEventListener('pointerup', e => { if (e.pointerType === 'mouse') end(); });
   // клик после перетаскивания не должен выбирать подарок
   dr.addEventListener('click', e => { if (moved){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+});
+
+/* табы с прокруткой: мышью — перетаскиванием и колесом (полос прокрутки нет), пальцем — как обычно */
+document.querySelectorAll('.tabs.scroll').forEach(t => {
+  let x0 = null, s0 = 0, moved = false;
+  t.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') return; x0 = e.clientX; s0 = t.scrollLeft; moved = false; });
+  addEventListener('pointermove', e => { if (x0 === null) return; const dx = (e.clientX - x0) / K; if (Math.abs(dx) > 4) moved = true; t.scrollLeft = s0 - dx; });
+  addEventListener('pointerup', () => { x0 = null; });
+  t.addEventListener('click', e => { if (moved){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+  t.addEventListener('wheel', e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)){ t.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
 });
 
 /* ---------- шторка подарков: инвентарь, выбрать максимум 2 ---------- */

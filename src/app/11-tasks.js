@@ -11,7 +11,6 @@ const tasksDone = () => TASKS.filter(([k, , n]) => S.tasks[k] >= n).length;
 const weekDone = () => dayIdx() === 6 && dailyDone() && !S.week.missed.length;
 /* бесплатные кейсы копятся: за выполненный день +1 кейс Биста, за неделю +1 Маска. Открываются разом — награда × число кейсов */
 S.stock = { beast: 0, musk: 0 };
-const caseMult = c => c.need ? Math.max(1, S.stock[c.id] || 0) : 1;
 function stockUp(id){ S.stock[id]++; const c = caseById(id);
   setTimeout(() => notify({ type: 'ok', img: c.img, color: c.c, title: `${c.name} в запасе ×${S.stock[id]}`, text: 'Открой сейчас или копи — награда умножится на число кейсов' }), 2600); }
 function bumpTasks(r){

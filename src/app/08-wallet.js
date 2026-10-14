@@ -52,6 +52,7 @@ function relayerFlow(){
   // прототип: через пару секунд «приходит» подарок
   setTimeout(() => { const n = pick(NFTS.slice(0, 9)), bg = n.bg;
     const g = { id: 'r' + Date.now(), num: n.num, nft: n, a: bg[0], b: bg[1], p: bg[2], value: n.price }; INV = [g, ...INV];
+    S.hist.wallet.unshift({ type: 'nftin', t: Date.now(), name: n.name, img: n.src, bg: n.bg, method: RELAYER });   // депозит NFT-подарком — в историю
     S.ach.nftDep = true; notify({ type: 'ok', img: n.src, title: `${n.name} получен`, text: 'Подарок уже в инвентаре' });
     if (openDrawer === $('giftsDrawer')) renderInv(); if (openDrawer === $('walletDrawer')) renderWallet(); checkAch(); }, 3500);
 }

@@ -62,17 +62,18 @@ function openPF(r = S.lastFair){
 }
 // открыть одну шторку вместо другой
 // открыть одну шторку вместо другой: шторка остаётся на месте, старое содержимое тает, новое проявляется из глубины
-function swapDrawer(id, prep){
+function swapDrawer(id, prep, back){
   const old = openDrawer, nw = $(id);
   if (!old){ prep?.(); return showDrawer(id); }
   if (old === nw) return prep?.();
-  prep?.(); haptic();
+  if (!back) drawerStack.push(old.id);
+  prep?.(); haptic(); setBack(nw);
   nw.classList.add('drag', 'open'); nw.style.transform = ''; nw.style.zIndex = 48; openDrawer = nw;
   nw.animate([{ opacity: 0, transform: 'translateY(10px) scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.25,.9,.3,1)' })
     .onfinish = () => { nw.classList.remove('drag'); nw.style.zIndex = ''; };
   old.classList.add('drag');
   old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease-out', fill: 'forwards' }).onfinish = () => {
-    old.classList.remove('open'); old.style.transform = ''; requestAnimationFrame(() => { old.getAnimations().forEach(a => a.cancel()); old.classList.remove('drag'); }); };
+    old.classList.remove('open'); old.style.transform = ''; old.querySelector('.dr-back')?.remove(); requestAnimationFrame(() => { old.getAnimations().forEach(a => a.cancel()); old.classList.remove('drag'); }); };
 }
 
 /* ---------- как это работает ---------- */
