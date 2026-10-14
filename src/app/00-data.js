@@ -155,14 +155,15 @@ function fit(){
   stage.style.transform = `scale(${k})`;
   // баланс: в макете 43 px сверху; на коротких экранах поджимается вместе с зазором
   // верх контента в Telegram fullscreen: статус-бар + кнопки Telegram
-  let tgTop = 0; try { const tg = Telegram.WebApp; if (tg.isFullscreen) tgTop = (tg.safeAreaInset?.top || 0) + (tg.contentSafeAreaInset?.top || 0); } catch(_){}
+  let tgTop = 0, tgRow = 0; try { const tg = Telegram.WebApp; if (tg.isFullscreen){ const st = tg.safeAreaInset?.top || 0, ct = tg.contentSafeAreaInset?.top || 0; tgTop = st + ct; if (ct) tgRow = st + ct / 2; } } catch(_){}
   stage.style.setProperty('--tgTop', tgTop / k + 'px');
   // уведомления — на уровне ленты «лайв»: выше их перекрывают кнопки и шапка Telegram
   stage.style.setProperty('--noteTop', Math.max(tgTop / k + 8, H - 844 + 106) + 'px');
-  // +16 px на высоких экранах: на iPhone с Dynamic Island в Telegram баланс иначе подлезает под «остров».
-  // На коротких (SE и т.п., острова нет) прибавка плавно уходит — иначе баланс наедет на ленту
-  const island = Math.max(0, 16 - Math.max(0, 844 - H));
-  stage.style.setProperty('--balTop', (H >= 844 ? 43 + island + Math.min(40, (H - 844) * .35) : 43 + island - (844 - H) * .75) + 'px');
+  // Telegram fullscreen: баланс — точно по центру строки с кнопками Telegram («Close» и «⌄ •••»), под статус-баром и островом.
+  // Вне Telegram (браузер): +16 px на высоких экранах от выреза/острова, на коротких (SE) прибавка плавно уходит, чтобы не наехать на ленту
+  const island = Math.max(0, 16 - Math.max(0, 844 - H)), bh = document.querySelector('.balance')?.offsetHeight || 40;
+  stage.style.setProperty('--balTop', (tgRow ? tgRow / k - bh / 2
+    : H >= 844 ? 43 + island + Math.min(40, (H - 844) * .35) : 43 + island - (844 - H) * .75) + 'px');
 }
 try { const tg = Telegram.WebApp; tg.ready(); tg.expand(); tg.disableVerticalSwipes?.(); tg.setHeaderColor?.('#0b0b0b'); tg.setBackgroundColor?.('#0b0b0b');
   ['safeAreaChanged', 'contentSafeAreaChanged', 'fullscreenChanged', 'viewportChanged'].forEach(ev => tg.onEvent(ev, () => fit())); } catch(_){}
