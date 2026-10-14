@@ -29,7 +29,7 @@ const GIFT_Q = '';
 function tileHTML(it, foot, g){
   const pool = it.rare ? RARE_POOL() : FLOOR_POOL();
   const img = it.t === 'nft' ? `<img class="tnft" data-pool="${it.rare ? 'rare' : 'floor'}" src="${g ? g.nft.src : pick(pool).src}" alt="">` : `<img src="${itemImg(it)}" alt="">`;
-  return `<div class="ct${it.rare ? ' hi' : ''}${it.t === 'nft' ? ' isnft' : ''}${g ? ' fixed' : ''}" style="--c:${itemColor(it)}"><b>${it.t === 'nft' ? (it.rare ? 'Редкий' : 'Обычный') : itemName(it)}</b>${img}<small>${foot}</small>${it.rare ? '<span class="shine"></span>' : ''}</div>`;
+  return `<div class="ct${it.rare ? ' hi' : ''} is${it.t}${g ? ' fixed' : ''}" style="--c:${itemColor(it)}"><b>${it.t === 'nft' ? (it.rare ? 'Редкий' : 'Обычный') : itemName(it)}</b>${img}<small>${foot}</small>${it.rare ? '<span class="shine"></span>' : ''}</div>`;
 }
 // картинка NFT на плитках сама перелистывается — видно, что подарок будет случайный из диапазона
 setInterval(() => {

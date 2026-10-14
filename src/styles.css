@@ -1281,6 +1281,9 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .croul .ct.cur{opacity:1;transform:scale(1.08)}
 .croul .ct.win{opacity:1;transform:scale(1.16)}
 .croul .mline{top:14px;bottom:14px;transform-origin:50% 50%}
+/* плитки кейсов: XP — насыщенный тёмно-оранжевый вместо грязного; гем GRAM крупнее */
+.ct.isxp{background:linear-gradient(180deg,#9c3209 0%,#dc5512 100%);box-shadow:inset 0 0 22px rgba(255,110,30,.5),inset 0 1px 0 rgba(255,255,255,.15)}
+.ct.isgram img{transform:scale(1.22)}
 .credit{margin:18px 0 4px;text-align:center;font:400 11.5px/1.4 var(--serif);color:rgba(255,255,255,.3)}
 .credit a{color:inherit}
 .gin .steps1{margin:0 0 14px;font-family:var(--serif);font-size:12.5px;color:rgba(255,255,255,.55)}
