@@ -1269,6 +1269,8 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .arow em.g{color:var(--teal)}
 /* запас бесплатных кейсов */
 .bcase .stk{position:absolute;right:10px;top:10px;z-index:2;padding:3px 9px;border-radius:999px;background:#fff;color:#0b0b0e;font-style:normal;font-size:15px;font-weight:700}
+/* «Проверить» в достижениях — как «Пригласить друга»: полупрозрачная белая, размер прежний */
+.chk-btn{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9)}
 .credit{margin:18px 0 4px;text-align:center;font:400 11.5px/1.4 var(--serif);color:rgba(255,255,255,.3)}
 .credit a{color:inherit}
 .gin .steps1{margin:0 0 14px;font-family:var(--serif);font-size:12.5px;color:rgba(255,255,255,.55)}
