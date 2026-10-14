@@ -1244,6 +1244,17 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 .fx-drop::before{pointer-events:none}
 .fx-win,.fx-btns{position:relative;z-index:2}
 .live-tag span{font-size:16px;line-height:20px;padding:10px 0 20px}
+html[lang=en] .bcase.free::before{content:"Free"}
+/* лайв — по высоте как карточки выигрышей рядом */
+.live-tag{top:8px}
+.live-tag span{display:flex;align-items:center;justify-content:center;height:64px;padding:0 0 14px;box-sizing:border-box}
+/* вывод: предупреждение про релеер */
+.wwarn{display:flex;gap:12px;margin:6px 0 12px;padding:14px;border-radius:20px;background:rgba(255,184,53,.12);box-shadow:inset 0 0 0 1.5px rgba(255,184,53,.6),inset 0 0 22px rgba(255,184,53,.25)}
+.wwarn>i{flex:none;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#FFB835;color:#2a1a08;font-style:normal;font-weight:800;font-size:22px}
+.wwarn>span{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.wwarn b{font-size:21px;line-height:1.1;text-transform:uppercase;color:#FFB835}
+.wwarn small{font:400 13px/1.4 var(--serif);color:rgba(255,255,255,.85)}
+.wwarn .pill-btn{margin-top:6px;background:#FFB835;color:#2a1a08}
 .credit{margin:18px 0 4px;text-align:center;font:400 11.5px/1.4 var(--serif);color:rgba(255,255,255,.3)}
 .credit a{color:inherit}
 .gin .steps1{margin:0 0 14px;font-family:var(--serif);font-size:12.5px;color:rgba(255,255,255,.55)}
@@ -1385,6 +1396,7 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
     for (;;){ const { done, value } = await rd.read(); if (done) break; parts.push(value); got += value.length; set(w0 + (w1 - w0) * Math.min(1, got / total)); }
     return JSON.parse(new TextDecoder().decode(await new Blob(parts).arrayBuffer()));
   }
+  try { if (localStorage.getItem('bm-lang') === 'en') document.querySelector('.boot-in b').textContent = 'Loading gifts'; } catch(_){}
   window.GIMG = {}; window.GSYM = {};
   window.CDN = await new Promise(res => { const im = new Image(), t = setTimeout(() => res(false), 2500);
     im.onload = () => { clearTimeout(t); res(true); }; im.onerror = () => { clearTimeout(t); res(false); };
@@ -1894,7 +1906,7 @@ $('menuBody').addEventListener('click', e => {
   const lg = e.target.closest('[data-lang]');
   if (lg){ if (S.lang === lg.dataset.lang) return; S.lang = lg.dataset.lang; try { localStorage.setItem('bm-lang', S.lang); } catch(_){} haptic();
     lg.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === lg));
-    if (S.lang === 'en') notify({ type: 'info', icon: 'info', title: 'English', text: 'Перевод интерфейса в работе — пока всё на русском' }); return; }
+    I18N.set(S.lang); return; }
   const r = e.target.closest('.mrow'); if (!r || !r.matches('button')) return;
   if (r.id === 'fastRow') return toggleFast();
   if (r.id === 'vibroRow') return toggleVibro();
@@ -2119,6 +2131,32 @@ S.fast = LS('bm-fast', false);
 S.sound = LS('bm-sound', true);
 S.vibro = LS('bm-vibro', true);
 S.lang = (() => { try { return localStorage.getItem('bm-lang') || 'ru'; } catch(_){ return 'ru'; } })();
+/* ---------- английский: переводим готовый DOM по словарю assets/i18n/en.json (грузится только при выборе EN).
+   Правила — на весь текст узла (числа, склонения), затем фразы целиком, затем подстроки; RU восстанавливается из запомненных оригиналов ---------- */
+const I18N = (() => {
+  const CYR = /[А-Яа-яЁё]/, orig = new WeakMap(), mine = new WeakMap(); let D = null, re = null, obs = null;
+  const load = () => D ? Promise.resolve() : fetch('assets/i18n/en.json').then(r => r.json()).then(d => {
+    const keys = Object.keys(d.phrases).sort((a, b) => b.length - a.length).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    re = new RegExp(`(?<![А-Яа-яЁё])(?:${keys.join('|')})(?![А-Яа-яЁё])`, 'g');
+    D = { ...d, rules: d.rules.map(([p, r]) => [new RegExp(p), r]), mre: new RegExp(`(\\d+) (${Object.keys(d.months).join('|')})\\.?`, 'g') };
+  });
+  const tr = t => {
+    const core = t.trim(), wrap = x => t.replace(core, () => x);
+    for (const [p, r] of D.rules) if (p.test(core)) return wrap(core.replace(p, r).replace(re, m => D.phrases[m]));
+    if (D.phrases[core]) return wrap(D.phrases[core]);
+    return t.replace(D.mre, (m, d, mo) => `${D.months[mo]} ${d}`).replace(re, m => D.phrases[m]);
+  };
+  // записываем, только если текст изменился: иначе каждая запись порождает новую мутацию и наблюдатель зацикливается
+  const node = n => { if (mine.get(n) === n.data || !CYR.test(n.data) || /^(SCRIPT|STYLE)$/.test(n.parentNode?.nodeName)) return;
+    const v = tr(n.data); orig.set(n, n.data); mine.set(n, v); if (v !== n.data) n.data = v; };
+  const texts = (root, fn) => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) fn(n); };
+  const onMut = ms => { for (const m of ms){ if (m.type === 'characterData') node(m.target); else m.addedNodes.forEach(a => a.nodeType === 3 ? node(a) : a.nodeType === 1 && texts(a, node)); } };
+  return { async set(lang){
+    document.documentElement.lang = lang;
+    if (lang === 'en'){ await load(); texts(document.body, node); (obs ||= new MutationObserver(onMut)).observe(document.body, { subtree: true, childList: true, characterData: true }); }
+    else { obs?.disconnect(); texts(document.body, n => { if (orig.has(n) && mine.get(n) === n.data){ n.data = orig.get(n); mine.delete(n); } }); }
+  } };
+})();
 S.lite = LS('bm-lite', !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches));
 S.demo = false;
 const swOn = (id, on) => { const el = document.querySelector(`#${id} .switch`); if (el) el.classList.toggle('on', on); };
@@ -2733,7 +2771,8 @@ function renderPFInfo(){
 /* =========================================================
    ИСТОРИЯ: крафты, кейсы, кошелёк, статистика
    ========================================================= */
-S.hist = { crafts: [], cases: [], wallet: [], refs: [] };
+S.hist = { crafts: [], cases: [], wallet: [], refs: [], rewards: [] };
+const logReward = (kind, title, rw) => S.hist.rewards.unshift({ kind, title, rw, t: Date.now() });   // награды заданий и достижений
 // начисления за друзей: 5% от активности — каждый день в 00:00 МСК, 10% от первого депозита друга — сразу
 (() => { const day = 864e5, mid = new Date(); mid.setHours(0, 0, 0, 0);
   [.84, 1.12, .37, 2.05, .66, .91, 1.48].forEach((v, i) => S.hist.refs.push({ type: 'act', t: mid - i * day, amount: v, n: 7 - (i > 3 ? 2 : 0) }));
@@ -2744,7 +2783,7 @@ const tAgo = ms => { const m = Math.round((Date.now() - ms) / 60000); return m <
 let histTab = 'crafts';
 function openHistory(tab = histTab){ histTab = tab; swapDrawer('histDrawer', () => renderHist()); }
 function renderHist(detail){
-  const tabs = [['crafts', 'Крафты'], ['cases', 'Кейсы'], ['wallet', 'Кошелёк'], ['refs', 'Рефералка'], ['stats', 'Статистика']];
+  const tabs = [['crafts', 'Крафты'], ['cases', 'Кейсы'], ['rewards', 'Награды'], ['wallet', 'Кошелёк'], ['refs', 'Рефералка'], ['stats', 'Статистика']];
   $('histTabs').innerHTML = tabs.map(([k, t]) => `<button class="tab${k === histTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
   const b = $('histBody');
   if (detail){
@@ -2763,6 +2802,11 @@ function renderHist(detail){
     b.innerHTML = `<div class="hstat-hero one"><div style="--c:#30A5FF"><small>Получено за друзей</small><b>+${fmt(sum)}</b><span>GRAM · начисляется само в 00:00 МСК</span></div></div>` +
       L.map(x => { const act = x.type === 'act', c = act ? '#30A5FF' : '#12D53D';
         return `<div class="hcard w" style="--c:${c}"><span class="hk-ic">${svg(act ? IC.users : '<path d="M12 5v14M5 12l7 7 7-7"/>')}</span><span class="hk-v"><b>${act ? '5% от активности' : '10% от депозита @' + x.name}</b><small>${act ? `${x.n} друзей · ` : 'первый депозит · '}${new Date(x.t).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}${act ? ', 00:00' : ''}</small></span><b class="hk-amt" style="color:${c}">+${fmt(x.amount)}</b></div>`; }).join('');
+  } else if (histTab === 'rewards'){
+    const L = S.hist.rewards;
+    b.innerHTML = L.length ? L.map(x => { const g = x.rw.g != null, c = g ? '#30A5FF' : '#F57A37';
+      return `<div class="hcard w" style="--c:${c}">${hpic(g ? 'assets/gem-small.svg' : 'assets/xp.webp')}<span class="hk-v"><b>${x.title}</b><small>${x.kind === 'task' ? 'Задание дня' : 'Достижение'} · ${tAgo(x.t)}</small></span>` +
+        `<b class="hk-amt" style="color:${c}">${g ? '+' + fmt(x.rw.g) + ' GRAM' : '+' + x.rw.xp + ' XP'}</b></div>`; }).join('') : '<p class="hempty">Наград пока нет</p>';
   } else if (histTab === 'wallet'){
     const L = S.hist.wallet, lab = { dep: 'Пополнение', out: 'Вывод GRAM', nft: 'Вывод NFT', sell: 'Продажа NFT' };
     b.innerHTML = L.length ? L.map(w => { const dep = w.type === 'dep' || w.type === 'sell', c = dep ? '#12D53D' : '#F57A37';
@@ -2874,9 +2918,10 @@ function renderWallet(){
       `<p class="muted small center">На балансе ${fmt(S.balance)} GRAM · пополнение только в GRAM</p>` +
       `<details class="gdet"><summary>Пополнить NFT-подарком</summary>${giftInHTML('Передай подарок')}</details>` + PARTNER;
   } else {
-    b.innerHTML = INV.length ? `<p class="muted small" style="margin:6px 0 12px">Подарок придёт в твой профиль Telegram. Комиссия сети — <b style="color:#fff">${OUT_FEE} GRAM</b> за каждый NFT.</p>` +
+    b.innerHTML = `<div class="wwarn"><i>!</i><span><b>Сначала напиши ${RELAYER}</b><small>Перед выводом обязательно отправь любое сообщение релееру <span class="acc">${RELAYER}</span> в Telegram — и только потом выводи.</small>` +
+      `<button class="pill-btn" data-act="relayerMsg">Написать ${RELAYER}</button></span></div>` + (INV.length ? `<p class="muted small" style="margin:6px 0 12px">Подарок придёт в твой профиль Telegram. Комиссия сети — <b style="color:#fff">${OUT_FEE} GRAM</b> за каждый NFT.</p>` +
       `<div class="onft" id="onft">${INV.map(g => `<button class="cell${outSel.has(g.id) ? ' sel' : ''}" data-id="${g.id}"><span class="chk">✓</span>${cardHTML(g, 76)}</button>`).join('')}</div>` + PARTNER
-      : giftInHTML() + PARTNER;
+      : giftInHTML() + PARTNER);
     b.querySelectorAll('.cell').forEach(c => tiltCard(c, .5));
   }
   walletBtn(); fitAmt(); fitCards($('onft'), 76, 10);
@@ -2895,7 +2940,8 @@ function relayerFlow(){
 }
 function partnerFlow(){ haptic(); try { Telegram.WebApp.openTelegramLink('https://t.me/StarsMarketBot'); } catch(_){ notify({ type: 'info', title: '@StarsMarketBot', text: 'В Telegram откроется бот партнёра' }); } }
 document.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a) return;
-  if (a.dataset.act === 'relayer') relayerFlow(); else if (a.dataset.act === 'partner') partnerFlow();
+  if (a.dataset.act === 'relayerMsg'){ haptic(); try { Telegram.WebApp.openTelegramLink('https://t.me/' + RELAYER.slice(1)); } catch(_){ window.open('https://t.me/' + RELAYER.slice(1), '_blank'); } }
+  else if (a.dataset.act === 'relayer') relayerFlow(); else if (a.dataset.act === 'partner') partnerFlow();
   else if (a.dataset.act === 'verify'){ haptic(); try { Telegram.WebApp.openLink(VERIFY_URL); e.preventDefault(); } catch(_){} } });
 $('walletBody').addEventListener('click', e => {
   const p = e.target.closest('.presets .pill-btn'), c = e.target.closest('.onft .cell');
@@ -3026,7 +3072,7 @@ const weekDone = () => dayIdx() === 6 && dailyDone() && !S.week.missed.length;
 function bumpTasks(r){
   if (S.demo) return;
   S.tasks.crafts++; S.tasks.turnover = Math.round((S.tasks.turnover + r.stake) * 1000) / 1000;
-  TASKS.forEach(([k, t, n, rw]) => { if (S.tasks[k] >= n && !S.tasks.done[k]){ S.tasks.done[k] = 1; setTimeout(() => { grant(rw); notify({ type: 'ok', icon: 'ok', title: 'Задание выполнено', text: `${t} · ${rewText(rw)}` }); }, 1600); } });
+  TASKS.forEach(([k, t, n, rw]) => { if (S.tasks[k] >= n && !S.tasks.done[k]){ S.tasks.done[k] = 1; setTimeout(() => { grant(rw); logReward('task', t, rw); notify({ type: 'ok', icon: 'ok', title: 'Задание выполнено', text: `${t} · ${rewText(rw)}` }); }, 1600); } });
 }
 
 /* =========================================================
@@ -3067,7 +3113,7 @@ function claimAch(id, btn){
   const [, t, rw, ok, act, prog] = a;
   btn.classList.add('wait'); btn.textContent = 'Проверяем…';
   setTimeout(() => {
-    if (ok()){ S.ach.got[id] = 1; grant(rw); haptic('medium'); Sfx.coin(); notify({ type: 'ok', icon: 'ok', color: '#12D53D', title: 'Достижение получено', text: `${t} · ${rewText(rw)}` }); }
+    if (ok()){ S.ach.got[id] = 1; grant(rw); logReward('ach', t, rw); haptic('medium'); Sfx.coin(); notify({ type: 'ok', icon: 'ok', color: '#12D53D', title: 'Достижение получено', text: `${t} · ${rewText(rw)}` }); }
     else { haptic('rigid'); const pr = prog ? prog() : null; notify({ type: 'warn', icon: 'info', title: 'Ещё не выполнено', text: pr ? `${t}: ${xpFmt(pr[0])} из ${xpFmt(pr[1])}` : t });
       if (act === 'sub'){ try { Telegram.WebApp.openTelegramLink('https://t.me/pawnd'); } catch(_){} setTimeout(() => { S.ach.subscribed = true; }, 1500); }
       if (act === 'relayer') relayerFlow(); }
@@ -3310,6 +3356,7 @@ syncBalBtn();
   await revealEpoch(false);                                // прошлые игры — в уже раскрытой эпохе
   S.hist.wallet.push({ type: 'dep', t: Date.now() - 26 * 3600000, amount: 250, method: 'Tonkeeper' }, { type: 'nft', t: Date.now() - 50 * 3600000, name: NFTS[40].name, img: NFTS[40].src, bg: NFTS[40].bg, method: 'в Telegram · комиссия 0.3 GRAM' },
     { type: 'dep', t: Date.now() - 98 * 3600000, amount: 150, method: 'Telegram Wallet' });
+  S.hist.rewards.push({ kind: 'task', title: TASKS[0][1], rw: TASKS[0][3], t: Date.now() - 3 * 3600000 });   // утреннее задание уже выполнено
   checkAch(true);                                          // то, что уже было сделано, отмечаем без наград
 })();
 
@@ -3566,6 +3613,7 @@ const FullGlow = makeGlow($('fxGlow'), { size: () => [SW, fxH()], active: () => 
     return { m: L(a.m, b.m), x: L(a.x, b.x), y: L(a.y, b.y), w: L(a.w, b.w), h: L(a.h, b.h), r: L(a.r, b.r) }; } });
 
 /* ---------- старт ---------- */
+if (S.lang === 'en') I18N.set('en');
 applyLite();
 renderBet();
 requestAnimationFrame(() => setTier(1));
