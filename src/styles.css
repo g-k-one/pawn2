@@ -1251,6 +1251,13 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .pfi-rtp span{display:flex;flex-direction:column;gap:3px}
 .pfi-rtp span b{font-size:20px;text-transform:uppercase}
 .pfi-rtp small{font:400 12.5px/1.4 var(--serif);color:rgba(255,255,255,.75)}
+/* карточки Provably Fair: общая колонка слева 48 px — заголовки и текст всех карточек начинаются на одной линии */
+.pfi-hero,.pfi-rtp,.pfi-env,.pfi-step{display:flex;align-items:flex-start;gap:12px;padding:16px}
+.pfi-hero>i,.pfi-env>i,.pfi-rtp>b{flex:none;width:48px;height:48px;margin:0}
+.pfi-hero>i{display:grid;place-items:center;border-radius:14px;background:#00D9FF;color:#06121a}
+.pfi-hero>i svg{width:26px;height:26px}
+.pfi-rtp>b{font-size:25px;line-height:48px;text-align:center;letter-spacing:-.5px}
+.pfi-step>i{width:32px;height:32px;margin:0 8px}
 /* онбординг */
 .onb{position:absolute;inset:0;z-index:80}
 .onb-hole{position:absolute;border-radius:22px;box-shadow:0 0 0 9999px rgba(0,0,0,.72),0 0 0 2px rgba(255,255,255,.5);transition:all .35s cubic-bezier(.25,.9,.3,1);pointer-events:none}

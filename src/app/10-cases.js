@@ -7,9 +7,11 @@ const CASES = [
   { id: 'satoshi', name: $t("Кейс Сатоши Накамото"), short: $t("Сатоши"), img: 'assets/chest-satoshi.webp', who: 'assets/who-satoshi.webp', c: '#FFB835', price: 2.5, items: [
     { t: 'nft', rare: 1, ch: 6.7 }, { t: 'nft', ch: 18.8 }, { t: 'gram', v: 25, ch: 2.28 }, { t: 'xp', v: 150, ch: 9.4 }, { t: 'xp', v: 100, ch: 23.1 }, { t: 'xp', v: 50, ch: 39.72 }] },
   { id: 'beast', name: $t("Кейс Мистера Биста"), short: $t("Мистер Бист"), img: 'assets/chest-beast.webp', who: 'assets/who-beast.webp', c: '#EB57B0', price: 0, need: 'daily', items: [
-    { t: 'nft', ch: 1 }, { t: 'gram', v: .5, ch: 4 }, { t: 'gram', v: .1, ch: 25 }, { t: 'gram', v: .05, ch: 36 }, { t: 'xp', v: 50, ch: 9 }, { t: 'xp', v: 25, ch: 25 }] },
+    { t: 'nft', rare: 1, ch: .05 }, { t: 'nft', ch: .95 }, { t: 'gram', v: .75, ch: 8 }, { t: 'gram', v: .25, ch: 14 }, { t: 'gram', v: .1, ch: 26 }, { t: 'gram', v: .05, ch: 28 },
+    { t: 'xp', v: 100, ch: 4 }, { t: 'xp', v: 50, ch: 9 }, { t: 'xp', v: 25, ch: 10 }] },
   { id: 'musk', name: $t("Кейс Илона Маска"), short: $t("Илон Маск"), img: 'assets/chest-musk.webp', who: 'assets/who-musk.webp', c: '#FF4C35', price: 0, need: 'weekly', items: [
-    { t: 'nft', rare: 1, ch: .5 }, { t: 'nft', ch: 2.5 }, { t: 'gram', v: 1, ch: 25 }, { t: 'gram', v: .5, ch: 35 }, { t: 'xp', v: 250, ch: 12 }, { t: 'xp', v: 100, ch: 25 }] },
+    { t: 'nft', rare: 1, ch: 1 }, { t: 'nft', ch: 8 }, { t: 'gram', v: 2, ch: 13 }, { t: 'gram', v: 1, ch: 24 }, { t: 'gram', v: .5, ch: 24 }, { t: 'gram', v: .3, ch: 19 },
+    { t: 'xp', v: 750, ch: 2 }, { t: 'xp', v: 300, ch: 4 }, { t: 'xp', v: 150, ch: 5 }] },
 ];
 CASES.forEach(c => { c.items.reduce((from, it) => { it.from = from; it.to = Math.min(TICKETS - 1, from + Math.round(it.ch / 100 * TICKETS) - 1); return it.to + 1; }, 0); c.items[c.items.length - 1].to = TICKETS - 1; });
 const caseById = id => CASES.find(c => c.id === id) || CASES[0];

@@ -76,7 +76,8 @@ test('кейс: открытие и проверка доказательств�
 test('вывод NFT: по одному, уведомление на каждый, комиссия за каждый', async () => {
   const { page, ctx, errors } = await open();
   const s0 = await waitSave(page, s => s.inv.length >= 3);
-  await page.click('.balance'); await page.waitForTimeout(600); await page.click('#walletTabs [data-k="out"]'); await page.waitForTimeout(500);
+  await page.click('#menuBtn'); await page.waitForTimeout(400); await page.click('[data-go="withdraw"]'); await page.waitForTimeout(600);   // пункт «Вывод NFT» в меню
+  assert.equal(await page.textContent('#walletTabs .tab.on'), 'Вывести NFT');
   for (let i = 0; i < 3; i++) await page.click(`#onft .cell >> nth=${i}`);
   await page.click('#walletGo');
   const seen = new Set();

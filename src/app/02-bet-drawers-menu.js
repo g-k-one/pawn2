@@ -197,6 +197,7 @@ const IC = {
   check: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12l3 3 5-6"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
   chat: '<path d="M4 6a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2H10l-4 3v-3H6a2 2 0 01-2-2z"/>',
+  out: '<rect x="4" y="11" width="16" height="9" rx="2"/><path d="M12 15V3M8 7l4-4 4 4"/>',
   globe: '<circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16"/>',
 };
 const svg = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
@@ -219,6 +220,7 @@ function renderMenu(){
       sw('vibroRow', '#30A5FF', NICON.vibro, $t("Вибрация"), '', S.vibro) +
       sw('soundRow', '#F57A37', NICON.sound, $t("Звук"), '', S.sound) + `</div>` +
     `<div class="mgrp-t">${$t("Другое")}</div><div class="mgrp">` +
+      row(IC.out, $t("Вывод NFT"), '#30A5FF', INV.length ? `${INV.length} ${$n("подарок|подарка|подарков", INV.length)}` : '', ' data-go="withdraw"') +   // заметно, сверху: не все находят вывод через баланс
       row(IC.users, $t("Рефералка"), '#EB57B0', `${REF.friends.length} ${$t("друзей")}`, ' data-go="refs"') +
       `<div class="mrow" style="--c:#AE3FC4"><i>${svg(IC.globe)}</i>${$t("Язык")}<span class="seg">${[['ru', 'RU'], ['en', 'EN']].map(([k, t]) => `<button data-lang="${k}"${S.lang === k ? ' class="on"' : ''}>${t}</button>`).join('')}</span></div>` +
       row(IC.chat, $t("Поддержка"), '#12D53D', '', ' data-go="support"') +
@@ -230,7 +232,7 @@ $('menuBtn').onclick = () => { renderMenu(); showDrawer('menuDrawer'); };
 $('menuBody').addEventListener('click', e => {
   if (e.target.closest('.menu-top')){ openWallet('dep'); return; }
   const go = e.target.closest('[data-go]')?.dataset.go;
-  if (go){ haptic(); if (go === 'cases') openCases('tasks'); else if (go === 'top') openCases('top'); else if (go === 'support') tgOpen(SUPPORT); else if (go === 'refs') openCases('refs'); else if (go === 'hist') openHistory(); else if (go === 'pfi') swapDrawer('pfiDrawer', renderPFInfo); return; }
+  if (go){ haptic(); if (go === 'cases') openCases('tasks'); else if (go === 'top') openCases('top'); else if (go === 'support') tgOpen(SUPPORT); else if (go === 'refs') openCases('refs'); else if (go === 'withdraw') openWallet('out'); else if (go === 'hist') openHistory(); else if (go === 'pfi') swapDrawer('pfiDrawer', renderPFInfo); return; }
   const lg = e.target.closest('[data-lang]');
   // язык: запоминаем и перезапускаем — все тексты строятся заново на выбранном языке
   if (lg){ if (S.lang === lg.dataset.lang) return; haptic(); try { localStorage.setItem('bm-lang', lg.dataset.lang); } catch(_){} location.reload(); return; }
