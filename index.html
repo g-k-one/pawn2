@@ -424,7 +424,7 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 .wbal b{display:flex;align-items:center;gap:6px;font-size:24px;color:var(--blue)}
 .wbal b img{width:22px}
 .amt{display:flex;align-items:baseline;justify-content:center;gap:8px;margin:18px 0 10px}
-.amt input{width:200px;background:none;border:0;outline:0;color:#fff;font:700 64px var(--font);text-align:right;-moz-appearance:textfield}
+.amt input{width:1ch;min-width:.6em;max-width:240px;padding:0;background:none;border:0;outline:0;color:#fff;font:700 64px var(--font);text-align:center;-moz-appearance:textfield}
 .amt input::-webkit-inner-spin-button,.amt input::-webkit-outer-spin-button{-webkit-appearance:none}
 .amt span{font-size:26px;color:rgba(255,255,255,.5)}
 .presets{display:flex;gap:6px;justify-content:center}
@@ -2851,7 +2851,7 @@ function renderWallet(){
       : giftInHTML() + PARTNER;
     b.querySelectorAll('.cell').forEach(c => tiltCard(c, .5));
   }
-  walletBtn(); fitCards($('onft'), 76, 10);
+  walletBtn(); fitAmt(); fitCards($('onft'), 76, 10);
 }
 $('walletTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; walletTab = t.dataset.k; outSel = new Set(); haptic(); renderWallet(); });
 /* общие действия: партнёр, релеер */
@@ -2872,11 +2872,15 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-act]
 $('walletBody').addEventListener('click', e => {
   const p = e.target.closest('.presets .pill-btn'), c = e.target.closest('.onft .cell');
   if (e.target.closest('[data-act="off"]')){ S.wallet = null; syncBalBtn(); haptic(); renderWallet(); return; }
-  if (p){ depAmount = +p.dataset.v; haptic(); $('walletBody').querySelectorAll('.presets .pill-btn').forEach(x => x.classList.toggle('on', x === p)); $('depIn').value = depAmount; walletBtn(); }
+  if (p){ depAmount = +p.dataset.v; haptic(); $('walletBody').querySelectorAll('.presets .pill-btn').forEach(x => x.classList.toggle('on', x === p)); $('depIn').value = depAmount; fitAmt(); walletBtn(); }
   // выбор подарка — без перерисовки, чтобы карточки не дёргались
   if (c){ const id = c.dataset.id; outSel.has(id) ? outSel.delete(id) : outSel.add(id); c.classList.toggle('sel', outSel.has(id)); haptic(); walletBtn(); }
 });
-$('walletBody').addEventListener('input', e => { if (e.target.id === 'depIn'){ depAmount = Math.max(0, Math.round(+e.target.value * 100) / 100 || 0); walletBtn(); } });
+/* поле суммы шириной ровно по тексту — «10 GRAM» стоит по центру как одна группа */
+const amtCtx = document.createElement('canvas').getContext('2d');
+function fitAmt(){ const el = $('depIn'); if (!el) return; const cs = getComputedStyle(el); amtCtx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  el.style.width = Math.ceil(amtCtx.measureText(el.value || '0').width + 4) + 'px'; }
+$('walletBody').addEventListener('input', e => { if (e.target.id === 'depIn'){ fitAmt(); depAmount = Math.max(0, Math.round(+e.target.value * 100) / 100 || 0); walletBtn(); } });
 /* TON Connect (макет): выбор кошелька в отдельном окне */
 function tonConnect(){
   modal(`<div class="tcx"><span class="tc-logo">${svg('<path d="M12 3l9 5-9 13L3 8z"/><path d="M12 3v18M3 8h18"/>')}</span><h4>TON Connect</h4><p class="muted small center" style="margin:-6px 0 14px">Выбери кошелёк для подключения</p>` +
