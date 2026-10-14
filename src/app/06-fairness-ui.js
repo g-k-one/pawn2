@@ -90,7 +90,7 @@ function renderPFInfo(){
     `<div class="pfi-t">Как это работает</div>` +
     steps.map(([c, t, d], i) => `<div class="pfi-step" style="--c:${c}"><i>${i + 1}</i><div><b>${t}</b><p>${d}</p></div></div>`).join('') +
     `<div class="pfi-t">Тикет и ранги</div><p class="pfi-p">Каждая игра даёт тикет — число от 0 до 99 999. В какой диапазон он попал, такой и ранг. Шанс ранга — ровно доля его диапазона.</p>` +
-    `<div class="rng">${TIERS.map(t => `<div style="--c:${t.c}"><b>${t.name}</b><span>${tk(t.from)}–${tk(t.to)}</span><em>${t.chance}%</em></div>`).join('')}</div>` +
+    `<div class="rng">${TIERS.map(t => `<div style="--c:${t.c}"><b>${t.name}</b><span>${tk(t.from)} – ${tk(t.to)}</span><em>${t.chance}%</em></div>`).join('')}</div>` +
     `<div class="pfi-t">Текущая эпоха</div><p class="pfi-p">Зерно сервера загадано заранее — вот его отпечаток. Все игры эпохи считаются от него. Сохрани подтверждение сейчас: после раскрытия сайт проверки сверит его с доказательством.</p>` +
     `<div class="pf-row"><small>Commitment · игр в эпохе: <span id="epN">…</span></small><code id="nextHash">…</code></div><button class="btn-ghost" id="saveReceipt">Сохранить подтверждение</button>` +
     `<div class="pfi-t">Твой ключ</div><div class="cseed"><code id="cseedV">${S.clientSeed}</code></div>` +
