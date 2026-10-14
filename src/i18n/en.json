@@ -188,8 +188,6 @@
  "Мистер Бист": "MrBeast",
  "Можно положить в следующий крафт": "You can use it in the next craft",
  "На баланс": "To balance",
- "На длинной дистанции игрокам возвращается 95% от суммы ставок. Это значение записано в правилах каждого доказательства — target_rtp_ppm.": "In the long run, 95% of all bets go back to players. This value is written into the rules of every proof — target_rtp_ppm.",
- "На длинной дистанции игрокам возвращается 95% ставок; на коротком отрезке твой может быть выше или ниже.": "In the long run, 95% of bets go back to players; over a short run yours can be higher or lower.",
  "На продажу": "For sale",
  "Набери 20 GRAM оборота": "Reach 20 GRAM turnover",
  "Наград пока нет": "No rewards yet",
@@ -547,5 +545,7 @@
  "Если GRAM списались — они придут после подтверждения в сети": "If GRAM was charged, it will arrive once the network confirms",
  "Нет сети": "No connection",
  "Крафт и кошелёк заработают, когда интернет вернётся": "Crafting and wallet will work again once you are back online",
- "Сеть снова есть": "Back online"
+ "Сеть снова есть": "Back online",
+ "Крафт на длинной дистанции возвращает игрокам 95% от суммы ставок. Это значение записано в правилах каждого доказательства крафта — target_rtp_ppm.": "Over the long run, crafting returns 95% of all bets to players. This value is written into the rules of every craft proof — target_rtp_ppm.",
+ "Крафт на длинной дистанции возвращает игрокам 95% ставок; на коротком отрезке твой может быть выше или ниже.": "In the long run, crafting returns 95% of bets to players; over a short run yours can be higher or lower."
 }

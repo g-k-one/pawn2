@@ -54,7 +54,7 @@ function renderHist(detail){
         [$t("Крафтов"), n, '#FFB835'], [$t("Лучший"), best.mult ? 'x' + best.mult : '—', '#EB57B0'], [$t("Кейсов"), S.hist.cases.length, '#F57A37'], [$t("Опыт"), xpFmt(S.xp), '#F57A37'],
         [$t("Депозит GRAM"), fmt(dep), '#12D53D'], [$t("Подарков"), INV.length, '#AE3FC4']]
         .map(([k, v, c, sub]) => `<div style="--c:${c}"><small>${k}</small><b>${v}</b>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`).join('')}</div>` +
-      `<div class="pfi-rtp"><b>${(+RTP_PPM / 1e4).toFixed(0)}%</b><span><b>${$t("Целевой RTP")}</b><small>${n ? `${$t("Твой RTP за {0} {1} — {2}%.", n, $n("крафт|крафта|крафтов", n), Math.round(won / staked * 100))} ` : ''}${$t("На длинной дистанции игрокам возвращается 95% ставок; на коротком отрезке твой может быть выше или ниже.")}</small></span></div>` +
+      `<div class="pfi-rtp"><b>${(+RTP_PPM / 1e4).toFixed(0)}%</b><span><b>${$t("Целевой RTP")}</b><small>${n ? `${$t("Твой RTP за {0} {1} — {2}%.", n, $n("крафт|крафта|крафтов", n), Math.round(won / staked * 100))} ` : ''}${$t("Крафт на длинной дистанции возвращает игрокам 95% ставок; на коротком отрезке твой может быть выше или ниже.")}</small></span></div>` +
       `<div class="hsec">${$t("Ранги в твоих крафтах")}</div><div class="bars">${TIERS.map((t, i) => { const pc = n ? by[i] / n * 100 : 0;
         return `<div style="--c:${t.c}"><span>${t.name}</span><i><b style="width:${Math.max(pc, 1.5).toFixed(1)}%"></b><em style="left:${t.chance}%"></em></i><small>${by[i]} · ${pc.toFixed(0)}%</small></div>`; }).join('')}</div>` +
       `<p class="hnote">${$t("Белая черта — честный шанс ранга. Чем больше крафтов, тем ближе к ней твои доли.")}</p>`;
