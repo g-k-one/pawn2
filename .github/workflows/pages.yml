@@ -1,10 +1,10 @@
-# Выкладка на GitHub Pages: на каждый push в основную ветку собирает dist/ и публикует.
+# Выкладка на GitHub Pages: на каждый push в main собирает dist/ и публикует.
 # Адрес: https://g-k-one.github.io/pawn2/
 # Один раз включить вручную: Settings → Pages → Source: GitHub Actions (робот GitHub включить Pages сам не может).
 name: pages
 on:
   push:
-    branches: [claude/zen-turing-dr0uw4, main]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
