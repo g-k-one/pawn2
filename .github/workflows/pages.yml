@@ -1,5 +1,6 @@
 # Выкладка на GitHub Pages: на каждый push в основную ветку собирает dist/ и публикует.
 # Адрес: https://g-k-one.github.io/pawn2/
+# Один раз включить вручную: Settings → Pages → Source: GitHub Actions (робот GitHub включить Pages сам не может).
 name: pages
 on:
   push:
@@ -21,7 +22,6 @@ jobs:
       - run: npm ci
       - run: npm run dist
       - uses: actions/configure-pages@v5
-        with: { enablement: true }
       - uses: actions/upload-pages-artifact@v3
         with: { path: dist }
       - id: deploy
