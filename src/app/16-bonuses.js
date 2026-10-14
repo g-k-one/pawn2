@@ -99,7 +99,7 @@ function tryOpenCase(c, m = 1){
 }
 document.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a) return; const act = a.dataset.act;
   if (act === 'copyref'){ try { navigator.clipboard.writeText(REF.link); } catch(_){} haptic(); notify({ type: 'ok', icon: 'ok', title: 'Ссылка скопирована', text: 'Отправь её друзьям' }); }
-  if (act === 'shareref'){ haptic(); try { Telegram.WebApp.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(REF.link) + '&text=' + encodeURIComponent('Крафти NFT вместе со мной в pawn')); } catch(_){ notify({ type: 'info', title: 'Пригласить друга', text: 'Откроется окно «Поделиться» в Telegram' }); } }
+  if (act === 'shareref'){ haptic(); if (!tgOpen('https://t.me/share/url?url=' + encodeURIComponent(REF.link) + '&text=' + encodeURIComponent('Крафти NFT вместе со мной в pawn'))) notify({ type: 'info', title: 'Пригласить друга', text: 'Откроется окно «Поделиться» в Telegram' }); }
   if (act === 'amb'){ haptic(); notify({ type: 'info', icon: 'users', title: 'Программа для амбассадоров', text: 'Напиши в поддержку — расскажем условия' }); }
   if (act === 'totasks'){ haptic(); openCases('tasks'); }
   if (act === 'refhist'){ haptic(); openHistory('refs'); }
@@ -161,7 +161,7 @@ async function caseRun(c, again, m = 1){
       Sfx.tick(.6 + .4 * k, k); if (k > .55) haptic('soft');
       if (k > .5){ FullGlow.set(glowOf(cols[i] || c.c)); if (!S.lite) line.animate([{ transform: 'scaleY(1.08)', opacity: 1 }, { transform: 'none', opacity: .85 }], { duration: 180 }); }
     }
-    FX.gainTo = .45 + .4 * k;
+    FX.gainTo = .6 + .4 * k;
   }, k => 1 - (1 - k) ** 5);
   el.children[lastI]?.classList.remove('cur');
   el.children[WIN].classList.add('win'); haptic('heavy'); Sfx.lock();
@@ -220,8 +220,8 @@ syncBalBtn();
   for (let i = 0; i < 3; i++){ const c = CASES[i % 2], r = await rollCase(c), it = c.items[r.idx]; S.hist.cases.push({ kind: 'case', t: Date.now() - (i + 1) * 5 * 3600000, r, label: it.t === 'nft' ? (it.rare ? NFTS[9].name : NFTS[1].name) : null, img: it.t === 'nft' ? (it.rare ? NFTS[9].src : NFTS[1].src) : null }); }
   S.lastFair = null;
   await revealEpoch(false);                                // прошлые игры — в уже раскрытой эпохе
-  S.hist.wallet.push({ type: 'dep', t: Date.now() - 26 * 3600000, amount: 250, method: 'Tonkeeper' }, { type: 'nft', t: Date.now() - 50 * 3600000, name: NFTS[40].name, img: NFTS[40].src, bg: NFTS[40].bg, method: 'в Telegram · комиссия 0.3 GRAM' },
-    { type: 'nftin', t: Date.now() - 74 * 3600000, name: NFTS[12].name, img: NFTS[12].src, bg: NFTS[12].bg, method: '@pawngift' },
+  S.hist.wallet.push({ type: 'dep', t: Date.now() - 26 * 3600000, amount: 250, method: 'Tonkeeper' }, { type: 'nft', t: Date.now() - 50 * 3600000, name: NFTS[40].name, img: NFTS[40].src, bg: NFTS[40].bg, value: NFTS[40].price, method: 'в Telegram · комиссия 0.3 GRAM' },
+    { type: 'nftin', t: Date.now() - 74 * 3600000, name: NFTS[12].name, img: NFTS[12].src, bg: NFTS[12].bg, value: NFTS[12].price, method: '@pawngift' },
     { type: 'dep', t: Date.now() - 98 * 3600000, amount: 150, method: 'Telegram Wallet' });
   S.hist.rewards.push({ kind: 'task', title: TASKS[0][1], rw: TASKS[0][3], t: Date.now() - 3 * 3600000 });   // утреннее задание уже выполнено
   checkAch(true);                                          // то, что уже было сделано, отмечаем без наград

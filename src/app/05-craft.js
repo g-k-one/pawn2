@@ -66,7 +66,7 @@ function renderDbg(){
     `<div class="dbg-l">Где в ранге</div><div class="dbg-g">${chip('near', false, 'Любой тикет')}${chip('near', true, 'Почти следующий ранг', '#ffb835', d.tier === last || d.tier < 0)}</div>` +
     `<div class="dbg-l">Сколько раз</div><div class="dbg-g">${chip('keep', false, 'Один крафт')}${chip('keep', true, 'Каждый крафт')}</div>` +
     `<div class="dbg-l">NFT на главной при смене ставки</div><div class="dbg-g">${chip('prevDelay', null, 'Сразу')}${chip('prevDelay', 1500, 'Ответ 1.5 с')}${chip('prevDelay', 4000, 'Ответ 4 с')}</div>` +
-    `<div class="dbg-l">Сбой (один раз)</div><div class="dbg-g">${chip('fail', null, 'Нет')}${chip('fail', 'craft', 'Неудачный крафт', '#FF4C35')}${chip('fail', 'case', 'Кейс не открылся', '#FF4C35')}</div>` +
+    `<div class="dbg-l">Сбой (один раз)</div><div class="dbg-g">${chip('fail', null, 'Нет')}${chip('fail', 'craft', 'Неудачный крафт', '#FF4C35')}${chip('fail', 'case', 'Кейс не открылся', '#FF4C35')}${chip('fail', 'out', 'Вывод NFT не прошёл', '#FF4C35')}${chip('fail', 'relayer', 'Вывод: не написал релееру', '#FF4C35')}</div>` +
     `<div class="dbg-l">Супер дроп</div><div class="dbg-g"><button class="dbg-c${d.ticket === SUPER.target ? ' on' : ''}" data-k="super" data-v="1" style="--c:#EB57B0">Выбить супер дроп · тикет ${SUPER.target}</button></div>` +
     `<div class="dbg-l">Онбординг</div><div class="dbg-g">${chip('noOnb', false, 'Показывать')}${chip('noOnb', true, 'Выключен')}<button class="dbg-c" data-k="onbNow" data-v="1">Показать сейчас</button></div>` +
     `<div class="dbg-l">Запас бесплатных кейсов</div><div class="dbg-g">${[['beast', 'Бист', '#EB57B0'], ['musk', 'Маск', '#FF4C35']].map(([id, n, c]) => [0, 1, 3, 5].map(v => `<button class="dbg-c${S.stock[id] === v ? ' on' : ''}" data-k="stock" data-id="${id}" data-v="${v}" style="--c:${c}">${n} ×${v}</button>`).join('')).join('')}</div>` +
@@ -89,7 +89,7 @@ $('dbgBody').addEventListener('click', e => {
 });
 $('dbgDone').onclick = () => {
   hideDrawer();
-  if (S.dbg.fail) notify({ type: 'warn', icon: 'bug', color: '#FF4C35', title: S.dbg.fail === 'craft' ? 'Дебаг: следующий крафт не удастся' : 'Дебаг: следующий кейс не откроется', text: 'Увидишь экран неудачи' });
+  if (S.dbg.fail) notify({ type: 'warn', icon: 'bug', color: '#FF4C35', title: { craft: 'Дебаг: следующий крафт не удастся', case: 'Дебаг: следующий кейс не откроется', out: 'Дебаг: следующий вывод NFT не пройдёт', relayer: 'Дебаг: вывод без сообщения релееру' }[S.dbg.fail], text: S.dbg.fail === 'out' || S.dbg.fail === 'relayer' ? 'Увидишь уведомление об ошибке' : 'Увидишь экран неудачи' });
   else if (S.dbg.ticket != null) notify({ type: 'warn', icon: 'bug', color: S.dbg.ticket === SUPER.target ? '#EB57B0' : null, title: S.dbg.ticket === SUPER.target ? 'Дебаг: супер дроп' : `Дебаг: тикет ${S.dbg.ticket}`, text: S.dbg.ticket === SUPER.target ? `Следующий крафт от ${SUPER.min} GRAM выбьет тикет ${SUPER.target}` : 'для следующего крафта' });
   else if (S.dbg.tier >= 0) notify({ type: 'warn', icon: 'bug', color: TIERS[S.dbg.tier].c, title: `Дебаг: ${TIERS[S.dbg.tier].name}${S.dbg.near ? ' у порога' : ''}`, text: S.dbg.keep ? 'для каждого крафта' : 'только для следующего крафта' });
   else notify({ type: 'info', icon: 'bug', title: 'Дебаг выключен', text: 'Исход снова случайный' });
@@ -278,6 +278,7 @@ function fadeUI(out, dur){
 $('craft').onclick = async () => {
   if (S.busy) return;
   if (total() <= 0){ strike(.25, REST + 6).then(settle); notify({ type: 'err', icon: 'coin', title: 'Сначала сделай ставку', text: S.demo ? 'Добавь фантики кнопками внизу' : 'Добавь GRAM или подарки кнопками внизу' }); haptic('rigid'); $('bet').animate([{ translate: '-6px 0' }, { translate: '6px 0' }, { translate: '0 0' }], { duration: 220, iterations: 2 }); return; }
+  if (total() < BET_MIN || total() > BET_MAX){ haptic('rigid'); return notify({ type: 'err', icon: 'coin', title: total() < BET_MIN ? `Минимальная ставка ${BET_MIN} GRAM` : `Максимальная ставка ${BET_MAX} GRAM`, text: 'С учётом подарков в крафте' }); }
   if (!S.demo && S.ton > S.balance){ notify({ type: 'err', icon: 'coin', title: 'Недостаточно GRAM', text: `На балансе ${fmt(S.balance)} GRAM` }); haptic('rigid'); return; }
   S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto);
   const stake = total(), used = S.gifts.slice(), tonStake = S.ton, fast = S.fast || S.lite;
@@ -289,6 +290,7 @@ $('craft').onclick = async () => {
   if (!r || S.dbg.fail === 'craft'){ S.dbg.fail = null;           // сбой: ставка возвращается, показываем экран неудачи
     if (tonStake > 0 && !S.demo) setBalance(S.balance + tonStake);
     INV = [...used, ...INV];
+    notify({ type: 'err', icon: 'err', title: 'Ошибка крафта', text: S.demo ? 'Попробуй ещё раз' : 'Ставка и подарки вернулись — попробуй ещё раз' });
     return failScreen('craft', { ton: tonStake, gifts: used });
   }
   r.gifts = used; r.tonStake = tonStake;
@@ -536,13 +538,13 @@ async function reveal(r, fast){
 /* ---------- дроп: число переезжает наверх, крупный приз проявляется, затем сумма и кнопки ---------- */
 /* NFT-подарок в Telegram: t.me/nft/<коллекция без пробелов и знаков>-<номер> */
 const nftLink = n => `https://t.me/nft/${n.name.replace(/[^A-Za-z0-9]/g, '')}-${n.num}`;
-function openNft(g){ haptic(); const url = nftLink(g.nft); try { Telegram.WebApp.openTelegramLink(url); } catch(_){ window.open(url, '_blank'); } }
+function openNft(g){ haptic(); tgOpen(nftLink(g.nft)); }
 const dropCard = g => { tiltCard($('pz'), 1.4); upgradeImg($('pz').querySelector('.nc-img'), g.nft); Tilt.grab($('pz').querySelector('.nc-t'), () => openNft(g)); };
 const PF_LINK = '<div class="fx-links"><button class="btn-link pf" id="fxPfIn">Проверить честность</button><button class="btn-link pf" id="fxShare">Поделиться</button></div>';
 /* поделиться выигрышем: в Telegram — окно «Поделиться» с реф-ссылкой, в браузере — системное или копирование */
 function shareWin(text){
   haptic(); const url = REF.link;
-  try { Telegram.WebApp.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text)); return; } catch(_){}
+  if (tgOpen('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text))) return;
   if (navigator.share) return void navigator.share({ text, url }).catch(() => {});
   try { navigator.clipboard.writeText(text + ' ' + url).catch(() => {}); } catch(_){}
   notify({ type: 'ok', icon: 'ok', title: 'Ссылка скопирована', text: 'Отправь её друзьям' });
@@ -628,7 +630,7 @@ async function finish(r, how){
   else if (how === 'sell') notify({ type: 'ok', color: t.c, img: r.nft.nft.src, title: `Продано: +${fmt(add)} GRAM`, text: `${r.nft.nft.name} за ${fmt(r.nft.value)} GRAM${r.change > 0 ? ` и ${fmt(r.change)} GRAM сверху` : ''}` });
   else notify({ type: 'ok', color: t.c, img: r.nft.nft.src, title: `${r.nft.nft.name} в инвентаре`, text: r.change > 0 ? `На баланс +${fmt(r.change)} GRAM` : 'Можно положить в следующий крафт' });
   setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win })), 300);
-  CRAFT.classList.remove('busy'); S.busy = false; finish.on = false; restartAuto();
+  fitBet(); CRAFT.classList.remove('busy'); S.busy = false; finish.on = false; restartAuto();
 }
 /* неудачный крафт или открытие кейса: грустный смайлик, тикет 00000, «Попробовать ещё раз» и «Вернуться» */
 function failScreen(kind, ctx){
@@ -677,7 +679,7 @@ async function superStage(r){
     if (how === 'sell') setBalance(S.balance + g.value);
     notify({ type: 'ok', color: '#EB57B0', img: g.nft.src, title: how === 'sell' ? `Супер дроп продан: +${fmt(g.value)} GRAM` : `Супер дроп: ${g.nft.name} твой`, text: 'Новый загаданный тикет уже в бонусах' });
     setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win })), 300);
-    CRAFT.classList.remove('busy'); S.busy = false; restartAuto();
+    fitBet(); CRAFT.classList.remove('busy'); S.busy = false; restartAuto();
   };
   $('sdSell').onclick = () => take('sell'); $('sdTake').onclick = () => take('take');
 }

@@ -130,6 +130,10 @@ phrases = {
 'Твой RTP за':'Your RTP over','На длинной дистанции игрокам возвращается 95% ставок; на коротком отрезке твой может быть выше или ниже.':'In the long run, 95% of bets go back to players; over a short run yours can be higher or lower.','Все':'All','Открыть 1 из':'Open 1 of','Ещё один · осталось':'One more · left','осталось':'left',
 'Депозит GRAM':'GRAM deposits','Депозит NFT':'NFT deposits',
 'NFT на плитке — для примера':'The NFT on the tile is just an example','Выпасть может другой подарок: редкий — случайный за':'You may get a different gift: a rare one is random for','обычный — по флору, сейчас':'a common one is at floor price, now','Какой именно — узнаешь при открытии.':"You'll see which one when you open it.",
+'Максимальная ставка':'Max bet','Минимальная ставка':'Min bet','С учётом подарков в крафте':'Including gifts in the craft','Это весь баланс':"That's your whole balance",'С этим подарком крафт выйдет дороже лимита':'This gift would push the craft over the limit',
+'GRAM в ставке уменьшены':'GRAM in the bet reduced','Вся ставка — не больше':'The whole bet is capped at','Ошибка крафта':'Craft error','Ставка и подарки вернулись — попробуй ещё раз':'Your bet and gifts are back — try again','Попробуй ещё раз':'Try again',
+'Вывод не прошёл':'Withdrawal failed','NFT остались в инвентаре, комиссия не списана — попробуй ещё раз':'The NFTs stay in your inventory and no fee was charged — try again','Без сообщения релееру вывод не пройдёт. NFT остались у тебя, комиссия не списана':"Withdrawals don't go through without a message to the relayer. Your NFTs stay with you and no fee was charged",
+'Вывод NFT не прошёл':'NFT withdrawal failed','Вывод: не написал релееру':'Withdraw: no relayer message','Дебаг: следующий вывод NFT не пройдёт':'Debug: the next NFT withdrawal will fail','Дебаг: вывод без сообщения релееру':'Debug: withdrawal without a relayer message','Увидишь уведомление об ошибке':"You'll see an error notification",
 # общие связки
 'и на баланс':'plus to balance','до':'to','из':'of','и':'and','за':'for','от':'from','в':'in','на':'on','NFT до':'NFT up to',
 }

@@ -1293,6 +1293,12 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .drawer.tall{height:calc(100% - max(64px, calc(var(--tgTop, 0px) + 16px)))}
 /* низ: системная сейф-зона или та, что отдаёт Telegram (Bot API 8.0 кладёт её в --tg-safe-area-inset-bottom) */
 .dr-f{padding-bottom:calc(20px + max(env(safe-area-inset-bottom, 0px), var(--tg-safe-area-inset-bottom, 0px)))}
+/* лента: значок кейса целиком, маленький, без подложки */
+.item .cbadge{width:20px;height:20px;border-radius:0;background:none;box-shadow:none;overflow:visible}
+.item .cbadge img{object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+/* плитки кейса без линии снизу */
+.ct::after{display:none}
+.hstat .sub{display:block;margin-top:2px;font-size:13px;color:rgba(255,255,255,.6)}
 .credit{margin:18px 0 4px;text-align:center;font:400 11.5px/1.4 var(--serif);color:rgba(255,255,255,.3)}
 .credit a{color:inherit}
 .gin .steps1{margin:0 0 14px;font-family:var(--serif);font-size:12.5px;color:rgba(255,255,255,.55)}

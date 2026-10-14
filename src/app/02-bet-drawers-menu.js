@@ -15,10 +15,19 @@ function renderBet(bump){
   if (bump === 'gift') bet.querySelector('.gsum')?.classList.add('bump');
   showPrize();
 }
+/* лимиты ставки (конфиг): вся ставка, GRAM + NFT, от BET_MIN до BET_MAX. Больше баланса или лимита — встаёт максимум */
+const BET_MIN = .1, BET_MAX = 50;
+const r2 = v => Math.floor(v * 100 + 1e-6) / 100;
+const tonCap = () => Math.max(0, r2(Math.min(BET_MAX - giftSum(), S.demo ? Infinity : S.balance)));
 document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => {
   if (S.busy) return;
-  S.ton = Math.min(999, Math.round((S.ton + +b.dataset.add) * 100) / 100); haptic(); renderBet(true);
+  const cap = tonCap();
+  if (S.ton >= cap){ haptic('rigid'); $('bet').animate([{ translate: '-5px 0' }, { translate: '5px 0' }, { translate: '0 0' }], { duration: 200, iterations: 2 });
+    return notify(cap >= BET_MAX - giftSum() ? { type: 'warn', icon: 'coin', title: `Максимальная ставка ${BET_MAX} GRAM`, text: 'С учётом подарков в крафте' } : { type: 'warn', icon: 'coin', title: 'Это весь баланс', text: `На балансе ${fmt(S.balance)} GRAM` }); }
+  S.ton = Math.min(cap, Math.round((S.ton + +b.dataset.add) * 100) / 100); haptic(); renderBet(true);
 });
+// после крафта: если ставка больше баланса или лимита — ставим всё, что можно
+function fitBet(){ if (S.ton > tonCap()){ S.ton = tonCap(); renderBet(true); } }
 $('trash').onclick = () => { if (S.busy) return; S.ton = 0; S.gifts = []; haptic('medium'); renderBet(true); };
 /* ---------- NFT-карточка ---------- */
 const SKINS = ['Neon', 'Cactus', 'Midnight', 'Sakura', 'Gold Rush', 'Frost', 'Toxic', 'Ruby', 'Aurora', 'Onyx', 'Bubblegum', 'Lava'];
@@ -143,7 +152,9 @@ $('inv').addEventListener('click', e => {
   if (sellMode){ sellSel.has(g.id) ? sellSel.delete(g.id) : sellSel.add(g.id); haptic(); c.classList.toggle('sel', sellSel.has(g.id)); updSel(); giftsFoot(); return; }
   if (S.gifts.includes(g)) S.gifts = S.gifts.filter(x => x !== g);
   else if (S.gifts.length >= MAX_GIFTS){ c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); notify({ type: 'warn', icon: 'gift', title: 'Максимум 2 подарка', text: 'Убери один, чтобы выбрать другой' }); haptic('rigid'); return; }
-  else S.gifts = [...S.gifts, g];
+  else if (giftSum() + g.value > BET_MAX){ c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); haptic('rigid');
+    return notify({ type: 'warn', icon: 'gift', title: `Максимальная ставка ${BET_MAX} GRAM`, text: 'С этим подарком крафт выйдет дороже лимита' }); }
+  else { S.gifts = [...S.gifts, g]; if (S.ton > tonCap()){ S.ton = tonCap(); notify({ type: 'info', icon: 'coin', title: 'GRAM в ставке уменьшены', text: `Вся ставка — не больше ${BET_MAX} GRAM` }); } }
   haptic(); c.classList.toggle('sel', S.gifts.includes(g)); updSel();
   renderBet('gift');
 });

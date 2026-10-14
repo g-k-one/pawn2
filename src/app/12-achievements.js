@@ -38,7 +38,7 @@ function claimAch(id, btn){
   setTimeout(() => {
     if (ok()){ S.ach.got[id] = 1; grant(rw); logReward('ach', t, rw); haptic('medium'); Sfx.coin(); notify({ type: 'ok', icon: 'ok', color: '#12D53D', title: 'Достижение получено', text: `${t} · ${rewText(rw)}` }); }
     else { haptic('rigid'); const pr = prog ? prog() : null; notify({ type: 'warn', icon: 'info', title: 'Ещё не выполнено', text: pr ? `${t}: ${xpFmt(pr[0])} из ${xpFmt(pr[1])}` : t });
-      if (act === 'sub'){ try { Telegram.WebApp.openTelegramLink('https://t.me/pawnd'); } catch(_){} setTimeout(() => { S.ach.subscribed = true; }, 1500); }
+      if (act === 'sub'){ tgOpen('https://t.me/pawnd'); setTimeout(() => { S.ach.subscribed = true; }, 1500); }
       if (act === 'relayer') relayerFlow(); }
     renderCases();
   }, 700);

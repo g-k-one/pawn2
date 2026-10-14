@@ -47,18 +47,18 @@ $('walletTabs').addEventListener('click', e => { const t = e.target.closest('.ta
 /* общие действия: партнёр, релеер */
 function relayerFlow(){
   haptic();
-  try { Telegram.WebApp.openTelegramLink('https://t.me/' + RELAYER.slice(1)); } catch(_){}
+  tgOpen('https://t.me/' + RELAYER.slice(1));
   notify({ type: 'info', icon: 'gift', title: `Передай подарок ${RELAYER}`, text: 'Как только он придёт — покажем здесь' });
   // прототип: через пару секунд «приходит» подарок
   setTimeout(() => { const n = pick(NFTS.slice(0, 9)), bg = n.bg;
     const g = { id: 'r' + Date.now(), num: n.num, nft: n, a: bg[0], b: bg[1], p: bg[2], value: n.price }; INV = [g, ...INV];
-    S.hist.wallet.unshift({ type: 'nftin', t: Date.now(), name: n.name, img: n.src, bg: n.bg, method: RELAYER });   // депозит NFT-подарком — в историю
+    S.hist.wallet.unshift({ type: 'nftin', t: Date.now(), name: n.name, img: n.src, bg: n.bg, value: n.price, method: RELAYER });   // депозит NFT-подарком — в историю
     S.ach.nftDep = true; notify({ type: 'ok', img: n.src, title: `${n.name} получен`, text: 'Подарок уже в инвентаре' });
     if (openDrawer === $('giftsDrawer')) renderInv(); if (openDrawer === $('walletDrawer')) renderWallet(); checkAch(); }, 3500);
 }
-function partnerFlow(){ haptic(); try { Telegram.WebApp.openTelegramLink('https://t.me/StarsMarketBot'); } catch(_){ notify({ type: 'info', title: '@StarsMarketBot', text: 'В Telegram откроется бот партнёра' }); } }
+function partnerFlow(){ haptic(); if (!tgOpen('https://t.me/StarsMarketBot')){ notify({ type: 'info', title: '@StarsMarketBot', text: 'В Telegram откроется бот партнёра' }); } }
 document.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a) return;
-  if (a.dataset.act === 'relayerMsg'){ haptic(); try { Telegram.WebApp.openTelegramLink('https://t.me/' + RELAYER.slice(1)); } catch(_){ window.open('https://t.me/' + RELAYER.slice(1), '_blank'); } }
+  if (a.dataset.act === 'relayerMsg'){ haptic(); tgOpen('https://t.me/' + RELAYER.slice(1)); }
   else if (a.dataset.act === 'relayer') relayerFlow(); else if (a.dataset.act === 'partner') partnerFlow();
   else if (a.dataset.act === 'verify'){ haptic(); try { Telegram.WebApp.openLink(VERIFY_URL); e.preventDefault(); } catch(_){} } });
 $('walletBody').addEventListener('click', e => {
@@ -116,8 +116,12 @@ $('walletGo').onclick = async () => {
     $('walletBody').querySelectorAll('.onft .cell.sel').forEach((c, i) => c.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-40px) scale(.8)' }], { duration: 380, delay: i * 60, easing: 'cubic-bezier(.5,0,.8,.5)', fill: 'forwards' }));
     await wait(520 + list.length * 60);
     btn.disabled = false; btn.classList.remove('wait');
+    // ошибки вывода (в бою — ответ бэкенда): NFT остаются в инвентаре, комиссия не списывается
+    if (S.dbg.fail === 'out' || S.dbg.fail === 'relayer'){ const kind = S.dbg.fail; S.dbg.fail = null; renderWallet(); haptic('rigid');
+      return notify(kind === 'relayer' ? { type: 'err', icon: 'err', ms: 6000, title: `Сначала напиши ${RELAYER}`, text: 'Без сообщения релееру вывод не пройдёт. NFT остались у тебя, комиссия не списана', action: { label: 'Написать', fn: () => tgOpen('https://t.me/' + RELAYER.slice(1)) } }
+        : { type: 'err', icon: 'err', ms: 5000, title: 'Вывод не прошёл', text: 'NFT остались в инвентаре, комиссия не списана — попробуй ещё раз' }); }
     INV = INV.filter(g => !outSel.has(g.id)); S.gifts = S.gifts.filter(g => !outSel.has(g.id)); outSel = new Set(); renderBet();
-    list.forEach(g => S.hist.wallet.unshift({ type: 'nft', t: Date.now(), name: g.nft.name, img: g.nft.src, bg: [g.a, g.b], fee: OUT_FEE, method: `в Telegram · комиссия ${OUT_FEE} GRAM`, status: 'в пути' }));
+    list.forEach(g => S.hist.wallet.unshift({ type: 'nft', t: Date.now(), name: g.nft.name, img: g.nft.src, bg: [g.a, g.b], value: g.value, fee: OUT_FEE, method: `в Telegram · комиссия ${OUT_FEE} GRAM`, status: 'в пути' }));
     hideDrawer(); setTimeout(() => setBalance(S.balance - fee), 250);
     notify({ type: 'ok', img: list[0].nft.src, title: list.length > 1 ? `${list.length} NFT отправлены` : `${list[0].nft.name} отправлен`, text: `Придут в профиль Telegram · комиссия ${fmt(fee)} GRAM` });
     checkAch();

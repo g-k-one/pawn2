@@ -108,6 +108,10 @@ let INV = Array.from({ length: 9 }, (_, i) => giftOf(pick(NFTS.filter(x => x.pri
 const LIVE_IMG = TIERS.map((_, i) => i < 2 ? ['assets/hero-gem.webp'] : i === 2 ? ['assets/hero-gem.webp', ...NFTS.slice(0, 4).map(n => n.src)] : i === 3 ? NFTS.slice(3, 10).map(n => n.src) : NFTS.slice(9).map(n => n.src));
 const $ = id => document.getElementById(id);
 const fmt = v => (Math.round(v * 100) / 100).toString();
+function tgOpen(url){
+  try { Telegram.WebApp.openTelegramLink(url); return true; } catch(_){}           // SDK есть только на верхнем уровне мини-аппа
+  try { return !!window.open(url, '_blank'); } catch(_){ return false; }
+}
 const haptic = (t = 'light') => { if (S.vibro === false) return; try { Telegram.WebApp.HapticFeedback.impactOccurred(t); } catch(_){ navigator.vibrate?.(8); } };
 
 /* ---------- масштаб сцены ---------- */
