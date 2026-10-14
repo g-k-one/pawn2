@@ -1240,6 +1240,8 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 .seg{margin-left:auto;display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(255,255,255,.08)}
 .seg button{padding:4px 12px;border-radius:999px;font-size:16px;font-weight:700;color:rgba(255,255,255,.55);transition:background .2s,color .2s}
 .seg button.on{background:#fff;color:#000}
+.credit{margin:18px 0 4px;text-align:center;font:400 11.5px/1.4 var(--serif);color:rgba(255,255,255,.3)}
+.credit a{color:inherit}
 .gin .steps1{margin:0 0 14px;font-family:var(--serif);font-size:12.5px;color:rgba(255,255,255,.55)}
 
 #boot{position:fixed;inset:0;z-index:999;display:grid;place-items:center;background:#0b0b0b;transition:opacity .45s}
@@ -1367,7 +1369,8 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 
 <div id="boot"><div class="boot-in"><img src="assets/gift-box.svg" alt=""><b>Загружаем подарки</b><i><u id="bootBar"></u></i></div></div>
 <script>
-/* загрузчик: картинки моделей и символов подарков (скачаны с changes.tg) лежат двумя файлами — подтягиваем их до старта приложения */
+/* загрузчик: картинки подарков берём с CDN changes.tg по одной, по мере надобности. Если CDN недоступен
+   (например, в просмотрщике artifact внешние картинки закрыты) — подтягиваем запасные JSON со всеми картинками */
 (async () => {
   const bar = document.getElementById('bootBar'), set = k => { if (bar) bar.style.width = (k * 100).toFixed(0) + '%'; };
   async function load(url, w0, w1){
@@ -1379,7 +1382,10 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
     return JSON.parse(new TextDecoder().decode(await new Blob(parts).arrayBuffer()));
   }
   window.GIMG = {};
-  try {
+  window.CDN = await new Promise(res => { const im = new Image(), t = setTimeout(() => res(false), 2500);
+    im.onload = () => { clearTimeout(t); res(true); }; im.onerror = () => { clearTimeout(t); res(false); };
+    im.src = 'https://api.changes.tg/model/Berry%20Box/Original.png?size=64'; });
+  if (!CDN) try {
     const [m, s] = await Promise.all([load('assets/g/models.json', 0, .85), load('assets/g/syms.json', .85, 1)]);
     for (const [k, v] of Object.entries(Object.assign(m, s))){
       const bin = atob(v), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
@@ -1434,9 +1440,14 @@ const LOCAL_NFT = ['bronze-cane', 'candy-cane', 'jelly-bunny', 'honey-bee', 'bda
 const FB = {};
 const hashStr = t => [...t].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);
 // картинки моделей и символов скачаны с changes.tg и лежат в assets/g (модели 220px, символы 72px)
+// с CDN: src — 128 px (лента, кейсы, история), card — 256 px (карточки), символ узора — 64 px; не загрузилось — локальная заглушка
+const apiImg = (kind, gift, name, size) => `https://api.changes.tg/${kind}/${encodeURIComponent(gift.replace(/’/g, "'"))}/${encodeURIComponent(name.replace(/’/g, "'"))}.png?size=${size}`;
 const NFTS = RELAY.g.map(([ci, num, model, bi, sym, price, mf, sf]) => {
-  const name = RELAY.c[ci], bd = RELAY.b[bi], src = mf && GIMG[mf] ? GIMG[mf] : `assets/nft/${LOCAL_NFT[hashStr(name) % LOCAL_NFT.length]}.webp`;
-  return { name, num, model, backdrop: bd[0], bg: [bd[1], bd[2], bd[3]], symbol: sym, sym: sf && GIMG[sf] ? GIMG[sf] : '', price, src };
+  const name = RELAY.c[ci], bd = RELAY.b[bi], local = `assets/nft/${LOCAL_NFT[hashStr(name) % LOCAL_NFT.length]}.webp`;
+  let src, card, symSrc;
+  if (CDN){ src = apiImg('model', name, model, 128); card = apiImg('model', name, model, 256); symSrc = apiImg('symbol', name, sym, 64); FB[src] = FB[card] = local; }
+  else { src = card = mf && GIMG[mf] ? GIMG[mf] : local; symSrc = sf && GIMG[sf] ? GIMG[sf] : ''; }
+  return { name, num, model, backdrop: bd[0], bg: [bd[1], bd[2], bd[3]], symbol: sym, sym: symSrc, price, src, card };
 });
 /* крупные картинки (приз на главной, экран дропа, супер дроп) — чёткие с CDN changes.tg.
    Сначала показываем лёгкую 220 px, чёткую подменяем, когда она загрузилась и раскодировалась; не загрузилась — остаётся 220 px */
@@ -1444,6 +1455,7 @@ const HI_FMT = 'png', HI = {};   // PNG 1024: раскодируется за ~0
 const hiSrc = n => `https://cdn.changes.tg/gifts/models/${encodeURIComponent(n.name.replace(/’/g, "'"))}/${HI_FMT}/${encodeURIComponent(n.model.replace(/’/g, "'"))}.${HI_FMT}`;
 function upgradeImg(img, n, gl){
   if (!img || !n?.model) return;
+  if (!CDN) return;                                             // CDN закрыт — остаёмся на запасных картинках
   const u = hiSrc(n); if (HI[u] === 0) return;
   const im = new Image(); im.src = u;
   im.decode().then(() => { HI[u] = 1; if (!img.isConnected) return; img.src = u; gl?.style.setProperty('--m', `url('${u}')`); }).catch(() => { HI[u] = 0; });
@@ -1693,7 +1705,7 @@ function cardHTML(g, w, big){
   const sy = g.nft.sym; if (sy) symLoad(sy);
   const num = '#' + g.num.toLocaleString('ru-RU');
   return `<div class="nc${big ? ' big' : ''}" style="--w:${w}px;--a:${g.a};--b:${g.b};--p:${g.p}"><div class="nc-t"><div class="nc-bg"></div><span class="nc-patw"><span class="nc-pat${sy && SYM_OK.has(sy) ? ' sym' : ''}"${sy ? ` data-sym="${sy}"${SYM_OK.has(sy) ? ` style="--symimg:${symImg(sy).replace(/"/g, '&quot;')}"` : ''}` : ''}></span></span>` +
-    (big ? '' : `<span class="nc-num">${num}</span>`) + `<img class="nc-img" src="${g.nft.src}" alt="${g.nft.name}"><span class="nc-gl"><i></i></span>` +
+    (big ? '' : `<span class="nc-num">${num}</span>`) + `<img class="nc-img" src="${g.nft.card || g.nft.src}" alt="${g.nft.name}"><span class="nc-gl"><i></i></span>` +
     (big ? `<span class="nc-cap"><b>${g.nft.name}</b><small>${g.skin} · ${num}</small></span>` : `<span class="nc-pr"><img src="assets/gem-small.svg" alt="">${fmt(g.value)}</span>`) + '</div></div>';
 }
 const priceHTML = v => `<img src="assets/gem-small.svg" alt="">${fmt(v)}`;
@@ -1856,7 +1868,8 @@ function renderMenu(){
       row(IC.users, 'Рефералка', '#EB57B0', `${REF.friends.length} друзей`, ' data-go="refs"') +
       `<div class="mrow" style="--c:#AE3FC4"><i>${svg(IC.globe)}</i>Язык<span class="seg">${[['ru', 'RU'], ['en', 'EN']].map(([k, t]) => `<button data-lang="${k}"${S.lang === k ? ' class="on"' : ''}>${t}</button>`).join('')}</span></div>` +
       row(IC.chat, 'Поддержка', '#12D53D', '') +
-      `<button class="mrow" id="dbgRow" style="--c:#EB57B0"><i>${svg(NICON.bug)}</i>Дебаг<em>${dbgLabel()}</em></button></div>`;
+      `<button class="mrow" id="dbgRow" style="--c:#EB57B0"><i>${svg(NICON.bug)}</i>Дебаг<em>${dbgLabel()}</em></button></div>` +
+    `<p class="credit">Картинки подарков — powered by <a href="https://t.me/GiftChanges" target="_blank" rel="noopener">@GiftChanges</a> (api.changes.tg)</p>`;
 }
 $('menuBtn').onclick = () => { renderMenu(); showDrawer('menuDrawer'); };
 $('menuBody').addEventListener('click', e => {
