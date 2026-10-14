@@ -40,5 +40,6 @@ liveEl.addEventListener('click', e => {
   const n = +it.dataset.n, t = TIERS[tierOfTicket(n)]; haptic();
   notify({ img: it.dataset.img, color: t.c, title: `${t.name} · x${it.dataset.m}`, text: `${it.dataset.who} ${$t("— {0} · тикет", it.dataset.nft || '+' + fmt(+it.dataset.w) + ' GRAM')} ${n.toLocaleString(LOC)}` });
 });
-setInterval(() => { if (!document.hidden) pushLive(); }, 3200);
+let liveN = 0;
+setInterval(() => { if (document.hidden || (S.lite && ++liveN % 2)) return; pushLive(); }, 3200);   // в экономном режиме — вдвое реже
 

@@ -32,7 +32,7 @@ function renderHist(detail){
     const L = S.hist.refs, sum = L.reduce((a, x) => a + x.amount, 0);
     b.innerHTML = `<div class="hstat-hero one"><div style="--c:#30A5FF"><small>${$t("Получено за друзей")}</small><b>+${fmt(sum)}</b><span>${$t("GRAM · начисляется само в 00:00 МСК")}</span></div></div>` +
       L.map(x => { const act = x.type === 'act', c = act ? '#30A5FF' : '#12D53D';
-        return `<div class="hcard w" style="--c:${c}"><span class="hk-ic">${svg(act ? IC.users : '<path d="M12 5v14M5 12l7 7 7-7"/>')}</span><span class="hk-v"><b>${act ? $t("5% от активности") : $t("10% от депозита @") + x.name}</b><small>${act ? `${x.n} ${$t("друзей ·")} ` : ($t("первый депозит ·") + " ")}${new Date(x.t).toLocaleDateString(LOC, { day: 'numeric', month: 'short' })}${act ? ', 00:00' : ''}</small></span><b class="hk-amt" style="color:${c}">+${fmt(x.amount)}</b></div>`; }).join('');
+        return `<div class="hcard w" style="--c:${c}"><span class="hk-ic">${svg(act ? IC.users : '<path d="M12 5v14M5 12l7 7 7-7"/>')}</span><span class="hk-v"><b>${act ? $t("5% от активности") : $t("10% от депозита @") + x.name}</b><small>${act ? `${x.n} ${$n("друг|друга|друзей", x.n)} · ` : ($t("первый депозит ·") + " ")}${new Date(x.t).toLocaleDateString(LOC, { day: 'numeric', month: 'short' })}${act ? ', 00:00' : ''}</small></span><b class="hk-amt" style="color:${c}">+${fmt(x.amount)}</b></div>`; }).join('');
   } else if (histTab === 'rewards'){
     const L = S.hist.rewards;
     b.innerHTML = L.length ? L.map(x => { const g = x.rw.g != null, c = g ? '#30A5FF' : '#F57A37';
@@ -54,14 +54,14 @@ function renderHist(detail){
         [$t("Крафтов"), n, '#FFB835'], [$t("Лучший"), best.mult ? 'x' + best.mult : '—', '#EB57B0'], [$t("Кейсов"), S.hist.cases.length, '#F57A37'], [$t("Опыт"), xpFmt(S.xp), '#F57A37'],
         [$t("Депозит GRAM"), fmt(dep), '#12D53D'], [$t("Подарков"), INV.length, '#AE3FC4']]
         .map(([k, v, c, sub]) => `<div style="--c:${c}"><small>${k}</small><b>${v}</b>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`).join('')}</div>` +
-      `<div class="pfi-rtp"><b>${(+RTP_PPM / 1e4).toFixed(0)}%</b><span><b>${$t("Целевой RTP")}</b><small>${n ? `${$t("Твой RTP за {0} крафтов — {1}%.", n, Math.round(won / staked * 100))} ` : ''}${$t("На длинной дистанции игрокам возвращается 95% ставок; на коротком отрезке твой может быть выше или ниже.")}</small></span></div>` +
+      `<div class="pfi-rtp"><b>${(+RTP_PPM / 1e4).toFixed(0)}%</b><span><b>${$t("Целевой RTP")}</b><small>${n ? `${$t("Твой RTP за {0} {1} — {2}%.", n, $n("крафт|крафта|крафтов", n), Math.round(won / staked * 100))} ` : ''}${$t("На длинной дистанции игрокам возвращается 95% ставок; на коротком отрезке твой может быть выше или ниже.")}</small></span></div>` +
       `<div class="hsec">${$t("Ранги в твоих крафтах")}</div><div class="bars">${TIERS.map((t, i) => { const pc = n ? by[i] / n * 100 : 0;
         return `<div style="--c:${t.c}"><span>${t.name}</span><i><b style="width:${Math.max(pc, 1.5).toFixed(1)}%"></b><em style="left:${t.chance}%"></em></i><small>${by[i]} · ${pc.toFixed(0)}%</small></div>`; }).join('')}</div>` +
       `<p class="hnote">${$t("Белая черта — честный шанс ранга. Чем больше крафтов, тем ближе к ней твои доли.")}</p>`;
   }
 }
 const ARW = '<path d="M5 12h14M13 6l6 6-6 6"/>';
-const hpic = (src, bg) => { const g = /gem/.test(src), x = /xp\.webp/.test(src); if (x) src = 'assets/xp-w.svg'; return `<span class="hp${g ? ' g' : x ? ' x' : ''}"${bg ? ` style="background:linear-gradient(160deg,${bg[0]},${bg[1]})"` : ''}><img src="${g ? 'assets/gem-small.svg' : src}" alt=""></span>`; };
+const hpic = (src, bg) => { const g = /gem/.test(src), x = /xp\.webp/.test(src); if (x) src = 'assets/xp-w.svg'; return `<span class="hp${g ? ' g' : x ? ' x' : ''}"${bg ? ` style="background:linear-gradient(160deg,${bg[0]},${bg[1]})"` : ''}><img src="${g ? 'assets/gem-small.svg' : src}" alt="" loading="lazy" decoding="async"></span>`; };
 const giftBg = g => [g.a, g.b];
 function stakeOf(r){ const g = r.gifts || [], ton = r.tonStake != null ? r.tonStake : r.stake; return { g, ton }; }
 // карточка крафта: ранг сверху, ниже «что поставил → что получил» крупно

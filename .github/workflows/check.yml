@@ -1,0 +1,18 @@
+# Проверка на каждый push и pull request: переводы, сборка (index.html совпадает с src/), сквозные тесты в Chromium
+name: check
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Переводы — нет ключей без перевода
+        run: npm run i18n
+      - name: Сборка — index.html собран из текущих src/
+        run: npm run build && git diff --exit-code index.html
+      - name: Тесты
+        run: npm test

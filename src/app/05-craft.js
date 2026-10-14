@@ -24,10 +24,13 @@ async function rollOf(seed, epoch, domain, clientSeed, nonce){
 }
 async function newEpoch(){ const seed = hex(crypto.getRandomValues(new Uint8Array(32))); return { id: uuid(), seed, commitment: await sha(unhex(seed)) }; }
 const openEpoch = () => newEpoch().then(e => Object.assign(e, { proofs: [] }));
-let epochP = openEpoch();                                      // текущая эпоха: зерно загадано, хеш виден до игр
+let epochP = null;                                             // текущая эпоха: зерно загадано, хеш виден до игр
+// S.ep — та же эпоха синхронно (для сохранения); ставим только если за это время эпоху не сменили
+function setEpoch(p){ epochP = p; p.then(e => { if (epochP === p) S.ep = e; }); return p; }
+setEpoch(openEpoch());
 /* раскрыть зерно эпохи: всем её доказательствам дописываем server seed, ключ игрока меняется, загадывается новая эпоха */
 async function revealEpoch(newClient = true){
-  const e = await epochP; epochP = openEpoch();
+  const e = await epochP; setEpoch(openEpoch());
   e.proofs.forEach(p => p.server_seed = e.seed); e.revealed = true;
   if (newClient) S.clientSeed = 'gk-' + hex(crypto.getRandomValues(new Uint8Array(4)));
   return e;
@@ -71,12 +74,14 @@ function renderDbg(){
     `<div class="dbg-l">${$t("Онбординг")}</div><div class="dbg-g">${chip('noOnb', false, $t("Показывать"))}${chip('noOnb', true, $t("Выключен"))}<button class="dbg-c" data-k="onbNow" data-v="1">${$t("Показать сейчас")}</button></div>` +
     `<div class="dbg-l">${$t("Запас бесплатных кейсов")}</div><div class="dbg-g">${[['beast', $t("Бист"), '#EB57B0'], ['musk', $t("Маск"), '#FF4C35']].map(([id, n, c]) => [0, 1, 3, 5].map(v => `<button class="dbg-c${S.stock[id] === v ? ' on' : ''}" data-k="stock" data-id="${id}" data-v="${v}" style="--c:${c}">${n} ×${v}</button>`).join('')).join('')}</div>` +
     `<div class="dbg-l">${$t("Кейсы")}</div><div class="dbg-g">${chip('freeCases', false, $t("По условиям"))}${chip('freeCases', true, $t("Без условий"))}</div>` +
+    `<div class="dbg-l">${$t("Сохранённый прогресс")}</div><div class="dbg-g"><button class="dbg-c" data-k="resetSave" data-v="1" style="--c:#FF4C35">${$t("Сбросить и начать заново")}</button></div>` +
     `<p class="dbg-n">${$t("Для ранга подбирается настоящий server seed — проверка честности сходится, но хеш до игры будет другим. Точный тикет подставляется напрямую, проверка для него не сойдётся. Только для тестов прототипа.")}</p>`;
 }
 $('dbgBody').addEventListener('input', e => { if (e.target.id !== 'dbgTicket') return; const v = e.target.value.trim(); S.dbg.ticket = v === '' ? null : Math.max(0, Math.min(TICKETS - 1, Math.floor(+v) || 0)); if (S.dbg.ticket != null) S.dbg.tier = -1; });
 $('dbgBody').addEventListener('click', e => {
   const c = e.target.closest('.dbg-c'); if (!c || c.disabled) return;
   const k = c.dataset.k, v = c.dataset.v;
+  if (k === 'resetSave'){ haptic('medium'); Store.reset(); return; }
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
   if (k === 'stock'){ S.stock[c.dataset.id] = +v; haptic(); renderDbg(); return; }
   if (k === 'onbNow'){ hideDrawer(); setTimeout(() => Onb.start(true), 300); return; }
@@ -256,12 +261,12 @@ $('craft').onclick = async () => {
   if (!S.demo && S.ton > S.balance){ notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM"), text: `${$t("На балансе {0} GRAM", fmt(S.balance))}` }); haptic('rigid'); return; }
   S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto);
   const stake = total(), used = S.gifts.slice(), tonStake = S.ton, fast = S.fast || S.lite;
-  const pf = fair(stake, used, tonStake);
+  const pf = API.craft(stake, used, tonStake); pf.catch(() => {});   // ошибку разберём ниже, после анимации удара
   if (S.ton > 0) setBalance(S.balance - S.ton);
   if (fast){ Sfx.lock(); await strike(.8, REST + 10); INV = INV.filter(g => !used.includes(g)); S.gifts = []; await openFx(true); }
   else { INV = INV.filter(g => !used.includes(g)); S.gifts = []; await bigStrike(); }
   let r = null; try { r = await pf; } catch(_){}
-  if (!r || S.dbg.fail === 'craft'){ S.dbg.fail = null;           // сбой: ставка возвращается, показываем экран неудачи
+  if (!r){                                                     // сбой: ставка возвращается, показываем экран неудачи
     if (tonStake > 0 && !S.demo) setBalance(S.balance + tonStake);
     INV = [...used, ...INV];
     notify({ type: 'err', icon: 'err', title: $t("Ошибка крафта"), text: S.demo ? $t("Попробуй ещё раз") : $t("Ставка и подарки вернулись — попробуй ещё раз") });
@@ -588,7 +593,7 @@ async function finish(r, how){
   else if (how === 'sell') add += r.nft.value;
   else INV = [{ ...r.nft, id: 'g' + Date.now() }, ...INV];
   haptic('medium'); if (add > 0) Sfx.coin();
-  if (!S.demo){ logCraft(r, how); bumpTasks(r); addXp(r.stake * .5); setTimeout(checkAch, 1200); }
+  if (!S.demo){ API.claimCraft(r, how); logCraft(r, how); bumpTasks(r); addXp(r.stake * .5); setTimeout(checkAch, 1200); }
   renderBet();
   if (r.super){                                               // приз крафта получен — и сверху ещё супер дроп
     if (add > 0) setBalance(S.balance + add);

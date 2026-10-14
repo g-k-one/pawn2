@@ -8,6 +8,9 @@
 const LANG = (() => { try { return localStorage.getItem('bm-lang') === 'en' ? 'en' : 'ru'; } catch(_){ return 'ru'; } })();
 const EN = __I18N_EN__;
 const LOC = LANG === 'en' ? 'en-US' : 'ru-RU';                // числа и даты — по языку
+// множественное число: $n("задание|задания|заданий", n) — формы по-русски (1, 2–4, 5+); в en.json — "task|tasks"
+const PLURAL = new Intl.PluralRules(LOC);
+function $n(forms, n){ const f = $t(forms).split('|'), c = PLURAL.select(n); return f[LANG === 'en' ? (c === 'one' ? 0 : 1) : c === 'one' ? 0 : c === 'few' ? 1 : 2] || f[f.length - 1]; }
 function $t(s, ...a){ const r = LANG === 'en' && EN[s] || s; return a.length ? r.replace(/\{(\d+)\}/g, (m, i) => a[i] ?? '') : r; }
 document.documentElement.lang = LANG;
 // Статика из index.html: data-t — первый текстовый узел, aria-label — как есть
@@ -45,6 +48,9 @@ const tierOfTicket = n => Math.max(0, TIERS.findIndex(t => n >= t.from && n <= t
 const AUTO_MS = 5000;
 
 const S = { tier: 1, ton: 0, gifts: [], balance: 345.56, busy: false };
+/* сохранённый прогресс прототипа (мок «базы» в localStorage, см. 17-api.js). Есть — стартовые заглушки истории не генерируются */
+const SAVE_KEY = 'pawn-state-v1';
+const SAVE = (() => { try { const v = JSON.parse(localStorage.getItem(SAVE_KEY)); return v && v.v === 1 ? v : null; } catch(_){ return null; } })();
 /* заглушки NFT: от какой суммы выигрыша доступны (по возрастанию цены). NFT выдаётся с 3.6 GRAM */
 const NFT_FROM = 3.5;
 const RELAY = __RELAY__;

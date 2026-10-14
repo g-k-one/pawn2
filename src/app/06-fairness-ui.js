@@ -29,7 +29,7 @@ function bindPF(root, r){
     if (!r.proof.server_seed){
       if (S.busy && !$('fx').classList.contains('done')) return;
       btn.classList.add('wait'); btn.textContent = $t("Раскрываем…"); haptic();
-      const ep = await revealEpoch(); await wait(S.lite ? 0 : 400);
+      const ep = await API.rotateSeed(); await wait(S.lite ? 0 : 400);
       root.querySelector('.pf-pend')?.remove(); const sc = root.querySelector('.pf-seed'); if (sc) sc.textContent = r.proof.server_seed;
       notify({ type: 'ok', icon: 'ok', title: $t("Зерно эпохи раскрыто"), text: `${$t("Игр в эпохе: {0} · новый хеш уже загадан", ep.proofs.length)}` });
     }
@@ -99,8 +99,8 @@ function renderPFInfo(){
     `<div class="pfi-btns"><button class="btn-main" id="pfiLast">${$t("Проверить последний крафт")}</button><button class="btn-ghost" id="pfiHist">${$t("Вся история")}</button></div>` + PF_EXT;
   const epFill = () => epochP.then(e => { if (!$('nextHash')) return; $('nextHash').textContent = e.commitment; $('epN').textContent = e.proofs.length; $('cseedV').textContent = S.clientSeed; });
   epFill();
-  $('saveReceipt').onclick = async () => { const rc = await receiptNow(); saveJson(`pawn-receipt-${rc.epoch_id.slice(0, 8)}.json`, rc, $t("Подтверждение")); };
-  $('cseedNew').onclick = async () => { if (S.busy) return; haptic('medium'); const e = await revealEpoch(); epFill();
+  $('saveReceipt').onclick = async () => { const rc = await API.receipt(); saveJson(`pawn-receipt-${rc.epoch_id.slice(0, 8)}.json`, rc, $t("Подтверждение")); };
+  $('cseedNew').onclick = async () => { if (S.busy) return; haptic('medium'); const e = await API.rotateSeed(); epFill();
     notify({ type: 'ok', icon: 'ok', title: $t("Зерно раскрыто"), text: `${$t("Игр в эпохе: {0} — их можно проверить. Новый хеш уже загадан, сохрани подтверждение", e.proofs.length)}` }); };
   $('pfiLast').onclick = () => swapDrawer('pfDrawer', () => { const r = S.lastFair || S.hist.crafts[0]?.r; if (r){ $('pfBody').innerHTML = pfHTML(r); bindPF($('pfBody'), r); } });
   $('pfiHist').onclick = () => openHistory('crafts');

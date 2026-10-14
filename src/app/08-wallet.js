@@ -20,7 +20,7 @@ function walletBtn(){
   const go = $('walletGo'), n = outSel.size, fee = Math.round(n * OUT_FEE * 100) / 100;
   go.classList.remove('off');
   if (walletTab === 'dep') go.innerHTML = S.wallet ? `${$t("Пополнить на {0} GRAM", fmt(depAmount))}` : $t("Подключить кошелёк");
-  else { go.innerHTML = n ? `${$t("Вывести {0} NFT", n)}<small>${$t("комиссия {0} GRAM", fmt(fee))}</small>` : $t("Выбери подарки для вывода"); go.classList.toggle('off', !n); }
+  else { go.innerHTML = n ? `${$t("Вывести {0} NFT", n)}<small>${$t("по одному · комиссия {0} GRAM", fmt(fee))}</small>` : $t("Выбери подарки для вывода"); go.classList.toggle('off', !n); }
 }
 function renderWallet(){
   $('walletTabs').innerHTML = [['dep', $t("Пополнить")], ['out', $t("Вывести NFT")]].map(([k, t]) => `<button class="tab${k === walletTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
@@ -102,9 +102,11 @@ $('walletGo').onclick = async () => {
     if (depAmount < 1){ notify({ type: 'err', icon: 'coin', title: $t("Минимум 1 GRAM") }); return; }
     if (!DEPOSIT_ADDR){ notify({ type: 'warn', icon: 'warn', title: $t("Адрес для пополнений не задан"), text: $t("Прототип: впиши DEPOSIT_ADDR в коде") }); return; }
     btn.disabled = true; btn.classList.add('wait'); btn.textContent = `${$t("Подтверди в {0}…", S.wallet.name)}`;
-    try { await tcUI.sendTransaction({ validUntil: Math.floor(Date.now() / 1000) + 300, messages: [{ address: DEPOSIT_ADDR, amount: String(nano(depAmount)) }] }); }
+    let tx = null;
+    try { tx = await tcUI.sendTransaction({ validUntil: Math.floor(Date.now() / 1000) + 300, messages: [{ address: DEPOSIT_ADDR, amount: String(nano(depAmount)) }] }); }
     catch(_){ btn.disabled = false; btn.classList.remove('wait'); walletBtn(); notify({ type: 'err', icon: 'err', title: $t("Платёж отменён") }); return; }
     btn.disabled = false; btn.classList.remove('wait'); hideDrawer();   // в бою баланс зачисляет бэкенд после подтверждения в сети
+    if (!(await API.confirmDeposit(depAmount, tx?.boc)).ok) return notify({ type: 'err', icon: 'err', title: $t("Пополнение не прошло"), text: $t("Если GRAM списались — они придут после подтверждения в сети") });
     S.hist.wallet.unshift({ type: 'dep', t: Date.now(), amount: depAmount, method: S.wallet.name });
     setTimeout(() => { setBalance(S.balance + depAmount); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(depAmount)} GRAM`, text: `${$t("Пополнение с")} ${S.wallet.name}` }); checkAch(); }, 250);
   } else {
@@ -116,14 +118,14 @@ $('walletGo').onclick = async () => {
     $('walletBody').querySelectorAll('.onft .cell.sel').forEach((c, i) => c.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-40px) scale(.8)' }], { duration: 380, delay: i * 60, easing: 'cubic-bezier(.5,0,.8,.5)', fill: 'forwards' }));
     await wait(520 + list.length * 60);
     btn.disabled = false; btn.classList.remove('wait');
-    // ошибка до отправки (в бою — ответ бэкенда): релеер не получил сообщение — ничего не выводится
-    if (S.dbg.fail === 'relayer'){ S.dbg.fail = null; renderWallet(); haptic('rigid');
-      return notify({ type: 'err', icon: 'err', ms: 6000, title: `${$t("Сначала напиши")} ${RELAYER}`, text: $t("Без сообщения релееру вывод не пройдёт. NFT остались у тебя, комиссия не списана"), action: { label: $t("Написать"), fn: () => tgOpen('https://t.me/' + RELAYER.slice(1)) } }); }
     // NFT выводятся по одному: отдельный запрос, своя комиссия и свой нотиф на каждый
     INV = INV.filter(g => !outSel.has(g.id)); S.gifts = S.gifts.filter(g => !outSel.has(g.id)); outSel = new Set(); renderBet(); hideDrawer();
-    for (const g of list){
-      await wait(450);
-      if (S.dbg.fail === 'out'){ S.dbg.fail = null; INV.unshift(g); haptic('rigid');   // этот не прошёл — вернулся в инвентарь
+    for (let i = 0; i < list.length; i++){
+      const g = list[i]; await wait(450);
+      const res = await API.withdrawNft(g).catch(() => ({ ok: false, error: 'failed' }));
+      if (res.error === 'relayer'){ INV.unshift(...list.slice(i)); haptic('rigid');   // релеер не получил сообщение — дальше не выводим, всё остаётся у игрока
+        notify({ type: 'err', icon: 'err', ms: 6000, title: `${$t("Сначала напиши")} ${RELAYER}`, text: $t("Без сообщения релееру вывод не пройдёт. NFT остались у тебя, комиссия не списана"), action: { label: $t("Написать"), fn: () => tgOpen('https://t.me/' + RELAYER.slice(1)) } }); break; }
+      if (!res.ok){ INV.unshift(g); haptic('rigid');                                  // этот не прошёл — вернулся в инвентарь
         notify({ type: 'err', img: g.nft.src, ms: 5000, title: `${g.nft.name} ${$t("не выведен")}`, text: $t("NFT остался в инвентаре, комиссия не списана — попробуй ещё раз") }); continue; }
       S.hist.wallet.unshift({ type: 'nft', t: Date.now(), name: g.nft.name, img: g.nft.src, bg: [g.a, g.b], value: g.value, fee: OUT_FEE, method: `${$t("в Telegram · комиссия {0} GRAM", OUT_FEE)}`, status: $t("в пути") });
       setBalance(Math.round((S.balance - OUT_FEE) * 100) / 100);

@@ -28,7 +28,7 @@ function renderCases(){
     b.innerHTML = `<div class="sect"><div class="sect-h hero" style="--c:${beast.c}"><span><b>${$t("Задания дня")}</b><small>${$t("Выполни все 3 — откроется кейс Мистера Биста")}</small><em class="cnt">${td} ${$t("из")} ${TASKS.length}</em></span>${caseArt(beast)}</div>` +
       TASKS.map(([k, t, n, rw]) => { const v = Math.min(n, S.tasks[k]), ok = v >= n;
         return `<div class="arow${ok ? ' ok' : ''}"><i>${ok ? svg(NICON.ok) : ''}</i><span>${n > 1 && !ok ? `<small>${fmt(v)} / ${n}</small>` : ''}<b>${t}</b></span><em class="${rw.g != null ? 'g' : 'x'}">${rewHTML(rw)}</em></div>`; }).join('') +
-      `<button class="btn-main${S.stock.beast ? '' : ' off'}" data-open="beast">${S.stock.beast ? `${$t("Открыть кейс Биста")}${S.stock.beast > 1 ? ' ×' + S.stock.beast : ''}` : dd ? $t("Кейс за сегодня уже открыт") : `${$t("Ещё {0} {1} до кейса", TASKS.length - td, TASKS.length - td === 1 ? $t("задание") : $t("задания"))}`}</button></div>` +
+      `<button class="btn-main${S.stock.beast ? '' : ' off'}" data-open="beast">${S.stock.beast ? `${$t("Открыть кейс Биста")}${S.stock.beast > 1 ? ' ×' + S.stock.beast : ''}` : dd ? $t("Кейс за сегодня уже открыт") : `${$t("Ещё {0} {1} до кейса", TASKS.length - td, $n("задание|задания|заданий", TASKS.length - td))}`}</button></div>` +
       `<div class="sect"><div class="sect-h hero" style="--c:${musk.c}"><span><b>${$t("Неделя")}</b><small>${$t("Задания каждый день — откроется кейс Илона Маска")}</small><em class="cnt">${di - S.week.missed.filter(d => d < di).length} ${$t("из 7 дней")}</em></span>${caseArt(musk)}</div>` +
       `<div class="days">${DAYS.map((d, i) => { const miss = S.week.missed.includes(i) && i < di, ok = (i < di && !miss) || (i === di && dd);
         return `<span class="${miss ? 'miss' : ok ? 'ok' : i === di ? 'now' : ''}">${miss ? svg('<path d="M7 7l10 10M17 7L7 17"/>') : ok ? svg(NICON.ok) : d}</span>`; }).join('')}</div>` +
@@ -135,8 +135,8 @@ async function caseRun(c, again, m = 1){
   if (!again) await openFx(true, 'case', glowOf(c.c));
   else { $('fx').classList.remove('done', 'fail'); FullGlow.set(glowOf(c.c)); FX.hot = true; $('fxCase').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 }); }
   $('fx').style.setProperty('--tc', c.c);
-  let r = null; try { [r] = await Promise.all([rollCase(c, m), wait(550)]); } catch(_){}
-  if (!r || S.dbg.fail === 'case'){ S.dbg.fail = null;
+  let r = null; try { [r] = await Promise.all([API.openCase(c, m), wait(550)]); } catch(_){}
+  if (!r){
     if (c.price) setBalance(S.balance + c.price);
     return failScreen('case', { c });
   }
@@ -212,6 +212,7 @@ function caseDrop(c, it, r, g){
 syncBalBtn();
 /* ---------- стартовая история: настоящие seed, чтобы проверка работала и на старых записях ---------- */
 (async () => {
+  if (SAVE) return;                                         // прогресс восстановлен из сохранения — заглушки не нужны
   const stakes = [1, 2, .5, 5, 1, 3, 2, 10];
   for (let i = 0; i < stakes.length; i++){ let gifts = [], ton = stakes[i];
     if (stakes[i] >= 3){ const n = pick(NFTS.slice(0, 5)), bg = n.bg, v = Math.round(stakes[i] * .7 * 100) / 100; gifts = [{ id: 's' + i, num: n.num, nft: n, a: bg[0], b: bg[1], p: bg[2], value: v }]; ton = Math.round((stakes[i] - v) * 100) / 100; }

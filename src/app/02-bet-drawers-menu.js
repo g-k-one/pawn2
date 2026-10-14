@@ -37,7 +37,7 @@ function cardHTML(g, w, big){
   const sy = g.nft.sym; if (sy) symLoad(sy);
   const num = '#' + g.num.toLocaleString(LOC);
   return `<div class="nc${big ? ' big' : ''}" style="--w:${w}px;--a:${g.a};--b:${g.b};--p:${g.p}"><div class="nc-t"><div class="nc-bg"></div><span class="nc-patw"><span class="nc-pat${sy && SYM_OK.has(sy) ? ' sym' : ''}"${sy ? ` data-sym="${sy}"${SYM_OK.has(sy) ? ` style="--symimg:${symImg(sy).replace(/"/g, '&quot;')}"` : ''}` : ''}></span></span>` +
-    (big ? '' : `<span class="nc-num">${num}</span>`) + `<img class="nc-img" src="${g.nft.card || g.nft.src}" alt="${g.nft.name}"><span class="nc-gl"><i></i></span>` +
+    (big ? '' : `<span class="nc-num">${num}</span>`) + `<img class="nc-img" src="${g.nft.card || g.nft.src}" alt="${g.nft.name}" decoding="async"><span class="nc-gl"><i></i></span>` +
     (big ? `<span class="nc-cap"><b>${g.nft.name}</b><small>${g.skin} · ${num}</small></span>` : `<span class="nc-pr"><img src="assets/gem-small.svg" alt="">${fmt(g.value)}</span>`) + '</div></div>';
 }
 const priceHTML = v => `<img src="assets/gem-small.svg" alt="">${fmt(v)}`;
@@ -176,12 +176,13 @@ $('giftsF').addEventListener('click', e => {
   if (id === 'sellCancel'){ haptic(); sellMode = false; sellSel.clear(); renderInv(); giftsFoot(); return; }
   if (id === 'sellGo'){
     if (!sellSel.size){ haptic('rigid'); return; }
-    const list = INV.filter(g => sellSel.has(g.id)), sum = Math.round(sellSum() * 100) / 100;
-    INV = INV.filter(g => !sellSel.has(g.id)); S.gifts = S.gifts.filter(g => INV.includes(g));
+    const list = INV.filter(g => sellSel.has(g.id));
+    API.sellNfts(list).then(({ ok, amount: sum }) => { if (!ok) return notify({ type: 'err', icon: 'err', title: $t("Продажа не прошла"), text: $t("Подарки остались в инвентаре") });
+    INV = INV.filter(g => !list.includes(g)); S.gifts = S.gifts.filter(g => INV.includes(g));
     setBalance(S.balance + sum); haptic('medium'); Sfx.coin();
     S.hist.wallet.unshift({ type: 'sell', t: Date.now(), amount: sum, name: list.length > 1 ? `${list.length} NFT` : list[0].nft.name, img: list[0].nft.src, bg: [list[0].a, list[0].b], method: $t("продажа") });
-    notify({ type: 'ok', img: list[0].nft.src, color: '#12D53D', title: `${$t("Продано: +{0} GRAM", fmt(sum))}`, text: list.length > 1 ? `${list.length} ${$t("подарка")}` : list[0].nft.name });
-    sellMode = false; sellSel.clear(); renderInv(); giftsFoot(); renderBet();
+    notify({ type: 'ok', img: list[0].nft.src, color: '#12D53D', title: `${$t("Продано: +{0} GRAM", fmt(sum))}`, text: list.length > 1 ? `${list.length} ${$n("подарок|подарка|подарков", list.length)}` : list[0].nft.name });
+    sellMode = false; sellSel.clear(); renderInv(); giftsFoot(); renderBet(); });
   }
 });
 giftsFoot();
