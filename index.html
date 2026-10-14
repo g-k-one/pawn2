@@ -1172,7 +1172,6 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 
 /* v32 */
 .fx-need.miss b{min-width:0;margin:0 .3em}
-.orb-fly{position:absolute;z-index:47;border-radius:50%;pointer-events:none;translate:0 0}
 .nc-num{color:#fff;opacity:.92;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 /* второстепенный текст Onest — ещё на шаг мельче (кроме баннеров меню) */
 .bnote,.rules ol,.pfc p,.pfi-hero p,.pfi-env p,.pfi-step p,.pfi-p,.hnote,.gin p,.lead,.muted{font-size:12.5px}
@@ -1213,6 +1212,15 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 .bcase .cart,.cinfo-h .cart,.sect-h.hero .cart{transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
 .bcase:active .cart,.cinfo-h .cart:active{transform:scale(.92) rotate(-3deg)}
 .lite .cart *,.lite .cupw{animation:none!important}
+
+/* v33 */
+.nc-cap b,.nc-cap small{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35)}
+/* узор карточки: в центре виден полностью, к краям тает до нуля */
+.nc-patw{position:absolute;inset:0;pointer-events:none;-webkit-mask-image:radial-gradient(closest-side,#000,transparent);mask-image:radial-gradient(closest-side,#000,transparent)}
+.nc-pat{opacity:1}
+.fx-drop .nc-t{touch-action:none;cursor:grab}
+.mb-t{max-width:calc(100% - 168px)}
+.item.ixp>img{transform:scale(.78)}
 
 #boot{position:fixed;inset:0;z-index:999;display:grid;place-items:center;background:#0b0b0b;transition:opacity .45s}
 #boot.off{opacity:0;pointer-events:none}
@@ -1644,7 +1652,7 @@ function cardHTML(g, w, big){
   g.skin = g.skin || g.nft.model || pick(SKINS);
   const sy = g.nft.sym; if (sy) symLoad(sy);
   const num = '#' + g.num.toLocaleString('ru-RU');
-  return `<div class="nc${big ? ' big' : ''}" style="--w:${w}px;--a:${g.a};--b:${g.b};--p:${g.p}"><div class="nc-t"><div class="nc-bg"></div><span class="nc-pat${sy && SYM_OK.has(sy) ? ' sym' : ''}"${sy ? ` data-sym="${sy}"${SYM_OK.has(sy) ? ` style="--symimg:${symImg(sy).replace(/"/g, '&quot;')}"` : ''}` : ''}></span>` +
+  return `<div class="nc${big ? ' big' : ''}" style="--w:${w}px;--a:${g.a};--b:${g.b};--p:${g.p}"><div class="nc-t"><div class="nc-bg"></div><span class="nc-patw"><span class="nc-pat${sy && SYM_OK.has(sy) ? ' sym' : ''}"${sy ? ` data-sym="${sy}"${SYM_OK.has(sy) ? ` style="--symimg:${symImg(sy).replace(/"/g, '&quot;')}"` : ''}` : ''}></span></span>` +
     (big ? '' : `<span class="nc-num">${num}</span>`) + `<img class="nc-img" src="${g.nft.src}" alt="${g.nft.name}"><span class="nc-gl"><i></i></span>` +
     (big ? `<span class="nc-cap"><b>${g.nft.name}</b><small>${g.skin} · ${num}</small></span>` : `<span class="nc-pr"><img src="assets/gem-small.svg" alt="">${fmt(g.value)}</span>`) + '</div></div>';
 }
@@ -1828,18 +1836,23 @@ $('menuBody').addEventListener('click', e => {
    ========================================================= */
 const Tilt = (() => {
   const items = new Set();
-  let ph = Math.random() * 10, last = 0;
+  let ph = Math.random() * 10, last = 0, prev = 0;
   function frame(now){
     requestAnimationFrame(frame);
-    if (document.hidden || !items.size || S.lite) return;
-    if (now - last < 32) return;                 // 30 к/с хватает для медленного поворота — вдвое меньше работы
+    const dt = prev ? Math.min(.1, (now - prev) / 1000) : 0; prev = now;
+    // карточку крутят пальцем или она доворачивается обратно — тогда каждый кадр, даже в экономном режиме
+    let hand = false;
+    items.forEach(it => { if (!it.grab && (it.ux || it.uy)){ const f = Math.exp(-dt / .35); it.ux *= f; it.uy *= f; if (Math.abs(it.ux) + Math.abs(it.uy) < .003) it.ux = it.uy = 0; } if (it.grab || it.ux || it.uy) hand = true; });
+    if (document.hidden || !items.size || (S.lite && !hand)) return;
+    if (!hand && now - last < 32) return;        // 30 к/с хватает для медленного поворота — вдвое меньше работы
     last = now;
     const t = now / 1000;
     items.forEach(it => {
       if (!it.t.isConnected){ items.delete(it); return; }
       if (it.dr && !it.dr.classList.contains('open')) return;          // карточки в закрытой шторке не крутим
       // у каждой карточки свой сдвиг фазы — крутятся не синхронно; очень медленно (период ~9–12 с)
-      const x = Math.sin(t * .62 + it.o) * .75, y = Math.cos(t * .5 + it.o * 1.3) * .55, k = it.k;
+      const au = S.lite ? 0 : 1;                                       // в экономном режиме сама не крутится, только пальцем
+      const x = Math.sin(t * .62 + it.o) * .75 * au + it.ux, y = Math.cos(t * .5 + it.o * 1.3) * .55 * au + it.uy, k = it.k;
       it.t.style.transform = `perspective(420px) rotateX(${(-y * 16 * k).toFixed(2)}deg) rotateY(${(x * 20 * k).toFixed(2)}deg)`;
       if (it.img) it.img.style.transform = `translate3d(${(x * 7 * k).toFixed(2)}px,${(y * 6 * k).toFixed(2)}px,0) scale(1.05)`;
       if (it.pat) it.pat.style.transform = `translate3d(${(-x * 4 * k).toFixed(2)}px,${(-y * 3 * k).toFixed(2)}px,0)`;
@@ -1848,7 +1861,18 @@ const Tilt = (() => {
     });
   }
   requestAnimationFrame(frame);
-  return { add(t, img, gl, k = 1, pat = null){ if (t) items.add({ t, img, gl, k, pat, o: (ph += 1.7), dr: t.closest('.drawer') }); }, drop(root){ items.forEach(it => { if (root.contains(it.t)) items.delete(it); }); } };
+  /* повернуть пальцем: тянешь — карточка следует, отпустил — плавно возвращается. Тап без сдвига — onTap */
+  function grab(t, onTap){
+    const it = [...items].find(i => i.t === t); if (!it) return;
+    const cl = v => Math.max(-1.6, Math.min(1.6, v));
+    let pid = null, x0 = 0, y0 = 0, u0 = 0, v0 = 0, moved = false;
+    t.addEventListener('pointerdown', e => { pid = e.pointerId; x0 = e.clientX; y0 = e.clientY; u0 = it.ux; v0 = it.uy; moved = false; it.grab = true; try { t.setPointerCapture(pid); } catch(_){} });
+    t.addEventListener('pointermove', e => { if (e.pointerId !== pid) return; const dx = (e.clientX - x0) / K, dy = (e.clientY - y0) / K;
+      if (Math.abs(dx) + Math.abs(dy) > 6) moved = true; it.ux = cl(u0 + dx / 110); it.uy = cl(v0 + dy / 110); });
+    const up = e => { if (e.pointerId !== pid) return; pid = null; it.grab = false; if (!moved && e.type === 'pointerup') onTap?.(); };
+    t.addEventListener('pointerup', up); t.addEventListener('pointercancel', up);
+  }
+  return { add(t, img, gl, k = 1, pat = null){ if (t) items.add({ t, img, gl, k, pat, o: (ph += 1.7), dr: t.closest('.drawer'), ux: 0, uy: 0, grab: false }); }, drop(root){ items.forEach(it => { if (root.contains(it.t)) items.delete(it); }); }, grab };
 })();
 
 /* =========================================================
@@ -1872,7 +1896,7 @@ function liveHTML(n, o = {}){
 function liveCaseHTML(c, it, o = {}){
   const img = o.img || (it.t === 'nft' ? pick(it.rare ? RARE_POOL() : FLOOR_POOL()).src : itemImg(it));
   const v = it.t === 'gram' ? fmt(it.v) : it.t === 'xp' ? '+' + it.v : fmt(o.value || (it.rare ? pick(RARE_POOL()).price : NFT_FLOOR));
-  return `<div class="item icase${it.rare ? ' hi' : ''}${o.me ? ' me' : ''}" style="--c:${itemColor(it)}" data-case="${c.id}" data-who="${o.me ? 'твой кейс' : '@' + pick(NICKS)}" data-lbl="${o.label || itemName(it)}" data-img="${img}">` +
+  return `<div class="item icase${it.rare ? ' hi' : ''}${it.t === 'xp' ? ' ixp' : ''}${o.me ? ' me' : ''}" style="--c:${itemColor(it)}" data-case="${c.id}" data-who="${o.me ? 'твой кейс' : '@' + pick(NICKS)}" data-lbl="${o.label || itemName(it)}" data-img="${img}">` +
     `<span class="glow"></span><img src="${img}" alt=""><span class="cbadge"><img src="${c.img}" alt=""></span><i><img src="${it.t === 'xp' ? 'assets/xp.webp' : 'assets/gem-small.svg'}" alt="">${v}</i>${it.rare ? '<span class="shine"></span>' : ''}</div>`;
 }
 const liveItem = () => { if (Math.random() < .3){ const c = pick(CASES), it = weighted(c); return liveCaseHTML(c, it); } return liveHTML(Math.random() * TICKETS | 0); };
@@ -2098,24 +2122,6 @@ function fadeUI(out, dur){
   }
 }
 
-/* фон кнопки по клику: вспыхивает оранжевым, как огонь, растёт и растворяется; после крафта возвращается */
-function orbFire(){
-  const o = document.querySelector('.cb .orb'); if (!o || S.lite) return;
-  document.querySelectorAll('.orb-fly').forEach(x => x.remove());
-  const r0 = parseFloat(getComputedStyle(o).rotate) || 0, cb = CB.getBoundingClientRect(), st = stage.getBoundingClientRect();
-  const cl = document.createElement('img'); cl.className = 'orb-fly'; cl.src = o.src;
-  cl.style.cssText = `left:${((cb.left - st.left) / K).toFixed(1)}px;top:${((cb.top - st.top) / K).toFixed(1)}px;width:${(cb.width / K).toFixed(1)}px;height:${(cb.height / K).toFixed(1)}px`;
-  stage.appendChild(cl); o.style.opacity = 0; o.dataset.fired = 1;
-  cl.animate([{ filter: 'none', scale: 1, opacity: 1, rotate: r0 + 'deg' },
-    { filter: 'sepia(1) saturate(6) hue-rotate(-28deg) blur(1.5px)', scale: 1.35, opacity: .55, rotate: (r0 + 150) + 'deg', offset: .35 },
-    { filter: 'sepia(1) saturate(7) hue-rotate(-40deg) blur(6px)', scale: 1.9, opacity: 0, rotate: (r0 + 330) + 'deg' }], { duration: 560, easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' }).onfinish = () => cl.remove();
-}
-function orbBack(){
-  const o = document.querySelector('.cb .orb'); if (!o) return;
-  const had = o.getAnimations().filter(a => a.id === 'fire'); had.forEach(a => a.cancel());
-  const fired = !!o.dataset.fired; delete o.dataset.fired; o.style.opacity = '';
-  if ((had.length || fired) && !S.lite) o.animate([{ opacity: 0, scale: .6 }, { opacity: 1, scale: 1 }], { duration: 520, easing: 'cubic-bezier(.3,1.4,.5,1)' });
-}
 /* ---------- крафт ---------- */
 $('craft').onclick = async () => {
   if (S.busy) return;
@@ -2123,7 +2129,6 @@ $('craft').onclick = async () => {
   if (!S.demo && S.ton > S.balance){ notify({ type: 'err', icon: 'coin', title: 'Недостаточно GRAM', text: `На балансе ${fmt(S.balance)} GRAM` }); haptic('rigid'); return; }
   S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto);
   const stake = total(), used = S.gifts.slice(), tonStake = S.ton, fast = S.fast || S.lite;
-  if (fast) orbFire();
   const pf = fair(stake);
   if (S.ton > 0) setBalance(S.balance - S.ton);
   if (fast){ Sfx.lock(); await strike(.8, REST + 10); INV = INV.filter(g => !used.includes(g)); S.gifts = []; await openFx(true); }
@@ -2375,13 +2380,17 @@ async function reveal(r, fast){
   showDrop(r);
 }
 /* ---------- дроп: число переезжает наверх, крупный приз проявляется, затем сумма и кнопки ---------- */
+/* NFT-подарок в Telegram: t.me/nft/<коллекция без пробелов и знаков>-<номер> */
+const nftLink = n => `https://t.me/nft/${n.name.replace(/[^A-Za-z0-9]/g, '')}-${n.num}`;
+function openNft(g){ haptic(); const url = nftLink(g.nft); try { Telegram.WebApp.openTelegramLink(url); } catch(_){ window.open(url, '_blank'); } }
+const dropCard = g => { tiltCard($('pz'), 1.4); Tilt.grab($('pz').querySelector('.nc-t'), () => openNft(g)); };
 const PF_LINK = '<button class="btn-link pf" id="fxPfIn">Проверить честность</button>';
 function fillDrop(r){
   const drop = $('fxDrop');
   if (false){
   } else if (r.nft){
     drop.innerHTML = `<div class="pz" id="pz">${cardHTML(r.nft, 266, true)}</div>`;
-    tiltCard($('pz'), 1.4);
+    dropCard(r.nft);
     if (S.demo){
       $('fxWin').innerHTML = `<span>в демо призы не выдаются</span>`;
       $('fxBtns').innerHTML = `<button class="btn-main" id="fxTake">Ещё раз</button>` + PF_LINK;
@@ -2456,7 +2465,7 @@ async function finish(r, how){
   else if (how === 'sell') notify({ type: 'ok', color: t.c, img: r.nft.nft.src, title: `Продано: +${fmt(add)} GRAM`, text: `${r.nft.nft.name} за ${fmt(r.nft.value)} GRAM${r.change > 0 ? ` и ${fmt(r.change)} GRAM сверху` : ''}` });
   else notify({ type: 'ok', color: t.c, img: r.nft.nft.src, title: `${r.nft.nft.name} в инвентаре`, text: r.change > 0 ? `На баланс +${fmt(r.change)} GRAM` : 'Можно положить в следующий крафт' });
   setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win })), 300);
-  CRAFT.classList.remove('busy'); S.busy = false; finish.on = false; restartAuto(); orbBack();
+  CRAFT.classList.remove('busy'); S.busy = false; finish.on = false; restartAuto();
 }
 /* неудачный крафт или открытие кейса: грустный смайлик, тикет 00000, «Попробовать ещё раз» и «Вернуться» */
 function failScreen(kind, ctx){
@@ -2475,7 +2484,7 @@ function failScreen(kind, ctx){
   $('fxBtns').innerHTML = `<button class="btn-main" id="failRetry">Попробовать ещё раз</button><button class="btn-ghost" id="failBack">Вернуться</button>`;
   FullGlow.set(glowOf('#FF4C35')); FullGlow.punch(0, .5); FX.gainTo = .6; Sfx.lock(); haptic('rigid');
   fx.classList.add('done'); setTimeout(() => { FX.hot = false; }, 900);
-  const free = () => { CRAFT.classList.remove('busy'); S.busy = false; orbBack(); };
+  const free = () => { CRAFT.classList.remove('busy'); S.busy = false; };
   const restoreBet = () => { if (craft){ S.ton = ctx.ton; S.gifts = ctx.gifts.filter(g => INV.includes(g)); renderBet(); } };
   let on = false;
   $('failBack').onclick = async () => { if (on) return; on = true; haptic(); await closeFx(); fx.classList.remove('fail'); restoreBet(); free(); restartAuto(); if (!craft) openCases(); };
@@ -2488,7 +2497,7 @@ async function superStage(r){
   const g = r.super, ids = ['fxDrop', 'fxWin', 'fxBtns'];
   if (!S.lite) await Promise.all(ids.map(id => $(id).animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(.96)' }], { duration: 220, easing: 'ease-in', fill: 'forwards' }).finished));
   Tilt.drop($('fxDrop'));
-  $('fxDrop').innerHTML = `<div class="pz" id="pz">${cardHTML(g, 266, true)}</div>`; tiltCard($('pz'), 1.4);
+  $('fxDrop').innerHTML = `<div class="pz" id="pz">${cardHTML(g, 266, true)}</div>`; dropCard(g);
   $('fxWin').innerHTML = `<img class="sdwin" src="assets/superdrop-logo.webp" alt="Super Drop"><span class="sdgot">Ты первым выбил тикет ${tk(r.ticket)}</span>`;
   $('fxBtns').innerHTML = `<button class="btn-main" id="sdSell">Продать за ${fmt(g.value)} GRAM</button><button class="btn-ghost" id="sdTake">Забрать</button>`;
   ids.forEach(id => $(id).getAnimations().forEach(a => a.cancel()));
@@ -2505,7 +2514,7 @@ async function superStage(r){
     if (how === 'sell') setBalance(S.balance + g.value);
     notify({ type: 'ok', color: '#EB57B0', img: g.nft.src, title: how === 'sell' ? `Супер дроп продан: +${fmt(g.value)} GRAM` : `Супер дроп: ${g.nft.name} твой`, text: 'Новый загаданный тикет уже в бонусах' });
     setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win })), 300);
-    CRAFT.classList.remove('busy'); S.busy = false; restartAuto(); orbBack();
+    CRAFT.classList.remove('busy'); S.busy = false; restartAuto();
   };
   $('sdSell').onclick = () => take('sell'); $('sdTake').onclick = () => take('take');
 }
@@ -3103,7 +3112,7 @@ async function caseRun(c, again){
 }
 function caseDrop(c, it, r, g){
   const drop = $('fxDrop'); $('fx').style.setProperty('--tc', itemColor(it));
-  if (g){ drop.innerHTML = `<div class="pz" id="pz">${cardHTML(g, 266, true)}</div>`; tiltCard($('pz'), 1.4);
+  if (g){ drop.innerHTML = `<div class="pz" id="pz">${cardHTML(g, 266, true)}</div>`; dropCard(g);
     $('fxWin').innerHTML = `<span>${c.name} · стоимость ${fmt(g.value)} GRAM</span>`; }
   else { const src = itemImg(it);
     drop.innerHTML = `<div class="pz"><div class="tw${it.t === 'xp' ? ' xpw' : ''}" id="pz"><img src="${src}" alt=""><span class="gl" style="--m:url('${src}')"><i></i></span></div></div>`;
