@@ -44,7 +44,7 @@ phrases = {
 # кейсы
 'Кейс Павла Дурова':"Pavel Durov's Case",'Павел Дуров':'Pavel Durov','Кейс Сатоши Накамото':"Satoshi Nakamoto's Case",'Сатоши':'Satoshi','Кейс Мистера Биста':"MrBeast's Case",'Мистер Бист':'MrBeast','Кейс Илона Маска':"Elon Musk's Case",'Илон Маск':'Elon Musk',
 'Бесплатно':'Free','бесплатно':'free','Открыть':'Open','Закрыт':'Locked','закрыт':'is locked','Пока закрыт':'Locked for now','Открыть за':'Open for','Ещё раз ·':'Again ·',
-'Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить: открытые разом, они умножают награду.':"Paid cases open for GRAM. Free ones — for tasks: MrBeast for a day, Elon Musk for a week. You can stack them: opened together, they multiply the reward.",
+'Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить и открывать по одному, когда захочешь.':"Paid cases open for GRAM. Free ones — for tasks: MrBeast for a day, Elon Musk for a week. You can stack them and open one at a time whenever you like.",
 'Что внутри':"What's inside",'Редкий NFT':'Rare NFT','Обычный NFT':'Common NFT','редкий NFT':'rare NFT','обычный NFT':'common NFT','Редкий':'Rare','Обычный':'Common','случайный подарок':'random gift','по флору, сейчас':'at floor, now','флор':'floor',
 'Когда придёт':'When it arrives','GRAM, XP и NFT — сразу':'GRAM, XP and NFT — instantly','Честно':'Fair','каждое открытие проверяется в истории':'every opening is verifiable in History','‹ Бонусы':'‹ Bonuses','опыт':'XP',
 'Ждём честный результат…':'Waiting for a fair result…','Кейсы — только на GRAM':'Cases are GRAM-only','Выключи демо в меню':'Turn off demo in the menu','стоимость открытия':'opening price','Выпало':'Dropped',
@@ -124,7 +124,7 @@ phrases = {
 'Здесь бонусы, история игр и проверка честности':'Bonuses, game history and fairness checks live here',
 'TON Connect не загрузился':'TON Connect failed to load','Проверь интернет и попробуй ещё раз':'Check your connection and try again','Адрес для пополнений не задан':'Deposit address is not set','Прототип: впиши DEPOSIT_ADDR в коде':'Prototype: set DEPOSIT_ADDR in the code','Платёж отменён':'Payment cancelled',
 'Играй ответственно':'Play responsibly','Ставь только то, что готов потерять, и делай перерывы. Если игра перестала быть развлечением — остановись.':'Only bet what you can afford to lose and take breaks. If it stops being fun — stop.',
-'в запасе':'in stock','Открой сейчас или копи — награда умножится на число кейсов':'Open now or stack them — the reward multiplies by the number of cases','награда':'reward','Кейс за сегодня уже открыт':"Today's case is already opened",
+'в запасе':'in stock','Открой сейчас или копи на потом':'Open now or save it for later','награда':'reward','Кейс за сегодня уже открыт':"Today's case is already opened",
 'Запас бесплатных кейсов':'Free case stock','Бист':'Beast','Маск':'Musk',
 'Восстановление дня':'Day restore','Пропущенный день:':'Missed day:',
 'Твой RTP за':'Your RTP over','На длинной дистанции игрокам возвращается 95% ставок; на коротком отрезке твой может быть выше или ниже.':'In the long run, 95% of bets go back to players; over a short run yours can be higher or lower.','Все':'All','Открыть 1 из':'Open 1 of','Ещё один · осталось':'One more · left','осталось':'left',

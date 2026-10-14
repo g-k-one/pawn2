@@ -9,10 +9,10 @@ S.week = { missed: [0], restorePrice: .5 };                       // какие 
 const dailyDone = () => TASKS.every(([k, , n]) => S.tasks[k] >= n);
 const tasksDone = () => TASKS.filter(([k, , n]) => S.tasks[k] >= n).length;
 const weekDone = () => dayIdx() === 6 && dailyDone() && !S.week.missed.length;
-/* бесплатные кейсы копятся: за выполненный день +1 кейс Биста, за неделю +1 Маска. Открываются разом — награда × число кейсов */
+/* бесплатные кейсы копятся: за выполненный день +1 кейс Биста, за неделю +1 Маска. Открываются по одному */
 S.stock = { beast: 0, musk: 0 };
 function stockUp(id){ S.stock[id]++; const c = caseById(id);
-  setTimeout(() => notify({ type: 'ok', img: c.img, color: c.c, title: `${c.name} в запасе ×${S.stock[id]}`, text: 'Открой сейчас или копи — награда умножится на число кейсов' }), 2600); }
+  setTimeout(() => notify({ type: 'ok', img: c.img, color: c.c, title: `${c.name} в запасе ×${S.stock[id]}`, text: 'Открой сейчас или копи на потом' }), 2600); }
 function bumpTasks(r){
   if (S.demo) return;
   S.tasks.crafts++; S.tasks.turnover = Math.round((S.tasks.turnover + r.stake) * 1000) / 1000;

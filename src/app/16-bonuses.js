@@ -22,7 +22,7 @@ function renderCases(){
   const b = $('casesBody');
   if (casesTab === 'cases'){
     b.innerHTML = `<div class="bgrid">${CASES.map(caseCard).join('')}</div>` +
-      `<p class="bnote">Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить: открытые разом, они умножают награду.</p>`;
+      `<p class="bnote">Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить и открывать по одному, когда захочешь.</p>`;
   } else if (casesTab === 'tasks'){
     const di = dayIdx(), dd = dailyDone(), td = tasksDone(), beast = caseById('beast'), musk = caseById('musk');
     b.innerHTML = `<div class="sect"><div class="sect-h hero" style="--c:${beast.c}"><span><b>Задания дня</b><small>Выполни все 3 — откроется кейс Мистера Биста</small><em class="cnt">${td} из ${TASKS.length}</em></span>${caseArt(beast)}</div>` +
@@ -85,10 +85,7 @@ function renderCaseInfo(){
     `<div class="facts"><div style="--c:#EB57B0"><b>Редкий NFT</b><span>случайный подарок ${RARE_FROM}–${RARE_TO} GRAM</span></div><div style="--c:#00D9FF"><b>Обычный NFT</b><span>по флору, сейчас ${NFT_FLOOR} GRAM</span></div>` +
     `<div style="--c:#30A5FF"><b>Когда придёт</b><span>GRAM, XP и NFT — сразу</span></div><div style="--c:#12D53D"><b>Честно</b><span>каждое открытие проверяется в истории</span></div></div>`;
   $('caseGo').textContent = c.price ? `Открыть за ${fmt(c.price)} GRAM` : st.ok ? (st.n > 1 ? `Открыть 1 из ${st.n}` : 'Открыть') : 'Пока закрыт';
-  // из запаса можно открыть и все разом — награда умножится на их число
-  $('caseAll')?.remove();
-  if (!c.price && st.n > 1){ const a = document.createElement('button'); a.id = 'caseAll'; a.className = 'btn-ghost'; a.innerHTML = `Все ×${st.n}<small>награда ×${st.n}</small>`;
-    a.onclick = () => tryOpenCase(c, st.n); $('caseGo').before(a); $('caseGo').parentElement.classList.add('two'); } else $('caseGo').parentElement.classList.remove('two');
+
   $('caseGo').classList.toggle('off', !st.ok && !S.dbg.freeCases);
 }
 $('caseGo').onclick = () => tryOpenCase(infoCase);
