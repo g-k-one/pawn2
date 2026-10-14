@@ -160,7 +160,7 @@ img{display:block;-webkit-user-drag:none}
 .digits span.blur i{filter:blur(2px)}
 .digits.focus span:first-child{transform:translateZ(0) scale(1.1);box-shadow:inset 0 0 0 1.5px var(--tc),0 0 24px color-mix(in srgb,var(--tc) 45%,transparent)}
 .digits span:first-child{transition:color .35s,background .35s,box-shadow .4s,transform .45s cubic-bezier(.3,1.4,.5,1)}
-.digits.run span{color:color-mix(in srgb,var(--tc) 55%,#fff);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tc) 30%,transparent)}
+.digits.run span{color:color-mix(in srgb,var(--tc) 55%,#fff)}
 .digits span i{position:absolute;left:0;top:0;width:100%;display:block;font-style:normal}
 .digits span i b{display:block;height:96px;line-height:96px;text-align:center;font-weight:700}
 .digits span.lock{color:#fff;background:rgba(255,255,255,.12);animation:lockPop .5s cubic-bezier(.3,1.7,.5,1)}
