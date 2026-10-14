@@ -1258,6 +1258,9 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .pfi-hero>i svg{width:26px;height:26px}
 .pfi-rtp>b{border-radius:14px;background:#12D53D;color:#06121a;font-size:19px;line-height:48px;text-align:center;letter-spacing:-.3px}   /* 95% — плашка как иконки соседних карточек */
 .pfi-step>i{width:32px;height:32px;margin:0 8px}
+/* заголовки верхних карточек — белые, одного размера */
+.pfi-hero h4,.pfi-rtp span b,.pfi-env b{margin:0;font-size:20px;line-height:1.15;text-transform:uppercase;color:#fff}
+.pfi-hero p{margin-top:4px}
 /* онбординг */
 .onb{position:absolute;inset:0;z-index:80}
 .onb-hole{position:absolute;border-radius:22px;box-shadow:0 0 0 9999px rgba(0,0,0,.72),0 0 0 2px rgba(255,255,255,.5);transition:all .35s cubic-bezier(.25,.9,.3,1);pointer-events:none}
