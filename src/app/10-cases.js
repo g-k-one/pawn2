@@ -34,7 +34,7 @@ function tileHTML(it, foot, g){
 // картинка NFT на плитках сама перелистывается — видно, что подарок будет случайный из диапазона
 setInterval(() => {
   if (document.hidden || S.lite) return;
-  document.querySelectorAll('.ct.isnft:not(.fixed) .tnft').forEach((im, i) => {
+  document.querySelectorAll('.tgrid .ct.isnft:not(.fixed) .tnft').forEach((im, i) => {   // только в «Что внутри»: в ленте прокрутки картинки не меняются
     if (!im.offsetParent || Math.random() < .4) return;
     const pool = im.dataset.pool === 'rare' ? RARE_POOL() : FLOOR_POOL(), cur = im.getAttribute('src'), next = pool.filter(n => n.src !== cur);
     if (!next.length) return;

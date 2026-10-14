@@ -129,6 +129,7 @@ phrases = {
 'Восстановление дня':'Day restore','Пропущенный день:':'Missed day:',
 'Твой RTP за':'Your RTP over','На длинной дистанции игрокам возвращается 95% ставок; на коротком отрезке твой может быть выше или ниже.':'In the long run, 95% of bets go back to players; over a short run yours can be higher or lower.','Все':'All','Открыть 1 из':'Open 1 of','Ещё один · осталось':'One more · left','осталось':'left',
 'Депозит GRAM':'GRAM deposits','Депозит NFT':'NFT deposits',
+'NFT на плитке — для примера':'The NFT on the tile is just an example','Выпасть может другой подарок: редкий — случайный за':'You may get a different gift: a rare one is random for','обычный — по флору, сейчас':'a common one is at floor price, now','Какой именно — узнаешь при открытии.':"You'll see which one when you open it.",
 # общие связки
 'и на баланс':'plus to balance','до':'to','из':'of','и':'and','за':'for','от':'from','в':'in','на':'on','NFT до':'NFT up to',
 }

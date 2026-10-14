@@ -82,7 +82,8 @@ function renderCaseInfo(){
   const c = infoCase, st = caseState(c);
   $('caseBody').innerHTML = `<div class="cinfo-h" style="--c:${c.c}">${caseArt(c, 'lg')}<b>${c.name}</b>${c.price ? `<span class="cprice"><img src="assets/gem-small.svg" alt="">${fmt(c.price)} GRAM</span>` : `<button class="cprice go" data-act="totasks">${st.txt}<i>›</i></button>`}</div>` +
     `<div class="sec-t">Что внутри</div><div class="tgrid">${c.items.map(it => tileHTML(it, String(it.ch).replace('.', ',') + '%')).join('')}</div>` +
-    `<div class="facts"><div style="--c:#EB57B0"><b>Редкий NFT</b><span>случайный подарок ${RARE_FROM}–${RARE_TO} GRAM</span></div><div style="--c:#00D9FF"><b>Обычный NFT</b><span>по флору, сейчас ${NFT_FLOOR} GRAM</span></div>` +
+    `<div class="wwarn nftw"><i>!</i><span><b>NFT на плитке — для примера</b><small>Выпасть может другой подарок: редкий — случайный за ${RARE_FROM}–${RARE_TO} GRAM, обычный — по флору, сейчас ${NFT_FLOOR} GRAM. Какой именно — узнаешь при открытии.</small></span></div>` +
+    `<div class="facts">` +
     `<div style="--c:#30A5FF"><b>Когда придёт</b><span>GRAM, XP и NFT — сразу</span></div><div style="--c:#12D53D"><b>Честно</b><span>каждое открытие проверяется в истории</span></div></div>`;
   $('caseGo').textContent = c.price ? `Открыть за ${fmt(c.price)} GRAM` : st.ok ? (st.n > 1 ? `Открыть 1 из ${st.n}` : 'Открыть') : 'Пока закрыт';
 
