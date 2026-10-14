@@ -5,7 +5,6 @@
  "Client seed — твой ключ": "Client seed — your key",
  "Commitment · игр в эпохе:": "Commitment · games in epoch:",
  "Commitment — SHA-256 зерна, показан до игры": "Commitment — SHA-256 of the seed, shown before the game",
- "GRAM · начисляется само в 00:00 МСК": "GRAM · credited automatically at 00:00 MSK",
  "GRAM в ставке уменьшены": "GRAM in the bet reduced",
  "GRAM вернулись на баланс": "GRAM returned to the balance",
  "GRAM, XP и NFT — сразу": "GRAM, XP and NFT — instantly",
@@ -548,5 +547,6 @@
  "Начислено вчера": "Credited yesterday",
  "5% от активности друзей. Начисляется само — каждый день в 00:00 МСК": "5% of friends’ activity. Credited automatically every day at 00:00 MSK",
  "Забирай бонус 10% на первый деп:": "Grab a 10% bonus on your first deposit:",
- "Забирай бонус 10% на первый деп по ссылке": "Grab a 10% bonus on your first deposit via the link"
+ "Забирай бонус 10% на первый деп по ссылке": "Grab a 10% bonus on your first deposit via the link",
+ "Начисляется само в 00:00 МСК": "Credited automatically at 00:00 MSK"
 }
