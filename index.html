@@ -1940,7 +1940,7 @@ setInterval(() => { if (!document.hidden) pushLive(); }, 3200);
 /* ---------- Provably Fair: протокол pawn-pf-v1 (как в бэкенде и на сайте проверки) ----------
    До игры показываем commitment = SHA-256 от 32 байт server seed. Ролл: HMAC-SHA256(зерно, JSON ["pawn-pf-v1", эпоха, домен, client seed, nonce, блок]),
    восемь 32-битных чисел big-endian, первое < 4 294 900 000 → mod 100 000; не подошло ни одно — следующий блок.
-   В прототипе каждая игра — своя эпоха: зерно раскрывается сразу после игры, и тут же загадывается следующее */
+   Эпоха: зерно загадано заранее, его хеш виден; игры идут с растущим nonce; зерно раскрывается, когда игрок меняет свой ключ, и начинается новая эпоха */
 const PF_VER = 'pawn-pf-v1';
 const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
 const enc = t => new TextEncoder().encode(t);
@@ -1958,12 +1958,19 @@ async function rollOf(seed, epoch, domain, clientSeed, nonce){
   }
 }
 async function newEpoch(){ const seed = hex(crypto.getRandomValues(new Uint8Array(32))); return { id: uuid(), seed, commitment: await sha(unhex(seed)) }; }
-let nextEpoch = newEpoch();                                    // зерно следующей игры: его хеш виден до игры
-async function takeEpoch(){ const e = await nextEpoch; nextEpoch = newEpoch(); return e; }
+const openEpoch = () => newEpoch().then(e => Object.assign(e, { proofs: [] }));
+let epochP = openEpoch();                                      // текущая эпоха: зерно загадано, хеш виден до игр
+/* раскрыть зерно эпохи: всем её доказательствам дописываем server seed, ключ игрока меняется, загадывается новая эпоха */
+async function revealEpoch(newClient = true){
+  const e = await epochP; epochP = openEpoch();
+  e.proofs.forEach(p => p.server_seed = e.seed); e.revealed = true;
+  if (newClient) S.clientSeed = 'gk-' + hex(crypto.getRandomValues(new Uint8Array(4)));
+  return e;
+}
 const proofBase = (ep, nonce, domain, block, roll) => ({ version: PF_VER, reference: String(nonce), request_id: uuid(), epoch_id: ep.id, commitment: ep.commitment,
-  client_seed: S.clientSeed, server_seed: ep.seed, nonce: String(nonce), domain, block_counter: String(block), roll });
+  client_seed: S.clientSeed, server_seed: '', nonce: String(nonce), domain, block_counter: String(block), roll });
 /* подтверждение хеша до игры — его сверяет сайт проверки */
-async function receiptNow(){ const e = await nextEpoch; return { version: PF_VER, reference: String(S.nonce + 1), epoch_id: e.id, commitment: e.commitment, client_seed: S.clientSeed }; }
+async function receiptNow(){ const e = await epochP; return { version: PF_VER, epoch_id: e.id, commitment: e.commitment, client_seed: S.clientSeed }; }   // без номера игры — подходит ко всей эпохе
 /* проверка доказательства прямо в приложении — тот же алгоритм, что в fair-verify.js */
 async function checkProof(p){
   const hashOk = await sha(unhex(p.server_seed)) === p.commitment;
@@ -2018,9 +2025,10 @@ $('dbgDone').onclick = () => {
   else notify({ type: 'info', icon: 'bug', title: 'Дебаг выключен', text: 'Исход снова случайный' });
 };
 async function fair(stake, gifts = [], tonStake = stake){
-  const nonce = ++S.nonce, want = dbgWant(), domain = 'craft';
-  let ep = await takeEpoch(), { roll, block } = await rollOf(ep.seed, ep.id, domain, S.clientSeed, nonce), tries = 0;
-  // дебаг: перебираем настоящие зерна, пока ролл не попадёт в нужный диапазон — проверка сходится, но хеш до игры был другим
+  const nonce = ++S.nonce, want = dbgWant(), domain = 'craft', forced = !!want || S.dbg.ticket != null;
+  // дебаг играет в отдельной одноразовой эпохе, раскрытой сразу — основную эпоху не трогает
+  let ep = forced ? await newEpoch() : await epochP, { roll, block } = await rollOf(ep.seed, ep.id, domain, S.clientSeed, nonce), tries = 0;
+  // дебаг: перебираем настоящие зерна, пока ролл не попадёт в нужный диапазон — проверка сходится
   while (want && !want(roll) && tries < 60000){
     const batch = await Promise.all(Array.from({ length: 64 }, async () => { const e = await newEpoch(); return { e, ...(await rollOf(e.seed, e.id, domain, S.clientSeed, nonce)) }; }));
     const hit = batch.find(b => want(b.roll)); tries += batch.length;
@@ -2038,6 +2046,7 @@ async function fair(stake, gifts = [], tonStake = stake){
   const proof = { ...proofBase(ep, nonce, domain, block, roll), rules_hash: await sha(enc(JSON.stringify(CRAFT_RULES))), rules: CRAFT_RULES,
     inputs: { bet_nano: String(bet), gifts: giftsIn, ton_bet_nano: String(tonNano) },
     result: { gift_payout_value_nano: String(giftPay), multiplier_ppm: String(ppm), payout_nano: String(payout), segment: TIERS[ti].key, ton_payout_nano: String(tonPay), zone: TIERS[ti].zone } };
+  if (forced) proof.server_seed = ep.seed; else ep.proofs.push(proof);
   return S.lastFair = { kind: 'craft', proof, ticket: roll, ti, mult: Math.round(Number(ppm) / 1e4) / 100, stake, win: Math.round(win * 100) / 100, nft, change: Math.floor(Number(tonPay) / 1e7) / 100, debug, manual };
 }
 
@@ -2575,19 +2584,27 @@ function pfHTML(r){
   const rng = isCase ? `«${itemName(it)}» в кейсе — это тикеты от ${tk(it.from)} до ${tk(it.to)}. Тикет ${tk(r.ticket)} внутри — значит, приз верный.`
                      : `Ранг «${t.name}» — это тикеты от ${tk(t.from)} до ${tk(t.to)}. Тикет ${tk(r.ticket)} внутри — значит, ранг и множитель x${r.mult} верные.`;
   const P = r.proof;
-  let tech = pfRow('Server seed — секретное зерно сервера', P.server_seed) + pfRow('Commitment — SHA-256 зерна, показан до игры', P.commitment) +
+  let tech = `<div class="pf-row"><small>Server seed — секретное зерно сервера</small><code class="pf-seed">${P.server_seed || 'раскроется при смене ключа'}</code></div>` + pfRow('Commitment — SHA-256 зерна, показан до игры', P.commitment) +
     pfRow('Client seed — твой ключ', P.client_seed) + pfRow('Эпоха', P.epoch_id) + pfRow('Nonce · домен · блок', `${P.nonce} · ${P.domain} · ${P.block_counter}`) + pfRow('Ролл', P.roll);
   return `<div class="pfres" style="--c:${col}"><small>Результат · тикет</small><b>${tk(r.ticket)}</b><span>${res}</span></div>` +
     `<div class="pfc" data-k="hash"><i></i><div><b>Результат не подменили</b><p>До игры мы показали «отпечаток» секретного ключа сервера. Теперь ключ открыт — сверим, что отпечаток тот же.</p><em>ждёт проверки</em></div></div>` +
     `<div class="pfc" data-k="ticket"><i></i><div><b>Тикет посчитан по формуле</b><p>Ключ сервера + твой ключ + номер игры (${r.proof.nonce}) по открытой формуле дают тикет ${tk(r.ticket)}.</p><em>ждёт проверки</em></div></div>` +
     `<div class="pfc" data-k="rule"><i></i><div><b>Приз выдан по правилам</b><p>${rng}</p><em>ждёт проверки</em></div></div>` +
     (r.manual ? '<p class="pfnote">Дебаг: тикет задан вручную, поэтому проверка не сойдётся. Это нормально.</p>' : r.debug ? '<p class="pfnote">Дебаг: исход выбран в настройках, ключ сервера подобран перебором — проверка сходится.</p>' : '') +
-    `<button class="btn-main pf-check">Проверить здесь</button><button class="btn-ghost pf-copy">Скачать доказательство</button>` + PF_EXT +
+    (P.server_seed ? '' : '<p class="pfnote pf-pend">Зерно этой эпохи ещё не раскрыто — без него игру не проверить. Раскрытие сменит твой ключ и начнёт новую эпоху.</p>') +
+    `<button class="btn-main pf-check">${P.server_seed ? 'Проверить здесь' : 'Раскрыть зерно и проверить'}</button><button class="btn-ghost pf-copy">Скачать доказательство</button>` + PF_EXT +
     `<details class="rules pftech"><summary>Технические данные</summary><div>${tech}</div></details>`;
 }
 function bindPF(root, r){
   root.querySelector('.pf-check').onclick = async e => {
     const btn = e.currentTarget; if (btn.classList.contains('wait')) return;
+    if (!r.proof.server_seed){
+      if (S.busy && !$('fx').classList.contains('done')) return;
+      btn.classList.add('wait'); btn.textContent = 'Раскрываем…'; haptic();
+      const ep = await revealEpoch(); await wait(S.lite ? 0 : 400);
+      root.querySelector('.pf-pend')?.remove(); const sc = root.querySelector('.pf-seed'); if (sc) sc.textContent = r.proof.server_seed;
+      notify({ type: 'ok', icon: 'ok', title: 'Зерно эпохи раскрыто', text: `Игр в эпохе: ${ep.proofs.length} · новый хеш уже загадан` });
+    }
     btn.classList.add('wait'); btn.textContent = 'Проверяем…'; haptic();
     const res = await checkProof(r.proof);
     const cards = [...root.querySelectorAll('.pfc')];
@@ -2624,7 +2641,7 @@ function renderPFInfo(){
   const steps = [
     ['#00D9FF', 'До игры', 'Сервер загадывает результат секретным ключом и сразу показывает тебе его «отпечаток» — короткий код. По отпечатку ключ не угадать, но и подменить ключ потом не выйдет.'],
     ['#AE3FC4', 'Твой вклад', 'В расчёте участвует и твой ключ. Его можно сменить в любой момент — поэтому мы не можем заранее подобрать результат под тебя.'],
-    ['#12D53D', 'После игры', 'Секретный ключ раскрывается. Отпечаток совпал — значит, результат не меняли. Тикет можно пересчитать прямо здесь, в браузере.'],
+    ['#12D53D', 'Раскрытие', 'Когда ты меняешь свой ключ, секретное зерно за всю эпоху раскрывается. Отпечаток совпал — значит, результаты не меняли. Любую игру эпохи можно пересчитать прямо здесь, в браузере.'],
   ];
   $('pfiBody').innerHTML = `<div class="pfi-hero"><h4>Что такое Provably Fair</h4><p>Это способ доказать, что мы не подкручиваем результат. Любой крафт и кейс можно проверить самому — без доверия к нам.</p></div>` +
     `<div class="pfi-env"><i>${svg(ENV)}</i><div><b>Как запечатанный конверт</b><p>Перед игрой мы кладём результат в конверт и отдаём его тебе. После игры конверт вскрывают — внутри то же, что было до игры.</p></div></div>` +
@@ -2632,14 +2649,17 @@ function renderPFInfo(){
     steps.map(([c, t, d], i) => `<div class="pfi-step" style="--c:${c}"><i>${i + 1}</i><div><b>${t}</b><p>${d}</p></div></div>`).join('') +
     `<div class="pfi-t">Тикет и ранги</div><p class="pfi-p">Каждая игра даёт тикет — число от 0 до 99 999. В какой диапазон он попал, такой и ранг. Шанс ранга — ровно доля его диапазона.</p>` +
     `<div class="rng">${TIERS.map(t => `<div style="--c:${t.c}"><b>${t.name}</b><span>${tk(t.from)}–${tk(t.to)}</span><em>${t.chance}%</em></div>`).join('')}</div>` +
-    `<div class="pfi-t">Хеш следующей игры</div><p class="pfi-p">Зерно следующей игры уже загадано — вот его отпечаток. Сохрани подтверждение до игры: после игры сайт проверки сверит его с доказательством.</p>` +
-    `<div class="pf-row"><small>Игра № ${S.nonce + 1} · commitment</small><code id="nextHash">…</code></div><button class="btn-ghost" id="saveReceipt">Сохранить подтверждение</button>` +
-    `<div class="pfi-t">Твой ключ</div><div class="cseed"><code id="cseedV">${S.clientSeed}</code><button class="pill-btn" id="cseedNew">Сменить</button></div>` +
+    `<div class="pfi-t">Текущая эпоха</div><p class="pfi-p">Зерно сервера загадано заранее — вот его отпечаток. Все игры эпохи считаются от него. Сохрани подтверждение сейчас: после раскрытия сайт проверки сверит его с доказательством.</p>` +
+    `<div class="pf-row"><small>Commitment · игр в эпохе: <span id="epN">…</span></small><code id="nextHash">…</code></div><button class="btn-ghost" id="saveReceipt">Сохранить подтверждение</button>` +
+    `<div class="pfi-t">Твой ключ</div><div class="cseed"><code id="cseedV">${S.clientSeed}</code></div>` +
+    `<p class="pfi-p" style="margin-top:10px">Смена ключа раскрывает зерно текущей эпохи — все её игры можно проверить — и начинает новую эпоху с новым хешем.</p><button class="btn-ghost" id="cseedNew">Сменить ключ и раскрыть зерно</button>` +
     `<details class="rules"><summary>Формула для разработчиков</summary><ol><li>Ключ HMAC-SHA256 — 32 байта server seed, сообщение — JSON ["pawn-pf-v1", эпоха, домен, client seed, nonce, блок]</li><li>Из хеша по очереди берутся восемь 32-битных чисел; первое меньше 4 294 900 000 по модулю 100 000 = тикет</li><li>Не подошло ни одно — номер блока +1</li><li>SHA-256(server seed) должен совпасть с отпечатком, показанным до игры</li></ol></details>` +
     `<div class="pfi-btns"><button class="btn-main" id="pfiLast">Проверить последний крафт</button><button class="btn-ghost" id="pfiHist">Вся история</button></div>` + PF_EXT;
-  nextEpoch.then(e => { if ($('nextHash')) $('nextHash').textContent = e.commitment; });
-  $('saveReceipt').onclick = async () => saveJson(`pawn-receipt-${S.nonce + 1}.json`, await receiptNow(), 'Подтверждение');
-  $('cseedNew').onclick = () => { S.clientSeed = 'gk-' + hex(crypto.getRandomValues(new Uint8Array(4))); $('cseedV').textContent = S.clientSeed; haptic(); notify({ type: 'ok', icon: 'ok', title: 'Ключ обновлён', text: 'Следующие игры пойдут с новым client seed — сохрани подтверждение заново' }); };
+  const epFill = () => epochP.then(e => { if (!$('nextHash')) return; $('nextHash').textContent = e.commitment; $('epN').textContent = e.proofs.length; $('cseedV').textContent = S.clientSeed; });
+  epFill();
+  $('saveReceipt').onclick = async () => { const rc = await receiptNow(); saveJson(`pawn-receipt-${rc.epoch_id.slice(0, 8)}.json`, rc, 'Подтверждение'); };
+  $('cseedNew').onclick = async () => { if (S.busy) return; haptic('medium'); const e = await revealEpoch(); epFill();
+    notify({ type: 'ok', icon: 'ok', title: 'Зерно раскрыто', text: `Игр в эпохе: ${e.proofs.length} — их можно проверить. Новый хеш уже загадан, сохрани подтверждение` }); };
   $('pfiLast').onclick = () => swapDrawer('pfDrawer', () => { const r = S.lastFair || S.hist.crafts[0]?.r; if (r){ $('pfBody').innerHTML = pfHTML(r); bindPF($('pfBody'), r); } });
   $('pfiHist').onclick = () => openHistory('crafts');
 }
@@ -3124,10 +3144,11 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-act]
 const caseRules = c => ({ kind: c.id, price_nano: String(nano(c.price)), rewards: c.items.map(it => ({ kind: it.t, amount: String(it.t === 'gram' ? nano(it.v) : it.t === 'xp' ? it.v : 0),
   ...(it.t === 'nft' ? { nft_rarity: it.rare ? 'rare' : 'common' } : {}), weight: it.to - it.from + 1 })) });
 async function rollCase(c){
-  const nonce = ++S.nonce, domain = 'case:' + c.id, ep = await takeEpoch(), { roll, block } = await rollOf(ep.seed, ep.id, domain, S.clientSeed, nonce);
+  const nonce = ++S.nonce, domain = 'case:' + c.id, ep = await epochP, { roll, block } = await rollOf(ep.seed, ep.id, domain, S.clientSeed, nonce);
   const rules = caseRules(c), idx = c.items.findIndex(it => roll >= it.from && roll <= it.to), rw = rules.rewards[idx];
   const proof = { ...proofBase(ep, nonce, domain, block, roll), rules_hash: await sha(enc(JSON.stringify(rules))), rules, inputs: { price_nano: rules.price_nano },
     result: { kind: rw.kind, amount: rw.amount, ...(rw.nft_rarity ? { nft_rarity: rw.nft_rarity } : {}) } };
+  ep.proofs.push(proof);
   return { kind: 'case', caseId: c.id, proof, ticket: roll, idx };
 }
 const weighted = c => { let x = Math.random() * 100; return c.items.find(it => (x -= it.ch) < 0) || c.items[c.items.length - 1]; };
@@ -3216,6 +3237,7 @@ syncBalBtn();
     S.hist.crafts.push({ kind: 'craft', t: Date.now() - (i + 1) * 47 * 60000, r, how: r.nft ? (i % 2 ? 'sell' : 'take') : 'gram' }); }
   for (let i = 0; i < 3; i++){ const c = CASES[i % 2], r = await rollCase(c), it = c.items[r.idx]; S.hist.cases.push({ kind: 'case', t: Date.now() - (i + 1) * 5 * 3600000, r, label: it.t === 'nft' ? (it.rare ? NFTS[9].name : NFTS[1].name) : null, img: it.t === 'nft' ? (it.rare ? NFTS[9].src : NFTS[1].src) : null }); }
   S.lastFair = null;
+  await revealEpoch(false);                                // прошлые игры — в уже раскрытой эпохе
   S.hist.wallet.push({ type: 'dep', t: Date.now() - 26 * 3600000, amount: 250, method: 'Tonkeeper' }, { type: 'nft', t: Date.now() - 50 * 3600000, name: NFTS[40].name, img: NFTS[40].src, bg: NFTS[40].bg, method: 'в Telegram · комиссия 0.3 GRAM' },
     { type: 'dep', t: Date.now() - 98 * 3600000, amount: 150, method: 'Telegram Wallet' });
   checkAch(true);                                          // то, что уже было сделано, отмечаем без наград
