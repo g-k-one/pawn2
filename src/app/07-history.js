@@ -50,8 +50,9 @@ function renderHist(detail){
     const nftList = t => S.hist.wallet.filter(w => w.type === t), sumV = L => L.reduce((a, w) => a + (w.value || 0), 0), nftOut = nftList('nft').length, nftIn = nftList('nftin').length;
     const by = TIERS.map((t, i) => C.filter(c => c.r.ti === i).length);
     b.innerHTML = `<div class="hstat-hero"><div style="--c:#12D53D"><small>Выиграно</small><b>${fmt(won)}</b><span>GRAM</span></div><div style="--c:#30A5FF"><small>Поставлено</small><b>${fmt(staked)}</b><span>GRAM</span></div></div>` +
-      `<div class="hstat">${[['Крафтов', n, '#FFB835'], ['Лучший', best.mult ? 'x' + best.mult : '—', '#EB57B0'], ['Кейсов', S.hist.cases.length, '#F57A37'], ['Опыт', xpFmt(S.xp), '#F57A37'],
-        ['Депозит GRAM', fmt(dep), '#12D53D'], ['Депозит NFT', nftIn + ' шт', '#00D9FF', `≈ ${fmt(sumV(nftList('nftin')))} GRAM`], ['NFT выведено', nftOut + ' шт', '#FF4C35', `≈ ${fmt(sumV(nftList('nft')))} GRAM`], ['Подарков', INV.length, '#AE3FC4']]
+      `<div class="hstat">${[['NFT выведено', nftOut + ' шт', '#FF4C35', `≈ ${fmt(sumV(nftList('nft')))} GRAM`], ['Депозит NFT', nftIn + ' шт', '#00D9FF', `≈ ${fmt(sumV(nftList('nftin')))} GRAM`],
+        ['Крафтов', n, '#FFB835'], ['Лучший', best.mult ? 'x' + best.mult : '—', '#EB57B0'], ['Кейсов', S.hist.cases.length, '#F57A37'], ['Опыт', xpFmt(S.xp), '#F57A37'],
+        ['Депозит GRAM', fmt(dep), '#12D53D'], ['Подарков', INV.length, '#AE3FC4']]
         .map(([k, v, c, sub]) => `<div style="--c:${c}"><small>${k}</small><b>${v}</b>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`).join('')}</div>` +
       `<div class="pfi-rtp"><b>${(+RTP_PPM / 1e4).toFixed(0)}%</b><span><b>Целевой RTP</b><small>${n ? `Твой RTP за ${n} крафтов — ${Math.round(won / staked * 100)}%. ` : ''}На длинной дистанции игрокам возвращается 95% ставок; на коротком отрезке твой может быть выше или ниже.</small></span></div>` +
       `<div class="hsec">Ранги в твоих крафтах</div><div class="bars">${TIERS.map((t, i) => { const pc = n ? by[i] / n * 100 : 0;
