@@ -220,7 +220,7 @@ function renderMenu(){
     `<div class="mgrp-t">Другое</div><div class="mgrp">` +
       row(IC.users, 'Рефералка', '#EB57B0', `${REF.friends.length} друзей`, ' data-go="refs"') +
       `<div class="mrow" style="--c:#AE3FC4"><i>${svg(IC.globe)}</i>Язык<span class="seg">${[['ru', 'RU'], ['en', 'EN']].map(([k, t]) => `<button data-lang="${k}"${S.lang === k ? ' class="on"' : ''}>${t}</button>`).join('')}</span></div>` +
-      row(IC.chat, 'Поддержка', '#12D53D', '') +
+      row(IC.chat, 'Поддержка', '#12D53D', '', ' data-go="support"') +
       `<button class="mrow" id="dbgRow" style="--c:#EB57B0"><i>${svg(NICON.bug)}</i>Дебаг<em>${dbgLabel()}</em></button></div>` +
     `<div class="wwarn rg"><i>18+</i><span><b>Играй ответственно</b><small>Ставь только то, что готов потерять, и делай перерывы. Если игра перестала быть развлечением — остановись.</small></span></div>` +
     `<p class="credit">Картинки подарков — powered by <a href="https://t.me/GiftChanges" target="_blank" rel="noopener">@GiftChanges</a> (api.changes.tg)</p>`;
@@ -229,7 +229,7 @@ $('menuBtn').onclick = () => { renderMenu(); showDrawer('menuDrawer'); };
 $('menuBody').addEventListener('click', e => {
   if (e.target.closest('.menu-top')){ openWallet('dep'); return; }
   const go = e.target.closest('[data-go]')?.dataset.go;
-  if (go){ haptic(); if (go === 'cases') openCases('tasks'); else if (go === 'top') openCases('top'); else if (go === 'refs') openCases('refs'); else if (go === 'hist') openHistory(); else if (go === 'pfi') swapDrawer('pfiDrawer', renderPFInfo); return; }
+  if (go){ haptic(); if (go === 'cases') openCases('tasks'); else if (go === 'top') openCases('top'); else if (go === 'support') tgOpen(SUPPORT); else if (go === 'refs') openCases('refs'); else if (go === 'hist') openHistory(); else if (go === 'pfi') swapDrawer('pfiDrawer', renderPFInfo); return; }
   const lg = e.target.closest('[data-lang]');
   if (lg){ if (S.lang === lg.dataset.lang) return; S.lang = lg.dataset.lang; try { localStorage.setItem('bm-lang', S.lang); } catch(_){} haptic();
     lg.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === lg));

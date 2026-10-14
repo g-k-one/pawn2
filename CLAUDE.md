@@ -1,4 +1,4 @@
-# Pawn / Black Market — контекст проекта
+# Pawn — контекст проекта
 
 Telegram mini-app с крафт-механикой: игрок ставит GRAM (бывш. TON) или NFT-подарки и получает provably-fair исход в одном из пяти тиров.
 

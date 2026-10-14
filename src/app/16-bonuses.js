@@ -100,7 +100,7 @@ function tryOpenCase(c, m = 1){
 document.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a) return; const act = a.dataset.act;
   if (act === 'copyref'){ try { navigator.clipboard.writeText(REF.link); } catch(_){} haptic(); notify({ type: 'ok', icon: 'ok', title: 'Ссылка скопирована', text: 'Отправь её друзьям' }); }
   if (act === 'shareref'){ haptic(); if (!tgOpen('https://t.me/share/url?url=' + encodeURIComponent(REF.link) + '&text=' + encodeURIComponent('Крафти NFT вместе со мной в pawn'))) notify({ type: 'info', title: 'Пригласить друга', text: 'Откроется окно «Поделиться» в Telegram' }); }
-  if (act === 'amb'){ haptic(); notify({ type: 'info', icon: 'users', title: 'Программа для амбассадоров', text: 'Напиши в поддержку — расскажем условия' }); }
+  if (act === 'amb'){ haptic(); tgOpen(SUPPORT); }   // амбассадоры — через поддержку
   if (act === 'totasks'){ haptic(); openCases('tasks'); }
   if (act === 'refhist'){ haptic(); openHistory('refs'); }
   if (act === 'claimref' && REF.pending){ const v = REF.pending; REF.pending = 0; haptic('medium'); setBalance(S.balance + v); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(v)} GRAM`, text: 'Бонус за друзей' }); renderCases(); }
