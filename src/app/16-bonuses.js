@@ -41,7 +41,7 @@ function renderCases(){
       `<div class="stats"><div><small>Приз</small><b>${fmt(sd.value)} GRAM</b></div><div><small>Мин. ставка</small><b>${SUPER.min} GRAM</b></div><div><small>Попыток сегодня</small><b>${SUPER.tries.toLocaleString('ru-RU')}</b></div><div><small>Шанс за крафт</small><b>1 из 100 000</b></div></div>` +
       `<div class="sect"><div class="sect-h"><span><b>Прошлые супер дропы</b></span></div>${SUPER.last.map(([n, g, t]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${t}</small></span><span class="tb2">${g}</span></div>`).join('')}</div>` +
       rulesHTML(['Super Drop забирает тот, кто первым выбьет загаданный тикет.', 'Учитываются крафты со ставкой от 0.5 GRAM.', 'Обычный выигрыш крафта при этом тоже зачисляется на баланс.', 'После выпадения загадывается новый тикет и новый NFT.']);
-    tiltCard($('sdCard'), 1.2); upgradeImg($('sdCard').querySelector('.nc-img'), sd.nft);
+    tiltCard($('sdCard'), 1.2); upgradeImg($('sdCard').querySelector('.nc-img'), sd.nft); Tilt.grab($('sdCard').querySelector('.nc-t'), () => openNft(sd));   // крутить пальцем, тап — в Telegram
   } else if (casesTab === 'refs'){
     b.innerHTML = `<div class="refpct"><div><b>10%</b><small>от первого депозита</small></div><div><b>5%</b><small>от активности</small></div></div>` +
       `<a class="banner amb" data-act="amb"><span><b>Программа для амбассадоров</b><small>больше процент для блогеров и комьюнити</small></span><img src="assets/referrals.webp" alt=""></a>` +

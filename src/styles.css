@@ -1209,7 +1209,7 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 /* узор карточки: в центре виден полностью, к краям тает до нуля */
 .nc-patw{position:absolute;inset:0;pointer-events:none;-webkit-mask-image:radial-gradient(closest-side,#000,transparent);mask-image:radial-gradient(closest-side,#000,transparent)}
 .nc-pat{opacity:1}
-.fx-drop .nc-t{touch-action:none;cursor:grab}
+.fx-drop .nc-t,.nc-t[data-grab]{touch-action:none;cursor:grab}
 .mb-t{max-width:calc(100% - 168px)}
 .item.ixp>img{transform:scale(.78)}
 /* кнопка крафта: шар не выходит за границы кнопки — иначе в нажатом состоянии WebKit обрезает его по краю кнопки */

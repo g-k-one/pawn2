@@ -84,7 +84,7 @@ $('backdrop').onclick = hideDrawer;
 document.querySelectorAll('.drawer').forEach(dr => {
   const body = dr.querySelector('.dr-b');
   let y0 = null, x0 = 0, dy = 0, t0 = 0, armed = false, moved = false;
-  const start = (x, y, target) => { y0 = y; x0 = x; dy = 0; t0 = performance.now(); moved = false; armed = !!target.closest('.dr-h') && !target.closest('.tabs, .dr-back'); };
+  const start = (x, y, target) => { if (target.closest('[data-grab]')){ y0 = null; armed = false; return; } y0 = y; x0 = x; dy = 0; t0 = performance.now(); moved = false; armed = !!target.closest('.dr-h') && !target.closest('.tabs, .dr-back'); };
   // возвращает true, если жест наш (тогда гасим прокрутку)
   const move = (x, y) => {
     if (y0 === null) return false;

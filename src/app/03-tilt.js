@@ -32,11 +32,12 @@ const Tilt = (() => {
   /* повернуть пальцем: тянешь — карточка следует, отпустил — плавно возвращается. Тап без сдвига — onTap */
   function grab(t, onTap){
     const it = [...items].find(i => i.t === t); if (!it) return;
+    t.dataset.grab = 1;                                          // шторка не перехватывает этот жест как «закрыть»
     const cl = v => Math.max(-1.6, Math.min(1.6, v));
     let pid = null, x0 = 0, y0 = 0, u0 = 0, v0 = 0, moved = false;
     t.addEventListener('pointerdown', e => { pid = e.pointerId; x0 = e.clientX; y0 = e.clientY; u0 = it.ux; v0 = it.uy; moved = false; it.grab = true; try { t.setPointerCapture(pid); } catch(_){} });
     t.addEventListener('pointermove', e => { if (e.pointerId !== pid) return; const dx = (e.clientX - x0) / K, dy = (e.clientY - y0) / K;
-      if (Math.abs(dx) + Math.abs(dy) > 6) moved = true; it.ux = cl(u0 + dx / 110); it.uy = cl(v0 + dy / 110); });
+      if (Math.abs(dx) + Math.abs(dy) > 6) moved = true; if (!S.lite){ it.ux = cl(u0 + dx / 110); it.uy = cl(v0 + dy / 110); } });   // в экономном режиме не крутится — только тап
     const up = e => { if (e.pointerId !== pid) return; pid = null; it.grab = false; if (!moved && e.type === 'pointerup') onTap?.(); };
     t.addEventListener('pointerup', up); t.addEventListener('pointercancel', up);
   }
