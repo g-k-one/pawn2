@@ -19,7 +19,7 @@ const caseArt = (c, cls = '') => `<span class="cart ${cls}" style="--c:${c.c}"><
 const itemName = it => it.t === 'nft' ? (it.rare ? $t("Редкий NFT") : $t("Обычный NFT")) : it.t === 'gram' ? `${fmt(it.v)} GRAM` : `+${it.v} XP`;
 const itemColor = it => it.t === 'nft' ? (it.rare ? '#EB57B0' : '#00D9FF') : it.t === 'gram' ? '#30A5FF' : '#F57A37';
 /* NFT в кейсах: редкий — случайный подарок с релеера ценой 11–14 GRAM, обычный — по флору (сейчас 3.5 GRAM). Выдаётся сразу */
-const NFT_FLOOR = 3.5, RARE_FROM = 11, RARE_TO = 14;
+const NFT_FLOOR = NFT_FROM, RARE_FROM = 11, RARE_TO = 14;   // флор — самый дешёвый подарок на релеере
 const RARE_POOL = () => NFTS.filter(n => n.price >= RARE_FROM && n.price <= RARE_TO), FLOOR_POOL = () => NFTS.filter(n => n.price <= 5.5);
 const itemImg = it => it.t === 'gram' ? 'assets/hero-gem.webp' : it.t === 'nft' ? (it.rare ? RARE_POOL()[0].src : FLOOR_POOL()[0].src) : 'assets/xp.webp';
 function caseNft(it){

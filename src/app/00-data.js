@@ -51,8 +51,6 @@ const S = { tier: 1, ton: 0, gifts: [], balance: 345.56, busy: false };
 /* сохранённый прогресс прототипа (мок «базы» в localStorage, см. 17-api.js). Есть — стартовые заглушки истории не генерируются */
 const SAVE_KEY = 'pawn-state-v1';
 const SAVE = (() => { try { const v = JSON.parse(localStorage.getItem(SAVE_KEY)); return v && v.v === 1 ? v : null; } catch(_){ return null; } })();
-/* заглушки NFT: от какой суммы выигрыша доступны (по возрастанию цены). NFT выдаётся с 3.6 GRAM */
-const NFT_FROM = 3.5;
 const RELAY = __RELAY__;
 /* NFT с релеера @pawngift: модель, фон (центр, край, узор), символ, средняя цена. Картинки — с cdn.changes.tg,
    если они не загрузились (нет сети) — подставляется локальная заглушка */
@@ -65,6 +63,9 @@ const HI_PACKS = 20;                                          // запасны�
 // свой CDN Pawn: модели 128/256/512 (узоры не отдаёт — их берём с api.changes.tg)
 const mediaImg = (gift, model, size) => `https://pawn-backend.onrender.com/api/media/gift?path=${encodeURIComponent(`/gifts/models/${encodeURIComponent(gift.replace(/’/g, "'"))}/png/${encodeURIComponent(model.replace(/’/g, "'"))}.png`)}&size=${size}`;
 const apiImg = (kind, gift, name, size) => `https://api.changes.tg/${kind}/${encodeURIComponent(gift.replace(/’/g, "'"))}/${encodeURIComponent(name.replace(/’/g, "'"))}.png?size=${size}`;
+/* порог выплаты NFT = самый дешёвый подарок на релеере: выигрыш от этой суммы приходит подарком, меньше — GRAM.
+   В бою каталог и цены отдаёт сервер — порог пересчитается сам */
+let NFT_FROM = 0;
 const NFTS = RELAY.g.map(([ci, num, model, bi, sym, price, mf, sf]) => {
   const name = RELAY.c[ci], bd = RELAY.b[bi], local = `assets/nft/${LOCAL_NFT[hashStr(name) % LOCAL_NFT.length]}.webp`;
   let src, card, symSrc;
@@ -72,6 +73,7 @@ const NFTS = RELAY.g.map(([ci, num, model, bi, sym, price, mf, sf]) => {
   else { src = card = mf && GIMG[mf] ? GIMG[mf] : local; symSrc = sf && GSYM[sf] ? GSYM[sf] : ''; }
   return { name, num, model, backdrop: bd[0], bg: [bd[1], bd[2], bd[3]], symbol: sym, sym: symSrc, price, src, card, mf, pack: ci % HI_PACKS };
 });
+NFT_FROM = Math.min(...NFTS.map(n => n.price));
 /* крупные картинки (приз на главной, экран дропа, супер дроп) — чёткие с CDN changes.tg.
    Сначала показываем лёгкую 220 px, чёткую подменяем, когда она загрузилась и раскодировалась; не загрузилась — остаётся 220 px */
 const HI_FMT = 'png', HI = {};   // PNG 1024: раскодируется за ~0.2 с вне главного потока; SVG того же качества — 1–2 с и рывки до 50 мс
