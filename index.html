@@ -1226,6 +1226,22 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 .cb{translate:none}
 .pf-ext{display:block;width:max-content;margin:12px auto 0;padding:4px 8px;font-size:15px;color:rgba(255,255,255,.45);text-decoration:underline;text-underline-offset:3px}
 
+/* v34 */
+/* без полос прокрутки */
+*{scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+/* содержимое шторки прокручивается в скруглённом контейнере — карточки уходят под шапку по дуге, а не по прямой */
+.dr-b{margin:0 12px;padding:4px 8px 20px;border-radius:22px 22px 0 0}
+.drawer:has(.dr-f) .dr-b{border-radius:22px}
+/* в прокручиваемых табах полоска не должна обрезаться */
+.tabs.scroll .tab.on::after{bottom:0}
+.banner.amb img{width:156px;margin:-28px -10px -28px -10px}
+/* язык: RU / EN */
+.seg{margin-left:auto;display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(255,255,255,.08)}
+.seg button{padding:4px 12px;border-radius:999px;font-size:16px;font-weight:700;color:rgba(255,255,255,.55);transition:background .2s,color .2s}
+.seg button.on{background:#fff;color:#000}
+.gin .steps1{margin:0 0 14px;font-family:var(--serif);font-size:12.5px;color:rgba(255,255,255,.55)}
+
 #boot{position:fixed;inset:0;z-index:999;display:grid;place-items:center;background:#0b0b0b;transition:opacity .45s}
 #boot.off{opacity:0;pointer-events:none}
 .boot-in{display:flex;flex-direction:column;align-items:center;gap:12px;font-family:var(--font);color:#fff}
@@ -1468,7 +1484,7 @@ let INV = Array.from({ length: 9 }, (_, i) => giftOf(pick(NFTS.filter(x => x.pri
 const LIVE_IMG = TIERS.map((_, i) => i < 2 ? ['assets/hero-gem.webp'] : i === 2 ? ['assets/hero-gem.webp', ...NFTS.slice(0, 4).map(n => n.src)] : i === 3 ? NFTS.slice(3, 10).map(n => n.src) : NFTS.slice(9).map(n => n.src));
 const $ = id => document.getElementById(id);
 const fmt = v => (Math.round(v * 100) / 100).toString();
-const haptic = (t = 'light') => { try { Telegram.WebApp.HapticFeedback.impactOccurred(t); } catch(_){ navigator.vibrate?.(8); } };
+const haptic = (t = 'light') => { if (S.vibro === false) return; try { Telegram.WebApp.HapticFeedback.impactOccurred(t); } catch(_){ navigator.vibrate?.(8); } };
 
 /* ---------- масштаб сцены ---------- */
 const stage = $('stage');
@@ -1542,7 +1558,7 @@ tiersEl.addEventListener('click', e => {
   const ni = +b.dataset.i; if (ni === S.tier) return;
   selHaptic(); setTier(ni, { dir: Math.sign(ni - S.tier) }); restartAuto();
 });
-const selHaptic = () => { try { Telegram.WebApp.HapticFeedback.selectionChanged(); } catch(_){ haptic(); } };
+const selHaptic = () => { if (S.vibro === false) return; try { Telegram.WebApp.HapticFeedback.selectionChanged(); } catch(_){ haptic(); } };
 /* свайп влево/вправо по экрану — соседний ранг. Контент тянется за пальцем с параллаксом, на краях — сопротивление */
 (() => {
   const movers = [['range', .55], ['prize', .28], ['drops', .42]];
@@ -1811,7 +1827,7 @@ const IC = {
   clock: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
   shield: '<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/>',
   gift: '<rect x="4" y="9" width="16" height="11" rx="2"/><path d="M12 9v11M4 13h16M12 9c-3 0-5-1-5-3s3-2 5 3c2-5 5-5 5-3s-2 3-5 3z"/>',
-  users: '<circle cx="9" cy="9" r="3"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="10" r="2.5"/><path d="M16 14c3 0 5 2 5 4"/>',
+  users: '<g fill="currentColor" stroke="none"><circle cx="9" cy="7.5" r="3.6"/><path d="M2 19.5C2 15.6 5.1 13 9 13s7 2.6 7 6.5v.5H2z"/><circle cx="17.2" cy="8.5" r="2.9"/><path d="M17.6 12.7c2.7.3 4.4 2.3 4.4 5.3v2h-4.4v-.5c0-2.4-.9-4.6-2.6-6 .8-.5 1.7-.8 2.6-.8z"/></g>',
   check: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12l3 3 5-6"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
   chat: '<path d="M4 6a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2H10l-4 3v-3H6a2 2 0 01-2-2z"/>',
@@ -1833,19 +1849,27 @@ function renderMenu(){
     `<div class="mgrp-t">Игра</div><div class="mgrp">` +
       sw('fastRow', '#FFB835', NICON.bolt, 'Быстрый крафт', 'сразу число и дроп', S.fast) +
       sw('liteRow', '#12D53D', NICON.leaf, 'Экономный режим', 'без анимаций — для слабых телефонов', S.lite) +
-      sw('soundRow', '#F57A37', NICON.sound, 'Звук', '', S.sound) +
-      sw('demoRow', '#AE3FC4', NICON.candy, 'Демо-режим', 'фантики вместо GRAM', S.demo) + `</div>` +
-    `<div class="mgrp-t">Ещё</div><div class="mgrp">` +
-      row(IC.users, 'Друзья', '#EB57B0', `${REF.friends.length} друзей`, ' data-go="refs"') + row(IC.globe, 'Язык', '#AE3FC4', 'Русский') + row(IC.chat, 'Поддержка', '#12D53D', '') +
+      sw('demoRow', '#AE3FC4', NICON.candy, 'Демо-режим', 'фантики вместо GRAM', S.demo) +
+      sw('vibroRow', '#30A5FF', NICON.vibro, 'Вибрация', '', S.vibro) +
+      sw('soundRow', '#F57A37', NICON.sound, 'Звук', '', S.sound) + `</div>` +
+    `<div class="mgrp-t">Другое</div><div class="mgrp">` +
+      row(IC.users, 'Рефералка', '#EB57B0', `${REF.friends.length} друзей`, ' data-go="refs"') +
+      `<div class="mrow" style="--c:#AE3FC4"><i>${svg(IC.globe)}</i>Язык<span class="seg">${[['ru', 'RU'], ['en', 'EN']].map(([k, t]) => `<button data-lang="${k}"${S.lang === k ? ' class="on"' : ''}>${t}</button>`).join('')}</span></div>` +
+      row(IC.chat, 'Поддержка', '#12D53D', '') +
       `<button class="mrow" id="dbgRow" style="--c:#EB57B0"><i>${svg(NICON.bug)}</i>Дебаг<em>${dbgLabel()}</em></button></div>`;
 }
 $('menuBtn').onclick = () => { renderMenu(); showDrawer('menuDrawer'); };
 $('menuBody').addEventListener('click', e => {
   if (e.target.closest('.menu-top')){ openWallet('dep'); return; }
   const go = e.target.closest('[data-go]')?.dataset.go;
-  if (go){ haptic(); if (go === 'cases') openCases('cases'); else if (go === 'refs') openCases('refs'); else if (go === 'hist') openHistory(); else if (go === 'pfi') swapDrawer('pfiDrawer', renderPFInfo); return; }
-  const r = e.target.closest('.mrow'); if (!r) return;
+  if (go){ haptic(); if (go === 'cases') openCases('tasks'); else if (go === 'refs') openCases('refs'); else if (go === 'hist') openHistory(); else if (go === 'pfi') swapDrawer('pfiDrawer', renderPFInfo); return; }
+  const lg = e.target.closest('[data-lang]');
+  if (lg){ if (S.lang === lg.dataset.lang) return; S.lang = lg.dataset.lang; try { localStorage.setItem('bm-lang', S.lang); } catch(_){} haptic();
+    lg.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === lg));
+    if (S.lang === 'en') notify({ type: 'info', icon: 'info', title: 'English', text: 'Перевод интерфейса в работе — пока всё на русском' }); return; }
+  const r = e.target.closest('.mrow'); if (!r || !r.matches('button')) return;
   if (r.id === 'fastRow') return toggleFast();
+  if (r.id === 'vibroRow') return toggleVibro();
   if (r.id === 'soundRow') return toggleSound();
   if (r.id === 'liteRow') return setLite(!S.lite);
   if (r.id === 'dbgRow'){ haptic(); hideDrawer(); renderDbg(); setTimeout(() => showDrawer('dbgDrawer'), 230); return; }
@@ -2065,10 +2089,13 @@ const LS = (k, d) => { try { const v = localStorage.getItem(k); return v === nul
 const LSset = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0'); } catch(_){} };
 S.fast = LS('bm-fast', false);
 S.sound = LS('bm-sound', true);
+S.vibro = LS('bm-vibro', true);
+S.lang = (() => { try { return localStorage.getItem('bm-lang') || 'ru'; } catch(_){ return 'ru'; } })();
 S.lite = LS('bm-lite', !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches));
 S.demo = false;
 const swOn = (id, on) => { const el = document.querySelector(`#${id} .switch`); if (el) el.classList.toggle('on', on); };
 function toggleFast(){ S.fast = !S.fast; swOn('fastRow', S.fast); haptic(); LSset('bm-fast', S.fast); }
+function toggleVibro(){ S.vibro = !S.vibro; swOn('vibroRow', S.vibro); LSset('bm-vibro', S.vibro); haptic('medium'); }
 function toggleSound(){ S.sound = !S.sound; swOn('soundRow', S.sound); haptic(); LSset('bm-sound', S.sound); if (S.sound) Sfx.tick(.8); }
 function applyLite(){ document.body.classList.toggle('lite', S.lite); document.body.classList.toggle('nogl', S.lite || !!S.noGL); }
 function setLite(on){
@@ -2123,6 +2150,7 @@ const NICON = {
   candy: '<path d="M7.5 12L3 8v8zM16.5 12L21 8v8z"/><circle cx="12" cy="12" r="5"/>',
   bolt: '<path d="M13.5 2L4 14h6.5L9 22l10-13h-6.6z"/>',
   bug: '<rect x="7" y="7" width="10" height="13" rx="5"/><path d="M12 11v9M7 12H3M21 12h-4M7 17l-3 2M17 17l3 2M8 7L6 4M16 7l2-3"/>',
+  vibro: '<rect x="8" y="3" width="8" height="18" rx="2"/><path d="M4.5 8v8M19.5 8v8"/>',
   sound: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/>',
 };
 const NCOL = { info: '#30a5ff', ok: '#12d53d', err: '#ff4c35', warn: '#ffb835', demo: '#AE3FC4' };
@@ -2165,7 +2193,7 @@ function notify(o){
   const live = [...notesEl.children].filter(n => !n.classList.contains('bye'));
   if (live.length > 3) live[live.length - 1].close();                      // больше трёх не держим — старое уходит
   run();
-  try { const h = Telegram.WebApp.HapticFeedback; if (type === 'err') h.notificationOccurred('error'); else if (type === 'ok') h.notificationOccurred('success'); else if (type === 'warn') h.notificationOccurred('warning'); } catch(_){}
+  if (S.vibro !== false) try { const h = Telegram.WebApp.HapticFeedback; if (type === 'err') h.notificationOccurred('error'); else if (type === 'ok') h.notificationOccurred('success'); else if (type === 'warn') h.notificationOccurred('warning'); } catch(_){}
 }
 const toast = (title, type = 'info') => notify({ title, type });
 
@@ -2688,7 +2716,7 @@ const tAgo = ms => { const m = Math.round((Date.now() - ms) / 60000); return m <
 let histTab = 'crafts';
 function openHistory(tab = histTab){ histTab = tab; swapDrawer('histDrawer', () => renderHist()); }
 function renderHist(detail){
-  const tabs = [['crafts', 'Крафты'], ['cases', 'Кейсы'], ['wallet', 'Кошелёк'], ['refs', 'Друзья'], ['stats', 'Статистика']];
+  const tabs = [['crafts', 'Крафты'], ['cases', 'Кейсы'], ['wallet', 'Кошелёк'], ['refs', 'Рефералка'], ['stats', 'Статистика']];
   $('histTabs').innerHTML = tabs.map(([k, t]) => `<button class="tab${k === histTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
   const b = $('histBody');
   if (detail){
@@ -2791,11 +2819,11 @@ const WALLETS = [['Tonkeeper', '#45aef5', 'T'], ['Telegram Wallet', '#2aabee', '
 const OUT_FEE = .3, RELAYER = '@pawngift';
 let walletTab = 'dep', depAmount = 10, outSel = new Set();
 const PARTNER = `<a class="partner" data-act="partner"><span class="pst">★</span><span><b>Купить и продать Stars</b><small>бот партнёра @StarsMarketBot</small></span><em>›</em></a>`;
-const WICO = '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M16 12.5h2M3 9h15a3 3 0 013 3"/>';
+const WICO = '<path fill="currentColor" stroke="none" fill-rule="evenodd" d="M6 4h10.5A1.5 1.5 0 0118 5.5V7H6a1 1 0 000 2h13a2 2 0 012 2v7a2 2 0 01-2 2H6a3 3 0 01-3-3V7a3 3 0 013-3zm11 9a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"/>';
 // как завести NFT: передать подарок релееру
 const giftInHTML = (title = 'Подарков пока нет') => `<div class="gin"><span class="gin-i"><img src="assets/gift-box.svg" alt=""></span><b>${title}</b>` +
-  `<p>Передай NFT-подарок в Telegram на аккаунт <span class="acc">${RELAYER}</span> — через минуту он появится здесь: его можно положить в крафт, продать или вывести обратно.</p>` +
-  `<ol><li>Открой свой подарок в профиле Telegram</li><li>Нажми «Передать»</li><li>Выбери <span class="acc">${RELAYER}</span></li></ol>` +
+  `<p>Передай подарок на <span class="acc">${RELAYER}</span> — через минуту он будет здесь.</p>` +
+  `<p class="steps1">Профиль → подарок → «Передать» → ${RELAYER}</p>` +
   `<button class="btn-main" data-act="relayer">Передать подарок ${RELAYER}</button></div>`;
 function syncBalBtn(){ const b = $('balAdd'); if (b) b.innerHTML = S.wallet ? svg('<path d="M12 6v12M6 12h12"/>') : svg(WICO); }
 function openWallet(tab = 'dep'){ if (S.busy) return; if (S.demo){ notify({ type: 'demo', img: 'assets/fantik.webp', title: 'В демо баланс бесконечный', text: 'Кошелёк работает только на GRAM' }); return; } walletTab = tab; outSel = new Set(); swapDrawer('walletDrawer', renderWallet); }
@@ -3045,7 +3073,7 @@ const TOP_RULES = ['Место в топе и звание зависят от �
 /* =========================================================
    БОНУСЫ: кейсы · задания · супер дроп · друзья · топ
    ========================================================= */
-let casesTab = 'cases';
+let casesTab = 'tasks';
 function openCases(tab){ if (tab) casesTab = tab; swapDrawer('casesDrawer', renderCases); }
 const caseState = c => !c.need ? { ok: true } : c.need === 'daily' ? { ok: dailyDone(), txt: `задания дня · ${tasksDone()}/${TASKS.length}`, k: tasksDone() / TASKS.length }
   : { ok: weekDone(), txt: `неделя · ${dayIdx() - S.week.missed.filter(d => d < dayIdx()).length}/7 дней`, k: (dayIdx() - S.week.missed.length) / 7 };
@@ -3061,7 +3089,7 @@ const achRow = ([id, t, rw, ok, act, prog]) => {
     `${done ? '' : `<button class="chk-btn" data-claim="${id}">Проверить</button>`}</span><em class="${rw.g != null ? 'g' : 'x'}">${rewHTML(rw)}</em></div>`;
 };
 function renderCases(){
-  $('casesTabs').innerHTML = [['cases', 'Кейсы'], ['tasks', 'Задания'], ['super', 'Супер дроп'], ['refs', 'Друзья'], ['top', 'Топ']].map(([k, t]) => `<button class="tab${k === casesTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
+  $('casesTabs').innerHTML = [['tasks', 'Задания'], ['cases', 'Кейсы'], ['super', 'Супер дроп'], ['refs', 'Рефералка'], ['top', 'Топ']].map(([k, t]) => `<button class="tab${k === casesTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
   $('casesTabs').querySelector('.on')?.scrollIntoView({ inline: 'center', block: 'nearest' });
   const b = $('casesBody');
   if (casesTab === 'cases'){
