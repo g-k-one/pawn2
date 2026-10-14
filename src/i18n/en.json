@@ -13,8 +13,6 @@
  "NFT забран": "NFT taken",
  "NFT на главной при смене ставки": "NFT on the main screen when the bet changes",
  "NFT на плитке — для примера": "The NFT on the tile is just an example",
- "NFT остались в инвентаре, комиссия не списана — попробуй ещё раз": "The NFTs stay in your inventory and no fee was charged — try again",
- "NFT отправлены": "NFTs sent",
  "NFT продан": "NFT sold",
  "Nonce · домен · блок": "Nonce · domain · block",
  "SHA-256(server seed) должен совпасть с отпечатком, показанным до игры": "SHA-256(server seed) must match the fingerprint shown before the game",
@@ -64,7 +62,6 @@
  "Вывод GRAM": "GRAM withdrawal",
  "Вывод NFT": "NFT withdrawal",
  "Вывод NFT не прошёл": "NFT withdrawal failed",
- "Вывод не прошёл": "Withdrawal failed",
  "Вывод: не написал релееру": "Withdraw: no relayer message",
  "Выиграно": "Won",
  "Выиграть первый NFT-гифт": "Win your first NFT gift",
@@ -511,7 +508,6 @@
  "Подтверди в {0}…": "Confirm in {0}…",
  "Нужно {0} GRAM — пополни баланс": "Need {0} GRAM — top up your balance",
  "в Telegram · комиссия {0} GRAM": "in Telegram · fee {0} GRAM",
- "Придут в профиль Telegram · комиссия {0} GRAM": "Will arrive in your Telegram profile · fee {0} GRAM",
  "до звания «{0}»": "to rank “{0}”",
  "в запасе ×": "in stock ×",
  ": {0} из": ": {0} of",
@@ -539,5 +535,8 @@
  "Добавить гифты": "Add gifts",
  "Сбросить ставку": "Reset bet",
  "Скрафтить": "Craft",
- "Проверка честности": "Fairness check"
+ "Проверка честности": "Fairness check",
+ "не выведен": "not withdrawn",
+ "NFT остался в инвентаре, комиссия не списана — попробуй ещё раз": "NFT stayed in your inventory, no fee charged — try again",
+ "Придёт в профиль Telegram · комиссия {0} GRAM": "Will arrive in your Telegram profile · fee {0} GRAM"
 }
