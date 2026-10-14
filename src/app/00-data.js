@@ -109,6 +109,7 @@ const LIVE_IMG = TIERS.map((_, i) => i < 2 ? ['assets/hero-gem.webp'] : i === 2 
 const $ = id => document.getElementById(id);
 const fmt = v => (Math.round(v * 100) / 100).toString();
 const SUPPORT = 'https://t.me/m2gdev';                          // чат поддержки
+const AMBASSADORS = 'https://t.me/+havEPmstLkpjMzVi';            // программа для амбассадоров
 function tgOpen(url){
   try { Telegram.WebApp.openTelegramLink(url); return true; } catch(_){}           // SDK есть только на верхнем уровне мини-аппа
   try { return !!window.open(url, '_blank'); } catch(_){ return false; }
