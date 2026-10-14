@@ -1221,6 +1221,9 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 .fx-drop .nc-t{touch-action:none;cursor:grab}
 .mb-t{max-width:calc(100% - 168px)}
 .item.ixp>img{transform:scale(.78)}
+/* кнопка крафта: шар не выходит за границы кнопки — иначе в нажатом состоянии WebKit обрезает его по краю кнопки */
+.craft{top:584px}
+.cb{translate:none}
 .pf-ext{display:block;width:max-content;margin:12px auto 0;padding:4px 8px;font-size:15px;color:rgba(255,255,255,.45);text-decoration:underline;text-underline-offset:3px}
 
 #boot{position:fixed;inset:0;z-index:999;display:grid;place-items:center;background:#0b0b0b;transition:opacity .45s}
