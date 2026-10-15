@@ -17,7 +17,8 @@ function caseCard(c){
   const st = caseState(c), free = !c.price;
   return `<div class="bcase${free ? ' free' : ''}" style="--c:${c.c}" data-info="${c.id}">${st.n > 1 ? `<em class="stk">×${st.n}</em>` : ''}${caseArt(c)}<b>${c.short}</b>` +
     (free ? `<small>${st.txt}</small><i class="prog"><b style="width:${Math.round(st.k * 100)}%"></b></i>` : `<small>${$t("NFT до {0} GRAM", RARE_TO)}</small>`) +
-    `<button class="cbuy${free && !st.ok ? ' locked' : ''}" data-open="${c.id}">${free ? (st.ok ? $t("Открыть") : st.lock) : `<img src="assets/gem-small.svg" alt="">${fmt(c.price)}`}</button></div>`;
+    // кнопка с ценой ведёт на страницу кейса (там «Открыть за N GRAM»), чтобы GRAM не списывались одним случайным тапом; бесплатный — открывается сразу
+    `<button class="cbuy${free && !st.ok ? ' locked' : ''}" ${free ? 'data-open' : 'data-info'}="${c.id}">${free ? (st.ok ? $t("Открыть") : st.lock) : `<img src="assets/gem-small.svg" alt="">${fmt(c.price)}`}</button></div>`;
 }
 const achRow = ([id, t, rw, ok, act, prog]) => {
   const done = !!S.ach.got[id], pr = !done && prog ? prog() : null;
@@ -59,7 +60,7 @@ function renderCases(){
       // начисление за друзей: заголовок и «История» в одной строке сверху, сумма крупно, ниже — за что и когда следующее
       `<div class="refauto"><div class="ra-h"><b>${$t("Начислено вчера")}</b><button class="pill-btn" data-act="refhist">${$t("История")}</button></div>` +
       `<div class="ra-v"><img src="assets/gem-small.svg" alt="">+${fmt(REF.pending)}<small>GRAM</small></div><p>${$t("5% от активности друзей. Начисляется само — каждый день в 00:00 МСК")}</p></div>` +
-      `<button class="btn-ghost" data-act="shareref" style="margin-top:8px">${$t("Пригласить друга")}</button>` +
+      `<button class="btn-main" data-act="shareref" style="margin-top:8px">${$t("Пригласить друга")}</button>` +
       `<div class="sect rgap"><div class="sect-h"><span><b>${$t("Твои друзья")}</b></span></div>` + REF.friends.map(([n, cr, g]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${cr ? cr + (" " + $t("крафтов")) : $t("ещё не крафтил")}</small></span><span class="tb2 g"><img src="assets/gem-small.svg" alt="">${fmt(g)}</span></div>`).join('') + `</div>` +
       rulesHTML(REF_RULES);
   } else {

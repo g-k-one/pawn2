@@ -88,7 +88,7 @@ let auto = 0;
 function restartAuto(){ clearInterval(auto); auto = setInterval(() => { if (!S.busy && !openDrawer && !S.onb && !document.hidden) setTier((S.tier + 1) % TIERS.length, { dir: 1 }); }, AUTO_MS); }
 
 /* ---------- что может выпасть ----------
-   ставка 0 → «???» и пустой светящийся гем;
+   ставка 0 → подсказка «Сделай ставку» (мельче выигрыша, над гемом) и пустой светящийся гем;
    ожидаемый выигрыш (ставка × средний множитель тира) < 3.6 GRAM → GRAM: гем и сумма;
    ≥ 3.6 GRAM → NFT: одна, самая дорогая из доступных.
    Сцена перестраивается (с отскоком) только когда меняется её состав; сумма GRAM просто плавно доезжает до нового значения */
@@ -114,7 +114,7 @@ function showPrize(dir = 0){
   } else prevTok++;
 
   p.className = 'abs prize ' + mode;
-  p.innerHTML = `<span class="xf">${mode === 'ton' ? fmt(ev) : mode === 'empty' ? '???' : 'NFT'}</span>`;   // мгновенно, без прыжков
+  p.innerHTML = `<span class="xf">${mode === 'ton' ? fmt(ev) : mode === 'empty' ? $t("Сделай ставку") : 'NFT'}</span>`;   // мгновенно, без прыжков
   if (key === sceneKey){
     // состав тот же — лёгкий «толчок» в сторону свайпа, чтобы смена ранга чувствовалась
     return;

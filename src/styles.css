@@ -84,7 +84,10 @@ img{display:block;-webkit-user-drag:none}
   -webkit-background-clip:text;background-clip:text;color:transparent;transition:opacity .3s}
 .prize.ton{background-image:linear-gradient(#00d9ff 19.47%,rgba(0,51,179,0))}
 .prize.nft,.prize.empty{background-image:linear-gradient(#fff 19.47%,rgba(0,0,0,0))}
-.prize.empty{opacity:.55}
+/* подсказка, а не выигрыш: заметно мельче суммы, гем её не закрывает; мягко «дышит», зовёт сделать ставку (в экономном режиме — без анимации) */
+.prize.empty{top:380px;font-size:44px;background-image:linear-gradient(#fff 30%,rgba(255,255,255,.5));opacity:.55;animation:betHint 2.6s ease-in-out infinite}
+@keyframes betHint{0%,100%{opacity:.4;scale:1}50%{opacity:.7;scale:1.045}}
+@media (prefers-reduced-motion:reduce){ .prize.empty{animation:none} }
 .prize.pop{animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
 @keyframes pop{0%{scale:.85}60%{scale:1.06}100%{scale:1}}
 
@@ -1014,7 +1017,9 @@ body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
 .pfc.no>i{background:#FF4C35;box-shadow:none}.pfc.no>i::after{content:"✕"}
 .pfc.no em{color:#FF4C35}
 .pfnote{margin:2px 2px 10px;font-size:15px;line-height:1.35;color:#FFB835}
-.pf-check{margin-top:6px}
+.pf-check{margin-top:6px;background:linear-gradient(#3fe06a,#0a9a2c)}   /* честность — зелёная, как раздел в меню */
+.pf-key{margin:8px 6px 4px;font:400 13.5px/1.35 var(--serif);text-transform:none;color:rgba(255,255,255,.72);text-align:center}
+.pf-key+.pf-copy,.pf-check+.pf-copy{margin-top:8px}
 .pf-check.done{background:linear-gradient(#3fe06a,#0a9a2c)}
 .pf-check.bad{background:linear-gradient(#ff6a55,#c22a14)}
 .pf-copy{margin-top:8px}
@@ -1246,6 +1251,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .chk svg{width:62%;height:62%;stroke-width:3.4}
 .rkbar[data-go]{cursor:pointer}
 .fx-links{display:flex;justify-content:center;gap:4px;margin-top:2px}
+#fxPfIn{color:#3fe06a}   /* «Проверить честность» после игры — зелёная, заметнее «Поделиться» */
 .pfi-rtp{display:flex;align-items:center;gap:14px;margin-top:10px;padding:14px;border-radius:22px;background:linear-gradient(135deg,rgba(18,213,61,.22),rgba(18,213,61,.06));box-shadow:inset 0 0 22px rgba(18,213,61,.35)}
 .pfi-rtp>b{flex:none;font-size:44px;line-height:1;color:#12D53D}
 .pfi-rtp span{display:flex;flex-direction:column;gap:3px}
@@ -1262,14 +1268,32 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .pfi-hero h4,.pfi-rtp span b,.pfi-env b{margin:0;font-size:20px;line-height:1.15;text-transform:uppercase;color:#fff}
 .pfi-hero p{margin-top:4px}
 /* онбординг */
-.onb{position:absolute;inset:0;z-index:80}
-.onb-hole{position:absolute;border-radius:22px;box-shadow:0 0 0 9999px rgba(0,0,0,.72),0 0 0 2px rgba(255,255,255,.5);transition:all .35s cubic-bezier(.25,.9,.3,1);pointer-events:none}
-.onb-card{position:absolute;left:16px;right:16px;padding:16px;border-radius:22px;background:#1b1b1f;box-shadow:0 14px 40px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.08);animation:tipIn .35s cubic-bezier(.25,1.3,.4,1) both}
+.onb{position:absolute;inset:0;z-index:80;pointer-events:none}   /* тапы фильтрует Onb.guard: живы только подсветка и карточка */
+.onb-hole{position:absolute;border-radius:22px;box-shadow:0 0 0 9999px rgba(0,0,0,.72),0 0 0 2px rgba(255,255,255,.6);transition:all .35s cubic-bezier(.25,.9,.3,1);pointer-events:none}
+.onb-hole::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:0 0 0 2px #30a5ff;animation:onbPulse 1.6s ease-out infinite}
+.onb-hole.none{left:50%;top:50%;width:0;height:0;box-shadow:0 0 0 9999px rgba(0,0,0,.78)}
+.onb-hole.none::after{display:none}
+@keyframes onbPulse{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(1.12,1.35)}}
+.onb-card{position:absolute;left:16px;right:16px;padding:16px;border-radius:22px;background:#1b1b1f;box-shadow:0 14px 40px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.08);animation:tipIn .35s cubic-bezier(.25,1.3,.4,1) both;pointer-events:auto;transition:box-shadow .3s}
+.onb-card.mid{top:31%}
+.onb-card.mid b{font-size:30px}
+/* стрелка от карточки к подсветке */
+.onb-card.at-dn::before,.onb-card.at-up::after{content:"";position:absolute;left:calc(var(--ax) - 8px);width:16px;height:16px;background:#1b1b1f;transform:rotate(45deg);box-shadow:inset 1px 1px 0 rgba(255,255,255,.08)}
+.onb-card.at-dn::before{top:-7px}
+.onb-card.at-up::after{bottom:-7px;box-shadow:inset -1px -1px 0 rgba(255,255,255,.08)}
+.onb-card.good{box-shadow:0 14px 40px rgba(0,0,0,.6),inset 0 0 0 2px #12d53d}
+.onb-card.good p{color:#3fe06a}
+.onb-dots{display:flex;gap:6px;margin-bottom:8px}
+.onb-dots i{width:6px;height:6px;border-radius:3px;background:rgba(255,255,255,.25);transition:width .3s,background .3s}
+.onb-dots i.was{background:rgba(255,255,255,.6)}
+.onb-dots i.on{width:18px;background:#30a5ff}
+.onb-demo{background:linear-gradient(#b48aff,#5d2bd6)}
+@media (prefers-reduced-motion:reduce){ .onb-hole::after{animation:none} }
 .onb-card small{font-size:13px;color:rgba(255,255,255,.45)}
 .onb-card b{display:block;margin:2px 0 4px;font-size:26px;text-transform:uppercase}
 .onb-card p{margin:0;font:400 14px/1.4 var(--serif);color:rgba(255,255,255,.8)}
 .onb-card span{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
-.onb-skip{font-size:17px;color:rgba(255,255,255,.5);padding:6px 4px}
+.onb-skip{font-size:17px;color:rgba(255,255,255,.72);padding:6px 4px}
 .onb-next{padding:9px 22px;border-radius:999px;background:linear-gradient(#24a0ff,#005ec9);font-size:19px;font-weight:700;text-transform:uppercase}
 .wwarn.rg{margin:18px 0 0}
 .wwarn.rg>i{font-size:13px;letter-spacing:-.02em}
