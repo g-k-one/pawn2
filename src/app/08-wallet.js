@@ -136,5 +136,12 @@ $('walletGo').onclick = async () => {
     checkAch();
   }
 };
-document.querySelector('.balance').addEventListener('click', () => openWallet('dep'));
+// тап по балансу — пополнение; долгое нажатие (0.8 с) — строка диагностики (сборка, экран, зум) для скриншота:
+// она нужна, когда сцена уехала и до меню «Дебаг» не дотянуться
+{ const bal = document.querySelector('.balance'); let lp = 0, fired = false;
+  const stop = () => clearTimeout(lp);
+  bal.addEventListener('pointerdown', () => { fired = false; stop(); lp = setTimeout(() => { fired = true; haptic('medium'); notify({ type: 'info', title: $t("Диагностика"), text: diagLine(), ms: 15000 }); }, 800); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => bal.addEventListener(t, stop));
+  bal.addEventListener('contextmenu', e => e.preventDefault());
+  bal.addEventListener('click', () => { if (fired){ fired = false; return; } openWallet('dep'); }); }
 

@@ -176,12 +176,31 @@ function fit(){
 try { const tg = Telegram.WebApp; tg.ready(); tg.expand(); tg.disableVerticalSwipes?.(); tg.setHeaderColor?.('#0b0b0b'); tg.setBackgroundColor?.('#0b0b0b');
   ['safeAreaChanged', 'contentSafeAreaChanged', 'fullscreenChanged', 'viewportChanged'].forEach(ev => tg.onEvent(ev, () => fit())); } catch(_){}
 fit(); addEventListener('resize', fit);
+// после обновления страницы браузер может вернуть прошлую прокрутку окна — у нас её быть не должно
+try { history.scrollRestoration = 'manual'; } catch(_){}
+scrollTo(0, 0);
+// iPhone/Telegram после «••• → Reload Page» может вернуть прошлое увеличение и сдвиг страницы — сцена тогда крупнее и уезжает вправо.
+// Масштаб у нас всегда 1: если он не 1 или страница сдвинута — переставляем viewport (iOS от этого сбрасывает зум) и прокрутку
+const vpMeta = document.querySelector('meta[name=viewport]'), VP = vpMeta?.content || '';
+let unzoomT = 0;
+function unzoom(){
+  if (/INPUT|TEXTAREA/.test(document.activeElement?.tagName)) return;   // открыта клавиатура — сдвиг законный, не мешаем
+  const v = window.visualViewport, zoomed = v && (Math.abs(v.scale - 1) > .01 || Math.abs(v.offsetLeft) > .5);
+  if (!zoomed && !scrollX && !scrollY) return;
+  if (zoomed && vpMeta && performance.now() - unzoomT > 500){ unzoomT = performance.now(); vpMeta.content = VP.replace('initial-scale=1', 'initial-scale=1.001'); requestAnimationFrame(() => { vpMeta.content = VP; }); }
+  scrollTo(0, 0);
+}
+window.visualViewport?.addEventListener('scroll', unzoom); window.visualViewport?.addEventListener('resize', unzoom);
+// диагностика для скриншота: версия сборки (видно, свежая или из кэша Telegram), размер окна, как посчиталась сцена, зум и сдвиг
+const diagLine = () => { const v = window.visualViewport;
+  return `${$t("Сборка")} __BUILD__ · ${innerWidth}×${innerHeight} · K ${K.toFixed(3)} · ${$t("сцена")} ${Math.round(SW)}` +
+    (v ? ` · zoom ${v.scale.toFixed(2)} · ${Math.round(v.offsetLeft)},${Math.round(v.offsetTop)}` : '') + ` · scroll ${Math.round(scrollX)},${Math.round(scrollY)}`; };
 // iPhone/Telegram: на старте WebView иногда отдаёт размер окна до того, как он устоялся, и resize потом не приходит —
 // сцена остаётся посчитанной под чужую ширину и уезжает вбок. Поэтому следим за размером сами и пересчитываем,
 // когда он реально поменялся (через resize — чтобы подстроились и все, кто его слушает)
 // Сравниваем с размером, под который сцена посчитана в последний раз (fitW/fitH), — так ловится и случай,
 // когда первый расчёт был пропущен из-за нулевого размера. Первые 3 с проверяем каждый кадр: на старте размер скачет
-{ const recheck = () => { const vw = innerWidth || document.documentElement.clientWidth, vh = innerHeight || document.documentElement.clientHeight;
+{ const recheck = () => { unzoom(); const vw = innerWidth || document.documentElement.clientWidth, vh = innerHeight || document.documentElement.clientHeight;
     if (vw === fitW && vh === fitH) return; fit(); if (fitW === vw && fitH === vh) dispatchEvent(new Event('resize')); };
   try { new ResizeObserver(recheck).observe(document.documentElement); } catch(_){}
   window.visualViewport?.addEventListener('resize', recheck);
@@ -189,8 +208,5 @@ fit(); addEventListener('resize', fit);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) recheck(); });
   const t0 = performance.now(); (function watch(){ recheck(); if (performance.now() - t0 < 3000) requestAnimationFrame(watch); })();
   [3500, 6000].forEach(t => setTimeout(recheck, t)); }
-// после обновления страницы браузер может вернуть прошлую прокрутку окна — у нас её быть не должно
-try { history.scrollRestoration = 'manual'; } catch(_){}
-scrollTo(0, 0);
 stage.addEventListener('scroll', () => { stage.scrollTop = 0; stage.scrollLeft = 0; });
 
