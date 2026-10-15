@@ -22,7 +22,7 @@ function walletBtn(){
   if (walletTab === 'dep') go.innerHTML = S.wallet ? `${$t("Пополнить на {0} GRAM", fmt(depAmount))}` : $t("Подключить кошелёк");
   // всегда две строки — шторка не прыгает при выборе. Комиссия видна ещё до выбора
   else { go.innerHTML = n ? `${$t("Вывести {0} NFT", n)}<small>${$t("по одному · комиссия {0} GRAM", fmt(fee))}</small>`
-    : `${$t("Выбери подарки для вывода")}<small>${$t("придут в профиль Telegram · {0} GRAM за каждый", OUT_FEE)}</small>`; go.classList.toggle('off', !n); }
+    : `${$t("Выбери подарки для вывода")}<small>${$t("комиссия {0} GRAM за каждый", OUT_FEE)}</small>`; go.classList.toggle('off', !n); }
 }
 function renderWallet(){
   $('walletTabs').innerHTML = [['dep', $t("Пополнить")], ['out', $t("Вывести NFT")]].map(([k, t]) => `<button class="tab${k === walletTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');

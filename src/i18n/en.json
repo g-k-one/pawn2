@@ -548,5 +548,5 @@
  "Выиграно в крафтах": "Won in crafts",
  "Поставлено {0} GRAM · вернулось {1}%": "Staked {0} GRAM · {1}% returned",
  "Не подключён": "Not connected",
- "придут в профиль Telegram · {0} GRAM за каждый": "go to your Telegram profile · {0} GRAM each"
+ "комиссия {0} GRAM за каждый": "fee {0} GRAM each"
 }
