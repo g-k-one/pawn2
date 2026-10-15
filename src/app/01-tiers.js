@@ -40,7 +40,7 @@ let noClick = false;
 tiersEl.addEventListener('click', e => {
   const b = e.target.closest('.tier'); if (!b || S.busy || noClick) return;
   const ni = +b.dataset.i; if (ni === S.tier) return;
-  selHaptic(); setTier(ni, { dir: Math.sign(ni - S.tier) }); restartAuto();
+  selHaptic(); Sfx.tabs(); setTier(ni, { dir: Math.sign(ni - S.tier) }); restartAuto();
 });
 const selHaptic = () => { if (S.vibro === false) return; try { Telegram.WebApp.HapticFeedback.selectionChanged(); } catch(_){ haptic(); } };
 /* свайп влево/вправо по экрану — соседний ранг. Контент тянется за пальцем с параллаксом, на краях — сопротивление */
@@ -75,7 +75,7 @@ const selHaptic = () => { if (S.vibro === false) return; try { Telegram.WebApp.H
     noClick = true; setTimeout(() => noClick = false, 60);
     const dir = dx < 0 ? 1 : -1, ni = S.tier + dir;
     if ((Math.abs(dx) > 44 || Math.abs(vx) > .45) && Math.sign(-vx || -dx) === dir && ni >= 0 && ni < TIERS.length){
-      selHaptic(); Sfx.swipe(); setTier(ni, { dir, from: dx });
+      selHaptic(); Sfx.tabs(); setTier(ni, { dir, from: dx });
     } else {
       if (ni < 0 || ni >= TIERS.length) haptic('rigid');
       placeInd(); movers.forEach(([id]) => { const el = $(id), o = el.style.opacity || 1, sc = el.style.scale || 1; el.style.opacity = ''; el.style.scale = ''; el.animate([{ opacity: o, scale: sc }, {}], { duration: 380, easing: 'cubic-bezier(.2,.7,.3,1)' }); });
@@ -88,7 +88,7 @@ let auto = 0;
 function restartAuto(){ clearInterval(auto); auto = setInterval(() => { if (!S.busy && !openDrawer && !S.onb && !document.hidden) setTier((S.tier + 1) % TIERS.length, { dir: 1 }); }, AUTO_MS); }
 
 /* ---------- что может выпасть ----------
-   ставка 0 → «???» и пустой светящийся гем;
+   ставка 0 → подсказка «Сделай ставку» (мельче выигрыша, над гемом) и пустой светящийся гем;
    ожидаемый выигрыш (ставка × средний множитель тира) < 3.6 GRAM → GRAM: гем и сумма;
    ≥ 3.6 GRAM → NFT: одна, самая дорогая из доступных.
    Сцена перестраивается (с отскоком) только когда меняется её состав; сумма GRAM просто плавно доезжает до нового значения */
@@ -114,7 +114,7 @@ function showPrize(dir = 0){
   } else prevTok++;
 
   p.className = 'abs prize ' + mode;
-  p.innerHTML = `<span class="xf">${mode === 'ton' ? fmt(ev) : mode === 'empty' ? '???' : 'NFT'}</span>`;   // мгновенно, без прыжков
+  p.innerHTML = `<span class="xf">${mode === 'ton' ? fmt(ev) : mode === 'empty' ? $t("Сделай ставку") : 'NFT'}</span>`;   // мгновенно, без прыжков
   if (key === sceneKey){
     // состав тот же — лёгкий «толчок» в сторону свайпа, чтобы смена ранга чувствовалась
     return;

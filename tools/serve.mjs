@@ -3,10 +3,12 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
-const root = process.argv[2] || new URL('..', import.meta.url).pathname, port = +process.env.PORT || 8765;
+import { fileURLToPath, pathToFileURL } from 'node:url';
+const root = process.argv[2] || fileURLToPath(new URL('..', import.meta.url)), port = +process.env.PORT || 8765;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml',
-  '.webp': 'image/webp', '.png': 'image/png', '.woff2': 'font/woff2' };
+  '.webp': 'image/webp', '.png': 'image/png', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg' };
 export function serve(dir = root, p = port){
+  dir = dir.replace(/^\/([A-Za-z]:)/, '$1');   // Windows: URL.pathname даёт /C:/… — без ведущего слэша
   const srv = createServer(async (req, res) => {
     const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^(\.\.[/\\])+/, '');
     try { const body = await readFile(join(dir, path.endsWith('/') ? path + 'index.html' : path));
@@ -15,4 +17,4 @@ export function serve(dir = root, p = port){
   });
   return new Promise(r => srv.listen(p, () => r(srv)));
 }
-if (import.meta.url === `file://${process.argv[1]}`) serve().then(() => console.log(`http://localhost:${port}`));
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) serve().then(() => console.log(`http://localhost:${port}`));

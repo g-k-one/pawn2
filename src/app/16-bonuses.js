@@ -17,7 +17,8 @@ function caseCard(c){
   const st = caseState(c), free = !c.price;
   return `<div class="bcase${free ? ' free' : ''}" style="--c:${c.c}" data-info="${c.id}">${st.n > 1 ? `<em class="stk">×${st.n}</em>` : ''}${caseArt(c)}<b>${c.short}</b>` +
     (free ? `<small>${st.txt}</small><i class="prog"><b style="width:${Math.round(st.k * 100)}%"></b></i>` : `<small>${$t("NFT до {0} GRAM", RARE_TO)}</small>`) +
-    `<button class="cbuy${free && !st.ok ? ' locked' : ''}" data-open="${c.id}">${free ? (st.ok ? $t("Открыть") : st.lock) : `<img src="assets/gem-small.svg" alt="">${fmt(c.price)}`}</button></div>`;
+    // кнопка с ценой ведёт на страницу кейса (там «Открыть за N GRAM»), чтобы GRAM не списывались одним случайным тапом; бесплатный — открывается сразу
+    `<button class="cbuy${free && !st.ok ? ' locked' : ''}" ${free ? 'data-open' : 'data-info'}="${c.id}">${free ? (st.ok ? $t("Открыть") : st.lock) : `<img src="assets/gem-small.svg" alt="">${fmt(c.price)}`}</button></div>`;
 }
 const achRow = ([id, t, rw, ok, act, prog]) => {
   const done = !!S.ach.got[id], pr = !done && prog ? prog() : null;
@@ -59,7 +60,7 @@ function renderCases(){
       // начисление за друзей: заголовок и «История» в одной строке сверху, сумма крупно, ниже — за что и когда следующее
       `<div class="refauto"><div class="ra-h"><b>${$t("Начислено вчера")}</b><button class="pill-btn" data-act="refhist">${$t("История")}</button></div>` +
       `<div class="ra-v"><img src="assets/gem-small.svg" alt="">+${fmt(REF.pending)}<small>GRAM</small></div><p>${$t("5% от активности друзей. Начисляется само — каждый день в 00:00 МСК")}</p></div>` +
-      `<button class="btn-ghost" data-act="shareref" style="margin-top:8px">${$t("Пригласить друга")}</button>` +
+      `<button class="btn-main" data-act="shareref" style="margin-top:8px">${$t("Пригласить друга")}</button>` +
       `<div class="sect rgap"><div class="sect-h"><span><b>${$t("Твои друзья")}</b></span></div>` + REF.friends.map(([n, cr, g]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${cr ? cr + (" " + $t("крафтов")) : $t("ещё не крафтил")}</small></span><span class="tb2 g"><img src="assets/gem-small.svg" alt="">${fmt(g)}</span></div>`).join('') + `</div>` +
       rulesHTML(REF_RULES);
   } else {
@@ -71,7 +72,7 @@ function renderCases(){
       rulesHTML(TOP_RULES);
   }
 }
-$('casesTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; casesTab = t.dataset.k; haptic(); renderCases(); $('casesBody').scrollTop = 0; });
+$('casesTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; casesTab = t.dataset.k; Sfx.tabs(); haptic(); renderCases(); $('casesBody').scrollTop = 0; });
 $('casesBody').addEventListener('click', e => {
   const o = e.target.closest('[data-open]'), q = e.target.closest('[data-info]'), cl = e.target.closest('[data-claim]');
   if (cl){ claimAch(cl.dataset.claim, cl); return; }
@@ -113,7 +114,7 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-act]
   if (act === 'amb'){ haptic(); tgOpen(AMBASSADORS); }
   if (act === 'totasks'){ haptic(); openCases('tasks'); }
   if (act === 'refhist'){ haptic(); openHistory('refs'); }
-  if (act === 'claimref' && REF.pending){ const v = REF.pending; REF.pending = 0; haptic('medium'); setBalance(S.balance + v); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(v)} GRAM`, text: $t("Бонус за друзей") }); renderCases(); }
+  if (act === 'claimref' && REF.pending){ const v = REF.pending; REF.pending = 0; haptic('medium'); setBalance(S.balance + v); Sfx.gram(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(v)} GRAM`, text: $t("Бонус за друзей") }); renderCases(); }
   if (act === 'restore'){ if (S.balance < S.week.restorePrice) return notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM") }); setBalance(S.balance - S.week.restorePrice); S.hist.wallet.unshift({ type: 'restore', t: Date.now(), amount: S.week.restorePrice, name: `${$t("Пропущенный день:")} ${DAYS[S.week.missed[0]]}`, method: $t("неделя заданий") }); S.week.missed.shift(); haptic('medium'); notify({ type: 'ok', icon: 'ok', title: $t("День восстановлен"), text: $t("Неделя снова идёт к кейсу Маска") }); renderCases(); }
 });
 
@@ -157,7 +158,8 @@ async function caseRun(c, again, m = 1){
   $('fxCaseS').textContent = '';
   const cols = strip.map(itemColor); cols[WIN] = itemColor(it);
   // сундук дрожит и подпрыгивает — ожидание перед прокрутом (только transform)
-  if (!S.lite){ Sfx.whoosh(); haptic('medium');
+  Sfx.chest();
+  if (!S.lite){ haptic('medium');
     await $('fxCaseArt').animate([{ transform: 'none' }, { transform: 'rotate(-4deg) scale(1.02)' }, { transform: 'rotate(4deg) scale(1.04)' }, { transform: 'rotate(-3deg) scale(1.06)' },
       { transform: 'rotate(3deg) scale(1.08)' }, { transform: 'translateY(-10px) scale(1.12)' }, { transform: 'none' }], { duration: 700, easing: 'ease-in-out' }).finished; }
   const tw = el.children[1].offsetLeft - el.children[0].offsetLeft, box = el.parentElement.offsetWidth;
@@ -176,7 +178,7 @@ async function caseRun(c, again, m = 1){
   el.children[lastI]?.classList.remove('cur');
   el.children[WIN].classList.add('win'); haptic('heavy'); Sfx.lock();
   if (!S.lite) $('fxCase').animate([{ transform: 'scale(1.03)' }, { transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.3,1.4,.5,1)' });
-  FullGlow.set(glowOf(itemColor(it))); FullGlow.punch(0, .8); Sfx.rank(it.t === 'nft' ? (it.rare ? 4 : 3) : it.t === 'gram' ? 2 : 1);
+  FullGlow.set(glowOf(itemColor(it))); FullGlow.punch(0, .8); it.t === 'nft' ? Sfx.nft() : it.t === 'gram' ? Sfx.gram() : Sfx.up(2);
   await wait(900);
   /* приз */
   let label = itemName(it), img = itemImg(it);
@@ -201,7 +203,7 @@ function caseDrop(c, it, r, g){
     if (g){ if (how === 'sell') setTimeout(() => setBalance(S.balance + g.value), 900); else INV = [g, ...INV]; }
     else if (it.t === 'gram') setTimeout(() => setBalance(S.balance + it.v), 900);
     else addXp(it.v);
-    haptic('medium'); Sfx.coin(); await closeFx(); $('fx').classList.remove('case');
+    haptic('medium'); (g ? how === 'sell' : it.t === 'gram') ? Sfx.gram() : Sfx.bet(); await closeFx(); $('fx').classList.remove('case');
     setTimeout(() => pushLive(liveCaseHTML(c, it, { me: true, img: g ? g.nft.src : null, value: g ? g.value : null, label: g ? g.nft.name : null })), 300);
     notify({ type: 'ok', color: itemColor(it), img: g ? g.nft.src : itemImg(it), title: g ? (how === 'sell' ? `${$t("Продано: +{0} GRAM", fmt(g.value))}` : `${g.nft.name} ${$t("в инвентаре")}`) : (it.t === 'gram' ? `+${fmt(it.v)} GRAM` : `+${it.v} XP`), text: c.name });
     CRAFT.classList.remove('busy'); S.busy = false; caseDrop.on = false; restartAuto(); checkAch();

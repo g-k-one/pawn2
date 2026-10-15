@@ -19,8 +19,10 @@ function pfHTML(r){
     `<div class="pfc" data-k="ticket"><i></i><div><b>${$t("Тикет посчитан по формуле")}</b><p>${$t("Ключ сервера + твой ключ + номер игры ({0}) по открытой формуле дают тикет {1}.", r.proof.nonce, tk(r.ticket))}</p><em>${$t("ждёт проверки")}</em></div></div>` +
     `<div class="pfc" data-k="rule"><i></i><div><b>${$t("Приз выдан по правилам")}</b><p>${rng}</p><em>${$t("ждёт проверки")}</em></div></div>` +
     (r.manual ? `<p class="pfnote">${$t("Дебаг: тикет задан вручную, поэтому проверка не сойдётся. Это нормально.")}</p>` : r.debug ? `<p class="pfnote">${$t("Дебаг: исход выбран в настройках, ключ сервера подобран перебором — проверка сходится.")}</p>` : '') +
-    (P.server_seed ? '' : `<p class="pfnote pf-pend">${$t("Зерно этой эпохи ещё не раскрыто — без него игру не проверить. Раскрытие сменит твой ключ и начнёт новую эпоху.")}</p>`) +
-    `<button class="btn-main pf-check">${P.server_seed ? $t("Проверить здесь") : $t("Раскрыть зерно и проверить")}</button><button class="btn-ghost pf-copy">${$t("Скопировать доказательство")}</button>` + PF_EXT +
+    `<button class="btn-main pf-check">${P.server_seed ? $t("Проверить здесь") : $t("Раскрыть зерно и проверить")}</button>` +
+    // пометка прямо под кнопкой: что произойдёт при раскрытии (смена ключа), чтобы это не было сюрпризом
+    (P.server_seed ? '' : `<p class="pf-key pf-pend">${$t("Твой ключ сменится на новый, и начнётся новая эпоха. На шансы это не влияет, а все игры этой эпохи тоже можно будет проверить.")}</p>`) +
+    `<button class="btn-ghost pf-copy">${$t("Скопировать доказательство")}</button>` + PF_EXT +
     `<details class="rules pftech"><summary>${$t("Технические данные")}</summary><div>${tech}</div></details>`;
 }
 function bindPF(root, r){
@@ -63,7 +65,7 @@ function swapDrawer(id, prep, back){
   if (!old){ prep?.(); return showDrawer(id); }
   if (old === nw) return prep?.();
   if (!back) drawerStack.push(old.id);
-  prep?.(); haptic(); setBack(nw);
+  prep?.(); Sfx.open(); haptic(); setBack(nw);
   nw.classList.add('drag', 'open'); nw.style.transform = ''; nw.style.zIndex = 48; openDrawer = nw;
   nw.animate([{ opacity: 0, transform: 'translateY(10px) scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.25,.9,.3,1)' })
     .onfinish = () => { nw.classList.remove('drag'); nw.style.zIndex = ''; };

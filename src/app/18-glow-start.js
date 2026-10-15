@@ -188,26 +188,49 @@ renderBet();
 requestAnimationFrame(() => setTier(1));
 document.fonts?.ready.then(() => setTier(S.tier, { keepPrize: true }));
 restartAuto();
-/* ---------- онбординг: 4 подсказки при первом запуске. Выключается в дебаге ---------- */
+/* ---------- онбординг при первом запуске. Выключается в дебаге ----------
+   Приветствие → «попробуй сам» на рангах и ставке (шаг идёт дальше, когда игрок сделал действие; «Далее» — запасной путь) →
+   меню → крафт с предложением начать на фантиках. Подсвеченный элемент живой: тапы проходят только в него и в карточку */
 const Onb = (() => {
   const STEPS = [
-    ['#tiers', $t("Ранги"), $t("Свайпай по экрану или жми на ранг — увидишь, что можно выбить и с каким шансом")],
-    ['.chips', $t("Ставка"), $t("Добавь GRAM кнопками или положи NFT-подарок — ставка растёт, растёт и приз")],
-    ['#craft', $t("Крафт"), $t("Жми на наковальню. Исход честный: тикет можно проверить после игры")],
-    ['#menuBtn', $t("Меню"), $t("Здесь бонусы, история игр и проверка честности")],
+    { t: $t("Добро пожаловать в Pawn"), d: $t("Ставишь GRAM или NFT-подарок, бьёшь по наковальне — и получаешь приз одного из пяти рангов, от «Базы» до «Джекпота». Покажу за полминуты."), next: $t("Поехали") },
+    { sel: '#tiers', t: $t("Ранги"), d: $t("Нажми на любой ранг — увидишь, что можно выбить и с каким шансом. Потом можно и свайпать по экрану."), done: s => S.tier !== s.tier, ok: $t("Отлично! Приз и шанс поменялись") },
+    { sel: '.chips', t: $t("Ставка"), d: $t("Добавь GRAM кнопкой, например +1. Ставка растёт — растёт и приз. Корзина слева всё сбросит."), done: s => S.ton > s.ton || S.gifts.length > s.gifts, ok: $t("Ставка есть — смотри, приз вырос") },
+    { sel: '#menuBtn', t: $t("Меню"), d: $t("Здесь бонусы и кейсы, история игр и проверка честности") },
+    { sel: '#craft', t: $t("Крафт"), d: $t("Жми на наковальню — и узнаешь приз. Каждый исход можно проверить после игры. Хочешь сначала попробовать без риска?"), demo: true },
   ];
-  let i = 0, el = null;
+  let i = 0, el = null, poll = 0, hole = null;
+  // тапы мимо подсветки и карточки гасим: живым остаётся только то, про что подсказка
+  // на «Меню» подсветка только показывает (шторка поверх подсказки не нужна); на «Крафте» тап по наковальне закрывает подсказки и запускает крафт
+  const guard = e => { if (!el) return; const c = el.querySelector('.onb-card'); if (c?.contains(e.target)) return;
+    const s = STEPS[i], p = e.touches?.[0] || e, inHole = hole && p.clientX >= hole.left && p.clientX <= hole.right && p.clientY >= hole.top && p.clientY <= hole.bottom;
+    if (!inHole || !(s.done || s.demo)){ e.stopPropagation(); e.preventDefault(); return; }
+    if (s.demo && e.type === 'click') end(); };
   function show(){
-    const [sel, t, d] = STEPS[i], tg = document.querySelector(sel); if (!tg) return end();
-    const st = stage.getBoundingClientRect(), r = tg.getBoundingClientRect(), pad = 8;
-    const x = (r.left - st.left) / K - pad, y = (r.top - st.top) / K - pad, w = r.width / K + pad * 2, h = r.height / K + pad * 2, below = y + h / 2 < stage.offsetHeight / 2;
-    el.innerHTML = `<i class="onb-hole" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"></i>` +
-      `<div class="onb-card" style="${below ? `top:${y + h + 14}px` : `bottom:${stage.offsetHeight - y + 14}px`}"><small>${i + 1} / ${STEPS.length}</small><b>${t}</b><p>${d}</p>` +
-      `<span><button class="onb-skip">${$t("Пропустить")}</button><button class="onb-next">${i < STEPS.length - 1 ? $t("Далее") : $t("Понятно")}</button></span></div>`;
-    el.querySelector('.onb-next').onclick = () => { haptic(); i++; i < STEPS.length ? show() : end(); };
+    clearInterval(poll); hole = null;
+    const s = STEPS[i], tg = s.sel && document.querySelector(s.sel); if (s.sel && !tg) return end();
+    const dots = `<em class="onb-dots">${STEPS.map((_, k) => `<i${k === i ? ' class="on"' : k < i ? ' class="was"' : ''}></i>`).join('')}</em>`;
+    const btns = s.demo ? `<span><button class="onb-skip">${$t("Играть на GRAM")}</button><button class="onb-next onb-demo">${$t("На фантиках")}</button></span>`
+                        : `<span><button class="onb-skip">${$t("Пропустить")}</button><button class="onb-next">${s.next || $t("Далее")}</button></span>`;
+    if (!tg){ el.innerHTML = `<i class="onb-hole none"></i><div class="onb-card mid">${dots}<b>${s.t}</b><p>${s.d}</p>${btns}</div>`; }
+    else {
+      const st = stage.getBoundingClientRect(), r = tg.getBoundingClientRect(), pad = 8;
+      const x = (r.left - st.left) / K - pad, y = (r.top - st.top) / K - pad, w = r.width / K + pad * 2, h = r.height / K + pad * 2, below = y + h / 2 < stage.offsetHeight / 2;
+      const ax = Math.max(28, Math.min(stage.offsetWidth - 28, x + w / 2)) - 16;   // стрелка карточки смотрит на центр подсветки
+      hole = { left: r.left - pad * K, right: r.right + pad * K, top: r.top - pad * K, bottom: r.bottom + pad * K };
+      el.innerHTML = `<i class="onb-hole" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"></i>` +
+        `<div class="onb-card ${below ? 'at-dn' : 'at-up'}" style="${below ? `top:${y + h + 16}px` : `bottom:${stage.offsetHeight - y + 16}px`};--ax:${ax}px">${dots}<b>${s.t}</b><p>${s.d}</p>${btns}</div>`;
+    }
+    el.querySelector('.onb-next').onclick = () => { haptic(); if (s.demo){ end(); if (!S.demo) setDemo(true); return; } step(); };
     el.querySelector('.onb-skip').onclick = () => { haptic(); end(); };
+    if (s.done){ const was = { tier: S.tier, ton: S.ton, gifts: S.gifts.length };
+      poll = setInterval(() => { if (!el || !s.done(was)) return; clearInterval(poll);
+        const c = el.querySelector('.onb-card'); c.classList.add('good'); c.querySelector('p').textContent = s.ok; haptic('light');
+        setTimeout(() => { if (el && STEPS[i] === s) step(); }, 1100); }, 150); }
   }
-  function end(){ S.onb = false; el?.remove(); el = null; LSset('bm-onb-done', true); restartAuto(); }
+  const step = () => { i++; i < STEPS.length ? show() : end(); };
+  function end(){ clearInterval(poll); S.onb = false; el?.remove(); el = null; hole = null; LSset('bm-onb-done', true); restartAuto(); }
+  ['pointerdown', 'click', 'touchstart'].forEach(t => stage.addEventListener(t, guard, { capture: true, passive: false }));
   return { start(force){ if (el || (!force && (S.dbg.noOnb || LS('bm-onb-done', false)))) return; S.onb = true; clearInterval(auto); i = 0;
     el = document.createElement('div'); el.className = 'onb'; stage.appendChild(el); show(); } };
 })();
