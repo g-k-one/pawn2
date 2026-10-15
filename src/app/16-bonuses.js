@@ -115,7 +115,8 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-act]
   if (act === 'totasks'){ haptic(); openCases('tasks'); }
   if (act === 'refhist'){ haptic(); openHistory('refs'); }
   if (act === 'claimref' && REF.pending){ const v = REF.pending; REF.pending = 0; haptic('medium'); setBalance(S.balance + v); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(v)} GRAM`, text: $t("Бонус за друзей") }); renderCases(); }
-  if (act === 'restore'){ if (S.balance < S.week.restorePrice) return notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM") }); setBalance(S.balance - S.week.restorePrice); S.hist.wallet.unshift({ type: 'restore', t: Date.now(), amount: S.week.restorePrice, name: `${$t("Пропущенный день:")} ${DAYS[S.week.missed[0]]}`, method: $t("неделя заданий") }); S.week.missed.shift(); haptic('medium'); notify({ type: 'ok', icon: 'ok', title: $t("День восстановлен"), text: $t("Неделя снова идёт к кейсу Маска") }); renderCases(); }
+  if (act === 'restore'){ if (S.demo) return notify({ type: 'demo', icon: 'coin', title: $t("Восстановление — только на GRAM"), text: $t("Выключи демо в меню") });
+    if (S.balance < S.week.restorePrice) return notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM") }); setBalance(S.balance - S.week.restorePrice); S.hist.wallet.unshift({ type: 'restore', t: Date.now(), amount: S.week.restorePrice, name: `${$t("Пропущенный день:")} ${DAYS[S.week.missed[0]]}`, method: $t("неделя заданий") }); S.week.missed.shift(); haptic('medium'); notify({ type: 'ok', icon: 'ok', title: $t("День восстановлен"), text: $t("Неделя снова идёт к кейсу Маска") }); renderCases(); }
 });
 
 /* честный ролл кейса: тот же HMAC, тикет → предмет по диапазону */
@@ -245,10 +246,19 @@ function pickNft(r){
   return new Promise(res => setTimeout(() => res(r.nft), ms));
 }
 
-/* ---------- баланс: плавно доезжает, под ним всплывает изменение. В демо баланс бесконечный ---------- */
+/* ---------- баланс: плавно доезжает, под ним всплывает изменение ----------
+   setBalance — всегда настоящий GRAM, и в демо тоже: награды и бонусы зачисляются, а платное (восстановление дня и т.п.)
+   в демо закрыто на входе. На экране в демо — «∞», поэтому число и всплывашку там не показываем.
+   Фантики крафта идут через moveBal: в демо — только всплывашка, настоящий баланс не трогается */
 function setBalance(v){
   const d = Math.round((v - S.balance) * 100) / 100;
-  if (!S.demo){ S.balance = Math.round(v * 100) / 100; countTo($('bal'), S.balance); }
+  S.balance = Math.round(v * 100) / 100;
+  if (S.demo) return;
+  countTo($('bal'), S.balance);
+  balFx(d);
+}
+const moveBal = d => S.demo ? balFx(d) : setBalance(S.balance + d);
+function balFx(d){
   if (!d) return;
   const el = document.createElement('div'), b = $('bal').getBoundingClientRect(), st = $('stage').getBoundingClientRect(), k = K;
   el.className = 'bal-delta'; el.textContent = (d > 0 ? '+' : '') + fmt(d); el.style.color = d > 0 ? (S.demo ? '#c9a4ff' : '#12d53d') : '#ff4c35';

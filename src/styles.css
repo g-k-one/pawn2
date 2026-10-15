@@ -343,9 +343,11 @@ img{display:block;-webkit-user-drag:none}
 @keyframes breathe{50%{opacity:.6}}
 /* ---------- демо: фантики, фиолетовый ---------- */
 .demo-tag{display:none;margin-right:2px;padding:0 6px;border-radius:99px;background:#AE3FC4;color:#160536;font-weight:700;font-size:13px;line-height:18px;text-transform:uppercase}
-body.demo{--blue:#c9a4ff;--teal:#c9a4ff}
+/* фиолетовый «фантиковый» цвет — только там, где играют на фантики: главный экран и экран крафта.
+   В шторках (бонусы, рефералка, кейсы, награды) остаются настоящие GRAM — они синие и в демо */
+.demo .scene,.demo .fx{--blue:#c9a4ff;--teal:#c9a4ff}
 .demo .demo-tag{display:block}
-.demo .bet,.demo .btn-main{background:linear-gradient(#b48aff,#5d2bd6)}
+.demo .bet,.demo .fx .btn-main{background:linear-gradient(#b48aff,#5d2bd6)}
 .demo .prize.ton{background-image:linear-gradient(#d4b6ff 19.47%,rgba(70,20,170,0))}
 .demo .drop img[src*="hero-gem"],.demo .fx-drop img[src*="hero-gem"]{filter:hue-rotate(48deg) saturate(1.1)}
 .demo #giftBtn{opacity:.35}

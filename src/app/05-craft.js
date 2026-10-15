@@ -264,12 +264,12 @@ $('craft').onclick = async () => {
   S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto);
   const stake = total(), used = S.gifts.slice(), tonStake = S.ton, fast = S.fast || S.lite;
   const pf = API.craft(stake, used, tonStake); pf.catch(() => {});   // ошибку разберём ниже, после анимации удара
-  if (S.ton > 0) setBalance(S.balance - S.ton);
+  if (S.ton > 0) moveBal(-S.ton);   // в демо — фантики: только всплывашка, настоящий баланс не трогается
   if (fast){ Sfx.lock(); await strike(.8, REST + 10); INV = INV.filter(g => !used.includes(g)); S.gifts = []; await openFx(true); }
   else { INV = INV.filter(g => !used.includes(g)); S.gifts = []; await bigStrike(); }
   let r = null; try { r = await pf; } catch(_){}
   if (!r){                                                     // сбой: ставка возвращается, показываем экран неудачи
-    if (tonStake > 0 && !S.demo) setBalance(S.balance + tonStake);
+    if (tonStake > 0) moveBal(tonStake);
     INV = [...used, ...INV];
     notify({ type: 'err', icon: 'err', title: $t("Ошибка крафта"), text: S.demo ? $t("Попробуй ещё раз") : $t("Ставка и подарки вернулись — попробуй ещё раз") });
     return failScreen('craft', { ton: tonStake, gifts: used });
@@ -601,13 +601,13 @@ async function finish(r, how){
   if (!S.demo){ API.claimCraft(r, how); logCraft(r, how); bumpTasks(r); addXp(r.stake * .5); setTimeout(checkAch, 1200); }
   renderBet();
   if (r.super){                                               // приз крафта получен — и сверху ещё супер дроп
-    if (add > 0) setBalance(S.balance + add);
+    if (add > 0) moveBal(add);
     notify(r.nft ? { type: 'ok', color: t.c, img: r.nft.nft.src, title: how === 'sell' ? `${$t("Продано: +{0} GRAM", fmt(add))}` : `${r.nft.nft.name} ${$t("в инвентаре")}`, text: $t("Приз крафта") }
                  : { type: 'ok', color: t.c, img: 'assets/hero-gem.webp', title: `+${fmt(add)} GRAM`, text: $t("Приз крафта зачислен") });
     finish.on = false; return superStage(r);
   }
   await closeFx();
-  if (add > 0) setBalance(S.balance + add);
+  if (add > 0) moveBal(add);
   if (S.demo) notify(r.nft ? { type: 'demo', img: r.nft.nft.src, title: r.nft.nft.name, text: $t("В реальном режиме он был бы твоим") }
                            : { type: 'demo', img: 'assets/fantik.webp', title: `${$t("Демо: +")}${fmt(add)}`, text: $t("Фантики не настоящие — просто попробовать") });
   else if (!r.nft) notify({ type: 'ok', color: t.c, img: 'assets/hero-gem.webp', title: `+${fmt(add)} GRAM`, text: `${t.name} ${$t("· x{0} · зачислено на баланс", r.mult)}` });
