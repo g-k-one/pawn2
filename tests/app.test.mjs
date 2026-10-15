@@ -83,7 +83,7 @@ test('вывод NFT: по одному, уведомление на кажды�
   await page.click('#walletGo');
   await page.waitForFunction(() => window.__notes >= 3, null, { timeout: 15000 }).catch(() => {});   // ждём, а не фиксированную паузу
   assert.equal(await page.evaluate(() => window.__notes), 3);
-  const s1 = await waitSave(page, s => s.inv.length === s0.inv.length - 3);
+  const s1 = await waitSave(page, s => s.inv.length === s0.inv.length - 3 && Math.round((s0.balance - s.balance) * 100) / 100 === 0.9);   // комиссии списываются по одной — ждём все три
   assert.equal(Math.round((s0.balance - s1.balance) * 100) / 100, 0.9);
   assert.deepEqual(errors, []); await ctx.close();
 });
