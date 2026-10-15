@@ -37,11 +37,11 @@ function renderWallet(){
   } else {
     b.innerHTML = `<div class="wwarn"><i>!</i><span><b>${$t("Сначала напиши")} ${RELAYER}</b><small>${$t("Перед выводом обязательно отправь любое сообщение релееру")} <span class="acc">${RELAYER}</span> ${$t("в Telegram — и только потом выводи.")}</small>` +
       `<button class="pill-btn" data-act="relayerMsg">${$t("Написать")} ${RELAYER}</button></span></div>` + (INV.length ? `<p class="muted small" style="margin:6px 0 12px">${$t("Подарок придёт в твой профиль Telegram. Комиссия сети —")} <b style="color:#fff">${OUT_FEE} GRAM</b> ${$t("за каждый NFT.")}</p>` +
-      `<div class="onft" id="onft">${INV.map(g => `<button class="cell${outSel.has(g.id) ? ' sel' : ''}" data-id="${g.id}"><span class="chk">${svg(NICON.ok)}</span>${cardHTML(g, 76)}</button>`).join('')}</div>` + PARTNER
+      `<div class="onft" id="onft">${INV.map(g => `<button class="cell${outSel.has(g.id) ? ' sel' : ''}" data-id="${g.id}"><span class="chk">${svg(NICON.ok)}</span>${cardHTML(g, 104)}</button>`).join('')}</div>` + PARTNER
       : giftInHTML() + PARTNER);
     b.querySelectorAll('.cell').forEach(c => tiltCard(c, .5));
   }
-  walletBtn(); fitAmt(); fitCards($('onft'), 76, 10);
+  walletBtn(); fitAmt(); fitCards($('onft'), 104, 10);
 }
 $('walletTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; walletTab = t.dataset.k; outSel = new Set(); haptic(); renderWallet(); });
 /* общие действия: партнёр, релеер */

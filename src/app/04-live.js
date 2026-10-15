@@ -38,7 +38,7 @@ liveEl.addEventListener('click', e => {
   const it = e.target.closest('.item'); if (!it) return;
   if (it.dataset.case){ const c = caseById(it.dataset.case); haptic(); notify({ img: it.dataset.img, color: c.c, title: c.name, text: `${it.dataset.who} ${$t("— выпало:")} ${it.dataset.lbl}` }); return; }
   const n = +it.dataset.n, t = TIERS[tierOfTicket(n)]; haptic();
-  notify({ img: it.dataset.img, color: t.c, title: `${t.name} · x${it.dataset.m}`, text: `${it.dataset.who} ${$t("— {0} · тикет", it.dataset.nft || '+' + fmt(+it.dataset.w) + ' GRAM')} ${n.toLocaleString(LOC)}` });
+  notify({ img: it.dataset.img, color: t.c, title: `${t.name} · x${it.dataset.m}`, text: `${it.dataset.who} ${$t("— {0} · тикет", it.dataset.nft || '+' + fmt(+it.dataset.w) + ' GRAM')} ${tk(n)}` });
 });
 let liveN = 0;
 setInterval(() => { if (document.hidden || (S.lite && ++liveN % 2)) return; pushLive(); }, 3200);   // в экономном режиме — вдвое реже

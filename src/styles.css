@@ -1349,3 +1349,11 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .hstat.n div.g b{color:var(--blue)}
 .hstat.n b i,.hstat-hero.net b i{font-style:normal;font-size:.55em;margin-left:5px;opacity:.85}
 .hstat-hero.net b{font-size:44px}
+/* отступы: внутри группы 8 px, между группами 20 px */
+.sect,.rules{margin-top:20px}
+.hsec{margin:20px 0 10px}
+/* экран выигрыша: приз и сумма — по центру между тикетом и кнопками, без дыры над кнопками */
+.fx.done #fxDrop{margin-top:auto}
+.fx.done .fx-btns{margin-top:auto;padding-top:20px}
+/* супер дроп: надпись чуть ниже — не закрывает подпись карточки */
+.sdlogo{margin-top:-10px}

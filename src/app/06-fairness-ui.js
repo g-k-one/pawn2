@@ -5,7 +5,7 @@
 const VERIFY_URL = 'https://pawn-frontend.onrender.com/verify';
 const PF_EXT = `<a class="pf-ext" href="${VERIFY_URL}" target="_blank" rel="noopener" data-act="verify">${$t("Проверить самому ↗")}</a>`;
 const pfRow = (k, v) => `<div class="pf-row"><small>${k}</small><code>${v}</code></div>`;
-const tk = n => n.toLocaleString(LOC);
+const tk = n => String(n).padStart(5, '0');   // тикет везде одинаково — пять цифр, как на барабане
 function pfHTML(r){
   const isCase = r.kind === 'case', c = isCase ? caseById(r.caseId) : null, it = isCase ? c.items[r.idx] : null, t = isCase ? null : TIERS[r.ti];
   const col = isCase ? itemColor(it) : t.c, res = isCase ? itemName(it) : `${t.name} · x${r.mult}`;
