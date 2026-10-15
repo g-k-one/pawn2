@@ -1357,3 +1357,14 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .fx.done .fx-btns{margin-top:auto;padding-top:20px}
 /* супер дроп: надпись чуть ниже — не закрывает подпись карточки */
 .sdlogo{margin-top:-10px}
+/* карточки истории: ставка у левого края, выигрыш — зеркально у правого, стрелка по центру — без пустоты справа */
+.hk-s.win{flex-direction:row-reverse;justify-content:flex-start;text-align:right}
+.hk-s.win .hk-v{align-items:flex-end}
+.hk-ar{justify-self:center}
+/* «GRAM» после суммы — мельче числа и одинаково везде (кроме крупного заголовка выигрыша) */
+.u{font-style:normal;font-size:.62em;margin-left:.28em;opacity:.85;letter-spacing:0}
+/* статистика: полоска «сколько вернулось» и спокойный итог */
+.hstat-hero.net .nbar{display:block;height:6px;margin:10px 0 8px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+.hstat-hero.net .nbar b{display:block;height:100%;border-radius:3px;background:#12D53D;font-size:0}
+.hstat-hero.net span em{font-style:normal;color:rgba(255,255,255,.85)}
+.hstat-hero.net span em.up{color:#12D53D}

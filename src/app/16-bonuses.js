@@ -47,14 +47,14 @@ function renderCases(){
     const sd = SUPER.nft;
     b.innerHTML = `<div class="sdhero"><img class="sdlogo" src="assets/superdrop-logo.webp" alt="Super Drop"><div class="sdcard" id="sdCard">${cardHTML(sd, 236, true)}</div></div>` +
       `<div class="sdtarget"><small>${$t("Загаданный тикет")}</small><div class="sddig">${superDigits()}</div><p>${$t("Выбей его первым в крафте — и NFT твой")}</p></div>` +
-      `<div class="stats"><div><small>${$t("Приз")}</small><b class="g">${fmt(sd.value)} GRAM</b></div><div><small>${$t("Мин. ставка")}</small><b class="g">${SUPER.min} GRAM</b></div><div><small>${$t("Попыток сегодня")}</small><b>${SUPER.tries.toLocaleString(LOC)}</b></div><div><small>${$t("Шанс за крафт")}</small><b>${$t("1 из 100 000")}</b></div></div>` +
+      `<div class="stats"><div><small>${$t("Приз")}</small><b class="g">${fmt(sd.value)}${GU}</b></div><div><small>${$t("Мин. ставка")}</small><b class="g">${SUPER.min}${GU}</b></div><div><small>${$t("Попыток сегодня")}</small><b>${SUPER.tries.toLocaleString(LOC)}</b></div><div><small>${$t("Шанс за крафт")}</small><b>${$t("1 из 100 000")}</b></div></div>` +
       `<div class="sect"><div class="sect-h"><span><b>${$t("Прошлые супер дропы")}</b></span></div>${SUPER.last.map(([n, g, t]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${t}</small></span><span class="tb2">${g}</span></div>`).join('')}</div>` +
       rulesHTML([$t("Super Drop забирает тот, кто первым выбьет загаданный тикет."), $t("Учитываются крафты со ставкой от 0.5 GRAM."), $t("Обычный выигрыш крафта при этом тоже зачисляется на баланс."), $t("После выпадения загадывается новый тикет и новый NFT.")]);
     tiltCard($('sdCard'), 1.2); upgradeImg($('sdCard').querySelector('.nc-img'), sd.nft); Tilt.grab($('sdCard').querySelector('.nc-t'), () => openNft(sd));   // крутить пальцем, тап — в Telegram
   } else if (casesTab === 'refs'){
     b.innerHTML = `<div class="refpct"><div><b>10%</b><small>${$t("от первого депозита")}</small></div><div><b>5%</b><small>${$t("от активности")}</small></div></div>` +
       `<a class="banner amb" data-act="amb"><span><b>${$t("Программа для амбассадоров")}</b><small>${$t("больше процент для блогеров и комьюнити")}</small></span><img src="assets/referrals.webp" alt=""></a>` +
-      `<div class="refbox rgap"><div class="refrow"><span>${svg(IC.users)} ${$t("Друзей:")} <b>${REF.friends.length}</b></span><span class="g"><img src="assets/gem-small.svg" alt="">${fmt(REF.total)} GRAM</span></div>` +
+      `<div class="refbox rgap"><div class="refrow"><span>${svg(IC.users)} ${$t("Друзей:")} <b>${REF.friends.length}</b></span><span class="g"><img src="assets/gem-small.svg" alt="">${fmt(REF.total)}${GU}</span></div>` +
       `<div class="reflink"><code>${REF.link.replace('https://', '')}</code><button class="pill-btn" data-act="copyref">${$t("Копировать")}</button></div></div>` +
       // начисление за друзей: заголовок и «История» в одной строке сверху, сумма крупно, ниже — за что и когда следующее
       `<div class="refauto"><div class="ra-h"><b>${$t("Начислено вчера")}</b><button class="pill-btn" data-act="refhist">${$t("История")}</button></div>` +
