@@ -1409,3 +1409,25 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .dr-b.fade-t{-webkit-mask-image:linear-gradient(transparent,#000 24px);mask-image:linear-gradient(transparent,#000 24px)}
 .dr-b.fade-b{-webkit-mask-image:linear-gradient(#000 calc(100% - 24px),transparent);mask-image:linear-gradient(#000 calc(100% - 24px),transparent)}
 .dr-b.fade-t.fade-b{-webkit-mask-image:linear-gradient(transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(transparent,#000 24px,#000 calc(100% - 24px),transparent)}
+/* ---------- крафт в складчину (эксперимент): золотой акцент, цифры тикета — как в супер дропе ---------- */
+.beta{display:inline-block;font-family:system-ui,-apple-system,sans-serif;font-weight:800;margin-left:6px;padding:0 7px;border-radius:999px;background:#FFB835;color:#2a1a00;font-size:14px;line-height:20px;vertical-align:middle}
+.pool-h{display:flex;align-items:center;gap:4px;margin:4px 2px 0}
+.pool-h b{font-size:30px;line-height:1.05;text-transform:uppercase}
+.pool-lead{margin-top:8px}
+.pool-fees{display:flex;gap:8px;margin-top:20px}
+.pool-fees .pill-btn{flex:1}
+.pool-fees .pill-btn:disabled{opacity:.4}
+.pool-stats{margin-top:8px}
+.pool-pick{margin-top:8px;background:linear-gradient(135deg,#4d3305,#1f1406);box-shadow:inset 0 0 22px rgba(255,184,53,.4)}
+.pool-pick .sddig b{color:#2a1a00;background:linear-gradient(#fff6df,#ffd88a);box-shadow:0 4px 0 #b77a10}
+.pool-res.won{box-shadow:inset 0 0 26px rgba(18,213,61,.55)}
+.pool-res .sddig.res b{background:linear-gradient(#fff,#e2f7ff);color:#03263a;box-shadow:0 4px 0 #1d7fb0}
+.pool-in{display:flex;justify-content:center;gap:8px}
+.pool-in input{width:120px;padding:7px 12px;border:0;border-radius:999px;background:rgba(0,0,0,.35);color:#fff;font:700 20px/1.2 var(--font);letter-spacing:.12em;text-align:center;outline:none}
+.pool-in input:focus{box-shadow:0 0 0 2px #FFB835}
+.trow.win{border-radius:16px;background:rgba(18,213,61,.12);padding-left:10px;padding-right:10px}
+.trow.win .tb2{color:#3fe06a}
+.pool-fair{margin-top:20px;padding:16px;border-radius:22px;background:rgba(255,255,255,.045);display:flex;flex-direction:column;gap:6px}
+.pool-fair small{font:400 12.5px/1.35 var(--serif);color:rgba(255,255,255,.72)}
+.pool-fair code{font-size:12.5px;line-height:1.35;color:#fff;word-break:break-all}
+.pool-fair .pool-check{margin-top:8px}

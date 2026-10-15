@@ -48,11 +48,16 @@ async function checkProof(p){
   if (p.domain === 'craft'){
     const ppm = craftPpm(p.rules, p.roll), sg = p.rules.segments.find(x => p.roll >= x.start && p.roll <= x.end), pay = BigInt(p.inputs.bet_nano) * ppm / BigInt(p.rules.multiplier_scale);
     rule = rule && p.result.zone === sg.zone && BigInt(p.result.multiplier_ppm) === ppm && BigInt(p.result.payout_nano) === pay && BigInt(p.result.ton_payout_nano) + BigInt(p.result.gift_payout_value_nano) === pay;
+  } else if (p.domain === 'pool'){
+    // складчина: client seed — хеш списка загаданных тикетов; победители — все, у кого наименьшая разница с тикетом
+    const d = p.inputs.entries.map(g => Math.abs(+g - p.roll)), best = Math.min(...d), w = d.flatMap((x, i) => x === best ? [i] : []);
+    rule = rule && await sha(enc(JSON.stringify(p.inputs.entries.map(Number)))) === p.client_seed && best === p.result.distance && JSON.stringify(w) === JSON.stringify(p.result.winners);
   } else { let tot = 0; const rw = p.rules.rewards.find(x => (tot += x.weight) > p.roll); rule = rule && rw.kind === p.result.kind && rw.amount === p.result.amount; }
   return { hash: hashOk, ticket: ticketOk, rule: ticketOk && rule };
 }
 /* ---------- дебаг: выбрать исход следующего крафта ---------- */
-S.dbg = { tier: -1, near: false, keep: false, prevDelay: null, freeCases: false, ticket: null, fail: null, noOnb: (() => { try { return localStorage.getItem('bm-onb-off') === '1'; } catch(_){ return false; } })() };
+S.dbg = { tier: -1, near: false, keep: false, prevDelay: null, freeCases: false, ticket: null, fail: null, noOnb: (() => { try { return localStorage.getItem('bm-onb-off') === '1'; } catch(_){ return false; } })(),
+  pool: (() => { try { return localStorage.getItem('bm-pool') === '1'; } catch(_){ return false; } })() };   // эксперимент «Крафт в складчину» — по умолчанию выкл
 function dbgWant(){
   const d = S.dbg; if (d.tier < 0 || d.ticket != null) return null;
   const t = TIERS[d.tier];
@@ -71,6 +76,7 @@ function renderDbg(){
     `<div class="dbg-l">${$t("NFT на главной при смене ставки")}</div><div class="dbg-g">${chip('prevDelay', null, $t("Сразу"))}${chip('prevDelay', 1500, $t("Ответ 1.5 с"))}${chip('prevDelay', 4000, $t("Ответ 4 с"))}</div>` +
     `<div class="dbg-l">${$t("Сбой (один раз)")}</div><div class="dbg-g">${chip('fail', null, $t("Нет"))}${chip('fail', 'craft', $t("Неудачный крафт"), '#FF4C35')}${chip('fail', 'case', $t("Кейс не открылся"), '#FF4C35')}${chip('fail', 'out', $t("Вывод NFT не прошёл"), '#FF4C35')}${chip('fail', 'relayer', $t("Вывод: не написал релееру"), '#FF4C35')}</div>` +
     `<div class="dbg-l">${$t("Супер дроп")}</div><div class="dbg-g"><button class="dbg-c${d.ticket === SUPER.target ? ' on' : ''}" data-k="super" data-v="1" style="--c:#EB57B0">${$t("Выбить супер дроп · тикет")} ${SUPER.target}</button></div>` +
+    `<div class="dbg-l">${$t("Эксперименты: крафт в складчину")}</div><div class="dbg-g">${chip('pool', false, $t("Выключен"))}${chip('pool', true, $t("Включён — пункт в меню"), '#FFB835')}</div>` +
     `<div class="dbg-l">${$t("Онбординг")}</div><div class="dbg-g">${chip('noOnb', false, $t("Показывать"))}${chip('noOnb', true, $t("Выключен"))}<button class="dbg-c" data-k="onbNow" data-v="1">${$t("Показать сейчас")}</button></div>` +
     `<div class="dbg-l">${$t("Запас бесплатных кейсов")}</div><div class="dbg-g">${[['beast', $t("Бист"), '#EB57B0'], ['musk', $t("Маск"), '#FF4C35']].map(([id, n, c]) => [0, 1, 3, 5].map(v => `<button class="dbg-c${S.stock[id] === v ? ' on' : ''}" data-k="stock" data-id="${id}" data-v="${v}" style="--c:${c}">${n} ×${v}</button>`).join('')).join('')}</div>` +
     `<div class="dbg-l">${$t("Кейсы")}</div><div class="dbg-g">${chip('freeCases', false, $t("По условиям"))}${chip('freeCases', true, $t("Без условий"))}</div>` +
@@ -89,6 +95,7 @@ $('dbgBody').addEventListener('click', e => {
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
   if (k === 'stock'){ S.stock[c.dataset.id] = +v; haptic(); renderDbg(); return; }
   if (k === 'onbNow'){ hideDrawer(); setTimeout(() => Onb.start(true), 300); return; }
+  if (k === 'pool'){ S.dbg.pool = v === 'true'; try { localStorage.setItem('bm-pool', S.dbg.pool ? '1' : '0'); } catch(_){} haptic(); renderDbg(); return; }
   if (k === 'noOnb'){ S.dbg.noOnb = v === 'true'; try { localStorage.setItem('bm-onb-off', S.dbg.noOnb ? '1' : '0'); } catch(_){} haptic(); renderDbg(); return; }
   if (k === 'super'){ S.dbg.ticket = SUPER.target; S.dbg.tier = -1; haptic(); renderDbg(); return; }
   S.dbg[k] = k === 'tier' ? +v : k === 'prevDelay' ? (v === 'null' ? null : +v) : k === 'fail' ? (v === 'null' ? null : v) : v === 'true';
@@ -262,21 +269,23 @@ $('craft').onclick = async () => {
   if (S.busy) return;
   if (total() <= 0){ strike(.25, REST + 6).then(settle); notify({ type: 'err', icon: 'coin', title: $t("Сначала сделай ставку"), text: S.demo ? $t("Добавь фантики кнопками внизу") : $t("Добавь GRAM или подарки кнопками внизу") }); haptic('rigid'); $('bet').animate([{ translate: '-6px 0' }, { translate: '6px 0' }, { translate: '0 0' }], { duration: 220, iterations: 2 }); return; }
   if (total() < BET_MIN || total() > BET_MAX){ haptic('rigid'); return notify({ type: 'err', icon: 'coin', title: total() < BET_MIN ? `${$t("Минимальная ставка {0} GRAM", BET_MIN)}` : `${$t("Максимальная ставка {0} GRAM", BET_MAX)}`, text: $t("С учётом подарков в крафте") }); }
-  if (!S.demo && S.ton > S.balance){ notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM"), text: `${$t("На балансе {0} GRAM", fmt(S.balance))}` }); haptic('rigid'); return; }
+  if (!S.demo && !S.pool && S.ton > S.balance){ notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM"), text: `${$t("На балансе {0} GRAM", fmt(S.balance))}` }); haptic('rigid'); return; }
   S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto);
   const stake = total(), used = S.gifts.slice(), tonStake = S.ton, fast = S.fast || S.lite;
+  const pool = S.pool; S.pool = null;   // складчина: ставка — банк пула, со своего баланса не списывается
   const pf = API.craft(stake, used, tonStake); pf.catch(() => {});   // ошибку разберём ниже, после анимации удара
-  if (S.ton > 0) moveBal(-S.ton);   // в демо — фантики: только всплывашка, настоящий баланс не трогается
+  if (S.ton > 0 && !pool) moveBal(-S.ton);   // в демо — фантики: только всплывашка, настоящий баланс не трогается
   if (fast){ Sfx.lock(); await strike(.8, REST + 10); INV = INV.filter(g => !used.includes(g)); S.gifts = []; await openFx(true); }
   else { INV = INV.filter(g => !used.includes(g)); S.gifts = []; await bigStrike(); }
+  if (pool){ S.ton = pool.prevTon; S.gifts = pool.prevGifts; }   // своя ставка на главном экране — как была до крафта на банк
   let r = null; try { r = await pf; } catch(_){}
   if (!r){                                                     // сбой: ставка возвращается, показываем экран неудачи
     if (tonStake > 0) moveBal(tonStake);
     INV = [...used, ...INV];
     notify({ type: 'err', icon: 'err', title: $t("Ошибка крафта"), text: S.demo ? $t("Попробуй ещё раз") : $t("Ставка и подарки вернулись — попробуй ещё раз") });
-    return failScreen('craft', { ton: tonStake, gifts: used });
+    return failScreen('craft', pool ? { ton: pool.prevTon, gifts: pool.prevGifts } : { ton: tonStake, gifts: used });
   }
-  r.gifts = used; r.tonStake = tonStake;
+  r.gifts = used; r.tonStake = tonStake; r.pool = !!pool;
   r.super = !S.demo && r.stake >= SUPER.min && r.ticket === SUPER.target ? { ...SUPER.nft } : null;   // загаданный тикет супер дропа
   r.superMiss = !r.super && r.ticket === SUPER.target;
   await reveal(r, fast);

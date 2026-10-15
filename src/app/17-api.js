@@ -27,6 +27,13 @@ const API = {
   async confirmDeposit(amount, boc){ track('deposit', { amount }); return { ok: true }; },
   /* POST /inventory/sell {gift_ids} → {balance}. Мок: сумма по оценке подарков */
   async sellNfts(list){ track('sell', { n: list.length }); return { ok: true, amount: Math.round(list.reduce((a, g) => a + g.value, 0) * 100) / 100 }; },
+  /* --- крафт в складчину (эксперимент, 16a-pool.js) --- */
+  /* GET /pool?fee_nano → открытый пул: {id, fee, commitment, state, seats, bank, entries[]} (чужие тикеты скрыты до розыгрыша) */
+  async poolOpen(fee){ track('pool_open', { fee }); return poolOpenMock(fee); },
+  /* POST /pool/join {fee_nano, guess} — взнос списывается сервером. Ответ {ok, pool} | {ok:false, error:'taken'|'closed'|'already'} */
+  async poolJoin(fee, guess){ track('pool_join', { fee }); return poolJoinMock(fee, guess); },
+  /* GET /pool/:id — состояние; после розыгрыша — тикет, победители и доказательство (domain 'pool', зерно раскрыто) */
+  async poolState(fee){ return poolStateMock(fee); },
 };
 
 /* ---------- аналитика: события воронки. Мок копит их в window.__pawnEvents; в бою — отправка на сервер/в счётчик ---------- */
