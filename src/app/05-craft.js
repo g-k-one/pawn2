@@ -139,7 +139,7 @@ S.demo = false;
 const swOn = (id, on) => { const el = document.querySelector(`#${id} .switch`); if (el) el.classList.toggle('on', on); };
 function toggleFast(){ S.fast = !S.fast; swOn('fastRow', S.fast); haptic(); LSset('bm-fast', S.fast); }
 function toggleVibro(){ S.vibro = !S.vibro; swOn('vibroRow', S.vibro); LSset('bm-vibro', S.vibro); haptic('medium'); }
-function toggleSound(){ S.sound = !S.sound; swOn('soundRow', S.sound); haptic(); LSset('bm-sound', S.sound); if (S.sound) Sfx.tick(.8); }
+function toggleSound(){ S.sound = !S.sound; swOn('soundRow', S.sound); haptic(); LSset('bm-sound', S.sound); }
 function applyLite(){ document.body.classList.toggle('lite', S.lite); document.body.classList.toggle('nogl', S.lite || !!S.noGL); }
 function setLite(on){
   S.lite = on; swOn('liteRow', on); LSset('bm-lite', on); applyLite(); haptic();
@@ -158,26 +158,45 @@ function setDemo(on){
             : { type: 'info', icon: 'coin', title: $t("Демо выключено"), text: $t("Снова играешь на GRAM") });
 }
 
-/* ---------- звук (WebAudio, синтез — без файлов). Включается в меню ---------- */
+/* ---------- звук: файлы assets/sfx (стиль «мягкая кузница», собраны tools/sfx-forge.mjs из Kenney CC0). Включается в меню ----------
+   Файлы грузятся при первом звуке (после первого касания — так требует iOS). Не успел загрузиться — звук пропускаем, а не играем с опозданием */
 const Sfx = (() => {
-  let ac = null;
-  const ctx = () => { if (!S.sound) return null; if (!ac){ try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(_){ return null; } } if (ac.state === 'suspended') ac.resume(); return ac; };
-  const env = (a, t, peak, dur) => { const g = a.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + .004); g.gain.exponentialRampToValueAtTime(.0001, t + dur); g.connect(a.destination); return g; };
-  const tone = (f, dur, peak = .08, type = 'sine', f2) => { const a = ctx(); if (!a) return; const t = a.currentTime, o = a.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur); o.connect(env(a, t, peak, dur)); o.start(t); o.stop(t + dur + .02); };
-  const noise = (dur, f, q, peak) => { const a = ctx(); if (!a) return; const t = a.currentTime, b = a.createBuffer(1, a.sampleRate * dur, a.sampleRate), d = b.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    const s = a.createBufferSource(), bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.setValueAtTime(f, t); bp.frequency.exponentialRampToValueAtTime(f * 3, t + dur); bp.Q.value = q;
-    s.buffer = b; s.connect(bp); bp.connect(env(a, t, peak, dur)); s.start(t); };
+  const NAMES = ['tap', 'tabs', 'drawer-open', 'drawer-close', 'bet', 'trash', 'hammer', 'drum-tick', 'drum-lock', 'win-gram', 'win-nft', 'jackpot', 'case', 'error', 'rank'];
+  let ac = null, out = null, last = 0, tapT = 0;
+  const bufs = {}, seen = {};
+  const ctx = () => {
+    if (!S.sound) return null;
+    if (!ac){ try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(_){ return null; }
+      out = ac.createGain(); out.gain.value = .9; out.connect(ac.destination);
+      NAMES.forEach(n => { bufs[n] = fetch(`assets/sfx/${n}.mp3`).then(r => r.arrayBuffer()).then(b => new Promise((ok, no) => ac.decodeAudioData(b, ok, no))).catch(() => null); }); }
+    if (ac.state === 'suspended') ac.resume();
+    return ac;
+  };
+  // rate — высота (1 = как в файле), vol — громкость 0…1
+  const play = (n, rate = 1, vol = 1) => { const a = ctx(); if (!a) return; const t0 = performance.now(); if (n !== 'tap') last = t0;
+    if ((n === 'error' || n === 'drum-lock') && t0 - (seen[n] || 0) < 300) return; seen[n] = t0;   // одно событие дважды подряд (уведомление об ошибке + экран сбоя, последняя цифра + итог) — звучит один раз
+    bufs[n].then(b => { if (!b || performance.now() - t0 > 250) return;
+      const s = a.createBufferSource(), g = a.createGain(); s.buffer = b; s.playbackRate.value = rate; g.gain.value = vol; s.connect(g); g.connect(out); s.start(); }); };
+  const st = semis => 2 ** (semis / 12);
   return {
-    // щелчок барабана; hi 0…1 — чем ближе следующий ранг, тем выше
-    tick: (p = 1, hi = 0) => tone(1500 + 350 * p + 1100 * hi, .022, .045 * p, 'square'),
-    lock: () => { tone(160, .16, .16, 'sine', 55); tone(2400, .03, .04, 'square'); },
-    whoosh: () => noise(.45, 300, .8, .1),
-    swipe: () => noise(.18, 900, 1.2, .05),
-    up: ti => { tone(260 + 70 * ti, .32, .09, 'sawtooth', 900 + 160 * ti); setTimeout(() => tone(1046 + 120 * ti, .25, .05, 'triangle'), 120); },
-    rank: ti => { const base = [392, 440, 523, 587, 659][ti]; [0, 4, 7, 12, 16].slice(0, 2 + ti).forEach((s, i) => setTimeout(() => tone(base * 2 ** (s / 12), .5, .07, 'triangle'), i * 90)); },
-    clang: () => { tone(1900, .7, .05, 'triangle'); tone(2870, .55, .035, 'sine'); tone(130, .3, .2, 'sine', 45); noise(.14, 2200, .7, .14); },
-    coin: () => { tone(1320, .08, .06, 'triangle'); setTimeout(() => tone(1760, .18, .06, 'triangle'), 70); },
+    // тап по кнопке — его зовёт haptic() без аргумента; если в том же нажатии прозвучал свой звук (вкладка, ставка…), тап не играет
+    tap: () => { if (!ctx()) return; const t = tapT = performance.now(); setTimeout(() => { if (t === tapT && Math.abs(last - t) > 40) play('tap'); }, 0); },   // ctx() — сразу, пока идёт касание (iOS)
+    tabs: () => play('tabs'),
+    open: () => play('drawer-open'),
+    close: () => play('drawer-close'),
+    bet: () => play('bet'),
+    trash: () => play('trash'),
+    hammer: () => play('hammer'),
+    // щелчок барабана; hi 0…1 — чем ближе следующий ранг, тем выше и громче
+    tick: (p = 1, hi = 0) => play('drum-tick', st(5 * hi), .55 + .45 * p),
+    lock: () => play('drum-lock'),
+    up: ti => play('drum-lock', st([0, 2, 4, 7, 9][ti] || 0)),   // шкала прорвалась в следующий ранг — ступенька вверх по ладу
+    gram: () => play('win-gram'),
+    nft: () => play('win-nft'),
+    jackpot: () => play('jackpot'),
+    chest: () => play('case'),
+    error: () => play('error'),
+    title: () => play('rank'),
   };
 })();
 
@@ -209,6 +228,7 @@ function notify(o){
   const type = o.type || 'info', c = o.color || NCOL[type] || NCOL.info, ms = o.ms || 3400, key = o.key || o.title + '|' + (o.text || '');   // одинаковые уведомления склеиваются; key — чтобы не склеивать
   const dup = [...notesEl.children].find(n => n.dataset.key === key && !n.classList.contains('bye'));
   if (dup){ dup.restart(); dup.animate([{ scale: 1.03 }, { scale: 1 }], { duration: 240 }); return; }
+  if (type === 'err') Sfx.error();
   const el = document.createElement('div'); el.className = 'note'; el.dataset.key = key; el.setAttribute('role', 'status');
   el.style.setProperty('--c', c); el.style.setProperty('--ms', ms + 'ms');
   el.innerHTML = `<span class="note-i${o.img ? ' img' : ''}">${o.img ? `<img src="${o.img}" alt="">` : svg(NICON[o.icon || type] || NICON.info)}</span>` +
@@ -265,7 +285,7 @@ $('craft').onclick = async () => {
   const stake = total(), used = S.gifts.slice(), tonStake = S.ton, fast = S.fast || S.lite;
   const pf = API.craft(stake, used, tonStake); pf.catch(() => {});   // ошибку разберём ниже, после анимации удара
   if (S.ton > 0) setBalance(S.balance - S.ton);
-  if (fast){ Sfx.lock(); await strike(.8, REST + 10); INV = INV.filter(g => !used.includes(g)); S.gifts = []; await openFx(true); }
+  if (fast){ Sfx.hammer(); await strike(.8, REST + 10); INV = INV.filter(g => !used.includes(g)); S.gifts = []; await openFx(true); }
   else { INV = INV.filter(g => !used.includes(g)); S.gifts = []; await bigStrike(); }
   let r = null; try { r = await pf; } catch(_){}
   if (!r){                                                     // сбой: ставка возвращается, показываем экран неудачи
@@ -287,7 +307,7 @@ async function openFx(fast, mode, glow){
   fx.classList.add('on');                                     // холст повторяет рамку панели — шов незаметен
   await wait(240);                                            // экран крафта полностью проявился поверх панели…
   document.body.classList.add('glowoff');                     // …и только теперь прячем рамку панели — двух рамок не видно
-  Sfx.whoosh(); haptic('medium');
+  Sfx.open(); haptic('medium');
   FullGlow.set(glow || NEUTRAL); FX.gainTo = .4;
   await tween(fast ? 280 : 440, k => FX.morph = k);           // рамка вытягивается на весь экран
   FX.cover = true;                                            // панель под экраном крафта не видна — её не рисуем
@@ -307,7 +327,7 @@ async function bigStrike(){
   const cbFade = CB.animate([{ opacity: 1, scale: 1 }, { opacity: 0, scale: .7 }], { duration: 180, easing: 'ease-in', fill: 'forwards' });
   fx.className = 'fx'; $('fxIn').style.opacity = 0; fx.style.setProperty('--tc', TIERS[S.tier].c);
   FullGlow.set(TIERS[S.tier].glow, true); FX.gain = 1; FX.gainTo = 1; FX.morph = 0; FX.on = true; FX.hot = true; FullGlow.resize();
-  fadeUI(true, 300); fx.classList.add('on'); Sfx.whoosh();
+  fadeUI(true, 300); fx.classList.add('on'); Sfx.open();
   FullGlow.set(NEUTRAL); FX.gainTo = .4;
   setTimeout(() => document.body.classList.add('glowoff'), 240);
   const grow = box.animate([{ transform: `translate(${dx}px,${dy}px) scale(${1 / 3})` }, { transform: 'none' }], { duration: 600, easing: 'cubic-bezier(.55,0,.15,1)', ...keep });
@@ -322,7 +342,7 @@ async function bigStrike(){
   await wait(70);
   await ham.animate([{ rotate: '60deg' }, { rotate: '-16deg' }], { duration: 110, easing: 'cubic-bezier(.7,0,1,.6)', ...keep }).finished;
   /* удар: звон, искры, наковальня приседает, экран и рамка вздрагивают */
-  Sfx.clang(); haptic('heavy'); FullGlow.punch(0, .9);
+  Sfx.hammer(); haptic('heavy'); FullGlow.punch(0, .9);
 
   box.querySelector('.fi-ring').animate([{ opacity: .9, transform: 'scale(.3)' }, { opacity: 0, transform: 'scale(1.9,1.4)' }], { duration: 520, easing: 'cubic-bezier(.2,.8,.3,1)' });
   box.querySelector('.fi-heat').animate([{ opacity: 0 }, { opacity: 1, offset: .12 }, { opacity: 0 }], { duration: 900, easing: 'ease-out' });
@@ -492,6 +512,8 @@ function spin(r, D, L){
     })(t0);
   });
 }
+// звук итога: джекпот, NFT, GRAM от «Удачи» и выше; «База» — только щелчок цифры, без праздника (она меньше ставки)
+const winSfx = r => r.ti === TIERS.length - 1 ? Sfx.jackpot() : r.nft ? Sfx.nft() : r.ti > 0 ? Sfx.gram() : null;
 async function reveal(r, fast){
   const fx = $('fx'), t = TIERS[r.ti], dg = $('digits'), pf = ticketToP(r.ticket);
   dg.className = 'digits run'; dg.style.removeProperty('--tc'); dg.style.setProperty('--ds', 1); dg.style.setProperty('--q', 0);
@@ -512,7 +534,7 @@ async function reveal(r, fast){
   D.forEach((d, i) => { d.sp.classList.remove('blur'); setTimeout(() => d.sp.classList.add('lock'), (4 - i) * 45); });
   rankLabel(r.ti, true); ladderSet(L, pf, 0);
   dg.classList.add('tiered'); dg.style.setProperty('--tc', t.c); dg.style.setProperty('--ds', 1); dg.style.setProperty('--q', 0);
-  FullGlow.set(t.glow); FullGlow.punch(0, .8); FX.gainTo = .8; Sfx.lock(); Sfx.rank(r.ti); haptic('heavy');
+  FullGlow.set(t.glow); FullGlow.punch(0, .8); FX.gainTo = .8; Sfx.lock(); winSfx(r); haptic('heavy');
   await wait(fast ? 380 : 950);
   showDrop(r);
 }
@@ -576,7 +598,7 @@ async function showDrop(r){
   await pickNft(r); r.nftReady = true;
   const sk = $('fxDrop').firstElementChild;
   if (sk && !S.lite) await sk.animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(.9)' }], { duration: 220, easing: 'ease-in', fill: 'forwards' }).finished;
-  fillDrop(r); haptic('heavy'); Sfx.rank(r.ti);
+  fillDrop(r); haptic('heavy'); winSfx(r);
   if (!S.lite){ ['fxWin', 'fxBtns'].forEach((id, i) => $(id).animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 120 + i * 120, easing: 'cubic-bezier(.25,.9,.3,1)', fill: 'backwards' })); burst(); }
 }
 function burst(){
@@ -597,7 +619,7 @@ async function finish(r, how){
   else if (!r.nft) add = r.win;
   else if (how === 'sell') add += r.nft.value;
   else INV = [{ ...r.nft, id: 'g' + Date.now() }, ...INV];
-  haptic('medium'); if (add > 0) Sfx.coin();
+  haptic('medium'); if (add > 0) (r.nft && how === 'sell' ? Sfx.gram() : Sfx.bet());
   if (!S.demo){ API.claimCraft(r, how); logCraft(r, how); bumpTasks(r); addXp(r.stake * .5); setTimeout(checkAch, 1200); }
   renderBet();
   if (r.super){                                               // приз крафта получен — и сверху ещё супер дроп
@@ -631,7 +653,7 @@ function failScreen(kind, ctx){
   const back = craft ? (S.demo ? $t("Фантики остались на месте") : $t("Ставка вернулась на баланс")) : (ctx.c.price ? `${fmt(ctx.c.price)} ${$t("GRAM вернулись на баланс")}` : $t("Кейс остался доступным"));
   $('fxWin').innerHTML = `<b class="failt">${craft ? $t("Крафт не удался") : $t("Кейс не открылся")}</b>${craft ? '' : `<span class="failtk">${$t("тикет 00000")}</span>`}<span>${back}</span>`;
   $('fxBtns').innerHTML = `<button class="btn-main" id="failRetry">${$t("Попробовать ещё раз")}</button><button class="btn-ghost" id="failBack">${$t("Вернуться")}</button>`;
-  FullGlow.set(glowOf('#FF4C35')); FullGlow.punch(0, .5); FX.gainTo = .6; Sfx.lock(); haptic('rigid');
+  FullGlow.set(glowOf('#FF4C35')); FullGlow.punch(0, .5); FX.gainTo = .6; Sfx.error(); haptic('rigid');
   fx.classList.add('done'); setTimeout(() => { FX.hot = false; }, 900);
   const free = () => { CRAFT.classList.remove('busy'); S.busy = false; };
   const restoreBet = () => { if (craft){ S.ton = ctx.ton; S.gifts = ctx.gifts.filter(g => INV.includes(g)); renderBet(); } };
@@ -651,12 +673,12 @@ async function superStage(r){
   $('fxBtns').innerHTML = `<button class="btn-main" id="sdSell">${$t("Продать за {0} GRAM", fmt(g.value))}</button><button class="btn-ghost" id="sdTake">${$t("Забрать")}</button>`;
   ids.forEach(id => $(id).getAnimations().forEach(a => a.cancel()));
   if (!S.lite) ids.forEach((id, i) => $(id).animate([{ opacity: 0, transform: id === 'fxDrop' ? 'scale(.7)' : 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 520, delay: i * 120, easing: 'cubic-bezier(.25,1.3,.4,1)', fill: 'backwards' }));
-  FullGlow.set(glowOf('#EB57B0')); FullGlow.punch(0, 1); FX.hot = true; Sfx.rank(4); haptic('heavy');
+  FullGlow.set(glowOf('#EB57B0')); FullGlow.punch(0, 1); FX.hot = true; Sfx.jackpot(); haptic('heavy');
   if (!S.lite) setTimeout(burst, 200);
   setTimeout(() => { FX.hot = false; }, 1400);
   let on = false;
   const take = async how => {
-    if (on) return; on = true; haptic('medium'); Sfx.coin();
+    if (on) return; on = true; haptic('medium'); how === 'sell' ? Sfx.gram() : Sfx.bet();
     if (how === 'take') INV = [{ ...g, id: 'sd' + Date.now() }, ...INV];
     SUPER.last.unshift(['gk', g.nft.name, $t("только что")]); newSuper();
     await closeFx();

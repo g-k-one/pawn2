@@ -44,7 +44,7 @@ function renderWallet(){
   }
   walletBtn(); fitAmt(); fitCards($('onft'), 104, 10);
 }
-$('walletTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; walletTab = t.dataset.k; outSel = new Set(); haptic(); renderWallet(); });
+$('walletTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; walletTab = t.dataset.k; outSel = new Set(); Sfx.tabs(); haptic(); renderWallet(); });
 /* общие действия: партнёр, релеер */
 function relayerFlow(){
   haptic();
@@ -110,7 +110,7 @@ $('walletGo').onclick = async () => {
     btn.disabled = false; btn.classList.remove('wait'); hideDrawer();   // в бою баланс зачисляет бэкенд после подтверждения в сети
     if (!(await API.confirmDeposit(depAmount, tx?.boc)).ok) return notify({ type: 'err', icon: 'err', title: $t("Пополнение не прошло"), text: $t("Если GRAM списались — они придут после подтверждения в сети") });
     S.hist.wallet.unshift({ type: 'dep', t: Date.now(), amount: depAmount, method: S.wallet.name });
-    setTimeout(() => { setBalance(S.balance + depAmount); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(depAmount)} GRAM`, text: `${$t("Пополнение с")} ${S.wallet.name}` }); checkAch(); }, 250);
+    setTimeout(() => { setBalance(S.balance + depAmount); Sfx.gram(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(depAmount)} GRAM`, text: `${$t("Пополнение с")} ${S.wallet.name}` }); checkAch(); }, 250);
   } else {
     const list = INV.filter(g => outSel.has(g.id)), fee = Math.round(list.length * OUT_FEE * 100) / 100;
     if (!list.length){ haptic('rigid'); btn.animate([{ translate: '-5px 0' }, { translate: '5px 0' }, { translate: '0 0' }], { duration: 200, iterations: 2 }); return; }

@@ -22,15 +22,15 @@ const tonCap = () => Math.max(0, r2(Math.min(BET_MAX - giftSum(), S.demo ? Infin
 document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => {
   if (S.busy) return;
   const cap = tonCap();
-  if (S.ton >= cap){ haptic('rigid'); $('bet').animate([{ translate: '-5px 0' }, { translate: '5px 0' }, { translate: '0 0' }], { duration: 200, iterations: 2 });
+  if (S.ton >= cap){ haptic('rigid'); Sfx.error(); $('bet').animate([{ translate: '-5px 0' }, { translate: '5px 0' }, { translate: '0 0' }], { duration: 200, iterations: 2 });
     return notify(cap >= BET_MAX - giftSum() ? { type: 'warn', icon: 'coin', title: `${$t("Максимальная ставка {0} GRAM", BET_MAX)}`, text: $t("С учётом подарков в крафте") } : { type: 'warn', icon: 'coin', title: $t("Это весь баланс"), text: `${$t("На балансе {0} GRAM", fmt(S.balance))}` }); }
-  S.ton = Math.min(cap, Math.round((S.ton + +b.dataset.add) * 100) / 100); haptic(); renderBet(true);
+  S.ton = Math.min(cap, Math.round((S.ton + +b.dataset.add) * 100) / 100); Sfx.bet(); haptic(); renderBet(true);
 });
 // после крафта: если ставка больше баланса или лимита — ставим всё, что можно
 function fitBet(){ if (S.ton > tonCap()){ S.ton = tonCap(); renderBet(true); } }
 // корзина: сначала убирает GRAM из ставки (подарки остаются), следующее нажатие — подарки.
 // Отдельный подарок убирается тапом по его карточке
-$('trash').onclick = () => { if (S.busy) return; if (S.ton > 0) S.ton = 0; else S.gifts = []; haptic('medium'); renderBet(true); };
+$('trash').onclick = () => { if (S.busy) return; if (S.ton > 0) S.ton = 0; else S.gifts = []; haptic('medium'); Sfx.trash(); renderBet(true); };
 /* ---------- NFT-карточка ---------- */
 const SKINS = ['Neon', 'Cactus', 'Midnight', 'Sakura', 'Gold Rush', 'Frost', 'Toxic', 'Ruby', 'Aurora', 'Onyx', 'Bubblegum', 'Lava'];
 /* карточка NFT в духе Telegram: номер сверху, картинка, цена в теле карты. big — карточка выигрыша: коллекция, скин, номер */
@@ -66,10 +66,11 @@ function renderSlots(){
 /* ---------- шторки ---------- */
 let openDrawer = null, drawerStack = [];   // стек шторок: из бонусов можно вернуться в меню
 function showDrawer(id){
-  openDrawer = $(id); openDrawer.classList.add('open'); $('backdrop').classList.add('on'); haptic();
+  openDrawer = $(id); openDrawer.classList.add('open'); $('backdrop').classList.add('on'); Sfx.open(); haptic();
 }
 function hideDrawer(){
   if (!openDrawer) return;
+  Sfx.close();
   openDrawer.classList.remove('open'); openDrawer.style.transform = ''; $('backdrop').classList.remove('on'); openDrawer = null;
   drawerStack = []; document.querySelectorAll('.dr-back').forEach(b => b.remove());
 }
@@ -156,7 +157,7 @@ $('inv').addEventListener('click', e => {
   else if (S.gifts.length >= MAX_GIFTS){ c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); notify({ type: 'warn', icon: 'gift', title: $t("Максимум 2 подарка"), text: $t("Убери один, чтобы выбрать другой") }); haptic('rigid'); return; }
   else if (giftSum() + g.value > BET_MAX){ c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); haptic('rigid');
     return notify({ type: 'warn', icon: 'gift', title: `${$t("Максимальная ставка {0} GRAM", BET_MAX)}`, text: $t("С этим подарком крафт выйдет дороже лимита") }); }
-  else { S.gifts = [...S.gifts, g]; if (S.ton > tonCap()){ S.ton = tonCap(); notify({ type: 'info', icon: 'coin', title: $t("GRAM в ставке уменьшены"), text: `${$t("Вся ставка — не больше {0} GRAM", BET_MAX)}` }); } }
+  else { S.gifts = [...S.gifts, g]; Sfx.bet(); if (S.ton > tonCap()){ S.ton = tonCap(); notify({ type: 'info', icon: 'coin', title: $t("GRAM в ставке уменьшены"), text: `${$t("Вся ставка — не больше {0} GRAM", BET_MAX)}` }); } }
   haptic(); c.classList.toggle('sel', S.gifts.includes(g)); updSel();
   renderBet('gift');
 });
@@ -181,7 +182,7 @@ $('giftsF').addEventListener('click', e => {
     const list = INV.filter(g => sellSel.has(g.id));
     API.sellNfts(list).then(({ ok, amount: sum }) => { if (!ok) return notify({ type: 'err', icon: 'err', title: $t("Продажа не прошла"), text: $t("Подарки остались в инвентаре") });
     INV = INV.filter(g => !list.includes(g)); S.gifts = S.gifts.filter(g => INV.includes(g));
-    setBalance(S.balance + sum); haptic('medium'); Sfx.coin();
+    setBalance(S.balance + sum); haptic('medium'); Sfx.gram();
     S.hist.wallet.unshift({ type: 'sell', t: Date.now(), amount: sum, name: list.length > 1 ? `${list.length} NFT` : list[0].nft.name, img: list[0].nft.src, bg: [list[0].a, list[0].b], method: $t("продажа") });
     notify({ type: 'ok', img: list[0].nft.src, color: '#12D53D', title: `${$t("Продано: +{0} GRAM", fmt(sum))}`, text: list.length > 1 ? `${list.length} ${$n("подарок|подарка|подарков", list.length)}` : list[0].nft.name });
     sellMode = false; sellSel.clear(); renderInv(); giftsFoot(); renderBet(); });
