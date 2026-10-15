@@ -242,3 +242,6 @@ if (!S.lite && !LS('bm-lite-asked', false)) setTimeout(() => { let n = 0, t0 = 0
     if (now - t0 < 4000) return requestAnimationFrame(probe);
     if (n / ((now - t0) / 1000) < 40 && !S.lite){ LSset('bm-lite-asked', true); notify({ type: 'warn', icon: 'leaf', ms: 8000, title: $t("Телефону тяжеловато"), text: $t("Включить экономный режим без анимаций?"), action: { label: $t("Да"), fn: () => setLite(true) } }); }
   })(performance.now()); }, 2500);
+
+// приложение дошло до конца запуска — ловушка в boot.js проверяет этот флаг
+window.APP_OK = 1;

@@ -1,5 +1,21 @@
 /* загрузчик: картинки подарков берём с CDN changes.tg по одной, по мере надобности. Если CDN недоступен
    (например, в просмотрщике artifact внешние картинки закрыты) — подтягиваем запасные JSON со всеми картинками */
+/* ловушка ошибок запуска: если приложение упало или не стартовало, на экране — красная плашка с текстом ошибки.
+   Нужна для iPhone/Telegram «Reload Page», где после перезагрузки код не запускался, а консоли на телефоне нет */
+(() => {
+  // ошибки только копим; плашку показываем, лишь если приложение так и не запустилось (window.APP_OK) —
+  // не загрузившийся, например, TON Connect работе не мешает, и пугать им не надо
+  const list = [];
+  const show = m => { if (m) list.push(m); if (window.APP_OK || !window.bootDone) return; let b = document.getElementById('oops');
+    if (!b){ b = document.createElement('div'); b.id = 'oops'; b.style.cssText = 'position:fixed;left:8px;right:8px;top:110px;z-index:99999;padding:10px 12px;border-radius:14px;background:#ff4c35;color:#fff;font:600 13px/1.35 system-ui,sans-serif;word-break:break-word;white-space:pre-wrap'; document.body.appendChild(b); }
+    b.textContent = 'Ошибка запуска\n' + list.join('\n') + '\n' + location.origin + location.pathname + ' · search ' + location.search.length + ' · hash ' + location.hash.length +
+      ' · TG ' + !!window.Telegram + ' · proxy ' + !!window.TelegramWebviewProxy + ' · ' + innerWidth + '×' + innerHeight; };
+  window.bootOops = show;
+  addEventListener('error', e => { const t = e.target;
+    if (t && t !== window && t.tagName !== 'SCRIPT') return;                        // картинки, которые не загрузились, — не ошибка запуска
+    show(t && t.tagName === 'SCRIPT' ? 'не загрузился скрипт ' + (t.src || '') : (e.message || 'error') + ' @' + e.lineno + ':' + e.colno + (e.error && e.error.stack ? '\n' + String(e.error.stack).slice(0, 300) : '')); }, true);
+  addEventListener('unhandledrejection', e => show('promise: ' + (e.reason && (e.reason.message || e.reason))));
+})();
 (async () => {
   const bar = document.getElementById('bootBar'), set = k => { if (bar) bar.style.width = (k * 100).toFixed(0) + '%'; };
   async function load(url, w0, w1){
@@ -24,5 +40,6 @@
     blobs(m, GIMG); blobs(s, GSYM);
   } catch (e){ console.warn('gift images not loaded', e); }
   const app = document.createElement('script'); app.textContent = document.getElementById('app').textContent; document.body.appendChild(app);
+  setTimeout(() => { if (!window.APP_OK){ window.bootDone = 1; window.bootOops('приложение не запустилось (нет APP_OK через 4 с)'); } }, 4000);
   const b = document.getElementById('boot'); b.classList.add('off'); setTimeout(() => b.remove(), 500);
 })();
