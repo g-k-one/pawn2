@@ -36,7 +36,7 @@ function claimAch(id, btn){
   const [, t, rw, ok, act, prog] = a;
   btn.classList.add('wait'); btn.textContent = $t("Проверяем…");
   setTimeout(() => {
-    if (ok()){ S.ach.got[id] = 1; grant(rw); logReward('ach', t, rw); haptic('medium'); Sfx.coin(); notify({ type: 'ok', icon: 'ok', color: '#12D53D', title: $t("Достижение получено"), text: `${t} · ${rewText(rw)}` }); }
+    if (ok()){ S.ach.got[id] = 1; grant(rw); logReward('ach', id, rw); haptic('medium'); Sfx.coin(); notify({ type: 'ok', icon: 'ok', color: '#12D53D', title: $t("Достижение получено"), text: `${t} · ${rewText(rw)}` }); }
     else { haptic('rigid'); const pr = prog ? prog() : null; notify({ type: 'warn', icon: 'info', title: $t("Ещё не выполнено"), text: pr ? `${t}${$t(": {0} из", xpFmt(pr[0]))} ${xpFmt(pr[1])}` : t });
       if (act === 'sub'){ tgOpen('https://t.me/pawnd'); setTimeout(() => { S.ach.subscribed = true; }, 1500); }
       if (act === 'relayer') relayerFlow(); }

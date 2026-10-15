@@ -20,7 +20,7 @@ function pfHTML(r){
     `<div class="pfc" data-k="rule"><i></i><div><b>${$t("Приз выдан по правилам")}</b><p>${rng}</p><em>${$t("ждёт проверки")}</em></div></div>` +
     (r.manual ? `<p class="pfnote">${$t("Дебаг: тикет задан вручную, поэтому проверка не сойдётся. Это нормально.")}</p>` : r.debug ? `<p class="pfnote">${$t("Дебаг: исход выбран в настройках, ключ сервера подобран перебором — проверка сходится.")}</p>` : '') +
     (P.server_seed ? '' : `<p class="pfnote pf-pend">${$t("Зерно этой эпохи ещё не раскрыто — без него игру не проверить. Раскрытие сменит твой ключ и начнёт новую эпоху.")}</p>`) +
-    `<button class="btn-main pf-check">${P.server_seed ? $t("Проверить здесь") : $t("Раскрыть зерно и проверить")}</button><button class="btn-ghost pf-copy">${$t("Скачать доказательство")}</button>` + PF_EXT +
+    `<button class="btn-main pf-check">${P.server_seed ? $t("Проверить здесь") : $t("Раскрыть зерно и проверить")}</button><button class="btn-ghost pf-copy">${$t("Скопировать доказательство")}</button>` + PF_EXT +
     `<details class="rules pftech"><summary>${$t("Технические данные")}</summary><div>${tech}</div></details>`;
 }
 function bindPF(root, r){
@@ -41,20 +41,16 @@ function bindPF(root, r){
     const all = Object.values(res).every(Boolean);
     btn.classList.remove('wait'); btn.classList.add(all ? 'done' : 'bad'); btn.textContent = all ? $t("Всё честно ✓") : $t("Проверка не сошлась");
   };
-  root.querySelector('.pf-copy').onclick = () => saveJson(`pawn-proof-${r.proof.reference}.json`, r.proof, $t("Доказательство"));
+  root.querySelector('.pf-copy').onclick = () => copyJson(r.proof, $t("Доказательство"));
 }
-/* сохранить JSON: в просмотрщике Claude — через его загрузки, в обычном браузере — файлом; всегда ещё и в буфер.
-   В Telegram файл из blob не скачать — только буфер; в бою файл отдаёт бэкенд по ссылке через Telegram.WebApp.downloadFile */
-const DL = window.claude?.use ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
-async function saveJson(name, obj, what){
-  const txt = JSON.stringify(obj, null, 2); let saved = false; haptic();
-  try { navigator.clipboard.writeText(txt).catch(() => {}); } catch(_){}
-  if (!window.Telegram?.WebApp?.initData){
-    if (window.claude){ const dl = await DL; if (dl){ try { await dl.save({ filename: name, data: txt }); saved = true; } catch(_){} } }
-    else try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'application/json' })); a.download = name;
-      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); saved = true; } catch(_){}
-  }
-  notify({ type: 'ok', icon: 'ok', title: saved ? `${what}${$t(": файл сохранён")}` : `${what} ${$t("скопировано")}`, text: saved ? `${name} ${$t("· JSON ещё и в буфере")}` : $t("Вставь JSON на сайте проверки") });
+/* скопировать JSON доказательства или подтверждения в буфер — его вставляют на сайте проверки.
+   Старые WebView без navigator.clipboard — через скрытое поле и execCommand */
+async function copyJson(obj, what){
+  haptic(); const txt = JSON.stringify(obj, null, 2); let ok = false;
+  try { await navigator.clipboard.writeText(txt); ok = true; } catch(_){}
+  if (!ok) try { const t = document.createElement('textarea'); t.value = txt; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select(); ok = document.execCommand('copy'); t.remove(); } catch(_){}
+  notify(ok ? { type: 'ok', icon: 'ok', title: `${what} ${$t("скопировано")}`, text: $t("Вставь JSON на сайте проверки") }
+            : { type: 'err', icon: 'err', title: $t("Не удалось скопировать"), text: $t("Разреши доступ к буферу обмена и попробуй ещё раз") });
 }
 function openPF(r = S.lastFair){
   if (!r){ $('pfBody').innerHTML = `<p class="muted">${$t("Сделай первый крафт — здесь появятся данные для проверки.")}</p>`; showDrawer('pfDrawer'); return; }
@@ -92,14 +88,14 @@ function renderPFInfo(){
     `<div class="pfi-t">${$t("Тикет и ранги")}</div><p class="pfi-p">${$t("Каждая игра даёт тикет — число от 0 до 99 999. В какой диапазон он попал, такой и ранг. Шанс ранга — ровно доля его диапазона.")}</p>` +
     `<div class="rng">${TIERS.map(t => `<div style="--c:${t.c}"><b>${t.name}</b><span>${tk(t.from)} – ${tk(t.to)}</span><em>${t.chance}%</em></div>`).join('')}</div>` +
     `<div class="pfi-t">${$t("Текущая эпоха")}</div><p class="pfi-p">${$t("Зерно сервера загадано заранее — вот его отпечаток. Все игры эпохи считаются от него. Сохрани подтверждение сейчас: после раскрытия сайт проверки сверит его с доказательством.")}</p>` +
-    `<div class="pf-row"><small>${$t("Commitment · игр в эпохе:")} <span id="epN">…</span></small><code id="nextHash">…</code></div><button class="btn-ghost" id="saveReceipt">${$t("Сохранить подтверждение")}</button>` +
+    `<div class="pf-row"><small>${$t("Commitment · игр в эпохе:")} <span id="epN">…</span></small><code id="nextHash">…</code></div><button class="btn-ghost" id="saveReceipt">${$t("Скопировать подтверждение")}</button>` +
     `<div class="pfi-t">${$t("Твой ключ")}</div><div class="cseed"><code id="cseedV">${S.clientSeed}</code></div>` +
     `<p class="pfi-p" style="margin-top:10px">${$t("Смена ключа раскрывает зерно текущей эпохи — все её игры можно проверить — и начинает новую эпоху с новым хешем.")}</p><button class="btn-ghost" id="cseedNew">${$t("Сменить ключ и раскрыть зерно")}</button>` +
     `<details class="rules"><summary>${$t("Формула для разработчиков")}</summary><ol><li>${$t("Ключ HMAC-SHA256 — 32 байта server seed, сообщение — JSON [\"pawn-pf-v1\", эпоха, домен, client seed, nonce, блок]")}</li><li>${$t("Из хеша по очереди берутся восемь 32-битных чисел; первое меньше 4 294 900 000 по модулю 100 000 = тикет")}</li><li>${$t("Не подошло ни одно — номер блока +1")}</li><li>${$t("SHA-256(server seed) должен совпасть с отпечатком, показанным до игры")}</li></ol></details>` +
     `<div class="pfi-btns"><button class="btn-main" id="pfiLast">${$t("Проверить последний крафт")}</button><button class="btn-ghost" id="pfiHist">${$t("Вся история")}</button></div>` + PF_EXT;
   const epFill = () => epochP.then(e => { if (!$('nextHash')) return; $('nextHash').textContent = e.commitment; $('epN').textContent = e.proofs.length; $('cseedV').textContent = S.clientSeed; });
   epFill();
-  $('saveReceipt').onclick = async () => { const rc = await API.receipt(); saveJson(`pawn-receipt-${rc.epoch_id.slice(0, 8)}.json`, rc, $t("Подтверждение")); };
+  $('saveReceipt').onclick = async () => { const rc = await API.receipt(); copyJson(rc, $t("Подтверждение")); };
   $('cseedNew').onclick = async () => { if (S.busy) return; haptic('medium'); const e = await API.rotateSeed(); epFill();
     notify({ type: 'ok', icon: 'ok', title: $t("Зерно раскрыто"), text: `${$t("Игр в эпохе: {0} — их можно проверить. Новый хеш уже загадан, сохрани подтверждение", e.proofs.length)}` }); };
   $('pfiLast').onclick = () => swapDrawer('pfDrawer', () => { const r = S.lastFair || S.hist.crafts[0]?.r; if (r){ $('pfBody').innerHTML = pfHTML(r); bindPF($('pfBody'), r); } });

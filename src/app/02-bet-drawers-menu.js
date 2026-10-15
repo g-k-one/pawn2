@@ -28,7 +28,9 @@ document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => {
 });
 // после крафта: если ставка больше баланса или лимита — ставим всё, что можно
 function fitBet(){ if (S.ton > tonCap()){ S.ton = tonCap(); renderBet(true); } }
-$('trash').onclick = () => { if (S.busy) return; S.ton = 0; S.gifts = []; haptic('medium'); renderBet(true); };
+// корзина: сначала убирает GRAM из ставки (подарки остаются), следующее нажатие — подарки.
+// Отдельный подарок убирается тапом по его карточке
+$('trash').onclick = () => { if (S.busy) return; if (S.ton > 0) S.ton = 0; else S.gifts = []; haptic('medium'); renderBet(true); };
 /* ---------- NFT-карточка ---------- */
 const SKINS = ['Neon', 'Cactus', 'Midnight', 'Sakura', 'Gold Rush', 'Frost', 'Toxic', 'Ruby', 'Aurora', 'Onyx', 'Bubblegum', 'Lava'];
 /* карточка NFT в духе Telegram: номер сверху, картинка, цена в теле карты. big — карточка выигрыша: коллекция, скин, номер */

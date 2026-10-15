@@ -332,7 +332,6 @@
  "Сделать 5000 крафтов": "Make 5000 crafts",
  "Сделать первый крафт": "Make your first craft",
  "Сервер загадывает результат секретным ключом и сразу показывает тебе его «отпечаток» — короткий код. По отпечатку ключ не угадать, но и подменить ключ потом не выйдет.": "The server commits to the result with a secret key and shows you its fingerprint — a short code. The key can't be guessed from it, and it can't be swapped later.",
- "Скачать доказательство": "Download proof",
  "Сколько раз": "How many times",
  "Скоро будет": "Coming soon",
  "Случайно": "Random",
@@ -341,7 +340,6 @@
  "Сначала напиши": "First message",
  "Сначала сделай ставку": "Place a bet first",
  "Снова играешь на GRAM": "Playing with GRAM again",
- "Сохранить подтверждение": "Save receipt",
  "Сразу": "Instant",
  "Ссылка скопирована": "Link copied",
  "Ставка": "Bet",
@@ -486,8 +484,6 @@
  "Ранг «{0}» — это тикеты от {1} до {2}. Тикет {3} внутри — значит, ранг и множитель x{4} верные.": "Tier “{0}” covers tickets {1} to {2}. Ticket {3} is inside, so the tier and multiplier x{4} are correct.",
  "Ключ сервера + твой ключ + номер игры ({0}) по открытой формуле дают тикет {1}.": "Server key + your key + game number ({0}) give ticket {1} via the open formula.",
  "Игр в эпохе: {0} · новый хеш уже загадан": "Games in epoch: {0} · new hash already committed",
- ": файл сохранён": ": file saved",
- "· JSON ещё и в буфере": "· JSON is also in clipboard",
  "Ключ HMAC-SHA256 — 32 байта server seed, сообщение — JSON [\"pawn-pf-v1\", эпоха, домен, client seed, nonce, блок]": "HMAC-SHA256 key is the 32-byte server seed, message is JSON [\"pawn-pf-v1\", epoch, domain, client seed, nonce, block]",
  "Игр в эпохе: {0} — их можно проверить. Новый хеш уже загадан, сохрани подтверждение": "Games in epoch: {0} — you can verify them. New hash is already committed, save the receipt",
  "10% от депозита @": "10% of deposit @",
@@ -548,5 +544,9 @@
  "5% от активности друзей. Начисляется само — каждый день в 00:00 МСК": "5% of friends’ activity. Credited automatically every day at 00:00 MSK",
  "Забирай бонус 10% на первый деп:": "Grab a 10% bonus on your first deposit:",
  "Забирай бонус 10% на первый деп по ссылке": "Grab a 10% bonus on your first deposit via the link",
- "Начисляется само в 00:00 МСК": "Credited automatically at 00:00 MSK"
+ "Начисляется само в 00:00 МСК": "Credited automatically at 00:00 MSK",
+ "Скопировать доказательство": "Copy proof",
+ "Скопировать подтверждение": "Copy receipt",
+ "Не удалось скопировать": "Couldn’t copy",
+ "Разреши доступ к буферу обмена и попробуй ещё раз": "Allow clipboard access and try again"
 }

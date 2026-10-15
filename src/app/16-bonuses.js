@@ -226,7 +226,7 @@ syncBalBtn();
   S.hist.wallet.push({ type: 'dep', t: Date.now() - 26 * 3600000, amount: 250, method: 'Tonkeeper' }, { type: 'nft', t: Date.now() - 50 * 3600000, name: NFTS[40].name, img: NFTS[40].src, bg: NFTS[40].bg, value: NFTS[40].price, method: $t("в Telegram · комиссия 0.3 GRAM") },
     { type: 'nftin', t: Date.now() - 74 * 3600000, name: NFTS[12].name, img: NFTS[12].src, bg: NFTS[12].bg, value: NFTS[12].price, method: '@pawngift' },
     { type: 'dep', t: Date.now() - 98 * 3600000, amount: 150, method: 'Telegram Wallet' });
-  S.hist.rewards.push({ kind: 'task', title: TASKS[0][1], rw: TASKS[0][3], t: Date.now() - 3 * 3600000 });   // утреннее задание уже выполнено
+  S.hist.rewards.push({ kind: 'task', id: TASKS[0][0], rw: TASKS[0][3], t: Date.now() - 3 * 3600000 });   // утреннее задание уже выполнено
   checkAch(true);                                          // то, что уже было сделано, отмечаем без наград
 })();
 

@@ -2,7 +2,11 @@
    ИСТОРИЯ: крафты, кейсы, кошелёк, статистика
    ========================================================= */
 S.hist = { crafts: [], cases: [], wallet: [], refs: [], rewards: [] };
-const logReward = (kind, title, rw) => S.hist.rewards.unshift({ kind, title, rw, t: Date.now() });   // награды заданий и достижений
+// награды заданий и достижений: храним id, а название берём при показе — на текущем языке
+const logReward = (kind, id, rw) => S.hist.rewards.unshift({ kind, id, rw, t: Date.now() });
+// текст, сохранённый раньше на одном языке, показываем на текущем: русский ключ → $t, английский → ищем его русский ключ
+const retitle = s => { if (!s || EN[s]) return $t(s || ''); const k = Object.keys(EN).find(k => EN[k] === s); return k ? $t(k) : s; };
+const rewardTitle = x => x.id ? ((x.kind === 'task' ? TASKS : ACH).find(a => a[0] === x.id) || [, x.id])[1] : retitle(x.title);
 // начисления за друзей: 5% от активности — каждый день в 00:00 МСК, 10% от первого депозита друга — сразу
 (() => { const day = 864e5, mid = new Date(); mid.setHours(0, 0, 0, 0);
   [.84, 1.12, .37, 2.05, .66, .91, 1.48].forEach((v, i) => S.hist.refs.push({ type: 'act', t: mid - i * day, amount: v, n: 7 - (i > 3 ? 2 : 0) }));
@@ -36,13 +40,13 @@ function renderHist(detail){
   } else if (histTab === 'rewards'){
     const L = S.hist.rewards;
     b.innerHTML = L.length ? L.map(x => { const g = x.rw.g != null, c = g ? '#30A5FF' : '#F57A37';
-      return `<div class="hcard w" style="--c:${c}">${hpic(g ? 'assets/gem-small.svg' : 'assets/xp.webp')}<span class="hk-v"><b>${x.title}</b><small>${x.kind === 'task' ? $t("Задание дня") : $t("Достижение")} · ${tAgo(x.t)}</small></span>` +
+      return `<div class="hcard w" style="--c:${c}">${hpic(g ? 'assets/gem-small.svg' : 'assets/xp.webp')}<span class="hk-v"><b>${rewardTitle(x)}</b><small>${x.kind === 'task' ? $t("Задание дня") : $t("Достижение")} · ${tAgo(x.t)}</small></span>` +
         `<b class="hk-amt" style="color:${c}">${g ? '+' + fmt(x.rw.g) + ' GRAM' : '+' + x.rw.xp + ' XP'}</b></div>`; }).join('') : `<p class="hempty">${$t("Наград пока нет")}</p>`;
   } else if (histTab === 'wallet'){
     const L = S.hist.wallet, lab = { dep: $t("Пополнение"), nftin: $t("Депозит NFT"), nft: $t("Вывод NFT"), sell: $t("Продажа NFT"), restore: $t("Восстановление дня") };
     b.innerHTML = L.length ? L.map(w => { const dep = w.type === 'dep' || w.type === 'sell' || w.type === 'nftin', c = dep ? '#12D53D' : '#F57A37';
       return `<div class="hcard w" style="--c:${c}">${w.img ? hpic(w.img, w.bg) : `<span class="hk-ic">${svg(w.type === 'restore' ? '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M9.5 15l2 2 3.5-4"/>' : dep ? '<path d="M12 5v14M5 12l7 7 7-7"/>' : '<path d="M12 19V5M5 12l7-7 7 7"/>')}</span>`}` +
-        `<span class="hk-v"><b>${w.name || lab[w.type]}</b><small>${w.name ? lab[w.type] + ' · ' : ''}${w.status && w.status !== $t("выполнено") ? `<i class="pend">${w.status}</i> · ` : ''}${tAgo(w.t)}</small></span>` +
+        `<span class="hk-v"><b>${w.name || lab[w.type]}</b><small>${w.name ? lab[w.type] + ' · ' : ''}${w.status && retitle(w.status) !== $t("выполнено") ? `<i class="pend">${retitle(w.status)}</i> · ` : ''}${tAgo(w.t)}</small></span>` +
         `<b class="hk-amt" style="color:${c}">${w.amount != null ? (dep ? '+' : '−') + fmt(w.amount) + ' GRAM' : w.value ? '≈' + fmt(w.value) + ' GRAM' : 'NFT'}</b></div>`; }).join('') : `<p class="hempty">${$t("Операций пока нет")}</p>`;
   } else {
     const C = S.hist.crafts, n = C.length, staked = C.reduce((a, c) => a + c.r.stake, 0), won = C.reduce((a, c) => a + c.r.win, 0);
