@@ -94,7 +94,7 @@ function caseCard2(c, i){
     `<i class="hk-ar">${svg(ARW)}</i>` +
     `<span class="hk-s win">${hpic(c.img || itemImg(it))}<span class="hk-v"><b style="color:${col}">${val}</b><small>${it.t === 'nft' ? (it.rare ? $t("редкий NFT") : $t("обычный NFT")) : it.t === 'gram' ? 'GRAM' : 'XP'}</small></span></span></span></button>`;
 }
-$('histTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; histTab = t.dataset.k; Sfx.tabs(); haptic(); renderHist(); $('histBody').scrollTop = 0; });
+$('histTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; histTab = t.dataset.k; haptic(); renderHist(); $('histBody').scrollTop = 0; });
 $('histBody').addEventListener('click', e => {
   const r = e.target.closest('button.hcard'); if (!r) return; haptic();
   renderHist((histTab === 'cases' ? S.hist.cases : S.hist.crafts)[+r.dataset.i]);

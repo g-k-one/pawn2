@@ -138,8 +138,7 @@ function tgOpen(url){
   try { Telegram.WebApp.openTelegramLink(url); return true; } catch(_){}           // SDK есть только на верхнем уровне мини-аппа
   try { return !!window.open(url, '_blank'); } catch(_){ return false; }
 }
-// без аргумента — обычный тап по кнопке: заодно тихий клик (Sfx.tap, 05-craft)
-const haptic = (...a) => { const t = a[0] || 'light'; if (!a.length) Sfx.tap(); if (S.vibro === false) return; try { Telegram.WebApp.HapticFeedback.impactOccurred(t); } catch(_){ navigator.vibrate?.(8); } };
+const haptic = (t = 'light') => { if (S.vibro === false) return; try { Telegram.WebApp.HapticFeedback.impactOccurred(t); } catch(_){ navigator.vibrate?.(8); } };
 
 /* ---------- масштаб сцены ---------- */
 const stage = $('stage');

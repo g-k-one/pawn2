@@ -72,7 +72,7 @@ function renderCases(){
       rulesHTML(TOP_RULES);
   }
 }
-$('casesTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; casesTab = t.dataset.k; Sfx.tabs(); haptic(); renderCases(); $('casesBody').scrollTop = 0; });
+$('casesTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; casesTab = t.dataset.k; haptic(); renderCases(); $('casesBody').scrollTop = 0; });
 $('casesBody').addEventListener('click', e => {
   const o = e.target.closest('[data-open]'), q = e.target.closest('[data-info]'), cl = e.target.closest('[data-claim]');
   if (cl){ claimAch(cl.dataset.claim, cl); return; }
@@ -114,7 +114,7 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-act]
   if (act === 'amb'){ haptic(); tgOpen(AMBASSADORS); }
   if (act === 'totasks'){ haptic(); openCases('tasks'); }
   if (act === 'refhist'){ haptic(); openHistory('refs'); }
-  if (act === 'claimref' && REF.pending){ const v = REF.pending; REF.pending = 0; haptic('medium'); setBalance(S.balance + v); Sfx.gram(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(v)} GRAM`, text: $t("Бонус за друзей") }); renderCases(); }
+  if (act === 'claimref' && REF.pending){ const v = REF.pending; REF.pending = 0; haptic('medium'); setBalance(S.balance + v); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(v)} GRAM`, text: $t("Бонус за друзей") }); renderCases(); }
   if (act === 'restore'){ if (S.balance < S.week.restorePrice) return notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM") }); setBalance(S.balance - S.week.restorePrice); S.hist.wallet.unshift({ type: 'restore', t: Date.now(), amount: S.week.restorePrice, name: `${$t("Пропущенный день:")} ${DAYS[S.week.missed[0]]}`, method: $t("неделя заданий") }); S.week.missed.shift(); haptic('medium'); notify({ type: 'ok', icon: 'ok', title: $t("День восстановлен"), text: $t("Неделя снова идёт к кейсу Маска") }); renderCases(); }
 });
 
@@ -158,8 +158,7 @@ async function caseRun(c, again, m = 1){
   $('fxCaseS').textContent = '';
   const cols = strip.map(itemColor); cols[WIN] = itemColor(it);
   // сундук дрожит и подпрыгивает — ожидание перед прокрутом (только transform)
-  Sfx.chest();
-  if (!S.lite){ haptic('medium');
+  if (!S.lite){ Sfx.whoosh(); haptic('medium');
     await $('fxCaseArt').animate([{ transform: 'none' }, { transform: 'rotate(-4deg) scale(1.02)' }, { transform: 'rotate(4deg) scale(1.04)' }, { transform: 'rotate(-3deg) scale(1.06)' },
       { transform: 'rotate(3deg) scale(1.08)' }, { transform: 'translateY(-10px) scale(1.12)' }, { transform: 'none' }], { duration: 700, easing: 'ease-in-out' }).finished; }
   const tw = el.children[1].offsetLeft - el.children[0].offsetLeft, box = el.parentElement.offsetWidth;
@@ -178,7 +177,7 @@ async function caseRun(c, again, m = 1){
   el.children[lastI]?.classList.remove('cur');
   el.children[WIN].classList.add('win'); haptic('heavy'); Sfx.lock();
   if (!S.lite) $('fxCase').animate([{ transform: 'scale(1.03)' }, { transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.3,1.4,.5,1)' });
-  FullGlow.set(glowOf(itemColor(it))); FullGlow.punch(0, .8); it.t === 'nft' ? Sfx.nft() : it.t === 'gram' ? Sfx.gram() : Sfx.up(2);
+  FullGlow.set(glowOf(itemColor(it))); FullGlow.punch(0, .8); Sfx.rank(it.t === 'nft' ? (it.rare ? 4 : 3) : it.t === 'gram' ? 2 : 1);
   await wait(900);
   /* приз */
   let label = itemName(it), img = itemImg(it);
@@ -203,7 +202,7 @@ function caseDrop(c, it, r, g){
     if (g){ if (how === 'sell') setTimeout(() => setBalance(S.balance + g.value), 900); else INV = [g, ...INV]; }
     else if (it.t === 'gram') setTimeout(() => setBalance(S.balance + it.v), 900);
     else addXp(it.v);
-    haptic('medium'); (g ? how === 'sell' : it.t === 'gram') ? Sfx.gram() : Sfx.bet(); await closeFx(); $('fx').classList.remove('case');
+    haptic('medium'); Sfx.coin(); await closeFx(); $('fx').classList.remove('case');
     setTimeout(() => pushLive(liveCaseHTML(c, it, { me: true, img: g ? g.nft.src : null, value: g ? g.value : null, label: g ? g.nft.name : null })), 300);
     notify({ type: 'ok', color: itemColor(it), img: g ? g.nft.src : itemImg(it), title: g ? (how === 'sell' ? `${$t("Продано: +{0} GRAM", fmt(g.value))}` : `${g.nft.name} ${$t("в инвентаре")}`) : (it.t === 'gram' ? `+${fmt(it.v)} GRAM` : `+${it.v} XP`), text: c.name });
     CRAFT.classList.remove('busy'); S.busy = false; caseDrop.on = false; restartAuto(); checkAch();

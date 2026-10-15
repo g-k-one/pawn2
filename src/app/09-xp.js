@@ -9,7 +9,7 @@ const xpFmt = v => Math.floor(v).toLocaleString(LOC);
 const XPI = '<img class="xpimg" src="assets/xp.webp" alt="XP">';
 function addXp(v){
   const was = rankOf(S.xp); S.xp = Math.round((S.xp + v) * 10) / 10; const now = rankOf(S.xp);
-  if (now > was) setTimeout(() => { notify({ type: 'ok', img: 'assets/xp.webp', color: '#F57A37', title: `${$t("Новое звание:")} ${RANKS[now][0]}`, text: `${xpFmt(S.xp)} XP` }); Sfx.title(); }, 1800);
+  if (now > was) setTimeout(() => { notify({ type: 'ok', img: 'assets/xp.webp', color: '#F57A37', title: `${$t("Новое звание:")} ${RANKS[now][0]}`, text: `${xpFmt(S.xp)} XP` }); Sfx.rank(Math.min(4, now - 1)); }, 1800);
 }
 function rankBar(xp){
   const i = rankOf(xp), nx = RANKS[i + 1], k = nx ? (xp - RANKS[i][1]) / (nx[1] - RANKS[i][1]) : 1;
