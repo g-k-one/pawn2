@@ -97,7 +97,6 @@
  "Достижение": "Achievement",
  "Достижение получено": "Achievement unlocked",
  "Достижения": "Achievements",
- "Достижения засчитываются один раз — по кнопке «Проверить».": "Achievements count once — via the “Check” button.",
  "Другое": "Other",
  "Друзей:": "Friends:",
  "Если у тебя ещё нет пригласившего и ты не пополнял баланс — по ссылке друга ты закрепишься за ним.": "If you have no referrer yet and haven't topped up, a friend's link makes you their referral.",
@@ -367,7 +366,6 @@
  "ещё не крафтил": "no crafts yet",
  "ждёт проверки": "pending",
  "закрыт": "is locked",
- "засчитываются по кнопке «Проверить»": "credited with the “Check” button",
  "игры, кошелёк и бонусы": "games, wallet and bonuses",
  "из": "of",
  "ищем лучший подарок на эту сумму…": "finding the best gift for this amount…",
@@ -548,5 +546,7 @@
  "Выиграно в крафтах": "Won in crafts",
  "Поставлено {0} GRAM · вернулось {1}%": "Staked {0} GRAM · {1}% returned",
  "Не подключён": "Not connected",
- "комиссия {0} GRAM за каждый": "fee {0} GRAM each"
+ "комиссия {0} GRAM за каждый": "fee {0} GRAM each",
+ "Достижения засчитываются один раз — по кнопке «Забрать», когда цель выполнена.": "Achievements count once — tap “Claim” when the goal is reached.",
+ "выполнил — забери награду": "done it — claim the reward"
 }

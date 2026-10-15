@@ -249,3 +249,7 @@ $('menuBody').addEventListener('click', e => {
   notify({ type: 'info', icon: 'info', title: r.childNodes[1].textContent.trim(), text: $t("Скоро будет") });
 });
 
+// прокрутка в шторках: край растворяет контент, а не режет его. Класс ставится, только если за краем что-то есть
+function scrollEdges(el){ el.classList.toggle('fade-t', el.scrollTop > 2); el.classList.toggle('fade-b', el.scrollTop + el.clientHeight < el.scrollHeight - 2); }
+document.addEventListener('scroll', e => { if (e.target.classList?.contains('dr-b')) scrollEdges(e.target); }, true);
+new MutationObserver(() => document.querySelectorAll('.drawer.open .dr-b').forEach(scrollEdges)).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });

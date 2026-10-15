@@ -1378,3 +1378,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 #caseBody .sec-t{text-align:center}
 /* кошелёк: подзаголовок раздела — по центру, как сумма над ним */
 #walletBody .sec-t{text-align:center}
+/* край прокрутки в шторках — мягкий: контент растворяется на 24 px, а не обрубается */
+.dr-b.fade-t{-webkit-mask-image:linear-gradient(transparent,#000 24px);mask-image:linear-gradient(transparent,#000 24px)}
+.dr-b.fade-b{-webkit-mask-image:linear-gradient(#000 calc(100% - 24px),transparent);mask-image:linear-gradient(#000 calc(100% - 24px),transparent)}
+.dr-b.fade-t.fade-b{-webkit-mask-image:linear-gradient(transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(transparent,#000 24px,#000 calc(100% - 24px),transparent)}
