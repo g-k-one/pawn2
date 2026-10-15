@@ -85,8 +85,10 @@ img{display:block;-webkit-user-drag:none}
 .prize.ton{background-image:linear-gradient(#00d9ff 19.47%,rgba(0,51,179,0))}
 .prize.nft,.prize.empty{background-image:linear-gradient(#fff 19.47%,rgba(0,0,0,0))}
 /* подсказка, а не выигрыш: заметно мельче суммы, гем её не закрывает; мягко «дышит», зовёт сделать ставку (в экономном режиме — без анимации) */
-.prize.empty{top:380px;font-size:44px;background-image:linear-gradient(#fff 30%,rgba(255,255,255,.5));opacity:.55;animation:betHint 2.6s ease-in-out infinite}
-@keyframes betHint{0%,100%{opacity:.4;scale:1}50%{opacity:.7;scale:1.045}}
+/* центр — по ширине сцены, без translate(-50%): iPhone (WebKit) запоминает сдвиг в процентах при старте анимации,
+   и если фирменный шрифт ещё не догрузился, надпись так и остаётся сдвинутой вправо */
+.prize.empty{left:0;right:0;top:354px;transform:none;text-align:center;font-size:44px;background-image:linear-gradient(#fff 30%,rgba(255,255,255,.5));opacity:.55;animation:betHint 2.6s ease-in-out infinite}
+@keyframes betHint{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:.7;transform:scale(1.045)}}
 @media (prefers-reduced-motion:reduce){ .prize.empty{animation:none} }
 .prize.pop{animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
 @keyframes pop{0%{scale:.85}60%{scale:1.06}100%{scale:1}}

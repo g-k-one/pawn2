@@ -235,7 +235,7 @@ const Onb = (() => {
     el = document.createElement('div'); el.className = 'onb'; stage.appendChild(el); show(); } };
 })();
 setTimeout(() => { if (!S.busy && !openDrawer) Onb.start(); }, 1400);
-addEventListener('resize', () => requestAnimationFrame(placeInd));
+addEventListener('resize', () => requestAnimationFrame(() => { placeInd(); placeChance(); }));
 /* если телефон не вытягивает анимации — предлагаем экономный режим */
 if (!S.lite && !LS('bm-lite-asked', false)) setTimeout(() => { let n = 0, t0 = 0;
   (function probe(now){ if (document.hidden) return; if (!t0) t0 = now; n++;

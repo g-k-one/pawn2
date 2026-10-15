@@ -3,6 +3,12 @@
    ========================================================= */
 const tiersEl = $('tiers');
 tiersEl.innerHTML = TIERS.map((t, i) => `<button class="tier" data-i="${i}" style="--c:${t.c}">${t.name}</button>`).join('') + '<i class="tind" id="tind"></i>';
+// плашка шанса — по центру над активным тиром; пересчитывается и при смене размера окна (иначе остаётся там, где была)
+function placeChance(){
+  const lab = tiersEl.children[S.tier], pr = $('scene').getBoundingClientRect(), lr = lab.getBoundingClientRect(), k = K;
+  const cw = $('chance').offsetWidth / 2 + 10;                       // не прижимать к краю экрана
+  $('chance').style.left = Math.max(cw, Math.min(SW - cw, (lr.left + lr.width / 2 - pr.left) / k)) + 'px';
+}
 function placeInd(){ const lab = tiersEl.children[S.tier]; $('tind').style.width = lab.offsetWidth * .7 + 'px'; $('tind').style.transform = `translateX(${lab.offsetLeft + lab.offsetWidth * .15}px)`; }
 /* смена ранга: dir = 1 — следующий (контент уезжает влево), −1 — предыдущий. from — где был контент при свайпе */
 function setTier(i, opts = {}){
@@ -17,10 +23,7 @@ function setTier(i, opts = {}){
   ['range', 'prize', 'drops'].forEach(id => { const el = $(id); if (el.style.opacity || el.style.scale){ const o = el.style.opacity || 1, sc = el.style.scale || 1; el.style.opacity = ''; el.style.scale = '';
     el.animate([{ opacity: o, scale: sc }, {}], { duration: 420, easing: 'cubic-bezier(.25,.8,.25,1)' }); } });
   rg.dataset.ready = 1;
-  // плашка шанса — по центру над активным тиром
-  const lab = tiersEl.children[i], pr = $('scene').getBoundingClientRect(), lr = lab.getBoundingClientRect(), k = K;
-  const cw = $('chance').offsetWidth / 2 + 10;                       // не прижимать к краю экрана
-  $('chance').style.left = Math.max(cw, Math.min(SW - cw, (lr.left + lr.width / 2 - pr.left) / k)) + 'px';
+  placeChance();
   Glow.set(t.glow);
   if (!opts.keepPrize) showPrize(dir);
 }

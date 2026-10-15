@@ -170,5 +170,14 @@ function fit(){
 try { const tg = Telegram.WebApp; tg.ready(); tg.expand(); tg.disableVerticalSwipes?.(); tg.setHeaderColor?.('#0b0b0b'); tg.setBackgroundColor?.('#0b0b0b');
   ['safeAreaChanged', 'contentSafeAreaChanged', 'fullscreenChanged', 'viewportChanged'].forEach(ev => tg.onEvent(ev, () => fit())); } catch(_){}
 fit(); addEventListener('resize', fit);
+// iPhone/Telegram: на старте WebView иногда отдаёт размер окна до того, как он устоялся, и resize потом не приходит —
+// сцена остаётся посчитанной под чужую ширину и уезжает вбок. Поэтому следим за размером сами и пересчитываем,
+// когда он реально поменялся (через resize — чтобы подстроились и все, кто его слушает)
+{ let w = innerWidth, h = innerHeight;
+  const recheck = () => { if (innerWidth === w && innerHeight === h) return; w = innerWidth; h = innerHeight; dispatchEvent(new Event('resize')); };
+  try { new ResizeObserver(recheck).observe(document.documentElement); } catch(_){}
+  window.visualViewport?.addEventListener('resize', recheck);
+  addEventListener('load', recheck); addEventListener('pageshow', recheck); addEventListener('orientationchange', () => setTimeout(recheck, 300));
+  [50, 200, 500, 1000, 2000].forEach(t => setTimeout(recheck, t)); }
 stage.addEventListener('scroll', () => { stage.scrollTop = 0; stage.scrollLeft = 0; });
 
