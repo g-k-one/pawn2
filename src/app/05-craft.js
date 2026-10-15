@@ -76,7 +76,9 @@ function renderDbg(){
     `<div class="dbg-l">${$t("Кейсы")}</div><div class="dbg-g">${chip('freeCases', false, $t("По условиям"))}${chip('freeCases', true, $t("Без условий"))}</div>` +
     `<div class="dbg-l">${$t("Кошелёк")}</div><div class="dbg-g">${[[null, $t("Не подключён")], ['Tonkeeper', 'Tonkeeper'], ['Telegram Wallet', 'Telegram Wallet']].map(([w, l]) => `<button class="dbg-c${(S.wallet?.name || null) === w && (!w || S.wallet?.fake) ? ' on' : ''}" data-k="wallet" data-v="${w || ''}" style="--c:#30A5FF">${l}</button>`).join('')}</div>` +
     `<div class="dbg-l">${$t("Сохранённый прогресс")}</div><div class="dbg-g"><button class="dbg-c" data-k="resetSave" data-v="1" style="--c:#FF4C35">${$t("Сбросить и начать заново")}</button></div>` +
-    `<p class="dbg-n">${$t("Для ранга подбирается настоящий server seed — проверка честности сходится, но хеш до игры будет другим. Точный тикет подставляется напрямую, проверка для него не сойдётся. Только для тестов прототипа.")}</p>`;
+    `<p class="dbg-n">${$t("Для ранга подбирается настоящий server seed — проверка честности сходится, но хеш до игры будет другим. Точный тикет подставляется напрямую, проверка для него не сойдётся. Только для тестов прототипа.")}</p>` +
+    // версия сборки и размеры экрана — по скриншоту видно, открыта ли свежая версия (Telegram кэширует) и как посчиталась сцена
+    `<p class="dbg-n dbg-ver">${$t("Сборка")} __BUILD__ · ${innerWidth}×${innerHeight} · K ${K.toFixed(3)} · ${$t("сцена")} ${Math.round(SW)}</p>`;
 }
 $('dbgBody').addEventListener('input', e => { if (e.target.id !== 'dbgTicket') return; const v = e.target.value.trim(); S.dbg.ticket = v === '' ? null : Math.max(0, Math.min(TICKETS - 1, Math.floor(+v) || 0)); if (S.dbg.ticket != null) S.dbg.tier = -1; });
 $('dbgBody').addEventListener('click', e => {

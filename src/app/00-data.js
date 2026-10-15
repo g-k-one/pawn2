@@ -146,12 +146,18 @@ const stage = $('stage');
    если экран совсем короткий (меньше 790 «макетных» px), уменьшаем масштаб, чтобы всё влезло */
 /* адаптив по ширине: масштаб берём от ширины, но не больше 1.15 — на широких экранах
    макет не раздувается, а растягивается: фон, панель, лента и нижняя панель — на всю ширину, центр — по центру */
-let K = 1, SW = 390;
+let K = 1, SW = 390, fitW = 0, fitH = 0;
 function fit(){
-  let k = Math.min(innerWidth / 390, 1.15), H = innerHeight / k;
-  if (H < 790){ k = innerHeight / 790; H = 790; }
-  if (innerWidth / k < 390){ k = innerWidth / 390; H = innerHeight / k; }   // никогда не обрезаем по бокам
-  K = k; SW = Math.max(390, innerWidth / k);
+  // после обновления страницы (всё из кэша) Telegram на iPhone успевает отдать нулевой размер окна:
+  // из него получались бесконечные ширина и сдвиг, браузер их отбрасывал, и сцена оставалась прижатой к центру экрана.
+  // Нулевой или явно недоустановившийся размер пропускаем — пересчитаем, когда придёт настоящий (см. recheck ниже)
+  const vw = innerWidth || document.documentElement.clientWidth, vh = innerHeight || document.documentElement.clientHeight;
+  if (vw < 200 || vh < 300) return;
+  fitW = vw; fitH = vh;
+  let k = Math.min(vw / 390, 1.15), H = vh / k;
+  if (H < 790){ k = vh / 790; H = 790; }
+  if (vw / k < 390){ k = vw / 390; H = vh / k; }   // никогда не обрезаем по бокам
+  K = k; SW = Math.max(390, vw / k);
   stage.style.width = SW + 'px'; stage.style.marginLeft = -SW / 2 + 'px';   // центр сцены всегда по центру экрана, даже когда она шире него
   stage.style.height = H + 'px';
   stage.style.transform = `scale(${k})`;
@@ -173,11 +179,18 @@ fit(); addEventListener('resize', fit);
 // iPhone/Telegram: на старте WebView иногда отдаёт размер окна до того, как он устоялся, и resize потом не приходит —
 // сцена остаётся посчитанной под чужую ширину и уезжает вбок. Поэтому следим за размером сами и пересчитываем,
 // когда он реально поменялся (через resize — чтобы подстроились и все, кто его слушает)
-{ let w = innerWidth, h = innerHeight;
-  const recheck = () => { if (innerWidth === w && innerHeight === h) return; w = innerWidth; h = innerHeight; dispatchEvent(new Event('resize')); };
+// Сравниваем с размером, под который сцена посчитана в последний раз (fitW/fitH), — так ловится и случай,
+// когда первый расчёт был пропущен из-за нулевого размера. Первые 3 с проверяем каждый кадр: на старте размер скачет
+{ const recheck = () => { const vw = innerWidth || document.documentElement.clientWidth, vh = innerHeight || document.documentElement.clientHeight;
+    if (vw === fitW && vh === fitH) return; fit(); if (fitW === vw && fitH === vh) dispatchEvent(new Event('resize')); };
   try { new ResizeObserver(recheck).observe(document.documentElement); } catch(_){}
   window.visualViewport?.addEventListener('resize', recheck);
   addEventListener('load', recheck); addEventListener('pageshow', recheck); addEventListener('orientationchange', () => setTimeout(recheck, 300));
-  [50, 200, 500, 1000, 2000].forEach(t => setTimeout(recheck, t)); }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) recheck(); });
+  const t0 = performance.now(); (function watch(){ recheck(); if (performance.now() - t0 < 3000) requestAnimationFrame(watch); })();
+  [3500, 6000].forEach(t => setTimeout(recheck, t)); }
+// после обновления страницы браузер может вернуть прошлую прокрутку окна — у нас её быть не должно
+try { history.scrollRestoration = 'manual'; } catch(_){}
+scrollTo(0, 0);
 stage.addEventListener('scroll', () => { stage.scrollTop = 0; stage.scrollLeft = 0; });
 
