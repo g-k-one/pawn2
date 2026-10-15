@@ -53,15 +53,19 @@ function renderHist(detail){
     const best = C.reduce((a, c) => c.r.mult > a.mult ? c.r : a, { mult: 0 }), dep = S.hist.wallet.filter(w => w.type === 'dep').reduce((a, w) => a + w.amount, 0);
     const nftList = t => S.hist.wallet.filter(w => w.type === t), sumV = L => L.reduce((a, w) => a + (w.value || 0), 0), nftOut = nftList('nft').length, nftIn = nftList('nftin').length;
     const by = TIERS.map((t, i) => C.filter(c => c.r.ti === i).length);
-    b.innerHTML = `<div class="hstat-hero"><div style="--c:#12D53D"><small>${$t("Выиграно")}</small><b>${fmt(won)}</b><span>GRAM</span></div><div style="--c:#30A5FF"><small>${$t("Поставлено")}</small><b>${fmt(staked)}</b><span>GRAM</span></div></div>` +
-      `<div class="hstat">${[[$t("NFT выведено"), nftOut + (" " + $t("шт")), '#FF4C35', `≈ ${fmt(sumV(nftList('nft')))} GRAM`], [$t("Депозит NFT"), nftIn + (" " + $t("шт")), '#00D9FF', `≈ ${fmt(sumV(nftList('nftin')))} GRAM`],
-        [$t("Крафтов"), n, '#FFB835'], [$t("Лучший"), best.mult ? 'x' + best.mult : '—', '#EB57B0'], [$t("Кейсов"), S.hist.cases.length, '#F57A37'], [$t("Опыт"), xpFmt(S.xp), '#F57A37'],
-        [$t("Депозит GRAM"), fmt(dep), '#12D53D'], [$t("Подарков"), INV.length, '#AE3FC4']]
-        .map(([k, v, c, sub]) => `<div style="--c:${c}"><small>${k}</small><b>${v}</b>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`).join('')}</div>` +
+    // статистика: итог крупно → крафты (+ RTP и ранги) → кейсы и кошелёк. Цвет — только у итога и сумм GRAM
+    const net = Math.round((won - staked) * 100) / 100, G = v => `${fmt(v)}<i>GRAM</i>`;
+    const tile = (k, v, sub, cls = '') => `<div class="${cls}"><small>${k}</small><b>${v}</b>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`;
+    b.innerHTML = `<div class="hstat-hero one net"><div style="--c:${net >= 0 ? '#12D53D' : '#F57A37'}"><small>${$t("Итог крафтов")}</small><b>${net > 0 ? '+' : net < 0 ? '−' : ''}${G(Math.abs(net))}</b>` +
+        `<span>${$t("Выиграно {0} из {1} GRAM поставленных", fmt(won), fmt(staked))}</span></div></div>` +
+      `<div class="hsec">${$t("Крафты")}</div><div class="hstat n">${tile($t("Крафтов"), n)}${tile($t("Лучший множитель"), best.mult ? 'x' + best.mult : '—')}` +
+        `${tile($t("Поставлено"), G(staked), '', 'g')}${tile($t("Выиграно"), G(won), '', 'g')}</div>` +
       `<div class="pfi-rtp"><b>${(+RTP_PPM / 1e4).toFixed(0)}%</b><span><b>${$t("Целевой RTP")}</b><small>${n ? `${$t("Твой RTP за {0} {1} — {2}%.", n, $n("крафт|крафта|крафтов", n), Math.round(won / staked * 100))} ` : ''}${$t("Крафт на длинной дистанции возвращает игрокам 95% ставок; на коротком отрезке твой может быть выше или ниже.")}</small></span></div>` +
       `<div class="hsec">${$t("Ранги в твоих крафтах")}</div><div class="bars">${TIERS.map((t, i) => { const pc = n ? by[i] / n * 100 : 0;
         return `<div style="--c:${t.c}"><span>${t.name}</span><i><b style="width:${Math.max(pc, 1.5).toFixed(1)}%"></b><em style="left:${t.chance}%"></em></i><small>${by[i]} · ${pc.toFixed(0)}%</small></div>`; }).join('')}</div>` +
-      `<p class="hnote">${$t("Белая черта — честный шанс ранга. Чем больше крафтов, тем ближе к ней твои доли.")}</p>`;
+      `<p class="hnote">${$t("Белая черта — честный шанс ранга. Чем больше крафтов, тем ближе к ней твои доли.")}</p>` +
+      `<div class="hsec">${$t("Кейсы и кошелёк")}</div><div class="hstat n">${tile($t("Кейсов открыто"), S.hist.cases.length)}${tile($t("Пополнено"), G(dep), '', 'g')}` +
+        `${tile($t("NFT пришло"), nftIn + ' ' + $t("шт"), `≈ ${fmt(sumV(nftList('nftin')))} GRAM`)}${tile($t("NFT выведено"), nftOut + ' ' + $t("шт"), `≈ ${fmt(sumV(nftList('nft')))} GRAM`)}</div>`;
   }
 }
 const ARW = '<path d="M5 12h14M13 6l6 6-6 6"/>';

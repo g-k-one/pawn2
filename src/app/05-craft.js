@@ -547,7 +547,7 @@ function fillDrop(r){
   } else {
     drop.innerHTML = `<div class="pz"><div class="tw" id="pz"><img src="assets/hero-gem.webp" alt=""><span class="gl" style="--m:url('assets/hero-gem.webp')"><i></i></span></div></div>`;
     Tilt.add($('pz'), $('pz').querySelector('img'), $('pz').querySelector('.gl i'), 1.5);
-    $('fxWin').innerHTML = `<b>+${fmt(r.win)}${S.demo ? `<img class="cur" src="assets/fantik.webp" alt=" ${$t("фантиков")}">` : ' GRAM'}</b><span>${$t("ставка {0} × x", fmt(r.stake))}${r.mult}</span>`;
+    $('fxWin').innerHTML = `<b>+${fmt(r.win)}${S.demo ? `<img class="cur" src="assets/fantik.webp" alt=" ${$t("фантиков")}">` : ' GRAM'}</b><span>${$t("ставка {0} · x{1}", S.demo ? fmt(r.stake) : fmt(r.stake) + ' GRAM', r.mult)}</span>`;
     $('fxBtns').innerHTML = `<button class="btn-main" id="fxTake">${$t("Забрать")}</button>` + PF_LINK;
   }
   if (r.super) $('fxWin').insertAdjacentHTML('beforeend', `<span class="sdnext">${$t("★ А после — супер дроп")}</span>`);

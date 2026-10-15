@@ -12,8 +12,8 @@ const WICO = '<path fill="currentColor" stroke="none" fill-rule="evenodd" d="M6 
 // как завести NFT: передать подарок релееру
 // пополнение NFT-подарком — в том же заметном стиле, что и «Сначала напиши релееру» при выводе
 const giftInHTML = (title = $t("Подарков пока нет")) => `<div class="wwarn ginw"><i>${svg(IC.gift)}</i><span><b>${title}</b>` +
-  `<small>${$t("Передай подарок на")} <span class="acc">${RELAYER}</span> ${$t("— через минуту он будет здесь.")}<br>${$t("Профиль → подарок → «Передать» →")} ${RELAYER}</small>` +
-  `<button class="pill-btn" data-act="relayer">${$t("Передать подарок")} ${RELAYER}</button></span></div>`;
+  `<small>${$t("В профиле Telegram: подарок → «Передать» →")} <span class="acc">${RELAYER}</span>. ${$t("Он появится здесь после проверки.")}</small>` +
+  `<button class="pill-btn" data-act="relayer">${$t("Передать подарок")}</button></span></div>`;
 function syncBalBtn(){ const b = $('balAdd'); if (b) b.innerHTML = S.wallet ? svg('<path d="M12 6v12M6 12h12"/>') : svg(WICO); }
 function openWallet(tab = 'dep'){ if (S.busy) return; if (S.demo){ notify({ type: 'demo', img: 'assets/fantik.webp', title: $t("В демо баланс бесконечный"), text: $t("Кошелёк работает только на GRAM") }); return; } walletTab = tab; outSel = new Set(); swapDrawer('walletDrawer', renderWallet); }
 function walletBtn(){
@@ -26,14 +26,14 @@ function renderWallet(){
   $('walletTabs').innerHTML = [['dep', $t("Пополнить")], ['out', $t("Вывести NFT")]].map(([k, t]) => `<button class="tab${k === walletTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
   const b = $('walletBody');
   if (walletTab === 'dep' && !S.wallet){
-    b.innerHTML = `<div class="wcon"><span class="wico">${svg(WICO)}</span><b>${$t("Подключи TON-кошелёк")}</b><p>${$t("Пополнение — только в GRAM, с твоего кошелька. Ключи остаются у тебя: каждую транзакцию ты подтверждаешь сам.")}</p></div>` +
-      `<div class="sec-t">${$t("Или пополни NFT-подарком")}</div>${giftInHTML(`${$t("Передай подарок")} ${RELAYER}`)}` + PARTNER;
+    b.innerHTML = `<div class="wcon"><span class="wico">${svg(WICO)}</span><b>${$t("Подключи кошелёк")}</b><p>${$t("Пополнение — только в GRAM, с твоего кошелька. Ключи остаются у тебя: каждую транзакцию ты подтверждаешь сам.")}</p></div>` +
+      `<div class="sec-t">${$t("Или пополни NFT-подарком")}</div>${giftInHTML($t("Передай подарок релееру"))}` + PARTNER;
   } else if (walletTab === 'dep'){
     b.innerHTML = `<div class="wchip"><i style="--c:${(WALLETS.find(w => w[0] === S.wallet.name) || [, '#0098ea'])[1]}">${S.wallet.name[0]}</i><span><b>${S.wallet.name}</b><small>${S.wallet.addr}</small></span><button data-act="off">${$t("Отключить")}</button></div>` +
       `<label class="amt"><input id="depIn" type="number" inputmode="decimal" min="1" step="1" value="${depAmount}"><span>GRAM</span></label>` +
       `<div class="presets">${[5, 10, 25, 50, 100].map(v => `<button class="pill-btn${v === depAmount ? ' on' : ''}" data-v="${v}">${v}</button>`).join('')}</div>` +
       `<p class="muted small center">${$t("На балансе {0} GRAM · пополнение только в GRAM", fmt(S.balance))}</p>` +
-      `<div class="sec-t">${$t("Или пополни NFT-подарком")}</div>${giftInHTML(`${$t("Передай подарок")} ${RELAYER}`)}` + PARTNER;
+      `<div class="sec-t">${$t("Или пополни NFT-подарком")}</div>${giftInHTML($t("Передай подарок релееру"))}` + PARTNER;
   } else {
     b.innerHTML = `<div class="wwarn"><i>!</i><span><b>${$t("Сначала напиши")} ${RELAYER}</b><small>${$t("Перед выводом обязательно отправь любое сообщение релееру")} <span class="acc">${RELAYER}</span> ${$t("в Telegram — и только потом выводи.")}</small>` +
       `<button class="pill-btn" data-act="relayerMsg">${$t("Написать")} ${RELAYER}</button></span></div>` + (INV.length ? `<p class="muted small" style="margin:6px 0 12px">${$t("Подарок придёт в твой профиль Telegram. Комиссия сети —")} <b style="color:#fff">${OUT_FEE} GRAM</b> ${$t("за каждый NFT.")}</p>` +
