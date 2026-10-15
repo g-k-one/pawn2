@@ -22,8 +22,8 @@ function caseCard(c){
 const achRow = ([id, t, rw, ok, act, prog]) => {
   const done = !!S.ach.got[id], pr = !done && prog ? prog() : null;
   return `<div class="arow${done ? ' ok' : ''}"><i>${done ? svg(NICON.ok) : ''}</i><span>${pr ? `<small>${xpFmt(pr[0])} / ${xpFmt(pr[1])}</small>` : ''}<b>${t.replace('@pawnd', '<span class="acc">@pawnd</span>')}</b>` +
-    // кнопка — только когда есть что делать: цель выполнена → «Забрать», нужен шаг (подписка, передача подарка) → он; иначе — только прогресс
-    `${done ? '' : ok() ? `<button class="chk-btn go" data-claim="${id}">${$t("Забрать")}</button>` : act ? `<button class="chk-btn" data-claim="${id}">${act === 'sub' ? $t("Подписаться") : $t("Передать подарок")}</button>` : ''}</span><em class="${rw.g != null ? 'g' : 'x'}">${rewHTML(rw)}</em></div>`;
+    // «Проверить» у каждого невыполненного: сервер проверяет условие только по нажатию — без фоновых запросов на каждое достижение
+    `${done ? '' : `<button class="chk-btn" data-claim="${id}">${$t("Проверить")}</button>`}</span><em class="${rw.g != null ? 'g' : 'x'}">${rewHTML(rw)}</em></div>`;
 };
 function renderCases(){
   $('casesTabs').innerHTML = [['tasks', $t("Задания")], ['cases', $t("Кейсы")], ['super', $t("Супер дроп")], ['refs', $t("Рефералка")], ['top', $t("Топ")]].map(([k, t]) => `<button class="tab${k === casesTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
@@ -42,7 +42,7 @@ function renderCases(){
       `<div class="days">${DAYS.map((d, i) => { const miss = S.week.missed.includes(i) && i < di, ok = (i < di && !miss) || (i === di && dd);
         return `<span class="${miss ? 'miss' : ok ? 'ok' : i === di ? 'now' : ''}">${miss ? svg('<path d="M7 7l10 10M17 7L7 17"/>') : ok ? svg(NICON.ok) : d}</span>`; }).join('')}</div>` +
       (S.week.missed.length ? `<button class="btn-main" data-act="restore">${$t("Восстановить 1 день · {0} GRAM", S.week.restorePrice)}</button>` : `<button class="btn-main${S.stock.musk ? '' : ' off'}" data-open="musk">${$t("Открыть кейс Маска")}${S.stock.musk > 1 ? ' ×' + S.stock.musk : ''}</button>`) + `</div>` +
-      `<div class="sect"><div class="sect-h"><span><b>${$t("Достижения")}</b><small>${$t("выполнил — забери награду")}</small></span><em class="cnt">${ACH.filter(a => S.ach.got[a[0]]).length}/${ACH.length}</em></div>` + ACH.map(achRow).join('') + `</div>` + rulesHTML(RULES);
+      `<div class="sect"><div class="sect-h"><span><b>${$t("Достижения")}</b><small>${$t("засчитываются по кнопке «Проверить»")}</small></span><em class="cnt">${ACH.filter(a => S.ach.got[a[0]]).length}/${ACH.length}</em></div>` + ACH.map(achRow).join('') + `</div>` + rulesHTML(RULES);
   } else if (casesTab === 'super'){
     const sd = SUPER.nft;
     b.innerHTML = `<div class="sdhero"><img class="sdlogo" src="assets/superdrop-logo.webp" alt="Super Drop"><div class="sdcard" id="sdCard">${cardHTML(sd, 236, true)}</div></div>` +

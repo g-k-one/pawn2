@@ -537,7 +537,6 @@
  "7 дней подряд · {0}/7": "7 days in a row · {0}/7",
  "Выполняй задания дня 7 дней подряд · {0}/7": "Complete daily tasks 7 days in a row · {0}/7",
  "день|дня|дней": "day|days",
- "Подписаться": "Subscribe",
  "Лучший множитель": "Best multiplier",
  "Кейсы и кошелёк": "Cases and wallet",
  "Кейсов открыто": "Cases opened",
@@ -547,6 +546,7 @@
  "Поставлено {0} GRAM · вернулось {1}%": "Staked {0} GRAM · {1}% returned",
  "Не подключён": "Not connected",
  "комиссия {0} GRAM за каждый": "fee {0} GRAM each",
- "Достижения засчитываются один раз — по кнопке «Забрать», когда цель выполнена.": "Achievements count once — tap “Claim” when the goal is reached.",
- "выполнил — забери награду": "done it — claim the reward"
+ "засчитываются по кнопке «Проверить»": "counted when you tap “Check”",
+ "Проверить": "Check",
+ "Достижения засчитываются один раз — по кнопке «Проверить».": "Achievements count once — tap “Check”."
 }

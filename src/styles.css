@@ -1338,7 +1338,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 /* GRAM — один вид везде: суммы синие (var(--blue)), иконка — плоский гем; зелёный/оранжевый — только «пришло/ушло» в кошельке.
    В плашках и кнопках — гем + число, в тексте — «N GRAM». XP — всегда оранжевый со своей иконкой */
 .arow em.g,.tb2.g,.refrow .g,.stats b.g{color:var(--blue)}
-.chk-btn.go{background:#12D53D;color:#03250b}
 /* читаемость: длинные тексты 13.5 px, подписи 12.5 px, серый не тусклее .72 */
 .bnote,.rules ol,.pfc p,.pfi-hero p,.pfi-env p,.pfi-step p,.pfi-p,.hnote,.gin p,.lead,.muted{font-size:13.5px}
 .sect-h small,.facts span,.dr-sub,.banner.amb small,.note-t small,.sdtarget p,.refauto small,.refauto em,.pfnote,.dbg-n,.hstat-hero.one span{font-size:12.5px}
