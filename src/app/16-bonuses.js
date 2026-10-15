@@ -54,7 +54,7 @@ function renderCases(){
   } else if (casesTab === 'refs'){
     b.innerHTML = `<div class="refpct"><div><b>10%</b><small>${$t("от первого депозита")}</small></div><div><b>5%</b><small>${$t("от активности")}</small></div></div>` +
       `<a class="banner amb" data-act="amb"><span><b>${$t("Программа для амбассадоров")}</b><small>${$t("больше процент для блогеров и комьюнити")}</small></span><img src="assets/referrals.webp" alt=""></a>` +
-      `<div class="refbox rgap"><div class="refrow"><span>${svg(IC.users)} ${$t("Друзей:")} <b>${REF.friends.length}</b></span><span class="g"><img src="assets/gem-small.svg" alt="">${fmt(REF.total)}${GU}</span></div>` +
+      `<div class="refbox rgap"><div class="refrow"><span>${svg(IC.users)} ${$t("Друзей:")} <b>${REF.friends.length}</b></span><span class="g"><img src="assets/gem-small.svg" alt="">${fmt(REF.total)}</span></div>` +
       `<div class="reflink"><code>${REF.link.replace('https://', '')}</code><button class="pill-btn" data-act="copyref">${$t("Копировать")}</button></div></div>` +
       // начисление за друзей: заголовок и «История» в одной строке сверху, сумма крупно, ниже — за что и когда следующее
       `<div class="refauto"><div class="ra-h"><b>${$t("Начислено вчера")}</b><button class="pill-btn" data-act="refhist">${$t("История")}</button></div>` +
@@ -91,11 +91,10 @@ let infoCase = null;
 function caseInfo(c){ infoCase = c; swapDrawer('caseDrawer', renderCaseInfo); }
 function renderCaseInfo(){
   const c = infoCase, st = caseState(c);
-  $('caseBody').innerHTML = `<div class="cinfo-h" style="--c:${c.c}">${caseArt(c, 'lg')}<b>${c.name}</b>${c.price ? `<span class="cprice"><img src="assets/gem-small.svg" alt="">${fmt(c.price)} GRAM</span>` : `<button class="cprice go" data-act="totasks">${st.how}<i>›</i></button>`}</div>` +
+  $('caseBody').innerHTML = `<div class="cinfo-h" style="--c:${c.c}">${caseArt(c, 'lg')}<b>${c.name}</b>${c.price ? `<span class="cprice"><img src="assets/gem-small.svg" alt="">${fmt(c.price)}</span>` : `<button class="cprice go" data-act="totasks">${st.how}<i>›</i></button>`}</div>` +
     `<div class="sec-t">${$t("Что внутри")}</div><div class="tgrid">${c.items.map(it => tileHTML(it, String(it.ch).replace('.', ',') + '%')).join('')}</div>` +
     `<div class="wwarn nftw"><i>!</i><span><b>${$t("NFT на плитке — для примера")}</b><small>${$t("Выпасть может другой подарок: редкий — случайный за {0}–{1} GRAM, обычный — по флору, сейчас {2} GRAM. Какой именно — узнаешь при открытии.", RARE_FROM, RARE_TO, NFT_FLOOR)}</small></span></div>` +
-    `<div class="facts">` +
-    `<div style="--c:#30A5FF"><b>${$t("Когда придёт")}</b><span>${$t("GRAM, XP и NFT — сразу")}</span></div><div style="--c:#12D53D"><b>${$t("Честно")}</b><span>${$t("каждое открытие проверяется в истории")}</span></div></div>`;
+    '';
   $('caseGo').textContent = c.price ? `${$t("Открыть за {0} GRAM", fmt(c.price))}` : st.ok ? (st.n > 1 ? `${$t("Открыть 1 из")} ${st.n}` : $t("Открыть")) : st.lock;
 
   $('caseGo').classList.toggle('off', !st.ok && !S.dbg.freeCases);

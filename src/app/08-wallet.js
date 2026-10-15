@@ -20,7 +20,9 @@ function walletBtn(){
   const go = $('walletGo'), n = outSel.size, fee = Math.round(n * OUT_FEE * 100) / 100;
   go.classList.remove('off');
   if (walletTab === 'dep') go.innerHTML = S.wallet ? `${$t("Пополнить на {0} GRAM", fmt(depAmount))}` : $t("Подключить кошелёк");
-  else { go.innerHTML = n ? `${$t("Вывести {0} NFT", n)}<small>${$t("по одному · комиссия {0} GRAM", fmt(fee))}</small>` : $t("Выбери подарки для вывода"); go.classList.toggle('off', !n); }
+  // всегда две строки — шторка не прыгает при выборе. Комиссия видна ещё до выбора
+  else { go.innerHTML = n ? `${$t("Вывести {0} NFT", n)}<small>${$t("по одному · комиссия {0} GRAM", fmt(fee))}</small>`
+    : `${$t("Выбери подарки для вывода")}<small>${$t("придут в профиль Telegram · {0} GRAM за каждый", OUT_FEE)}</small>`; go.classList.toggle('off', !n); }
 }
 function renderWallet(){
   $('walletTabs').innerHTML = [['dep', $t("Пополнить")], ['out', $t("Вывести NFT")]].map(([k, t]) => `<button class="tab${k === walletTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
@@ -32,11 +34,10 @@ function renderWallet(){
     b.innerHTML = `<div class="wchip"><i style="--c:${(WALLETS.find(w => w[0] === S.wallet.name) || [, '#0098ea'])[1]}">${S.wallet.name[0]}</i><span><b>${S.wallet.name}</b><small>${S.wallet.addr}</small></span><button data-act="off">${$t("Отключить")}</button></div>` +
       `<label class="amt"><input id="depIn" type="number" inputmode="decimal" min="1" step="1" value="${depAmount}"><span>GRAM</span></label>` +
       `<div class="presets">${[5, 10, 25, 50, 100].map(v => `<button class="pill-btn${v === depAmount ? ' on' : ''}" data-v="${v}">${v}</button>`).join('')}</div>` +
-      `<p class="muted small center">${$t("На балансе {0} GRAM · пополнение только в GRAM", fmt(S.balance))}</p>` +
       `<div class="sec-t">${$t("Или пополни NFT-подарком")}</div>${giftInHTML($t("Передай подарок релееру"))}` + PARTNER;
   } else {
     b.innerHTML = `<div class="wwarn"><i>!</i><span><b>${$t("Сначала напиши")} ${RELAYER}</b><small>${$t("Перед выводом обязательно отправь любое сообщение релееру")} <span class="acc">${RELAYER}</span> ${$t("в Telegram — и только потом выводи.")}</small>` +
-      `<button class="pill-btn" data-act="relayerMsg">${$t("Написать")} ${RELAYER}</button></span></div>` + (INV.length ? `<p class="muted small" style="margin:6px 0 12px">${$t("Подарок придёт в твой профиль Telegram. Комиссия сети —")} <b style="color:#fff">${OUT_FEE} GRAM</b> ${$t("за каждый NFT.")}</p>` +
+      `<button class="pill-btn" data-act="relayerMsg">${$t("Написать")} ${RELAYER}</button></span></div>` + (INV.length ? `<div style="height:12px"></div>` +
       `<div class="onft" id="onft">${INV.map(g => `<button class="cell${outSel.has(g.id) ? ' sel' : ''}" data-id="${g.id}"><span class="chk">${svg(NICON.ok)}</span>${cardHTML(g, 104)}</button>`).join('')}</div>` + PARTNER
       : giftInHTML() + PARTNER);
     b.querySelectorAll('.cell').forEach(c => tiltCard(c, .5));
@@ -100,10 +101,11 @@ $('walletGo').onclick = async () => {
   if (walletTab === 'dep' && !S.wallet){ tonConnect(); return; }
   if (walletTab === 'dep'){
     if (depAmount < 1){ notify({ type: 'err', icon: 'coin', title: $t("Минимум 1 GRAM") }); return; }
-    if (!DEPOSIT_ADDR){ notify({ type: 'warn', icon: 'warn', title: $t("Адрес для пополнений не задан"), text: $t("Прототип: впиши DEPOSIT_ADDR в коде") }); return; }
+    if (!DEPOSIT_ADDR && !S.wallet.fake){ notify({ type: 'warn', icon: 'warn', title: $t("Адрес для пополнений не задан"), text: $t("Прототип: впиши DEPOSIT_ADDR в коде") }); return; }
     btn.disabled = true; btn.classList.add('wait'); btn.textContent = `${$t("Подтверди в {0}…", S.wallet.name)}`;
     let tx = null;
-    try { tx = await tcUI.sendTransaction({ validUntil: Math.floor(Date.now() / 1000) + 300, messages: [{ address: DEPOSIT_ADDR, amount: String(nano(depAmount)) }] }); }
+    if (S.wallet.fake) await wait(900);   // дебаг-кошелёк: подтверждение «в кошельке» без настоящей транзакции
+    else try { tx = await tcUI.sendTransaction({ validUntil: Math.floor(Date.now() / 1000) + 300, messages: [{ address: DEPOSIT_ADDR, amount: String(nano(depAmount)) }] }); }
     catch(_){ btn.disabled = false; btn.classList.remove('wait'); walletBtn(); notify({ type: 'err', icon: 'err', title: $t("Платёж отменён") }); return; }
     btn.disabled = false; btn.classList.remove('wait'); hideDrawer();   // в бою баланс зачисляет бэкенд после подтверждения в сети
     if (!(await API.confirmDeposit(depAmount, tx?.boc)).ok) return notify({ type: 'err', icon: 'err', title: $t("Пополнение не прошло"), text: $t("Если GRAM списались — они придут после подтверждения в сети") });

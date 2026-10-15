@@ -1365,3 +1365,16 @@ html[lang=en] .bcase.free::before{content:"Free"}
 /* статистика: полоска «сколько вернулось» и спокойный итог */
 .hstat-hero.net .nbar{display:block;height:6px;margin:10px 0 8px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
 .hstat-hero.net .nbar b{display:block;height:100%;border-radius:3px;background:#12D53D;font-size:0}
+/* единые карточки: внутренний отступ 16 px со всех сторон, скругление 22 px */
+.rkbar,.mbonus,.mb2,.wwarn,.sect,.sect-h.hero,.sdtarget,.banner.amb,.refbox,.refauto,.tophero,.hcard,.hcard.w,.pfi-rtp,.hdet,.pfres,.pfc,
+.pfi-hero,.pfi-env,.pfi-step,.hstat>div,.hstat-hero>div,.stats>div{padding:16px;border-radius:22px}
+.mgrp,.rules{padding-left:16px;padding-right:16px;border-radius:22px}
+.bcase{border-radius:22px}
+.refpct>div{padding:16px;border-radius:22px}
+.banner.amb{padding-right:0}                                   /* картинка уходит в край */
+.refauto .ra-h{margin:-6px -6px 0 0}                            /* «История» ближе к углу, как просили */
+.hk-h{align-items:center}                                      /* ранг и время — на одной оси */
+/* описание кейса — одна ось по центру: заголовок, цена и «Что внутри» */
+#caseBody .sec-t{text-align:center}
+/* кошелёк: подзаголовок раздела — по центру, как сумма над ним */
+#walletBody .sec-t{text-align:center}
