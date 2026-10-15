@@ -130,6 +130,8 @@ let INV = Array.from({ length: 9 }, (_, i) => giftOf(pick(NFTS.filter(x => x.pri
 const LIVE_IMG = TIERS.map((_, i) => i < 2 ? ['assets/hero-gem.webp'] : i === 2 ? ['assets/hero-gem.webp', ...NFTS.slice(0, 4).map(n => n.src)] : i === 3 ? NFTS.slice(3, 10).map(n => n.src) : NFTS.slice(9).map(n => n.src));
 const $ = id => document.getElementById(id);
 const fmt = v => (Math.round(v * 100) / 100).toString();
+// «GRAM» после числа — мельче самого числа, одинаково во всех суммах: `${fmt(v)}${GU}`
+const GU = '<i class="u">GRAM</i>';
 const SUPPORT = 'https://t.me/m2gdev';                          // чат поддержки
 const AMBASSADORS = 'https://t.me/+havEPmstLkpjMzVi';            // программа для амбассадоров
 function tgOpen(url){

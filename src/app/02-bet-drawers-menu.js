@@ -28,7 +28,9 @@ document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => {
 });
 // после крафта: если ставка больше баланса или лимита — ставим всё, что можно
 function fitBet(){ if (S.ton > tonCap()){ S.ton = tonCap(); renderBet(true); } }
-$('trash').onclick = () => { if (S.busy) return; S.ton = 0; S.gifts = []; haptic('medium'); renderBet(true); };
+// корзина: сначала убирает GRAM из ставки (подарки остаются), следующее нажатие — подарки.
+// Отдельный подарок убирается тапом по его карточке
+$('trash').onclick = () => { if (S.busy) return; if (S.ton > 0) S.ton = 0; else S.gifts = []; haptic('medium'); renderBet(true); };
 /* ---------- NFT-карточка ---------- */
 const SKINS = ['Neon', 'Cactus', 'Midnight', 'Sakura', 'Gold Rush', 'Frost', 'Toxic', 'Ruby', 'Aurora', 'Onyx', 'Bubblegum', 'Lava'];
 /* карточка NFT в духе Telegram: номер сверху, картинка, цена в теле карты. big — карточка выигрыша: коллекция, скин, номер */
@@ -247,3 +249,7 @@ $('menuBody').addEventListener('click', e => {
   notify({ type: 'info', icon: 'info', title: r.childNodes[1].textContent.trim(), text: $t("Скоро будет") });
 });
 
+// прокрутка в шторках: край растворяет контент, а не режет его. Класс ставится, только если за краем что-то есть
+function scrollEdges(el){ el.classList.toggle('fade-t', el.scrollTop > 2); el.classList.toggle('fade-b', el.scrollTop + el.clientHeight < el.scrollHeight - 2); }
+document.addEventListener('scroll', e => { if (e.target.classList?.contains('dr-b')) scrollEdges(e.target); }, true);
+new MutationObserver(() => document.querySelectorAll('.drawer.open .dr-b').forEach(scrollEdges)).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });

@@ -1330,9 +1330,54 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .refauto .ra-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .refauto .ra-h b{font-size:18px;line-height:1.1;text-transform:uppercase;color:#fff}
 .refauto .ra-h .pill-btn{padding:6px 12px;font-size:15px}
-.refauto .ra-v{display:flex;align-items:baseline;gap:6px;margin-top:6px;font-size:34px;line-height:1;font-weight:700;color:#2EE6C9}
+.refauto .ra-v{display:flex;align-items:baseline;gap:6px;margin-top:6px;font-size:34px;line-height:1;font-weight:700;color:var(--blue)}
 .refauto .ra-v img{width:auto;height:22px;align-self:center}
 .refauto .ra-v small{font:inherit;font-size:20px}
 .refauto p{margin:6px 0 0;font:400 12.5px/1.4 var(--serif);color:rgba(255,255,255,.72)}
-/* рефералка: все суммы GRAM — бирюзовые, как сумма начисления */
-.refrow .g,.rgap .tb2.g{color:#2EE6C9}
+
+/* GRAM — один вид везде: суммы синие (var(--blue)), иконка — плоский гем; зелёный/оранжевый — только «пришло/ушло» в кошельке.
+   В плашках и кнопках — гем + число, в тексте — «N GRAM». XP — всегда оранжевый со своей иконкой */
+.arow em.g,.tb2.g,.refrow .g,.stats b.g{color:var(--blue)}
+/* читаемость: длинные тексты 13.5 px, подписи 12.5 px, серый не тусклее .72 */
+.bnote,.rules ol,.pfc p,.pfi-hero p,.pfi-env p,.pfi-step p,.pfi-p,.hnote,.gin p,.lead,.muted{font-size:13.5px}
+.sect-h small,.facts span,.dr-sub,.banner.amb small,.note-t small,.sdtarget p,.refauto small,.refauto em,.pfnote,.dbg-n,.hstat-hero.one span{font-size:12.5px}
+.hnote,.muted,.dr-sub,.bnote,.pfi-p,.rules ol{color:rgba(255,255,255,.72)}
+/* статистика: нейтральные плитки, синие суммы GRAM, цвет у итога */
+.hstat.n div{--c:#fff;background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.03))}
+.hstat.n b{font-size:26px}
+.hstat.n div.g b{color:var(--blue)}
+.hstat.n b i,.hstat-hero.net b i{font-style:normal;font-size:.55em;margin-left:5px;opacity:.85}
+/* отступы: внутри группы 8 px, между группами 20 px */
+.sect,.rules{margin-top:20px}
+.hsec{margin:20px 0 10px}
+/* экран выигрыша: приз и сумма — по центру между тикетом и кнопками, без дыры над кнопками */
+.fx.done #fxDrop{margin-top:auto}
+.fx.done .fx-btns{margin-top:auto;padding-top:20px}
+/* супер дроп: надпись чуть ниже — не закрывает подпись карточки */
+.sdlogo{margin-top:-10px}
+/* карточки истории: ставка у левого края, выигрыш — зеркально у правого, стрелка по центру — без пустоты справа */
+.hk-s.win{flex-direction:row-reverse;justify-content:flex-start;text-align:right}
+.hk-s.win .hk-v{align-items:flex-end}
+.hk-ar{justify-self:center}
+/* «GRAM» после суммы — мельче числа и одинаково везде (кроме крупного заголовка выигрыша) */
+.u{font-style:normal;font-size:.62em;margin-left:.28em;opacity:.85;letter-spacing:0}
+/* статистика: полоска «сколько вернулось» и спокойный итог */
+.hstat-hero.net .nbar{display:block;height:6px;margin:10px 0 8px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+.hstat-hero.net .nbar b{display:block;height:100%;border-radius:3px;background:#12D53D;font-size:0}
+/* единые карточки: внутренний отступ 16 px со всех сторон, скругление 22 px */
+.rkbar,.mbonus,.mb2,.wwarn,.sect,.sect-h.hero,.sdtarget,.banner.amb,.refbox,.refauto,.tophero,.hcard,.hcard.w,.pfi-rtp,.hdet,.pfres,.pfc,
+.pfi-hero,.pfi-env,.pfi-step,.hstat>div,.hstat-hero>div,.stats>div{padding:16px;border-radius:22px}
+.mgrp,.rules{padding-left:16px;padding-right:16px;border-radius:22px}
+.bcase{border-radius:22px}
+.refpct>div{padding:16px;border-radius:22px}
+.banner.amb{padding-right:0}                                   /* картинка уходит в край */
+.refauto .ra-h{margin:-6px -6px 0 0}                            /* «История» ближе к углу, как просили */
+.hk-h{align-items:center}                                      /* ранг и время — на одной оси */
+/* описание кейса — одна ось по центру: заголовок, цена и «Что внутри» */
+#caseBody .sec-t{text-align:center}
+/* кошелёк: подзаголовок раздела — по центру, как сумма над ним */
+#walletBody .sec-t{text-align:center}
+/* край прокрутки в шторках — мягкий: контент растворяется на 24 px, а не обрубается */
+.dr-b.fade-t{-webkit-mask-image:linear-gradient(transparent,#000 24px);mask-image:linear-gradient(transparent,#000 24px)}
+.dr-b.fade-b{-webkit-mask-image:linear-gradient(#000 calc(100% - 24px),transparent);mask-image:linear-gradient(#000 calc(100% - 24px),transparent)}
+.dr-b.fade-t.fade-b{-webkit-mask-image:linear-gradient(transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(transparent,#000 24px,#000 calc(100% - 24px),transparent)}

@@ -3,17 +3,26 @@
    ========================================================= */
 let casesTab = 'tasks';
 function openCases(tab){ if (tab) casesTab = tab; swapDrawer('casesDrawer', renderCases); }
-const caseState = c => !c.need ? { ok: true } : c.need === 'daily' ? { ok: S.stock.beast > 0, n: S.stock.beast, txt: `${$t("3 задания дня · {0} из", tasksDone())} ${TASKS.length}`, k: tasksDone() / TASKS.length }
-  : { ok: S.stock.musk > 0, n: S.stock.musk, txt: `${$t("7 дней заданий · {0} из 7", dayIdx() - S.week.missed.filter(d => d < dayIdx()).length)}`, k: (dayIdx() - S.week.missed.length) / 7 };
+// бесплатные кейсы: txt — короткая подпись на карточке, how — что сделать (в описании кейса), lock — текст на кнопке, пока закрыт
+const caseState = c => {
+  if (!c.need) return { ok: true };
+  if (c.need === 'daily'){ const d = tasksDone(), n = TASKS.length, left = n - d;
+    return { ok: S.stock.beast > 0, n: S.stock.beast, k: d / n, txt: $t("3 задания сегодня · {0}/{1}", d, n), how: $t("Выполни все 3 задания сегодня · {0}/{1}", d, n),
+      lock: left ? $t("Ещё {0} {1}", left, $n("задание|задания|заданий", left)) : $t("Новый — завтра") }; }
+  const d = dayIdx() - S.week.missed.filter(x => x < dayIdx()).length, left = 7 - d;
+  return { ok: S.stock.musk > 0, n: S.stock.musk, k: d / 7, txt: $t("7 дней подряд · {0}/7", d), how: $t("Выполняй задания дня 7 дней подряд · {0}/7", d),
+    lock: $t("Ещё {0} {1}", left, $n("день|дня|дней", left)) };
+};
 function caseCard(c){
   const st = caseState(c), free = !c.price;
   return `<div class="bcase${free ? ' free' : ''}" style="--c:${c.c}" data-info="${c.id}">${st.n > 1 ? `<em class="stk">×${st.n}</em>` : ''}${caseArt(c)}<b>${c.short}</b>` +
     (free ? `<small>${st.txt}</small><i class="prog"><b style="width:${Math.round(st.k * 100)}%"></b></i>` : `<small>${$t("NFT до {0} GRAM", RARE_TO)}</small>`) +
-    `<button class="cbuy${free && !st.ok ? ' locked' : ''}" data-open="${c.id}">${free ? (st.ok ? $t("Открыть") : $t("Закрыт")) : `<img src="assets/gem-small.svg" alt="">${fmt(c.price)}`}</button></div>`;
+    `<button class="cbuy${free && !st.ok ? ' locked' : ''}" data-open="${c.id}">${free ? (st.ok ? $t("Открыть") : st.lock) : `<img src="assets/gem-small.svg" alt="">${fmt(c.price)}`}</button></div>`;
 }
 const achRow = ([id, t, rw, ok, act, prog]) => {
   const done = !!S.ach.got[id], pr = !done && prog ? prog() : null;
   return `<div class="arow${done ? ' ok' : ''}"><i>${done ? svg(NICON.ok) : ''}</i><span>${pr ? `<small>${xpFmt(pr[0])} / ${xpFmt(pr[1])}</small>` : ''}<b>${t.replace('@pawnd', '<span class="acc">@pawnd</span>')}</b>` +
+    // «Проверить» у каждого невыполненного: сервер проверяет условие только по нажатию — без фоновых запросов на каждое достижение
     `${done ? '' : `<button class="chk-btn" data-claim="${id}">${$t("Проверить")}</button>`}</span><em class="${rw.g != null ? 'g' : 'x'}">${rewHTML(rw)}</em></div>`;
 };
 function renderCases(){
@@ -38,14 +47,14 @@ function renderCases(){
     const sd = SUPER.nft;
     b.innerHTML = `<div class="sdhero"><img class="sdlogo" src="assets/superdrop-logo.webp" alt="Super Drop"><div class="sdcard" id="sdCard">${cardHTML(sd, 236, true)}</div></div>` +
       `<div class="sdtarget"><small>${$t("Загаданный тикет")}</small><div class="sddig">${superDigits()}</div><p>${$t("Выбей его первым в крафте — и NFT твой")}</p></div>` +
-      `<div class="stats"><div><small>${$t("Приз")}</small><b>${fmt(sd.value)} GRAM</b></div><div><small>${$t("Мин. ставка")}</small><b>${SUPER.min} GRAM</b></div><div><small>${$t("Попыток сегодня")}</small><b>${SUPER.tries.toLocaleString(LOC)}</b></div><div><small>${$t("Шанс за крафт")}</small><b>${$t("1 из 100 000")}</b></div></div>` +
+      `<div class="stats"><div><small>${$t("Приз")}</small><b class="g">${fmt(sd.value)}${GU}</b></div><div><small>${$t("Мин. ставка")}</small><b class="g">${SUPER.min}${GU}</b></div><div><small>${$t("Попыток сегодня")}</small><b>${SUPER.tries.toLocaleString(LOC)}</b></div><div><small>${$t("Шанс за крафт")}</small><b>${$t("1 из 100 000")}</b></div></div>` +
       `<div class="sect"><div class="sect-h"><span><b>${$t("Прошлые супер дропы")}</b></span></div>${SUPER.last.map(([n, g, t]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${t}</small></span><span class="tb2">${g}</span></div>`).join('')}</div>` +
       rulesHTML([$t("Super Drop забирает тот, кто первым выбьет загаданный тикет."), $t("Учитываются крафты со ставкой от 0.5 GRAM."), $t("Обычный выигрыш крафта при этом тоже зачисляется на баланс."), $t("После выпадения загадывается новый тикет и новый NFT.")]);
     tiltCard($('sdCard'), 1.2); upgradeImg($('sdCard').querySelector('.nc-img'), sd.nft); Tilt.grab($('sdCard').querySelector('.nc-t'), () => openNft(sd));   // крутить пальцем, тап — в Telegram
   } else if (casesTab === 'refs'){
     b.innerHTML = `<div class="refpct"><div><b>10%</b><small>${$t("от первого депозита")}</small></div><div><b>5%</b><small>${$t("от активности")}</small></div></div>` +
       `<a class="banner amb" data-act="amb"><span><b>${$t("Программа для амбассадоров")}</b><small>${$t("больше процент для блогеров и комьюнити")}</small></span><img src="assets/referrals.webp" alt=""></a>` +
-      `<div class="refbox rgap"><div class="refrow"><span>${svg(IC.users)} ${$t("Друзей:")} <b>${REF.friends.length}</b></span><span class="g"><img src="assets/gem-small.svg" alt="">${fmt(REF.total)} GRAM</span></div>` +
+      `<div class="refbox rgap"><div class="refrow"><span>${svg(IC.users)} ${$t("Друзей:")} <b>${REF.friends.length}</b></span><span class="g"><img src="assets/gem-small.svg" alt="">${fmt(REF.total)}</span></div>` +
       `<div class="reflink"><code>${REF.link.replace('https://', '')}</code><button class="pill-btn" data-act="copyref">${$t("Копировать")}</button></div></div>` +
       // начисление за друзей: заголовок и «История» в одной строке сверху, сумма крупно, ниже — за что и когда следующее
       `<div class="refauto"><div class="ra-h"><b>${$t("Начислено вчера")}</b><button class="pill-btn" data-act="refhist">${$t("История")}</button></div>` +
@@ -82,12 +91,11 @@ let infoCase = null;
 function caseInfo(c){ infoCase = c; swapDrawer('caseDrawer', renderCaseInfo); }
 function renderCaseInfo(){
   const c = infoCase, st = caseState(c);
-  $('caseBody').innerHTML = `<div class="cinfo-h" style="--c:${c.c}">${caseArt(c, 'lg')}<b>${c.name}</b>${c.price ? `<span class="cprice"><img src="assets/gem-small.svg" alt="">${fmt(c.price)} GRAM</span>` : `<button class="cprice go" data-act="totasks">${st.txt}<i>›</i></button>`}</div>` +
+  $('caseBody').innerHTML = `<div class="cinfo-h" style="--c:${c.c}">${caseArt(c, 'lg')}<b>${c.name}</b>${c.price ? `<span class="cprice"><img src="assets/gem-small.svg" alt="">${fmt(c.price)}</span>` : `<button class="cprice go" data-act="totasks">${st.how}<i>›</i></button>`}</div>` +
     `<div class="sec-t">${$t("Что внутри")}</div><div class="tgrid">${c.items.map(it => tileHTML(it, String(it.ch).replace('.', ',') + '%')).join('')}</div>` +
     `<div class="wwarn nftw"><i>!</i><span><b>${$t("NFT на плитке — для примера")}</b><small>${$t("Выпасть может другой подарок: редкий — случайный за {0}–{1} GRAM, обычный — по флору, сейчас {2} GRAM. Какой именно — узнаешь при открытии.", RARE_FROM, RARE_TO, NFT_FLOOR)}</small></span></div>` +
-    `<div class="facts">` +
-    `<div style="--c:#30A5FF"><b>${$t("Когда придёт")}</b><span>${$t("GRAM, XP и NFT — сразу")}</span></div><div style="--c:#12D53D"><b>${$t("Честно")}</b><span>${$t("каждое открытие проверяется в истории")}</span></div></div>`;
-  $('caseGo').textContent = c.price ? `${$t("Открыть за {0} GRAM", fmt(c.price))}` : st.ok ? (st.n > 1 ? `${$t("Открыть 1 из")} ${st.n}` : $t("Открыть")) : $t("Пока закрыт");
+    '';
+  $('caseGo').textContent = c.price ? `${$t("Открыть за {0} GRAM", fmt(c.price))}` : st.ok ? (st.n > 1 ? `${$t("Открыть 1 из")} ${st.n}` : $t("Открыть")) : st.lock;
 
   $('caseGo').classList.toggle('off', !st.ok && !S.dbg.freeCases);
 }
@@ -226,7 +234,7 @@ syncBalBtn();
   S.hist.wallet.push({ type: 'dep', t: Date.now() - 26 * 3600000, amount: 250, method: 'Tonkeeper' }, { type: 'nft', t: Date.now() - 50 * 3600000, name: NFTS[40].name, img: NFTS[40].src, bg: NFTS[40].bg, value: NFTS[40].price, method: $t("в Telegram · комиссия 0.3 GRAM") },
     { type: 'nftin', t: Date.now() - 74 * 3600000, name: NFTS[12].name, img: NFTS[12].src, bg: NFTS[12].bg, value: NFTS[12].price, method: '@pawngift' },
     { type: 'dep', t: Date.now() - 98 * 3600000, amount: 150, method: 'Telegram Wallet' });
-  S.hist.rewards.push({ kind: 'task', title: TASKS[0][1], rw: TASKS[0][3], t: Date.now() - 3 * 3600000 });   // утреннее задание уже выполнено
+  S.hist.rewards.push({ kind: 'task', id: TASKS[0][0], rw: TASKS[0][3], t: Date.now() - 3 * 3600000 });   // утреннее задание уже выполнено
   checkAch(true);                                          // то, что уже было сделано, отмечаем без наград
 })();
 

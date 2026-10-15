@@ -74,6 +74,7 @@ function renderDbg(){
     `<div class="dbg-l">${$t("Онбординг")}</div><div class="dbg-g">${chip('noOnb', false, $t("Показывать"))}${chip('noOnb', true, $t("Выключен"))}<button class="dbg-c" data-k="onbNow" data-v="1">${$t("Показать сейчас")}</button></div>` +
     `<div class="dbg-l">${$t("Запас бесплатных кейсов")}</div><div class="dbg-g">${[['beast', $t("Бист"), '#EB57B0'], ['musk', $t("Маск"), '#FF4C35']].map(([id, n, c]) => [0, 1, 3, 5].map(v => `<button class="dbg-c${S.stock[id] === v ? ' on' : ''}" data-k="stock" data-id="${id}" data-v="${v}" style="--c:${c}">${n} ×${v}</button>`).join('')).join('')}</div>` +
     `<div class="dbg-l">${$t("Кейсы")}</div><div class="dbg-g">${chip('freeCases', false, $t("По условиям"))}${chip('freeCases', true, $t("Без условий"))}</div>` +
+    `<div class="dbg-l">${$t("Кошелёк")}</div><div class="dbg-g">${[[null, $t("Не подключён")], ['Tonkeeper', 'Tonkeeper'], ['Telegram Wallet', 'Telegram Wallet']].map(([w, l]) => `<button class="dbg-c${(S.wallet?.name || null) === w && (!w || S.wallet?.fake) ? ' on' : ''}" data-k="wallet" data-v="${w || ''}" style="--c:#30A5FF">${l}</button>`).join('')}</div>` +
     `<div class="dbg-l">${$t("Сохранённый прогресс")}</div><div class="dbg-g"><button class="dbg-c" data-k="resetSave" data-v="1" style="--c:#FF4C35">${$t("Сбросить и начать заново")}</button></div>` +
     `<p class="dbg-n">${$t("Для ранга подбирается настоящий server seed — проверка честности сходится, но хеш до игры будет другим. Точный тикет подставляется напрямую, проверка для него не сойдётся. Только для тестов прототипа.")}</p>`;
 }
@@ -81,6 +82,7 @@ $('dbgBody').addEventListener('input', e => { if (e.target.id !== 'dbgTicket') r
 $('dbgBody').addEventListener('click', e => {
   const c = e.target.closest('.dbg-c'); if (!c || c.disabled) return;
   const k = c.dataset.k, v = c.dataset.v;
+  if (k === 'wallet'){ S.wallet = v ? { name: v, addr: 'UQBv…k3Qf', fake: true } : null; syncBalBtn(); haptic(); renderDbg(); return; }   // дебаг: имитация подключённого кошелька
   if (k === 'resetSave'){ haptic('medium'); Store.reset(); return; }
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
   if (k === 'stock'){ S.stock[c.dataset.id] = +v; haptic(); renderDbg(); return; }
@@ -547,7 +549,7 @@ function fillDrop(r){
   } else {
     drop.innerHTML = `<div class="pz"><div class="tw" id="pz"><img src="assets/hero-gem.webp" alt=""><span class="gl" style="--m:url('assets/hero-gem.webp')"><i></i></span></div></div>`;
     Tilt.add($('pz'), $('pz').querySelector('img'), $('pz').querySelector('.gl i'), 1.5);
-    $('fxWin').innerHTML = `<b>+${fmt(r.win)}${S.demo ? `<img class="cur" src="assets/fantik.webp" alt=" ${$t("фантиков")}">` : ' GRAM'}</b><span>${$t("ставка {0} × x", fmt(r.stake))}${r.mult}</span>`;
+    $('fxWin').innerHTML = `<b>+${fmt(r.win)}${S.demo ? `<img class="cur" src="assets/fantik.webp" alt=" ${$t("фантиков")}">` : ' GRAM'}</b><span>${$t("ставка {0} · x{1}", S.demo ? fmt(r.stake) : fmt(r.stake) + ' GRAM', r.mult)}</span>`;
     $('fxBtns').innerHTML = `<button class="btn-main" id="fxTake">${$t("Забрать")}</button>` + PF_LINK;
   }
   if (r.super) $('fxWin').insertAdjacentHTML('beforeend', `<span class="sdnext">${$t("★ А после — супер дроп")}</span>`);
