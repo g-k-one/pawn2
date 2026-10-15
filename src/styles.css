@@ -1330,9 +1330,11 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .refauto .ra-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .refauto .ra-h b{font-size:18px;line-height:1.1;text-transform:uppercase;color:#fff}
 .refauto .ra-h .pill-btn{padding:6px 12px;font-size:15px}
-.refauto .ra-v{display:flex;align-items:baseline;gap:6px;margin-top:6px;font-size:34px;line-height:1;font-weight:700;color:#2EE6C9}
+.refauto .ra-v{display:flex;align-items:baseline;gap:6px;margin-top:6px;font-size:34px;line-height:1;font-weight:700;color:var(--blue)}
 .refauto .ra-v img{width:auto;height:22px;align-self:center}
 .refauto .ra-v small{font:inherit;font-size:20px}
 .refauto p{margin:6px 0 0;font:400 12.5px/1.4 var(--serif);color:rgba(255,255,255,.72)}
-/* рефералка: все суммы GRAM — бирюзовые, как сумма начисления */
-.refrow .g,.rgap .tb2.g{color:#2EE6C9}
+
+/* GRAM — один вид везде: суммы синие (var(--blue)), иконка — плоский гем; зелёный/оранжевый — только «пришло/ушло» в кошельке.
+   В плашках и кнопках — гем + число, в тексте — «N GRAM». XP — всегда оранжевый со своей иконкой */
+.arow em.g,.tb2.g,.refrow .g,.stats b.g{color:var(--blue)}

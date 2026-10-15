@@ -34,7 +34,7 @@ function renderHist(detail){
     b.innerHTML = L.length ? L.map((c, i) => caseCard2(c, i)).join('') : `<p class="hempty">${$t("Кейсы ещё не открывались")}</p>`;
   } else if (histTab === 'refs'){
     const L = S.hist.refs, sum = L.reduce((a, x) => a + x.amount, 0);
-    b.innerHTML = `<div class="hstat-hero one"><div style="--c:#30A5FF"><small>${$t("Получено за друзей")}</small><b style="color:#2EE6C9">+${fmt(sum)} GRAM</b><span>${$t("Начисляется само в 00:00 МСК")}</span></div></div>` +
+    b.innerHTML = `<div class="hstat-hero one"><div style="--c:#30A5FF"><small>${$t("Получено за друзей")}</small><b style="color:var(--blue)">+${fmt(sum)} GRAM</b><span>${$t("Начисляется само в 00:00 МСК")}</span></div></div>` +
       L.map(x => { const act = x.type === 'act', c = act ? '#30A5FF' : '#12D53D';
         return `<div class="hcard w" style="--c:${c}"><span class="hk-ic">${svg(act ? IC.users : '<path d="M12 5v14M5 12l7 7 7-7"/>')}</span><span class="hk-v"><b>${act ? $t("5% от активности") : $t("10% от депозита @") + x.name}</b><small>${act ? `${x.n} ${$n("друг|друга|друзей", x.n)} · ` : ($t("первый депозит ·") + " ")}${new Date(x.t).toLocaleDateString(LOC, { day: 'numeric', month: 'short' })}${act ? ', 00:00' : ''}</small></span><b class="hk-amt" style="color:${c}">+${fmt(x.amount)} GRAM</b></div>`; }).join('');
   } else if (histTab === 'rewards'){
@@ -79,7 +79,7 @@ function craftCard(c, i){
     `<span class="hk-s win"><span class="hps">${wp}</span><span class="hk-v"><b class="pos">+${fmt(r.win)}</b><small>${r.nft ? (c.how === 'sell' ? $t("NFT продан") : $t("NFT забран")) : 'GRAM'}</small></span></span></span></button>`;
 }
 function caseCard2(c, i){
-  const cs = caseById(c.r.caseId), it = cs.items[c.r.idx], col = itemColor(it);
+  const cs = caseById(c.r.caseId), it = cs.items[c.r.idx], col = it.t === 'xp' ? '#F57A37' : '#12D53D';   // выигрыш — зелёный, как в крафтах; XP — оранжевый
   const m = c.r.mult || 1, val = it.t === 'gram' ? '+' + fmt(it.v * m) : it.t === 'xp' ? '+' + it.v * m : (c.label || itemName(it));
   return `<button class="hcard" data-i="${i}" style="--c:${cs.c}"><span class="hk-h"><em>${cs.short}</em><small>${tAgo(c.t)}</small></span>` +
     `<span class="hk-b"><span class="hk-s">${caseArt(cs, 'xs')}<span class="hk-v"><b>${cs.price ? fmt(cs.price) : '0'}</b><small>${cs.price ? 'GRAM' : $t("бесплатно")}</small></span></span>` +
