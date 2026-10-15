@@ -54,14 +54,14 @@ function renderHist(detail){
     const nftList = t => S.hist.wallet.filter(w => w.type === t), sumV = L => L.reduce((a, w) => a + (w.value || 0), 0), nftOut = nftList('nft').length, nftIn = nftList('nftin').length;
     const by = TIERS.map((t, i) => C.filter(c => c.r.ti === i).length);
     // статистика: итог крупно → крафты (+ RTP и ранги) → кейсы и кошелёк. Цвет — только у итога и сумм GRAM
-    const net = Math.round((won - staked) * 100) / 100, G = v => `${fmt(v)}${GU}`;
+    const G = v => `${fmt(v)}${GU}`;
     const tile = (k, v, sub, cls = '') => `<div class="${cls}"><small>${k}</small><b>${v}</b>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`;
-    // главное — сколько выиграно (без красного «минуса»); итог — спокойной строкой ниже, зелёным только если в плюсе.
+    // главное — сколько выиграно; итог не показываем — поставлено и выиграно рядом, разницу видно и так.
     // Полоска — какая доля поставленного вернулась (это и есть личный RTP)
     const back = staked ? Math.round(won / staked * 100) : 0;
     b.innerHTML = `<div class="hstat-hero one net"><div style="--c:#12D53D"><small>${$t("Выиграно в крафтах")}</small><b>${G(won)}</b>` +
         `<i class="nbar"><b style="width:${Math.min(100, back)}%"></b></i>` +
-        `<span>${$t("Поставлено {0} GRAM · вернулось {1}%", fmt(staked), back)}${net ? ` · <em class="${net > 0 ? 'up' : ''}">${$t("итог {0}", (net > 0 ? '+' : '−') + fmt(Math.abs(net)))}</em>` : ''}</span></div></div>` +
+        `<span>${$t("Поставлено {0} GRAM · вернулось {1}%", fmt(staked), back)}</span></div></div>` +
       `<div class="hsec">${$t("Крафты")}</div><div class="hstat n">${tile($t("Крафтов"), n)}${tile($t("Лучший множитель"), best.mult ? 'x' + best.mult : '—')}` +
         `${tile($t("Поставлено"), G(staked), '', 'g')}${tile($t("Выиграно"), G(won), '', 'g')}</div>` +
       `<div class="pfi-rtp"><b>${(+RTP_PPM / 1e4).toFixed(0)}%</b><span><b>${$t("Целевой RTP")}</b><small>${n ? `${$t("Твой RTP за {0} {1} — {2}%.", n, $n("крафт|крафта|крафтов", n), Math.round(won / staked * 100))} ` : ''}${$t("Крафт на длинной дистанции возвращает игрокам 95% ставок; на коротком отрезке твой может быть выше или ниже.")}</small></span></div>` +

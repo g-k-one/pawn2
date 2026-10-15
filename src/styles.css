@@ -1348,7 +1348,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .hstat.n b{font-size:26px}
 .hstat.n div.g b{color:var(--blue)}
 .hstat.n b i,.hstat-hero.net b i{font-style:normal;font-size:.55em;margin-left:5px;opacity:.85}
-.hstat-hero.net b{font-size:44px}
 /* отступы: внутри группы 8 px, между группами 20 px */
 .sect,.rules{margin-top:20px}
 .hsec{margin:20px 0 10px}
@@ -1366,5 +1365,3 @@ html[lang=en] .bcase.free::before{content:"Free"}
 /* статистика: полоска «сколько вернулось» и спокойный итог */
 .hstat-hero.net .nbar{display:block;height:6px;margin:10px 0 8px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
 .hstat-hero.net .nbar b{display:block;height:100%;border-radius:3px;background:#12D53D;font-size:0}
-.hstat-hero.net span em{font-style:normal;color:rgba(255,255,255,.85)}
-.hstat-hero.net span em.up{color:#12D53D}
