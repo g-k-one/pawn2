@@ -209,4 +209,22 @@ const diagLine = () => { const v = window.visualViewport;
   const t0 = performance.now(); (function watch(){ recheck(); if (performance.now() - t0 < 3000) requestAnimationFrame(watch); })();
   [3500, 6000].forEach(t => setTimeout(recheck, t)); }
 stage.addEventListener('scroll', () => { stage.scrollTop = 0; stage.scrollLeft = 0; });
+// Сторож: сцена должна стоять по центру видимой области. Если уехала (бывает на iPhone после «Reload Page») —
+// пересчитываем; если и это не помогло — показываем плашку с цифрами вне сцены (до баланса тогда не дотянуться)
+{ let box = null, bad = 0;
+  const geo = () => { const s = stage.getBoundingClientRect(), v = window.visualViewport, de = document.documentElement;
+    const vw = v ? v.width : de.clientWidth, cx = (s.left + s.right) / 2, want = (v ? v.offsetLeft : 0) + vw / 2;
+    return { off: cx - want, txt: `${diagLine()} · stage ${Math.round(s.left)}..${Math.round(s.right)} · client ${de.clientWidth}×${de.clientHeight} · vv ${v ? Math.round(v.width) + '×' + Math.round(v.height) : '-'} · screen ${screen.width}×${screen.height} · dpr ${devicePixelRatio} · body ${document.body.offsetWidth}` }; };
+  const check = () => {
+    let g = geo(); if (Math.abs(g.off) <= 4){ bad = 0; box?.remove(); box = null; return; }
+    unzoom(); fit(); dispatchEvent(new Event('resize'));                     // попытка починить
+    g = geo(); if (Math.abs(g.off) <= 4){ bad = 0; return; }
+    if (++bad < 2) return;                                                  // два раза подряд — значит, не мимолётное
+    if (!box){ box = document.createElement('div'); box.style.cssText = 'position:fixed;left:8px;top:110px;z-index:9999;max-width:260px;padding:10px 12px;border-radius:14px;background:#ff4c35;color:#fff;font:600 13px/1.35 system-ui,sans-serif;white-space:normal;word-break:break-word';
+      document.body.appendChild(box); }
+    box.textContent = `${$t("Диагностика")} · ${$t("сдвиг")} ${Math.round(g.off)} · ${g.txt}`;
+  };
+  const start = () => [600, 1500, 3000, 5000, 8000].forEach(t => setTimeout(check, t));
+  document.readyState === 'complete' ? start() : addEventListener('load', start);   // приложение может стартовать и после load (загрузчик)
+  addEventListener('resize', () => setTimeout(check, 300)); }
 
