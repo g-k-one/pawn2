@@ -39,6 +39,9 @@
       dst[k] = URL.createObjectURL(new Blob([u8], { type: 'image/webp' })); } };
     blobs(m, GIMG); blobs(s, GSYM);
   } catch (e){ console.warn('gift images not loaded', e); }
+  // код приложения берём только когда страница прочитана целиком: при «Reload Page» в Telegram на iPhone
+  // проверка CDN отвечала из кэша мгновенно, страница ещё догружалась, и сюда попадал обрезанный код (SyntaxError: Unexpected EOF)
+  if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r, { once: true }));
   const app = document.createElement('script'); app.textContent = document.getElementById('app').textContent; document.body.appendChild(app);
   setTimeout(() => { if (!window.APP_OK){ window.bootDone = 1; window.bootOops('приложение не запустилось (нет APP_OK через 4 с)'); } }, 4000);
   const b = document.getElementById('boot'); b.classList.add('off'); setTimeout(() => b.remove(), 500);
