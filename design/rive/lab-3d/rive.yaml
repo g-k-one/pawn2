@@ -1,0 +1,7 @@
+name: caesar3d
+main: main
+scripting: wasm
+artboard:
+  width: 360
+  height: 360
+  background: "#1A1430"

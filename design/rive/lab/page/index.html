@@ -1,0 +1,435 @@
+<title>Rive-лаборатория Цезаря</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: тёмная «сцена» — шапка с тезисом, сетка из 4 окон-стендов (2×2, на телефоне в столбик), под ними выводы. Тёмная одна тема — так видны свечения */
+:root {
+  --bg: #0b0a14;          /* ночь колизея */
+  --panel: #15122a;       /* стенд */
+  --line: #2a2546;
+  --fg: #ece8ff;
+  --muted: #a8a0cc;
+  --bolt: #7fd0ff;        /* молния — акцент */
+  --gold: #e8b64c;        /* лавр — второй акцент, редко */
+  --display: "Unbounded", "Golos Text", system-ui, sans-serif;
+  --body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); margin: 0 }
+.wrap { max-width: 1060px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px }
+header { display: grid; gap: 10px; max-width: 68ch }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--bolt) }
+h1 { font: 800 clamp(26px, 5vw, 40px)/1.08 var(--display); margin: 0; text-wrap: balance }
+h1 em { font-style: normal; color: var(--bolt); text-shadow: 0 0 18px rgba(127, 208, 255, .55) }
+header p { margin: 0; color: var(--muted) }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px }
+@media (max-width: 900px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+@media (max-width: 560px) { .grid { grid-template-columns: 1fr } }
+.hero { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 22px; align-items: start }
+@media (max-width: 720px) { .hero { grid-template-columns: 1fr } }
+.stage.tall { aspect-ratio: 390 / 844 }
+.hero .info { padding: 0 }
+.stand { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: grid; grid-template-rows: auto 1fr; min-width: 0 }
+.stage { position: relative; aspect-ratio: 1; max-width: 100%; background: #0d0b1e }
+.stage canvas { width: 100%; height: 100%; display: block }
+.stage.fxs { container-type: inline-size }
+.stage .gr { position: absolute; display: block }
+.stage .err { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font: 13px var(--mono); padding: 16px; text-align: center }
+.info { padding: 14px 16px 16px; display: grid; gap: 8px; min-width: 0 }
+.row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 10px }
+h2 { font: 600 17px/1.2 var(--display); margin: 0 }
+.tag { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--bolt); border: 1px solid rgba(127, 208, 255, .35); border-radius: 999px; padding: 5px 8px; white-space: nowrap }
+.info p { margin: 0; color: var(--muted); font-size: 14px }
+.info b { color: var(--fg); font-weight: 600 }
+button.again { font: 600 13px var(--body); color: var(--bg); background: var(--bolt); border: 0; border-radius: 8px; padding: 7px 12px; cursor: pointer; justify-self: start }
+button.again:hover { filter: brightness(1.1) }
+button.again:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px }
+.stage img { width: 100%; height: 100%; display: block; object-fit: cover }
+.badge { position: absolute; left: 10px; top: 10px; font: 600 11px/1 var(--mono); letter-spacing: .06em; color: var(--gold); background: rgba(11, 10, 20, .78); border: 1px solid rgba(232, 182, 76, .4); border-radius: 999px; padding: 6px 9px }
+section.fx { display: grid; gap: 16px }
+.fx-head { display: grid; gap: 8px; max-width: 72ch }
+.fx-head h3 { font: 600 19px/1.2 var(--display); margin: 0 }
+.fx-head p { margin: 0; color: var(--muted) }
+.fx-head b { color: var(--fg) }
+section.notes { display: grid; gap: 14px; max-width: 72ch }
+section.notes h3 { font: 600 19px/1.2 var(--display); margin: 0 }
+dl { margin: 0; display: grid; gap: 12px }
+dt { font-weight: 600 }
+dd { margin: 2px 0 0; color: var(--muted) }
+code { font: 13px var(--mono); color: var(--gold) }
+@media (prefers-reduced-motion: reduce) { h1 em { text-shadow: none } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Заставка арены · Rive</div>
+    <h1>Цезарь и <em>эффекты</em></h1>
+    <p>Последняя сборка заставки и новые частицы на текстурах. Заставка — сцена Rive, собранная из кода; эффекты — наш движок частиц на WebGL, тот же, что в игре.</p>
+  </header>
+
+  <section class="hero">
+    <div class="stage tall"><canvas id="cv-Caesar" data-board="Caesar" data-src="caesar"></canvas></div>
+    <div class="info">
+      <div class="row"><h2>Заставка: Цезарь</h2><span class="tag">как в игре</span></div>
+      <p>Та же сцена, что играет перед PvP-боем по кнопке «Старт сейчас»: Цезарь поднимается из-за стены, хохочет (смена рта и глаз), бьёт молниями из глаз в песок. Голова собрана как у Wukong: сетки по контуру, глаза в масках, венок и волосы на цепочках костей.</p>
+      <button class="again" data-again="Caesar">Заново</button>
+    </div>
+  </section>
+
+  <section class="fx">
+    <div class="fx-head">
+      <h3>Частицы на текстурах — 11 эффектов</h3>
+      <p>Рисованные маски из Magnific — чёрно-белые, мягкие, «мобильные». Наш движок на WebGL перекрашивает маску по ступеням (цвет по возрасту частицы), множит, вращает и тянет по скорости. <b>Это тот же код, что уже в игре</b> (Дебаг → «Эффекты частиц»): без Rive, без его логотипа при загрузке, один холст поверх экрана. <b>У каждого эффекта свой маленький атлас</b> (8–55 КБ, WebP), вместе — 282 КБ. Эффект рисуется одним вызовом; за экраном не считается вовсе.</p>
+    </div>
+    <div class="grid">
+    <article class="stand">
+      <div class="stage fxs" data-fx="fire" style="background:#140C10"><i class="gr" style="left:29.17%;top:85.00%;width:41.67%;height:5.56%;background:#3A2420;border-radius:2.78cqw"></i></div>
+      <div class="info">
+        <div class="row"><h2>Костёр</h2><span class="tag">плазма внутри</span></div>
+        <p>Пламя из шума, а внутри — плазма: шум искажает шум, который искажает шум, поэтому огонь течёт и закручивается, как жидкость, с прожилками светлее и темнее. Цвет плавный, без ступеней, край мягкий. Порывы ветра гнут макушку, угольки с ореолом.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="boom" style="background:#15112A"></div>
+      <div class="info">
+        <div class="row"><h2>Взрыв</h2><span class="tag">атлас 44 КБ</span></div>
+        <p>Эталон: вспышка-звезда → огненный шар из клубов (раскалённый → серый) → ударное кольцо и искры по баллистике → дым поднимается и тает. Удар короткий и яркий, затухание долгое и тусклое.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="portal" style="background:#0E0B22"></div>
+      <div class="info">
+        <div class="row"><h2>Портал</h2><span class="tag">атлас 54 КБ</span></div>
+        <p>Новое: <b>туннель</b> — кольца рождаются на краю и сжимаются к центру, светлея, это даёт глубину; внутри тёмное окно. Завитки кружат по сужающейся орбите и ускоряются, как вода в воронке.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="bolt" style="background:#110F2A"><i class="gr" style="left:0.00%;top:88.33%;width:100.00%;height:12.22%;background:#262040;border-radius:0.00cqw"></i></div>
+      <div class="info">
+        <div class="row"><h2>Удар молнии</h2><span class="tag">атлас 36 КБ</span></div>
+        <p>Предвестник — небо наливается светом; удар — рисованная молния перескакивает 3 кадра и мерцает; у земли кольцо, треск, искры и клубы пыли.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="coins" style="background:#161230"><i class="gr" style="left:0.00%;top:86.67%;width:100.00%;height:15.56%;background:#221C42;border-radius:0.00cqw"></i></div>
+      <div class="info">
+        <div class="row"><h2>Награда</h2><span class="tag">атлас 20 КБ</span></div>
+        <p>Монета вращается сменой рисованных кадров (анфас → три четверти → ребро), отскакивает от пола и ложится. Гемы трёх видов, по монетам пробегают блики.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="confetti" style="background:#181336"></div>
+      <div class="info">
+        <div class="row"><h2>Конфетти</h2><span class="tag">атлас 8 КБ</span></div>
+        <p>Бумажки — вектором (кувыркаются и порхают), вспышки хлопушек и мерцание — текстурой. Палитра мягче: без кислотных цветов.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="charge" style="background:#140E26"></div>
+      <div class="info">
+        <div class="row"><h2>Заряд «Ультра»</h2><span class="tag">атлас 23 КБ</span></div>
+        <p>Ожидание: искры стягиваются к шару всё чаще, кольца сжимаются внутрь, шар трещит. Разряд: лучи, кольцо наружу, звёздочки разлетаются.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="sparkle" style="background:#120E28"></div>
+      <div class="info">
+        <div class="row"><h2>Волшебная пыль</h2><span class="tag">атлас 11 КБ</span></div>
+        <p>Звёздочки вспыхивают, вращаются и гаснут; на заднем плане плывёт крупное мягкое боке. Спокойный фон для экрана наград или редкого предмета.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="smoke" style="background:#2A2440"></div>
+      <div class="info">
+        <div class="row"><h2>Дым</h2><span class="tag">атлас 13 КБ</span></div>
+        <p>«Ватные» клубы растут, медленно вращаются и темнеют к верху. Обычное смешивание вместо сложения света — дым закрывает фон, как и должен.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="shock" style="background:#2E2436"><i class="gr" style="left:0.00%;top:72.22%;width:100.00%;height:38.89%;background:#54402E;border-radius:0.00cqw"></i></div>
+      <div class="info">
+        <div class="row"><h2>Удар о землю</h2><span class="tag">атлас 23 КБ</span></div>
+        <p>Плоское кольцо по земле (эллипс — перспектива), за ним катятся клубы пыли, вверх летят золотые искры.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="comets" style="background:#0E0C24"><i class="gr" style="left:0.00%;top:91.67%;width:100.00%;height:11.11%;background:#1A1634;border-radius:0.00cqw"></i></div>
+      <div class="info">
+        <div class="row"><h2>Кометы</h2><span class="tag">атлас 9 КБ</span></div>
+        <p>Хвост из «штампов»: каждый кадр в точке головы остаётся мягкое пятно и тает. Хвост ровный на любой скорости и без полигонов.</p>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section class="fx">
+    <div class="fx-head">
+      <h3>Фракталы — природная сложность из формулы</h3>
+      <p>Огонь, молнии, трещины, кристаллы и облака в природе самоподобны: ветка похожа на дерево. Фрактал даёт такую сложность из пары строк и почти без картинок. Плюс в манифест добавлены принципы руководства Riot по VFX: фокус, шкала важности, тон, цвет, формы, тайминг.</p>
+    </div>
+    <div class="grid">
+    <article class="stand">
+      <div class="stage fxs" data-fx="fbolt" style="background:#151525"></div>
+      <div class="info">
+        <div class="row"><h2>Ветвящаяся молния</h2><span class="tag">фрактал</span></div>
+        <p>Ствол — ломаная, от изломов отходят ветки, от веток — веточки (фрактал). Перерисовка 15 раз в секунду, три «перескока» яркости; ветви гаснут раньше ствола — фокус на главном (правило Riot).</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="julia" style="background:#151525"></div>
+      <div class="info">
+        <div class="row"><h2>Аура Жюлиа</h2><span class="tag">фрактал</span></div>
+        <p>Настоящий фрактал Жюлиа считается в шейдере: узор бесконечно закручивается и дышит, светящиеся нити — ловушка орбиты. Для Ультра и Джекпота.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="crystal" style="background:#151525"></div>
+      <div class="info">
+        <div class="row"><h2>Кристалл</h2><span class="tag">фрактал</span></div>
+        <p>Снежинка растёт ветвлением: 6 лучей → ветки под 60° → веточки. По граням бежит блик, в конце рассыпается осколками.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="cracks" style="background:#2e2436"></div>
+      <div class="info">
+        <div class="row"><h2>Трещины от удара</h2><span class="tag">фрактал</span></div>
+        <p>Из точки удара растут ветвящиеся трещины, свет течёт от центра, бьют лучи и пыль, трещины остывают и краснеют.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="plasma" style="background:#151525"></div>
+      <div class="info">
+        <div class="row"><h2>Плазма</h2><span class="tag">фрактал</span></div>
+        <p>Шум, искажённый шумом, искажённым шумом, — течёт как магма. Ни одной картинки, фон для наград.</p>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section class="fx">
+    <div class="fx-head">
+      <h3>По твоим GIF и Unity-роликам — 13 эффектов</h3>
+      <p><b>Новое в движке:</b> картинка бежит по маске (огонь, хвосты), лента-хвост по следу, новые мультяшные маски, тряска при ударе, микро-жизнь — все светящиеся частицы и свечения чуть дышат и мерцают каждое в своём ритме.</p>
+      <p>Разобрал покадрово 24 GIF и 4 видео. Главное, что берём: <b>тайминг важнее числа частиц</b> (2/3 ожидания → 1–2 кадра удара → долгое затухание), жёсткий мультяшный край с обводкой и светом снизу, вспышка на весь экран, молнии, которые перерисовываются 7–20 раз в секунду, а не плывут. В движок добавлены: мультяшные клубы, энергосфера, лучи, радужный обод, серп, поток в кнопке, спираль, хвост из точек, многоугольники, молнии и отрезки.</p>
+    </div>
+    <div class="grid">
+    <article class="stand">
+      <div class="stage fxs" data-fx="firering" style="background:#222228"><i class="gr" style="left:22%;top:22%;width:56%;height:56%;border-radius:50%;background:#7a8290"></i></div>
+      <div class="info">
+        <div class="row"><h2>Рамка: огонь</h2><span class="tag">Discord</span></div>
+        <p>Ленты огня бегут по кругу навстречу (огонь течёт вдоль ленты), два спутника с огненным хвостом, искры срываются по касательной.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="sparkring" style="background:#222228"><i class="gr" style="left:22%;top:22%;width:56%;height:56%;border-radius:50%;background:#7a8290"></i></div>
+      <div class="info">
+        <div class="row"><h2>Рамка: блёстки</h2><span class="tag">Discord</span></div>
+        <p>При появлении — вспышка разноцветных звёздочек вокруг, потом редкие звёздочки вспыхивают по ободу.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="mushroom" style="background:#3c4048"></div>
+      <div class="info">
+        <div class="row"><h2>Гриб-взрыв</h2><span class="tag">video-1-front</span></div>
+        <p>Появляется за 2 кадра целиком: ножка и шапка из мультяшных клубов. Свет снизу — верхние края клубов темнее, жёсткий край с обводкой; через 1,6 с рвётся по шуму на клочья.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="eruption" style="background:#3c3c3c"></div>
+      <div class="info">
+        <div class="row"><h2>Извержение</h2><span class="tag">kuny-az (Unreal)</span></div>
+        <p>Искры стягиваются по кругу, встают лучи → огненный выброс → смена цвета на бирюзу: столп, 70 искр, обломки с отскоком, светящиеся трещины по земле.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="sphere" style="background:#120808"></div>
+      <div class="info">
+        <div class="row"><h2>Энергосфера</h2><span class="tag">magic-sphere</span></div>
+        <p>Мультяшный френель в 3 ступени к ободу, внутри кружат тёмные дуги, по ободу ползут молнии (новые 7 раз в секунду), плавают тёмные осколки.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="toonboom" style="background:#3a2a44"></div>
+      <div class="info">
+        <div class="row"><h2>Мультяшный взрыв</h2><span class="tag">переделан</span></div>
+        <p>Ожидание: ядро пульсирует всё чаще и плюётся искрами, дрожит. Удар: кадр-звезда, тряска, вспышка. Шар из рисованных клубов с перелётом размера, вокруг с задержкой «хлопают» малые клубы, цвет остывает белый → жёлтый → оранжевый → красный, края рвутся, поднимается тёмный дым.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="reveal" style="background:#10142a"></div>
+      <div class="info">
+        <div class="row"><h2>Раскрытие предмета</h2><span class="tag">Clash Royale: альбом</span></div>
+        <p>2/3 времени — ожидание: дышит, радужный обод, лучи разгоняются, трясёт → белая вспышка → новый предмет выпрыгивает.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="hexreveal" style="background:#2a1450"></div>
+      <div class="info">
+        <div class="row"><h2>Раскрытие героя</h2><span class="tag">Squad Busters</span></div>
+        <p>Шестиугольник пульсирует всё чаще, расходятся контуры, лучи → вспышка на экран → предмет с перелётом.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="combo" style="background:#10142a"></div>
+      <div class="info">
+        <div class="row"><h2>Комбо</h2><span class="tag">Kitchen Masters</span></div>
+        <p>Два шара сближаются, между ними трещат молнии (новые каждые 0,05 с), радужное поле → волна наружу и вспышка.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="hit" style="background:#555555"></div>
+      <div class="info">
+        <div class="row"><h2>Попадание</h2><span class="tag">attack result</span></div>
+        <p>Кадр 1 — белая точка, кадры 2–3 — звезда с тёмным кольцом, потом осколки и «зёрна» тормозят и тают. Всё ~1 с.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="starwave" style="background:#5a4050"></div>
+      <div class="info">
+        <div class="row"><h2>Волна звёзд</h2><span class="tag">Brawl Stars: Janet</span></div>
+        <p>Вспышка-эллипс → пять звёзд строем, тормозят, сыплют треугольники, в конце ломаются; цвет чередуется.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="bubble" style="background:#2a2a6a"></div>
+      <div class="info">
+        <div class="row"><h2>Снаряд с хвостом</h2><span class="tag">переделан</span></div>
+        <p>Хвост — лента по следу полёта, <b>внутри бегут полутоновые точки, огонь и световые штрихи</b> (три полосы с разной скоростью). Голова дышит, вокруг крутятся два серпа; попадание — диск, шипы, кольцо-серп, разлёт точек.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="swirl" style="background:#000000"></div>
+      <div class="info">
+        <div class="row"><h2>Спираль-фон</h2><span class="tag">Squad Busters: подбор</span></div>
+        <p>Двухрукавная спираль из градиента, палитра меняется раз в 3 с, из центра летят на камеру предметы.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="button" style="background:#10142a"><i class="gr" style="left:8.3%;top:36%;width:83.3%;height:27.8%;border-radius:50cqw;background:linear-gradient(#5fd83a,#2fa51c)"></i></div>
+      <div class="info">
+        <div class="row"><h2>Кнопка</h2><span class="tag">Kitchen Masters</span></div>
+        <p>Внутри кнопки бегут прожилки и проходит блик, мигают звёздочки — всё в одном шейдере.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="slash" style="background:#10142a"></div>
+      <div class="info">
+        <div class="row"><h2>Взмах</h2><span class="tag">Misfitz: Speed Up</span></div>
+        <p>Три серпа с белым ядром растут и втягиваются, проворачиваясь вокруг центра.</p>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section class="fx">
+    <div class="fx-head">
+      <h3>Ауры по твоим видео — 7 штук</h3>
+      <p>Разобрал ролики покадрово (10 кадров в секунду): это не разовые эффекты, а <b>зацикленные ауры</b> — фон за предметом по редкости. Каждая собрана из 2–4 слоёв на нашем движке; нити и туманность рисует шейдер прямо из шума, без картинок. Атлас на все семь — 35 КБ.</p>
+    </div>
+    <div class="grid">
+    <article class="stand">
+      <div class="stage fxs" data-fx="twinkle" style="background:#000"></div>
+      <div class="info">
+        <div class="row"><h2>Мерцание</h2><span class="tag">частицы</span></div>
+        <p>~60 четырёхлучевых звёзд в овале: каждая вспыхивает и гаснет за 0,5–1 с, под каждой — голубой ореол.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="spirit" style="background:#000"></div>
+      <div class="info">
+        <div class="row"><h2>Дух</h2><span class="tag">шейдер + частицы</span></div>
+        <p>Клубы дыма бирюзой медленно вращаются, края колышет и съедает шум; внизу — яркое ядро, внутри мерцают белые осколки.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="starburst" style="background:#000"></div>
+      <div class="info">
+        <div class="row"><h2>Звезда</h2><span class="tag">частицы</span></div>
+        <p>Горячее ядро с роем искорок, большое пурпурное свечение, редкие вспышки-лучи; розовые звёздочки уплывают в сторону.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="cloud" style="background:#000"></div>
+      <div class="info">
+        <div class="row"><h2>Облако</h2><span class="tag">частицы</span></div>
+        <p>Мягкие синие пятна плавают друг через друга, разноцветные точки медленно мерцают и дрейфуют.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="threads" style="background:#000"></div>
+      <div class="info">
+        <div class="row"><h2>Нити</h2><span class="tag">только шейдер</span></div>
+        <p>Светящиеся прожилки из шума двумя слоями навстречу — переплетаются, как плазма. Ни одной картинки.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="nebula" style="background:#000"></div>
+      <div class="info">
+        <div class="row"><h2>Туманность</h2><span class="tag">шейдер + пыль</span></div>
+        <p>Облака шума с тёмными провалами и прожилками, поверх — звёздная пыль; всё медленно вращается.</p>
+      </div>
+    </article>
+    <article class="stand">
+      <div class="stage fxs" data-fx="ring" style="background:#000"></div>
+      <div class="info">
+        <div class="row"><h2>Кольцо</h2><span class="tag">частицы</span></div>
+        <p>Толстые кольца-эллипсы поворачиваются в разных фазах — кольцо будто крутится в объёме.</p>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section class="notes">
+    <h3>Что сделали мягче</h3>
+    <dl>
+      <div><dt>Почему эффекты не на Rive</dt>
+        <dd>Файлы Rive со скриптами на бесплатном тарифе показывают логотип RIVE 2–3 секунды при каждом запуске. Заставка Цезаря скриптов не содержит — у неё логотипа нет, она остаётся на Rive. Частицы перенесли в свой код: те же атласы и настройки, логотипа нет, вес — 25 КБ кода и 282 КБ картинок.</dd></div>
+      <div><dt>Без чисто чёрного и выбитого белого</dt>
+        <dd>Тёмная ступень каждого цвета — насыщенная (бордовый, лавандово-серый), светлая — кремовая, а не белая. Ядра и свечения тусклее, чем в первой пробе.</dd></div>
+      <div><dt>Плавные кривые прозрачности</dt>
+        <dd>Частица появляется и гаснет по плавной кривой, а не скачком; крупных частиц меньше, мелкой пыли больше нет.</dd></div>
+      <div><dt>Искры летят головой вперёд</dt>
+        <dd>Маска искры нарисована по диагонали; скрипт поворачивает её по скорости и тянет вдоль полёта — чем быстрее, тем длиннее хвост.</dd></div>
+    </dl>
+  </section>
+</div>
+
+<script src="fx-atlas.js"></script>
+<script src="fx.js"></script>
+<script>
+// эффекты: тот же движок, что в игре; каждый привязан к своему стенду (следует за прокруткой, обрезается по нему)
+(() => {
+  const st = [...document.querySelectorAll('[data-fx]')];
+  if (typeof Particles === 'undefined' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  st.forEach(el => { if (!Particles.play(el.dataset.fx, { el, loop: true })) el.insertAdjacentHTML('beforeend', '<div class="err">WebGL недоступен</div>'); });
+})();
+</script>
+<script src="rive.js"></script>
+<script>
+(() => {
+  const boards = [...document.querySelectorAll('canvas[data-board]')], live = {};
+  const fail = (cv, msg) => { const d = document.createElement('div'); d.className = 'err'; d.textContent = msg; cv.parentElement.appendChild(d); };
+  if (!window.rive){ boards.forEach(cv => fail(cv, 'Рантайм Rive не загрузился')); return; }
+  rive.RuntimeLoader.setWasmUrl('rive.wasm');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const get = f => fetch(f + '.riv.txt').then(r => { if (!r.ok) throw new Error(f + '.riv ' + r.status); return r.text(); })
+    .then(t => Uint8Array.from(atob(t.trim()), c => c.charCodeAt(0)).buffer);
+  get('caesar')
+    .then(caesarBuf => {
+      const start = cv => { const name = cv.dataset.board; live[name]?.cleanup();
+        const dpr = Math.min(2, devicePixelRatio || 1); cv.width = cv.clientWidth * dpr; cv.height = cv.clientHeight * dpr;
+        live[name] = new rive.Rive({ buffer: caesarBuf.slice(0), canvas: cv, stateMachine: 'SM', autoplay: !reduce,
+          layout: new rive.Layout({ fit: rive.Fit.Contain, alignment: rive.Alignment.Center }),
+          onLoad: () => live[name].resizeDrawingSurfaceToCanvas(), onLoadError: () => fail(cv, 'Сцена не открылась') }); };
+      boards.forEach(start);
+      document.querySelectorAll('[data-again]').forEach(b => b.addEventListener('click', () => start(document.getElementById('cv-' + b.dataset.again))));
+      let t; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => boards.forEach(start), 250); });
+    })
+    .catch(e => boards.forEach(cv => fail(cv, 'Не удалось загрузить сцену: ' + e.message)));
+})();
+</script>

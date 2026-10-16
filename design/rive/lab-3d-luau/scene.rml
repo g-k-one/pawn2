@@ -1,0 +1,15 @@
+<Rive version="1" kind="fragment">
+<Artboard width="360" height="360" clip="true" name="Caesar3D" styleId="0:3" defaultStateMachineId="0:20" id="0:2">
+<LayoutComponentStyle name="Style" id="0:3"/>
+<Fill name="Bg"><SolidColor colorValue="FF1A1430" name="C"/></Fill>
+<ScriptedDrawable x="0" y="0" scriptAssetId="0:90" name="Caesar" id="0:10"/>
+<Shape x="180" y="338" name="Shadow" id="0:11">
+<Ellipse width="150" height="26" name="P"/>
+<Fill name="F"><SolidColor colorValue="66000000" name="C"/><Feather strength="10" name="Fe"/></Fill>
+</Shape>
+<StateMachine name="SM" id="0:20"><StateMachineLayer name="L" id="0:21"><AnyState x="200" y="-120"/><ExitState x="400" y="-120"/><EntryState/></StateMachineLayer></StateMachine>
+</Artboard>
+<ImageAsset file="tex.webp" name="tex" id="0:91"/>
+<BlobAsset file="c3d.bin" name="c3d" id="0:92"/>
+<ScriptAsset file="c3d.luau" name="c3d" id="0:90"/>
+</Rive>

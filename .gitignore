@@ -3,3 +3,10 @@ dist/
 design/rive/*/build/
 design/rive/caesar2/probe/
 design/rive/caesar2/traced.json
+# Rive/эффекты: тяжёлое и производное (с диска не удаляется)
+design/rive/refs/*.riv
+design/rive/*/shots/
+design/rive/lab-3d-src/*.glb
+design/rive/lab/page/*
+!design/rive/lab/page/index.html
+design/rive/lab-fx/fx-*.webp

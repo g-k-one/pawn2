@@ -1,0 +1,247 @@
+<title>Мастерская Цезаря</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: верстак — слева сцена с частями (квадрат), справа инструменты: эмоция/поза, список частей, ползунки, сохранение. На телефоне — столбиком */
+:root {
+  --bg: #0b0a14; --panel: #15122a; --line: #2a2546; --fg: #ece8ff; --muted: #a8a0cc;
+  --accent: #7fd0ff; --gold: #e8b64c; --stage: #1a1430;
+  --display: "Unbounded", "Golos Text", system-ui, sans-serif;
+  --body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--body); margin: 0 }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 22px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px }
+h1 { font: 800 clamp(22px, 4vw, 30px)/1.1 var(--display); margin: 0 }
+h1 em { font-style: normal; color: var(--gold) }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 60ch }
+.tabs { display: flex; gap: 6px }
+.tabs button, .chips button { font: 600 13px var(--body); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer }
+.tabs button[aria-pressed="true"], .chips button[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent) }
+.bench { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; align-items: start }
+@media (max-width: 820px) { .bench { grid-template-columns: 1fr } }
+.stage { position: relative; aspect-ratio: 1; max-width: 100%; background: var(--stage); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; touch-action: none }
+.stage canvas { width: 100%; height: 100%; display: block; cursor: grab }
+.stage canvas.drag { cursor: grabbing }
+.hint { position: absolute; left: 10px; bottom: 10px; font: 12px var(--mono); color: var(--muted); background: rgba(11, 10, 20, .7); padding: 5px 8px; border-radius: 8px; pointer-events: none }
+.tools { display: grid; gap: 14px; min-width: 0 }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; min-width: 0 }
+.box h2 { font: 600 12px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
+.parts { display: grid; gap: 4px; max-height: 240px; overflow: auto }
+.parts button { display: flex; justify-content: space-between; gap: 8px; text-align: left; font: 500 13px var(--body); color: var(--fg); background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 6px 8px; cursor: pointer }
+.parts button:hover { background: rgba(127, 208, 255, .08) }
+.parts button[aria-current="true"] { border-color: var(--accent); background: rgba(127, 208, 255, .12) }
+.parts small { font: 11px var(--mono); color: var(--muted) }
+.field { display: grid; grid-template-columns: 74px minmax(0, 1fr) 62px; align-items: center; gap: 8px }
+.field label { color: var(--muted); font-size: 13px }
+.field input[type="range"] { width: 100%; accent-color: var(--accent) }
+.field output { font: 12px var(--mono); text-align: right; font-variant-numeric: tabular-nums }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+button.act { font: 600 13px var(--body); border: 0; border-radius: 8px; padding: 9px 14px; cursor: pointer; color: var(--bg); background: var(--accent) }
+button.ghost { font: 600 13px var(--body); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; color: var(--fg); background: transparent }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px }
+.status { font-size: 13px; color: var(--muted); min-height: 1.5em }
+.status.ok { color: #8fe3a8 } .status.err { color: #ff9a8a }
+label.check { display: flex; gap: 8px; align-items: center; color: var(--muted); cursor: pointer }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Мастерская <em>Цезаря</em></h1>
+      <p class="sub">Подвиньте, увеличьте или поверните части, чтобы они сели как надо. Нажмите «Сохранить» — Claude заберёт раскладку и пересоберёт сцену.</p>
+    </div>
+    <div class="tabs" role="group" aria-label="Что редактируем">
+      <button id="tabFace" aria-pressed="true">Лицо</button>
+      <button id="tabBody" aria-pressed="false">Тело</button>
+    </div>
+  </header>
+
+  <div class="bench">
+    <div class="stage"><canvas id="cv" width="900" height="900" aria-label="Сцена с частями"></canvas><div class="hint" id="hint">Тащите часть мышью или пальцем · стрелки — по 1 px</div></div>
+    <div class="tools">
+      <div class="box">
+        <h2 id="modeTitle">Эмоция</h2>
+        <div class="chips" id="modes"></div>
+        <label class="check" id="refRow"><input type="checkbox" id="showRef"> Образец поверх (полупрозрачный)</label>
+      </div>
+      <div class="box">
+        <h2>Части</h2>
+        <div class="parts" id="parts"></div>
+      </div>
+      <div class="box">
+        <h2 id="selTitle">Выбрано</h2>
+        <div class="field"><label for="fx">Сдвиг X</label><input type="range" id="fx" min="-400" max="400" step="1"><output id="ox"></output></div>
+        <div class="field"><label for="fy">Сдвиг Y</label><input type="range" id="fy" min="-600" max="400" step="1"><output id="oy"></output></div>
+        <div class="field"><label for="fs">Размер</label><input type="range" id="fs" min="0.2" max="3" step="0.01"><output id="os"></output></div>
+        <div class="field"><label for="fr">Поворот</label><input type="range" id="fr" min="-180" max="180" step="1"><output id="or"></output></div>
+        <div class="row"><button class="ghost" id="resetPart">Вернуть часть</button></div>
+      </div>
+      <div class="box">
+        <div class="row"><button class="act" id="save">Сохранить</button><button class="ghost" id="resetAll">Сбросить всё</button><button class="ghost" id="copy">Скопировать</button></div>
+        <div class="status" id="status" role="status"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // размеры картинок (px), чтобы раскладка считалась до загрузки
+  const SIZE = {"kGrin":[195,116],"kHa":[195,154],"kitBase":[310,383],"kitBrowAL":[110,63],"kitBrowAR":[110,64],"kitBrowNL":[106,55],"kitBrowNR":[106,55],"kitEyeL":[106,55],"kitEyeR":[104,56],"kitLaughL":[98,48],"kitLaughR":[98,49],"kitLidL":[84,57],"kitLidR":[85,57],"kitRef":[311,383],"kO":[67,83],"kRoar":[189,163],"kSmirk":[177,98],"poseFist":[264,269],"poseHang":[142,412],"poseStop":[275,315],"poseUp":[311,426],"torso":[605,691]};
+  // раскладка по умолчанию — та, что сейчас в сцене. Лицо: от центра основы; рты крепятся верхом (top). Тело: единицы — пиксели туники.
+  const DEF = {
+    face: {
+      kitBase: { x: 0, y: 0, s: 1, r: 0, name: 'Голова (основа)' },
+      kitBrowNL: { x: -55, y: -17, s: .8, r: 0, name: 'Бровь левая' }, kitBrowNR: { x: 55, y: -20, s: .8, r: 0, name: 'Бровь правая' },
+      kitBrowAL: { x: -55, y: -17, s: .74, r: 0, name: 'Бровь злая, левая' }, kitBrowAR: { x: 55, y: -20, s: .74, r: 0, name: 'Бровь злая, правая' },
+      kitEyeL: { x: -50, y: 16, s: .56, r: 0, name: 'Глаз левый' }, kitEyeR: { x: 52, y: 16, s: .56, r: 0, name: 'Глаз правый' },
+      kitLidL: { x: -50, y: 7, s: .7, r: 0, name: 'Веко левое' }, kitLidR: { x: 52, y: 7, s: .7, r: 0, name: 'Веко правое' },
+      kitLaughL: { x: -50, y: 18, s: .62, r: 0, name: 'Глаз-смех левый' }, kitLaughR: { x: 52, y: 18, s: .62, r: 0, name: 'Глаз-смех правый' },
+      kSmirk: { x: 0, y: 81, s: .68, r: 0, top: 1, name: 'Рот: ухмылка' }, kGrin: { x: 0, y: 81, s: .6, r: 0, top: 1, name: 'Рот: улыбка' },
+      kHa: { x: 0, y: 81, s: .6, r: 0, top: 1, name: 'Рот: хохот' }, kRoar: { x: 0, y: 81, s: .57, r: 0, top: 1, name: 'Рот: рёв' }, kO: { x: 0, y: 81, s: .57, r: 0, top: 1, name: 'Рот: «о»' },
+    },
+    body: {
+      torso: { x: 0, y: 0, s: 1, r: 0, name: 'Туника' },
+      kitRef: { x: 0, y: -275 - 383 * 1.35 / 2, s: 1.35, r: 0, name: 'Голова' },
+      // позы руки: x, y — центр картинки относительно плеча, r — поворот вокруг плеча (рад), joint — где плечо
+      poseHang: { x: (142 / 2 - 110) * 2.2, y: (412 / 2 - 50) * 2.2, s: 2.2, r: 0, name: 'Рука: висит' },
+      poseFist: { x: (264 / 2 - 248) * 2.2, y: (269 / 2 - 222) * 2.2, s: 2.2, r: 0, name: 'Рука: кулак' },
+      poseStop: { x: (275 / 2 - 262) * 2.2, y: (315 / 2 - 270) * 2.2, s: 2.2, r: 0, name: 'Рука: «стоп»' },
+      poseUp: { x: (311 / 2 - 25) * 2.2, y: (426 / 2 - 390) * 2.2, s: 2.2, r: -.42, name: 'Рука: вверх' },
+      joint: { x: -232, y: -136, s: 1, r: 0, name: 'Плечо (точка вращения)' },
+      shoulder: { x: -272, y: -150, s: 1, r: 0, name: 'Плечо под рукавом (кожа)' },
+    },
+  };
+  const FACE_MODES = { 'Ухмылка': ['kitBrowNL', 'kitBrowNR', 'kitEyeL', 'kitEyeR', 'kSmirk'], 'Улыбка': ['kitBrowNL', 'kitBrowNR', 'kitEyeL', 'kitEyeR', 'kGrin'],
+    'Смех': ['kitBrowNL', 'kitBrowNR', 'kitLaughL', 'kitLaughR', 'kHa'], 'Злость': ['kitBrowAL', 'kitBrowAR', 'kitEyeL', 'kitEyeR', 'kitLidL', 'kitLidR', 'kRoar'],
+    'Удивление': ['kitBrowNL', 'kitBrowNR', 'kitEyeL', 'kitEyeR', 'kO'] };
+  const BODY_MODES = { 'Висит': 'poseHang', 'Кулак': 'poseFist', '«Стоп»': 'poseStop', 'Вверх': 'poseUp' };
+  const clone = o => JSON.parse(JSON.stringify(o));
+  let L = clone(DEF), tab = 'face', mode = 'Ухмылка', bodyMode = 'Висит', sel = 'kSmirk', showRef = false;
+
+  // ---------- картинки ----------
+  const imgs = {}, alpha = {};
+  const load = n => imgs[n] ||= new Promise(res => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = i.width; c.height = i.height;
+    const x = c.getContext('2d'); x.drawImage(i, 0, 0); alpha[n] = { w: i.width, h: i.height, d: x.getImageData(0, 0, i.width, i.height).data }; imgs[n] = i; res(i); draw(); };
+    i.onerror = () => res(null); i.src = 'img/' + n + '.webp'; });
+  Object.keys(SIZE).forEach(load);
+
+  // ---------- что на сцене (сверху вниз = позже рисуем) ----------
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  const view = () => tab === 'face' ? { k: 2.2, cx: 450, cy: 470 } : { k: .5, cx: 470, cy: 600 };
+  // список слоёв: { n, part, M } — M переводит пиксели картинки в пиксели холста
+  function layers(){
+    const v = view(), out = [], base = [v.k, 0, 0, v.k, v.cx, v.cy];
+    const T = (M, x, y, r, s) => { const c = Math.cos(r), si = Math.sin(r); return mul(M, [c * s, si * s, -si * s, c * s, x, y]); };
+    if (tab === 'face'){
+      const F = L.face; out.push({ n: 'kitBase', M: T(base, F.kitBase.x, F.kitBase.y, F.kitBase.r, F.kitBase.s) });
+      for (const n of FACE_MODES[mode]){ const p = F[n], h = SIZE[n][1]; out.push({ n, M: T(T(base, p.x, p.y, p.r, p.s), 0, p.top ? h / 2 : 0, 0, 1) }); }
+      if (showRef) out.push({ n: 'kitRef', M: T(base, F.kitBase.x, F.kitBase.y, 0, 1), ghost: .45 });
+    } else {
+      const B = L.body, J = B.joint, pose = BODY_MODES[bodyMode];
+      // левая рука (зеркально) и правая — под туникой; кожа плеча — между ними и туникой
+      const mirror = mul(base, [-1, 0, 0, 1, 0, 0]);
+      out.push({ n: 'poseHang', M: T(T(mirror, J.x - 4, J.y + 6, B.poseHang.r, 1), B.poseHang.x, B.poseHang.y, 0, B.poseHang.s), fixed: 1 });
+      out.push({ n: pose, M: T(T(base, J.x, J.y, B[pose].r, 1), B[pose].x, B[pose].y, 0, B[pose].s) });
+      out.push({ n: 'shoulder', shape: 1, M: T(base, B.shoulder.x, B.shoulder.y, B.shoulder.r, B.shoulder.s) }, { n: 'shoulder', shape: 1, fixed: 1, M: T(mirror, B.shoulder.x, B.shoulder.y, B.shoulder.r, B.shoulder.s) });
+      out.push({ n: 'torso', M: T(base, B.torso.x, B.torso.y, B.torso.r, B.torso.s) });
+      out.push({ n: 'kitRef', M: T(base, B.kitRef.x, B.kitRef.y, B.kitRef.r, B.kitRef.s) });
+    }
+    return out;
+  }
+  function mul(A, B){ return [A[0] * B[0] + A[2] * B[1], A[1] * B[0] + A[3] * B[1], A[0] * B[2] + A[2] * B[3], A[1] * B[2] + A[3] * B[3], A[0] * B[4] + A[2] * B[5] + A[4], A[1] * B[4] + A[3] * B[5] + A[5]]; }
+  function inv(M){ const d = M[0] * M[3] - M[1] * M[2]; return [M[3] / d, -M[1] / d, -M[2] / d, M[0] / d, (M[2] * M[5] - M[3] * M[4]) / d, (M[1] * M[4] - M[0] * M[5]) / d]; }
+
+  function draw(){
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+    for (const l of layers()){
+      ctx.setTransform(...l.M);
+      if (l.shape){ const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 120); g.addColorStop(0, '#F6B98E'); g.addColorStop(.55, '#E69A6C'); g.addColorStop(1, '#B8684A');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, 48, 115, 0, 0, Math.PI * 2); ctx.fill(); }
+      else { const i = imgs[l.n]; if (!(i instanceof Image)) continue; const [w, h] = SIZE[l.n]; ctx.globalAlpha = l.ghost || 1; ctx.drawImage(i, -w / 2, -h / 2, w, h); ctx.globalAlpha = 1; }
+      const key = l.shape ? 'shoulder' : l.n;
+      if (key === sel && !l.fixed && !l.ghost){ const [w, h] = l.shape ? [96, 230] : SIZE[l.n]; ctx.lineWidth = 2 / Math.hypot(l.M[0], l.M[1]); ctx.strokeStyle = '#7fd0ff'; ctx.setLineDash([8 / Math.hypot(l.M[0], l.M[1]), 6 / Math.hypot(l.M[0], l.M[1])]); ctx.strokeRect(-w / 2, -h / 2, w, h); ctx.setLineDash([]); }
+    }
+    if (tab === 'body'){ const v = view(), J = L.body.joint; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.strokeStyle = '#e8b64c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(v.cx + J.x * v.k, v.cy + J.y * v.k, 9, 0, Math.PI * 2); ctx.stroke(); }
+  }
+
+  // ---------- выбор и перетаскивание ----------
+  const pt = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+  function hit(x, y){
+    if (tab === 'body'){ const v = view(), J = L.body.joint; if (Math.hypot(x - (v.cx + J.x * v.k), y - (v.cy + J.y * v.k)) < 14) return 'joint'; }
+    const ls = layers().filter(l => !l.fixed && !l.ghost).reverse();
+    for (const l of ls){ const [u, w] = (() => { const I = inv(l.M); return [I[0] * x + I[2] * y + I[4], I[1] * x + I[3] * y + I[5]]; })();
+      if (l.shape){ if ((u / 48) ** 2 + (w / 115) ** 2 <= 1) return 'shoulder'; continue; }
+      const a = alpha[l.n], [W, H] = SIZE[l.n]; if (!a) continue; const px = Math.floor((u + W / 2) * a.w / W), py = Math.floor((w + H / 2) * a.h / H);
+      if (px >= 0 && py >= 0 && px < a.w && py < a.h && a.d[(py * a.w + px) * 4 + 3] > 60) return l.n; }
+    return null;
+  }
+  const part = () => (tab === 'face' ? L.face : L.body)[sel];
+  let drag = null;
+  cv.addEventListener('pointerdown', e => { const [x, y] = pt(e), n = hit(x, y); if (!n) return; select(n);
+    drag = { x, y, px: part().x, py: part().y }; cv.setPointerCapture(e.pointerId); cv.classList.add('drag'); });
+  cv.addEventListener('pointermove', e => { if (!drag) return; const [x, y] = pt(e), k = view().k, p = part();
+    // поза руки и плечо двигаются в осях повёрнутой позы — пересчитываем сдвиг экрана в оси части
+    let dx = (x - drag.x) / k, dy = (y - drag.y) / k;
+    if (tab === 'body' && sel.startsWith('pose')){ const r = -p.r, c = Math.cos(r), s = Math.sin(r); [dx, dy] = [c * dx - s * dy, s * dx + c * dy]; }
+    p.x = Math.round((drag.px + dx) * 10) / 10; p.y = Math.round((drag.py + dy) * 10) / 10; sync(); draw(); });
+  const end = () => { drag = null; cv.classList.remove('drag'); };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+  addEventListener('keydown', e => { if (!sel || e.target.tagName === 'INPUT') return; const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+    if (!d) return; e.preventDefault(); const p = part(), m = e.shiftKey ? 10 : 1; p.x += d[0] * m; p.y += d[1] * m; sync(); draw(); });
+
+  // ---------- панель ----------
+  const $ = id => document.getElementById(id);
+  const F = { x: $('fx'), y: $('fy'), s: $('fs'), r: $('fr') }, O = { x: $('ox'), y: $('oy'), s: $('os'), r: $('or') };
+  function sync(){ const p = part(); if (!p) return; $('selTitle').textContent = 'Выбрано: ' + p.name;
+    F.x.value = p.x; F.y.value = p.y; F.s.value = p.s; F.r.value = Math.round(p.r * 180 / Math.PI);
+    O.x.textContent = (+p.x).toFixed(0); O.y.textContent = (+p.y).toFixed(0); O.s.textContent = (+p.s).toFixed(2); O.r.textContent = Math.round(p.r * 180 / Math.PI) + '°';
+    const noScale = sel === 'joint'; F.s.disabled = noScale; F.r.disabled = sel === 'joint' || sel === 'shoulder';
+    document.querySelectorAll('#parts button').forEach(b => b.setAttribute('aria-current', b.dataset.n === sel)); }
+  for (const k of ['x', 'y', 's', 'r']) F[k].addEventListener('input', () => { const p = part(); p[k] = k === 'r' ? +F[k].value * Math.PI / 180 : +F[k].value; sync(); draw(); });
+  function select(n){ sel = n; sync(); draw(); }
+  function visible(){ if (tab === 'face') return ['kitBase', ...FACE_MODES[mode]]; return ['joint', BODY_MODES[bodyMode], 'shoulder', 'torso', 'kitRef']; }
+  function renderTools(){
+    $('tabFace').setAttribute('aria-pressed', tab === 'face'); $('tabBody').setAttribute('aria-pressed', tab === 'body');
+    $('modeTitle').textContent = tab === 'face' ? 'Эмоция' : 'Поза руки'; $('refRow').hidden = tab !== 'face';
+    const modes = tab === 'face' ? Object.keys(FACE_MODES) : Object.keys(BODY_MODES), cur = tab === 'face' ? mode : bodyMode;
+    $('modes').innerHTML = ''; modes.forEach(m => { const b = document.createElement('button'); b.textContent = m; b.setAttribute('aria-pressed', m === cur);
+      b.onclick = () => { if (tab === 'face') mode = m; else bodyMode = m; if (!visible().includes(sel)) sel = visible()[tab === 'face' ? visible().length - 1 : 1]; renderTools(); draw(); }; $('modes').appendChild(b); });
+    const P = tab === 'face' ? L.face : L.body;
+    $('parts').innerHTML = ''; visible().forEach(n => { const b = document.createElement('button'); b.dataset.n = n;
+      b.innerHTML = `<span></span><small></small>`; b.firstChild.textContent = P[n].name; b.lastChild.textContent = n; b.onclick = () => select(n); $('parts').appendChild(b); });
+    if (!visible().includes(sel)) sel = visible()[tab === 'face' ? visible().length - 1 : 1];
+    sync();
+  }
+  $('tabFace').onclick = () => { tab = 'face'; sel = 'kSmirk'; renderTools(); draw(); };
+  $('tabBody').onclick = () => { tab = 'body'; sel = BODY_MODES[bodyMode]; renderTools(); draw(); };
+  $('showRef').onchange = e => { showRef = e.target.checked; draw(); };
+  $('resetPart').onclick = () => { const D = (tab === 'face' ? DEF.face : DEF.body)[sel]; Object.assign(part(), clone(D)); sync(); draw(); };
+  $('resetAll').onclick = () => { L = clone(DEF); renderTools(); draw(); say('Раскладка сброшена к исходной. Сохраните, чтобы закрепить.'); };
+  const say = (t, cls = '') => { const s = $('status'); s.textContent = t; s.className = 'status ' + cls; };
+  const plain = () => { const o = {}; for (const g of ['face', 'body']){ o[g] = {}; for (const [k, v] of Object.entries(L[g])) o[g][k] = { x: v.x, y: v.y, s: v.s, r: v.r }; } return o; };
+  $('copy').onclick = async () => { const t = JSON.stringify(plain()); try { await navigator.clipboard.writeText(t); say('Раскладка скопирована — можно вставить в чат.', 'ok'); }
+    catch { say('Буфер обмена недоступен. Нажмите «Сохранить» — так Claude тоже увидит раскладку.', 'err'); } };
+
+  // ---------- хранилище: раскладка в документе rig/layout ----------
+  let db = null;
+  $('save').onclick = async () => { if (!db){ say('Сохранение недоступно в этом просмотре. Нажмите «Скопировать» и вставьте раскладку в чат.', 'err'); return; }
+    $('save').disabled = true; say('Сохраняю…');
+    try { await db.doc('rig/layout').set({ ...plain(), savedAt: new Date().toISOString() }); say('Сохранено. Напишите Claude «забери раскладку».', 'ok'); }
+    catch (e){ say('Не удалось сохранить: ' + (e && e.message || 'ошибка') + '. Попробуйте «Скопировать».', 'err'); }
+    finally { $('save').disabled = false; } };
+  renderTools(); draw();
+  (async () => { try { db = await window.claude?.use?.('db'); } catch { db = null; }
+    if (!db) return;
+    try { const s = await db.doc('rig/layout').get(); const d = s.exists && s.data();
+      if (d){ for (const g of ['face', 'body']) for (const [k, v] of Object.entries(d[g] || {})) if (L[g][k]) Object.assign(L[g][k], v); renderTools(); draw(); say('Загружена сохранённая раскладка.'); } }
+    catch { /* нет данных — остаётся исходная раскладка */ } })();
+})();
+</script>

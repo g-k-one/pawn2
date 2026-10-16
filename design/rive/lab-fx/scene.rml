@@ -1,0 +1,104 @@
+<Rive version="1" kind="fragment">
+<Artboard x="0" y="0" width="360" height="360" clip="true" name="Fire" styleId="0:23" defaultStateMachineId="0:24" id="0:22">
+<LayoutComponentStyle name="Style" id="0:23"/>
+<Fill name="Bg"><SolidColor colorValue="FF140C10" name="C"/></Fill>
+<ScriptedDrawable x="0" y="0" scriptAssetId="0:10" name="tfire" id="0:25"/>
+<Shape x="180" y="316" id="0:26" name="Logs"><Rectangle width="150" height="20" cornerRadiusTL="10" cornerRadiusTR="10" cornerRadiusBL="10" cornerRadiusBR="10" name="P"/><Fill name="F"><SolidColor colorValue="FF3A2420" name="C"/></Fill></Shape>
+<StateMachine name="SM" id="0:24"><StateMachineLayer name="L" id="0:27"><AnyState x="200" y="-120"/><ExitState x="400" y="-120"/><EntryState/></StateMachineLayer></StateMachine>
+</Artboard>
+<Artboard x="400" y="0" width="360" height="360" clip="true" name="Boom" styleId="0:29" defaultStateMachineId="0:30" id="0:28">
+<LayoutComponentStyle name="Style" id="0:29"/>
+<Fill name="Bg"><SolidColor colorValue="FF15112A" name="C"/></Fill>
+<ScriptedDrawable x="0" y="0" scriptAssetId="0:11" name="tboom" id="0:31"/>
+
+<StateMachine name="SM" id="0:30"><StateMachineLayer name="L" id="0:32"><AnyState x="200" y="-120"/><ExitState x="400" y="-120"/><EntryState/></StateMachineLayer></StateMachine>
+</Artboard>
+<Artboard x="800" y="0" width="360" height="360" clip="true" name="Portal" styleId="0:34" defaultStateMachineId="0:35" id="0:33">
+<LayoutComponentStyle name="Style" id="0:34"/>
+<Fill name="Bg"><SolidColor colorValue="FF0E0B22" name="C"/></Fill>
+<ScriptedDrawable x="0" y="0" scriptAssetId="0:12" name="tportal" id="0:36"/>
+
+<StateMachine name="SM" id="0:35"><StateMachineLayer name="L" id="0:37"><AnyState x="200" y="-120"/><ExitState x="400" y="-120"/><EntryState/></StateMachineLayer></StateMachine>
+</Artboard>
+<Artboard x="1200" y="0" width="360" height="360" clip="true" name="Bolt" styleId="0:39" defaultStateMachineId="0:40" id="0:38">
+<LayoutComponentStyle name="Style" id="0:39"/>
+<Fill name="Bg"><SolidColor colorValue="FF110F2A" name="C"/></Fill>
+<ScriptedDrawable x="0" y="0" scriptAssetId="0:13" name="tbolt" id="0:41"/>
+<Shape x="180" y="340" id="0:42" name="Ground"><Rectangle width="360" height="44" name="P"/><Fill name="F"><SolidColor colorValue="FF262040" name="C"/></Fill></Shape>
+<StateMachine name="SM" id="0:40"><StateMachineLayer name="L" id="0:43"><AnyState x="200" y="-120"/><ExitState x="400" y="-120"/><EntryState/></StateMachineLayer></StateMachine>
+</Artboard>
+<Artboard x="1600" y="0" width="360" height="360" clip="true" name="Coins" styleId="0:45" defaultStateMachineId="0:46" id="0:44">
+<LayoutComponentStyle name="Style" id="0:45"/>
+<Fill name="Bg"><SolidColor colorValue="FF161230" name="C"/></Fill>
+<ScriptedDrawable x="0" y="0" scriptAssetId="0:14" name="tcoins" id="0:47"/>
+<Shape x="180" y="340" id="0:48" name="Floor"><Rectangle width="360" height="56" name="P"/><Fill name="F"><SolidColor colorValue="FF221C42" name="C"/></Fill></Shape>
+<StateMachine name="SM" id="0:46"><StateMachineLayer name="L" id="0:49"><AnyState x="200" y="-120"/><ExitState x="400" y="-120"/><EntryState/></StateMachineLayer></StateMachine>
+</Artboard>
+<Artboard x="0" y="400" width="360" height="360" clip="true" name="Confetti" styleId="0:51" defaultStateMachineId="0:52" id="0:50">
+<LayoutComponentStyle name="Style" id="0:51"/>
+<Fill name="Bg"><SolidColor colorValue="FF181336" name="C"/></Fill>
+<ScriptedDrawable x="0" y="0" scriptAssetId="0:15" name="tconfetti" id="0:53"/>
+
+<StateMachine name="SM" id="0:52"><StateMachineLayer name="L" id="0:54"><AnyState x="200" y="-120"/><ExitState x="400" y="-120"/><EntryState/></StateMachineLayer></StateMachine>
+</Artboard>
+<Artboard x="400" y="400" width="360" height="360" clip="true" name="Charge" styleId="0:56" defaultStateMachineId="0:57" id="0:55">
+<LayoutComponentStyle name="Style" id="0:56"/>
+<Fill name="Bg"><SolidColor colorValue="FF140E26" name="C"/></Fill>
+<ScriptedDrawable x="0" y="0" scriptAssetId="0:16" name="tcharge" id="0:58"/>
+
+<StateMachine name="SM" id="0:57"><StateMachineLayer name="L" id="0:59"><AnyState x="200" y="-120"/><ExitState x="400" y="-120"/><EntryState/></StateMachineLayer></StateMachine>
+</Artboard>
+<Artboard x="800" y="400" width="360" height="360" clip="true" name="Sparkle" styleId="0:61" defaultStateMachineId="0:62" id="0:60">
+<LayoutComponentStyle name="Style" id="0:61"/>
+<Fill name="Bg"><SolidColor colorValue="FF120E28" name="C"/></Fill>
+<ScriptedDrawable x="0" y="0" scriptAssetId="0:17" name="tsparkle" id="0:63"/>
+
+<StateMachine name="SM" id="0:62"><StateMachineLayer name="L" id="0:64"><AnyState x="200" y="-120"/><ExitState x="400" y="-120"/><EntryState/></StateMachineLayer></StateMachine>
+</Artboard>
+<Artboard x="1200" y="400" width="360" height="360" clip="true" name="Smoke" styleId="0:66" defaultStateMachineId="0:67" id="0:65">
+<LayoutComponentStyle name="Style" id="0:66"/>
+<Fill name="Bg"><SolidColor colorValue="FF2A2440" name="C"/></Fill>
+<ScriptedDrawable x="0" y="0" scriptAssetId="0:18" name="tsmoke" id="0:68"/>
+
+<StateMachine name="SM" id="0:67"><StateMachineLayer name="L" id="0:69"><AnyState x="200" y="-120"/><ExitState x="400" y="-120"/><EntryState/></StateMachineLayer></StateMachine>
+</Artboard>
+<Artboard x="1600" y="400" width="360" height="360" clip="true" name="Shock" styleId="0:71" defaultStateMachineId="0:72" id="0:70">
+<LayoutComponentStyle name="Style" id="0:71"/>
+<Fill name="Bg"><SolidColor colorValue="FF2E2436" name="C"/></Fill>
+<ScriptedDrawable x="0" y="0" scriptAssetId="0:19" name="tshock" id="0:73"/>
+<Shape x="180" y="330" id="0:74" name="Ground"><Rectangle width="360" height="140" name="P"/><Fill name="F"><SolidColor colorValue="FF54402E" name="C"/></Fill></Shape>
+<StateMachine name="SM" id="0:72"><StateMachineLayer name="L" id="0:75"><AnyState x="200" y="-120"/><ExitState x="400" y="-120"/><EntryState/></StateMachineLayer></StateMachine>
+</Artboard>
+<Artboard x="0" y="800" width="360" height="360" clip="true" name="Comets" styleId="0:77" defaultStateMachineId="0:78" id="0:76">
+<LayoutComponentStyle name="Style" id="0:77"/>
+<Fill name="Bg"><SolidColor colorValue="FF0E0C24" name="C"/></Fill>
+<ScriptedDrawable x="0" y="0" scriptAssetId="0:20" name="tcomets" id="0:79"/>
+<Shape x="180" y="350" id="0:80" name="Ground"><Rectangle width="360" height="40" name="P"/><Fill name="F"><SolidColor colorValue="FF1A1634" name="C"/></Fill></Shape>
+<StateMachine name="SM" id="0:78"><StateMachineLayer name="L" id="0:81"><AnyState x="200" y="-120"/><ExitState x="400" y="-120"/><EntryState/></StateMachineLayer></StateMachine>
+</Artboard>
+<ImageAsset file="fx-fire.webp" name="fx-fire" id="0:82"/>
+<ImageAsset file="fx-boom.webp" name="fx-boom" id="0:83"/>
+<ImageAsset file="fx-portal.webp" name="fx-portal" id="0:84"/>
+<ImageAsset file="fx-bolt.webp" name="fx-bolt" id="0:85"/>
+<ImageAsset file="fx-coins.webp" name="fx-coins" id="0:86"/>
+<ImageAsset file="fx-confetti.webp" name="fx-confetti" id="0:87"/>
+<ImageAsset file="fx-charge.webp" name="fx-charge" id="0:88"/>
+<ImageAsset file="fx-sparkle.webp" name="fx-sparkle" id="0:89"/>
+<ImageAsset file="fx-smoke.webp" name="fx-smoke" id="0:90"/>
+<ImageAsset file="fx-shock.webp" name="fx-shock" id="0:91"/>
+<ImageAsset file="fx-comets.webp" name="fx-comets" id="0:92"/>
+<ScriptAsset file="fxlib.luau" isModule="true" name="fxlib" id="0:21"/>
+<ScriptAsset file="atlases.luau" isModule="true" name="atlases" id="0:93"/>
+<ScriptAsset file="vfx.luau" isModule="true" name="vfx" id="0:94"/>
+<ScriptAsset file="tfire.luau" name="tfire" id="0:10"/>
+<ScriptAsset file="tboom.luau" name="tboom" id="0:11"/>
+<ScriptAsset file="tportal.luau" name="tportal" id="0:12"/>
+<ScriptAsset file="tbolt.luau" name="tbolt" id="0:13"/>
+<ScriptAsset file="tcoins.luau" name="tcoins" id="0:14"/>
+<ScriptAsset file="tconfetti.luau" name="tconfetti" id="0:15"/>
+<ScriptAsset file="tcharge.luau" name="tcharge" id="0:16"/>
+<ScriptAsset file="tsparkle.luau" name="tsparkle" id="0:17"/>
+<ScriptAsset file="tsmoke.luau" name="tsmoke" id="0:18"/>
+<ScriptAsset file="tshock.luau" name="tshock" id="0:19"/>
+<ScriptAsset file="tcomets.luau" name="tcomets" id="0:20"/>
+</Rive>

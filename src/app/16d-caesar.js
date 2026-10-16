@@ -8,7 +8,7 @@
    Нет сети или WebGL2, лайт-режим или «Быстрый крафт» — гладиаторы с мечами / молот.
    ========================================================= */
 const RIVE_JS = 'assets/rive/rive.js', RIVE_WASM = 'assets/rive/rive.wasm';   // @rive-app/webgl2 2.44.0
-const HA_F = [30, 48, 66, 84, 140, 158], ZAP_F = 111, CAESAR_F = 180;     // кадры сцены (60 fps): «ха», удар молнии, конец
+const HA_F = [50, 66, 82, 142, 158], ZAP_F = 112, CAESAR_F = 180;     // кадры сцены (60 fps): «ха», удар молнии, конец
 let caesarP = null;
 const riveRT = () => new Promise((res, rej) => { if (window.rive) return res(window.rive); const sc = document.createElement('script'); sc.src = RIVE_JS;
   sc.onload = () => { window.rive.RuntimeLoader.setWasmUrl(RIVE_WASM); res(window.rive); };

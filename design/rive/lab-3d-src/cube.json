@@ -1,0 +1,674 @@
+[
+ {
+  "name": "New Artboard",
+  "objs": [
+   {
+    "type": "Artboard",
+    "p": {
+     "width": 1000,
+     "height": 1000,
+     "name": "New Artboard"
+    }
+   },
+   {
+    "type": "Node",
+    "p": {
+     "name": "Root",
+     "parentId": 0,
+     "x": 530.4611,
+     "y": 436.907
+    }
+   },
+   {
+    "type": "Node",
+    "p": {
+     "name": "Cube",
+     "parentId": 1,
+     "x": -0.1971,
+     "y": 10.2799
+    }
+   },
+   {
+    "type": "Node",
+    "p": {
+     "parentId": 2,
+     "x": -30.264,
+     "y": 35.0883
+    }
+   },
+   {
+    "type": "Node",
+    "p": {
+     "parentId": 2,
+     "x": -30.264,
+     "y": 31.095
+    }
+   },
+   {
+    "type": "TranslationConstraint",
+    "p": {
+     "parentId": 4,
+     "strength": 0.5,
+     "targetId": 3
+    }
+   },
+   {
+    "type": "RootBone",
+    "p": {
+     "parentId": 2,
+     "rotation": -1.5708,
+     "length": 174.876,
+     "x": -26.8343,
+     "y": 32.1701
+    }
+   },
+   {
+    "type": "TranslationConstraint",
+    "p": {
+     "parentId": 6,
+     "strength": 0.1,
+     "targetId": 4
+    }
+   },
+   {
+    "type": "Node",
+    "p": {
+     "parentId": 2,
+     "x": -26.8343,
+     "y": 32.1701
+    }
+   },
+   {
+    "type": "RootBone",
+    "p": {
+     "parentId": 8,
+     "length": 71.0818,
+     "x": 204.9813,
+     "y": 71.2351
+    }
+   },
+   {
+    "type": "TranslationConstraint",
+    "p": {
+     "parentId": 8,
+     "strength": -0.05,
+     "targetId": 4
+    }
+   },
+   {
+    "type": "Node",
+    "p": {
+     "parentId": 2,
+     "x": -26.8343,
+     "y": 32.1701
+    }
+   },
+   {
+    "type": "RootBone",
+    "p": {
+     "parentId": 11,
+     "length": 71.0818,
+     "x": -4.9807,
+     "y": 174.9384
+    }
+   },
+   {
+    "type": "TranslationConstraint",
+    "p": {
+     "parentId": 11,
+     "strength": -0.15,
+     "targetId": 4
+    }
+   },
+   {
+    "type": "Image",
+    "p": {
+     "name": "Cube.png",
+     "parentId": 2,
+     "scaleX": 0.5593,
+     "scaleY": 0.5593,
+     "x": -30.264,
+     "y": -9.0869,
+     "assetId": 0
+    }
+   },
+   {
+    "type": "Mesh",
+    "p": {
+     "parentId": 14,
+     "triangleIndexBytes": "<18 bytes>"
+    }
+   },
+   {
+    "type": "ContourMeshVertex",
+    "p": {
+     "parentId": 15,
+     "x": -390.79,
+     "y": -193.9691,
+     "u": 0.0734,
+     "v": 0.2873
+    }
+   },
+   {
+    "type": "Weight",
+    "p": {
+     "parentId": 16,
+     "indices": 2
+    }
+   },
+   {
+    "type": "ContourMeshVertex",
+    "p": {
+     "parentId": 15,
+     "x": -23.4165,
+     "y": -411.0445,
+     "u": 0.4744,
+     "v": 0.0493
+    }
+   },
+   {
+    "type": "Weight",
+    "p": {
+     "parentId": 18,
+     "indices": 3
+    }
+   },
+   {
+    "type": "ContourMeshVertex",
+    "p": {
+     "parentId": 15,
+     "x": 389.0049,
+     "y": -184.8006,
+     "u": 0.9247,
+     "v": 0.2974
+    }
+   },
+   {
+    "type": "Weight",
+    "p": {
+     "parentId": 20,
+     "indices": 2
+    }
+   },
+   {
+    "type": "ContourMeshVertex",
+    "p": {
+     "parentId": 15,
+     "x": 379.8843,
+     "y": 209.7624,
+     "u": 0.9147,
+     "v": 0.73
+    }
+   },
+   {
+    "type": "Weight",
+    "p": {
+     "parentId": 22,
+     "indices": 2
+    }
+   },
+   {
+    "type": "ContourMeshVertex",
+    "p": {
+     "parentId": 15,
+     "x": 6.9121,
+     "y": 406.7784,
+     "u": 0.5075,
+     "v": 0.946
+    }
+   },
+   {
+    "type": "Weight",
+    "p": {
+     "parentId": 24
+    }
+   },
+   {
+    "type": "ContourMeshVertex",
+    "p": {
+     "parentId": 15,
+     "x": -349.8001,
+     "y": 260.7917,
+     "u": 0.1181,
+     "v": 0.786
+    }
+   },
+   {
+    "type": "Weight",
+    "p": {
+     "parentId": 26,
+     "indices": 2
+    }
+   },
+   {
+    "type": "ForcedEdge",
+    "p": {
+     "parentId": 15,
+     "fromId": 16,
+     "toId": 18
+    }
+   },
+   {
+    "type": "MeshVertex",
+    "p": {
+     "parentId": 15,
+     "x": 6.9122,
+     "y": 77.6002,
+     "u": 0.5075,
+     "v": 0.5851
+    }
+   },
+   {
+    "type": "Weight",
+    "p": {
+     "parentId": 29,
+     "indices": 3
+    }
+   },
+   {
+    "type": "ForcedEdge",
+    "p": {
+     "parentId": 15,
+     "fromId": 18,
+     "toId": 29
+    }
+   },
+   {
+    "type": "ForcedEdge",
+    "p": {
+     "parentId": 15,
+     "fromId": 29,
+     "toId": 26
+    }
+   },
+   {
+    "type": "ForcedEdge",
+    "p": {
+     "parentId": 15,
+     "fromId": 29,
+     "toId": 22
+    }
+   },
+   {
+    "type": "Skin",
+    "p": {
+     "parentId": 15,
+     "xx": 0.5593,
+     "yy": 0.5593,
+     "tx": 500,
+     "ty": 438.1001
+    }
+   },
+   {
+    "type": "Tendon",
+    "p": {
+     "parentId": 34,
+     "boneId": 12,
+     "tx": 498.4489,
+     "ty": 654.2955
+    }
+   },
+   {
+    "type": "Tendon",
+    "p": {
+     "parentId": 34,
+     "boneId": 9,
+     "tx": 708.4109,
+     "ty": 550.5922
+    }
+   },
+   {
+    "type": "Tendon",
+    "p": {
+     "parentId": 34,
+     "boneId": 6,
+     "xx": 0,
+     "yx": 1,
+     "xy": -1,
+     "yy": 0,
+     "tx": 503.4297,
+     "ty": 479.3571
+    }
+   },
+   {
+    "type": "Shape",
+    "p": {
+     "name": "Hitbox_mouse",
+     "parentId": 1,
+     "scaleX": 1.2145,
+     "scaleY": 1.1643,
+     "x": -30.4611,
+     "y": 63.093
+    }
+   },
+   {
+    "type": "Rectangle",
+    "p": {
+     "parentId": 38,
+     "width": 823.3699,
+     "height": 858.866
+    }
+   },
+   {
+    "type": "SolidColor",
+    "p": {
+     "parentId": 44,
+     "colorValue": "ffff0000"
+    }
+   },
+   {
+    "type": "RadialGradient",
+    "p": {
+     "parentId": 45,
+     "startX": 500,
+     "startY": 500,
+     "endX": 1000,
+     "endY": 500
+    }
+   },
+   {
+    "type": "GradientStop",
+    "p": {
+     "parentId": 41,
+     "colorValue": "ff521653"
+    }
+   },
+   {
+    "type": "GradientStop",
+    "p": {
+     "parentId": 41,
+     "colorValue": "ff0b0004",
+     "position": 1
+    }
+   },
+   {
+    "type": "Fill",
+    "p": {
+     "parentId": 38,
+     "isVisible": false
+    }
+   },
+   {
+    "type": "Fill",
+    "p": {
+     "parentId": 0
+    }
+   },
+   {
+    "type": "CubicEaseInterpolator",
+    "p": {}
+   },
+   {
+    "type": "LinearAnimation",
+    "p": {
+     "name": "Idle",
+     "duration": 120,
+     "loopValue": 1
+    }
+   },
+   {
+    "type": "KeyedObject",
+    "p": {
+     "objectId": 2
+    }
+   },
+   {
+    "type": "KeyedProperty",
+    "p": {
+     "propertyKey": 14
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": -9.4763
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 60,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": 14.4396
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 120,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": -9.48
+    }
+   },
+   {
+    "type": "LinearAnimation",
+    "p": {
+     "name": "Demo",
+     "duration": 480,
+     "loopValue": 1,
+     "workStart": 120,
+     "workEnd": 360,
+     "enableWorkArea": true
+    }
+   },
+   {
+    "type": "KeyedObject",
+    "p": {
+     "objectId": 2
+    }
+   },
+   {
+    "type": "KeyedProperty",
+    "p": {
+     "propertyKey": 14
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 120,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": -9.4763
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 180,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": 14.4396
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 240,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": -9.4763
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 300,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": 14.4396
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 360,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": -9.48
+    }
+   },
+   {
+    "type": "KeyedObject",
+    "p": {
+     "objectId": 3
+    }
+   },
+   {
+    "type": "KeyedProperty",
+    "p": {
+     "propertyKey": 13
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 120,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": -360.6831
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 240,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": 340.5072
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 360,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": -360.68
+    }
+   },
+   {
+    "type": "KeyedProperty",
+    "p": {
+     "propertyKey": 14
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 59,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": 481.26
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 180,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": -314.87
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 299,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": 481.2578
+    }
+   },
+   {
+    "type": "KeyFrameDouble",
+    "p": {
+     "frame": 420,
+     "interpolationType": 2,
+     "interpolatorId": 46,
+     "value": -314.87
+    }
+   },
+   {
+    "type": "StateMachine",
+    "p": {
+     "name": "Cube"
+    }
+   },
+   {
+    "type": "StateMachineBool",
+    "p": {
+     "name": "isHovering"
+    }
+   },
+   {
+    "type": "StateMachineLayer",
+    "p": {
+     "name": "MOtion"
+    }
+   },
+   {
+    "type": "EntryState",
+    "p": {}
+   },
+   {
+    "type": "StateTransition",
+    "p": {
+     "stateToId": 3
+    }
+   },
+   {
+    "type": "AnyState",
+    "p": {}
+   },
+   {
+    "type": "ExitState",
+    "p": {}
+   },
+   {
+    "type": "AnimationState",
+    "p": {
+     "animationId": 0
+    }
+   },
+   {
+    "type": "StateMachineListenerSingle",
+    "p": {
+     "targetId": 38,
+     "listenerTypeValue": 4
+    }
+   },
+   {
+    "type": "ListenerAlignTarget",
+    "p": {
+     "targetId": 3
+    }
+   },
+   {
+    "type": "StateMachineListenerSingle",
+    "p": {}
+   },
+   {
+    "type": "ListenerBoolChange",
+    "p": {
+     "inputId": 0
+    }
+   },
+   {
+    "type": "StateMachineListenerSingle",
+    "p": {}
+   },
+   {
+    "type": "ListenerBoolChange",
+    "p": {
+     "inputId": 0,
+     "value": 0
+    }
+   }
+  ]
+ }
+]
