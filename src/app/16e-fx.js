@@ -52,7 +52,7 @@ const Particles = (() => {
     const du = 1 / at.cols, dv = 1 / at.rows, u0 = (cell % at.cols) * du, v0 = Math.floor(cell / at.cols) * dv, ins = inset || 0;
     const r = tint ? tint[0] : 1, g = tint ? tint[1] : 1, bl = tint ? tint[2] : 1, al = a * c.fade;
     // обрезка по видимой части ячейки (атлас знает её рамку): режимы, которые рисуют без маски (2–4, 6, 7, 9–13, 15), — во всю ячейку
-    let tr = (f[0] < 2 || f[0] === 5 || f[0] === 8 || f[0] === 14) && !ins && at.trim ? at.trim[cell] : FULL;
+    let tr = (f[0] < 2 || f[0] === 5 || f[0] === 8 || f[0] === 14 || (f[0] >= 18 && f[0] < 18.3)) && !ins && at.trim ? at.trim[cell] : FULL;
     // искажение шумом (режимы 1–1.5) тянет картинку из-за рамки — даём запас
     if (f[0] >= 1 && f[0] < 2 && tr !== FULL){ const e = .1; tr = TRS; TRS[0] = Math.max(0, at.trim[cell][0] - e); TRS[1] = Math.max(0, at.trim[cell][1] - e); TRS[2] = Math.min(1, at.trim[cell][2] + e); TRS[3] = Math.min(1, at.trim[cell][3] + e); }
     const ar = Math.abs(m00 * m11 - m01 * m10) * at.cell * at.cell * k * k * (tr[2] - tr[0]) * (tr[3] - tr[1]); if (ar === ar) fill += Math.min(ar, innerWidth * innerHeight);   // больше экрана не закрасить
@@ -173,6 +173,18 @@ const Particles = (() => {
     'float f=texture2D(nz,p*.5+w*1.1+vec2(t*.01)).g;if(lq<.5){f=f*.75+texture2D(nz,p*1.3+w*.6).b*.25;}' +
     'float v=clamp((f*f*1.6+length(q)*.25+w.x*.35)*.72,0.,1.);float a=smoothstep(1.,.55,rr)*vf.z*(.45+v*.55);' +
     'vec3 col=mix(texture2D(rp,vec2(v,RW)).rgb,vt,clamp(length(w)*.6-.2,0.,.6));a=clamp(a,0.,1.)*va.x;gl_FragColor=vec4(col*a,a*(1.-va.y));return;}' +
+    // 18 — плазма в форме: внутри маски (или круга) течёт шум, искажённый шумом, искажённым шумом; воронка — закручивает к центру
+    // (быстрее у центра). vf.y — растворение (края рвутся по плазме), vf.z — жар, vf.w — зерно; цвет — градиент частицы
+    'if(vf.x>17.9&&vf.x<18.6){float t=tm*gp.z;float md=floor(fract(vf.x+.001)*10.+.5);float m;' +
+    'if(md>3.5){m=smoothstep(1.,.62,length(vq*2.-1.));}else{vec4 tc=texture2D(tx,vu);m=tc.r*clamp(tc.a*4.,0.,1.);}' +
+    'if(m<.004){gl_FragColor=vec4(0.);return;}' +
+    'vec2 u=vq;vec2 fl=vec2(0.,t*.09);if(md>1.5&&md<2.5||md>4.5){vec2 c=vq-.5;float r=length(c);float an=atan(c.y,c.x)+t*.5+.55/(r+.12);u=vec2(cos(an),sin(an))*r+.5;fl=vec2(0.);}' +
+    'vec2 pp=u*1.5+vf.w;' +
+    'vec2 q=vec2(texture2D(nz,pp*.5+fl+vec2(t*.015,0.)).r,texture2D(nz,pp*.5+fl+vec2(.37,.11)-vec2(0.,t*.02)).g);' +
+    'vec2 w=lq>.5?q:vec2(texture2D(nz,pp*.5+q*1.1+fl*1.3+vec2(.17,.92)).b,texture2D(nz,pp*.5+q*1.1+fl*1.3+vec2(.83,.28)).r);' +
+    'float f=texture2D(nz,pp*.55+w*1.2+fl*1.6).g;float v=clamp((f*f*1.6+length(q)*.25+w.x*.35)*.8,0.,1.);' +
+    'float e=vf.y;float a=smoothstep(e,e+.16,m*(.5+v*.75));float x=clamp(m*vf.z*(.4+v*.9),0.,1.);' +
+    'vec3 col=texture2D(rp,vec2(x,RW)).rgb*vt;a*=va.x;gl_FragColor=vec4(col*a,a*(1.-va.y));return;}' +
     // 15 — объёмное пламя из шума (принцип симуляций): одно сплошное тело, шум течёт вверх с искажением (domain warp),
     // к верху шума больше — пламя рвётся на языки; цвет — по «температуре» = яркость, которая падает с высотой.
     // vq.y=1 — низ. vf.y — ветер (изгиб к верху), vf.z — жар, vf.w — зерно
@@ -279,6 +291,9 @@ const Particles = (() => {
     julia: [[0, '07031a'], [.3, '2a0f6a'], [.55, '5a2ad8'], [.75, '3ab8ff'], [.9, 'a8f4ff'], [1, 'ffffff']],
     gold: [[0, '2a1404'], [.3, '7a3a08'], [.55, 'd88a18'], [.8, 'ffd24a'], [1, 'fff6d0']],
     plasma: [[0, '120626'], [.3, '4a0f6a'], [.5, 'c02a8a'], [.7, 'ff7a4a'], [.88, 'ffd27a'], [1, 'fff4e0']],
+    portal: [[0, '0a0420'], [.3, '3a1478'], [.55, '7a3ae8'], [.75, 'd070ff'], [.9, 'ffc2ff'], [1, 'ffffff']],
+    pink: [[0, '2a0420'], [.35, '8a1460'], [.6, 'e83aa8'], [.8, 'ff9ad8'], [1, 'fff0fa']],
+    redsph: [[0, '3a0204'], [.4, '9a0a0c'], [.65, 'e8201c'], [.85, 'ff7a4a'], [1, 'ffe0c0']],
     smoke: [[0, '1c1622'], [.35, '3a2e3c'], [.65, '5e4c5a'], [.9, '8c7884'], [1, 'b4a2aa']],
     sw_purple: [[0, '4a12b0'], [.5, '9a3ce8'], [.8, 'e070f0'], [1, 'ffc0ff']],
     sw_blue: [[0, '1a3ad8'], [.5, '2a8cff'], [.8, '5ad8ff'], [1, 'c8ffff']],
@@ -341,6 +356,7 @@ const Particles = (() => {
     return t;
   }
 
+const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_ROW[row]];   // плазма для sprite()
   /* ── эффекты (перенос tfire/tboom/… .luau) ──
      init(s) — состояние; update(s, dt); render(s, c) — рисует слоями; period — длина разового эффекта (сек) */
   const DEF = {};
@@ -359,6 +375,10 @@ const Particles = (() => {
         for (let i = 1; i <= 16; i++){ const a = i / 16 * 6.28 + R(0, .3), sp = R(150, 350);
           spawn(s.smoke, { x: CX, y: CY, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .8 - 40, rot: R(0, 6.28), vr: R(-.75, .75), size: R(70, 110), grow: 1.4, life: R(1, 1.4),
             cells: seq(at, i % 2 ? 'smoke2' : 'smoke1', 'S0', 'S0', 'S1', 'S2', 'S3'), add: .35, alpha: .95, drag: 3.2, grav: -60, fadeIn: .04, fadeOut: .45 }); }
+        // ядро огненного шара — плазма в форме клубов: течёт и кипит, остывает от жёлтого к тёмно-красному, края рвутся
+        for (let i = 0; i < 5; i++){ const a = i / 5 * 6.28 + R(-.3, .3), sp = R(60, 180);
+          spawn(s.smoke, { x: CX, y: CY, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .8 - 30, rot: R(0, 6.28), vr: R(-.6, .6), size: R(105, 135), grow: .8, life: R(.65, .9), drag: 3,
+            cells: [at.map[i % 2 ? 'smoke2:S0' : 'smoke1:S0']], mode: 18, ramp: 'flame', add: .55, heat: [[0, 1.5], [.4, 1.05], [1, .55]], ero: [[0, .02], [.6, .12], [1, .7]], fadeIn: .02, fadeOut: .3 }); }
         for (let i = 0; i < 10; i++) spawn(s.smoke, { x: CX + R(-30, 30), y: CY - 20, vx: R(-20, 20), vy: R(-80, -40), rot: R(0, 6.28), vr: R(-.25, .25), size: 90, grow: 1.6, life: 2,
           cells: seq(at, 'smoke1', 'S1', 'S2', 'S3'), add: 0, alpha: .55, sway: 12, fadeIn: .25, fadeOut: .5 });
         for (let i = 1; i <= 10; i++){ const a = i / 10 * 6.28;
@@ -396,12 +416,13 @@ const Particles = (() => {
     },
     render(s, c){
       const at = c.at, CX = 180, CY = 180, t = s.t, pulse = 1 + .05 * Math.sin(t * 5);
-      sprite(c, CX, CY, 440, 0, .45, 1, at.map['sglow:M2']);
+      sprite(c, CX, CY, 380, 0, .5, 1, at.map['sglow:M2']);
       sprite(c, CX, CY, 330, t * .25, .5, 1, at.map['rune:M1']);
       // тёмное окно: свечение, перекрашенное почти в чёрный, обычным смешиванием
-      sprite(c, CX, CY, 300 * pulse, 0, .95, 0, at.map['sglow:M2'], 1, [.16, .08, .3]);
+      sprite(c, CX, CY, 240 * pulse, 0, .95, 0, at.map['sglow:M2'], 1, [.16, .08, .3]);
+      // плазменная воронка: жидкий фиолетовый вихрь закручивается к центру
+      sprite(c, CX, CY, 250 * pulse, 0, 1, .25, 0, 1, null, 0, PL('portal', .05, .62, .4, .5));
       draw(c, s.tun);
-      sprite(c, CX, CY, 230, -t * .5, .35, 1, at.map['circle:M2']);
       sprite(c, CX, CY, 250 * pulse, 0, .7, 1, at.map['sring:M1']);
       for (const w of s.wisps){ const k = w.age / w.life, al = Math.min(1, k / .2) * Math.min(1, (1 - k) / .35);
         sprite(c, CX + Math.cos(w.a) * w.r, CY + Math.sin(w.a) * w.r, 80 * (.5 + .5 * w.r / 170), w.a + 3.6, .8 * al, 1, w.cell); }
@@ -532,7 +553,7 @@ const Particles = (() => {
       const orb = cy < CH ? 30 + 70 * k * k : 100 * Math.max(0, 1 - (cy - CH) / .5), jit = 1 + .06 * Math.sin(cy * 40) * k, f = Math.floor(cy * 20);
       sprite(c, CX, CY, 360, 0, .25 + .3 * k, 1, at.map['sglow:P1']);
       draw(c, s.rings); draw(c, s.inP);
-      if (orb > 1){ sprite(c, CX, CY, orb * 2.6 * jit, 0, .7, 1, at.map['sglow:P1']); sprite(c, CX, CY, orb * 1.1, 0, .75, 1, at.map['sglow:P0']);
+      if (orb > 1){ sprite(c, CX, CY, orb * 2.6 * jit, 0, .7, 1, at.map['sglow:P1']); sprite(c, CX, CY, orb * 1.6 * jit, 0, 1, .6, 0, 1, null, 0, PL('pink', .04, .6 + .2 * k, .7, .5)); sprite(c, CX, CY, orb * .5, 0, .45, 1, at.map['sglow:P0']);
         if (cy < CH && f % 3) sprite(c, CX, CY, orb * 2.2, f * 1.7, .4 + .6 * k, 1, at.map[f % 2 ? 'crackle:P1' : 'crackle:P0']); }
       const t = cy - CH;
       if (t >= 0 && t < .5){ const e = t / .5; sprite(c, CX, CY, 200 + 260 * easeOut(e), e, (1 - e) * .8, 1, at.map['burst:P0']); sprite(c, CX, CY, 80 + 420 * easeOut(e), 0, (1 - e) * .9, 1, at.map['sring:P0']); }
@@ -557,7 +578,7 @@ const Particles = (() => {
     update(s, dt, at){
       const BX = 180, BY = 320, w = Math.sin(s.t * .8) * 20;
       emit(s.acc, 1, 4.5, dt, () => spawn(s.puffs, { x: BX + R(-20, 20), y: BY, vx: R(-10, 10), vy: R(-90, -70), rot: R(0, 6.28), vr: R(-.4, .4), size: R(70, 90), grow: 1.6, life: R(3, 3.6),
-        cells: seq(at, 'puff', 'S3', 'S2', 'S1'), add: 0, alpha: .85, drag: .25, sway: 10, fadeIn: .12, fadeOut: .45 }));
+        cells: [at.map['puff:S3']], mode: 18, ramp: 'smoke', heat: [[0, 1.25], [1, .8]], ero: [[0, .05], [.7, .1], [1, .5]], add: 0, alpha: .9, drag: .25, sway: 10, fadeIn: .12, fadeOut: .45 }));
       emit(s.acc, 2, 5, dt, () => spawn(s.small, { x: BX + R(-40, 40), y: BY - R(0, 20), vx: R(-30, 30), vy: R(-60, -40), rot: R(0, 6.28), vr: R(-.8, .8), size: R(36, 50), grow: .8, life: R(1.4, 2),
         cells: seq(at, 'puffS', 'S3', 'S2'), add: 0, alpha: .7, sway: 14, fadeIn: .15, fadeOut: .5 }));
       emit(s.acc, 3, 3, dt, () => spawn(s.tw, { x: BX + R(-30, 30), y: BY - 20, vx: R(-30, 30), vy: R(-150, -90), size: R(14, 22), life: R(.8, 1.2), vr: 3, cells: seq(at, 'twinkle', 'W0'), add: 1, alpha: .8, sway: 30, fadeIn: .2, fadeOut: .5 }));
@@ -639,7 +660,7 @@ const Particles = (() => {
   // 2. дух: большие клубы дыма бирюзой (шейдер: градиент, искажение, растворение), яркое ядро ниже центра, белые осколки
   DEF.spirit = { atlas: 'aura', gfx: { dist: .35, speed: .6, ramp: 'teal' },
     wisp: (s, at, age) => spawn(s.sm, { x: 180 + R(-40, 40), y: 175 + R(-40, 40), rot: R(0, 6.28), vr: R(-.5, .5), size: R(200, 260), life: R(2.6, 3.6), age,
-      cells: [at.map[pick(['smoke1:L', 'smoke2:L', 'puff:L'])]], mode: 1.45, add: .35, alpha: .55,
+      cells: [at.map[pick(['smoke1:L', 'smoke2:L', 'puff:L'])]], mode: 18, ramp: 'teal', add: .45, alpha: .65,
       heat: [[0, .55], [.5, .72], [1, .5]], ero: [[0, .6], [.3, .2], [.7, .25], [1, .8]], fadeIn: .2, fadeOut: .3 }),
     init(s, at){ Object.assign(s, { sm: [], sh: [] }); for (let i = 0; i < 9; i++) this.wisp(s, at, R(0, 2.5)); },
     update(s, dt, at){
@@ -965,6 +986,7 @@ const Particles = (() => {
     render(s, c){ const at = c.at, t = s.t;
       sprite(c, 180, 285, 260, 0, .6, 1, at.map['sglow:W0'], .22, [1, .2, .1]);
       sprite(c, 180, 175, 300, 0, 1, .3, 0, 1, [.95, .1, .08], 0, [12, 0, 0, 0]);
+      sprite(c, 180, 175, 196, 0, .9, .3, 0, 1, null, 0, PL('redsph', .1, .72, .2, .5));
       draw(c, s.sh);
       for (const p of s.arcs) for (let i = 1; i < p.length; i++){
         seg(c, p[i - 1][0], p[i - 1][1], p[i][0], p[i][1], 20, .55, 1, at.map['sglow:W0'], [1, .5, .3]);
