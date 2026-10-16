@@ -9,7 +9,7 @@
    раньше ставок, а список ставок — до розыгрыша, поэтому тикет не подогнать ни под одного игрока.
    Мок: соседи по комнате — заглушки (ники NICKS), в бою это живые игроки с сервера. Комната живёт в памяти.
    ========================================================= */
-const PVP_FEES = [.5, 1, 5], PVP_TIME = 30;                          // взносы, GRAM; длительность комнаты, с
+const PVP_FEES = [.5, 1, 5], PVP_TIME = 30, PVP_LOCK = 5;            // взносы, GRAM; длительность комнаты, с; за сколько секунд до старта тикеты фиксируются
 let pvpFee = 1, pvpGuess = null, pvpView = null, pvpPoll = 0, pvpKey = '', pvpGo = false;
 const pvpRand = () => Math.floor(Math.random() * TICKETS);
 
@@ -50,6 +50,14 @@ async function pvpJoinMock(fee, guess){
   if (p.entries.some(x => x.guess === guess) || p.bots.some(x => x.guess === guess)) return { ok: false, error: 'taken' };
   p.entries.push({ who: 'GK', guess, me: true, at: Date.now() });
   return { ok: true, room: pvpPublic(p) };
+}
+// сменить тикет после входа: можно, пока до старта больше PVP_LOCK секунд; потом список тикетов зафиксирован (он и уходит в розыгрыш)
+async function pvpChangeMock(fee, guess){
+  const p = PVP_ROOMS[fee]; if (!p) return { ok: false, error: 'closed' }; pvpAdvance(p);
+  const me = p.entries.find(x => x.me); if (!me) return { ok: false, error: 'closed' };
+  if (p.state !== 'open' || p.endsAt - Date.now() <= PVP_LOCK * 1000) return { ok: false, error: 'locked' };
+  if (p.entries.some(x => !x.me && x.guess === guess) || p.bots.some(x => x.guess === guess)) return { ok: false, error: 'taken' };
+  me.guess = guess; return { ok: true, room: pvpPublic(p) };
 }
 async function pvpStateMock(fee){ const p = PVP_ROOMS[fee]; if (!p) return null; pvpAdvance(p); if (p.state === 'drawing') await p.drawP;
   if (p.state === 'done' && p.entries.some(x => x.me)) p.claimed = true;   // итог отдан игроку
@@ -140,8 +148,8 @@ async function reopenArena(){
 }
 
 function renderArena(){
-  const v = pvpView, me = v.entries.find(x => x.me), a = $('fxArena'), left = pvpLeft(v);
-  const key = [v.id, v.state, !!me, pvpFee].join('|');
+  const v = pvpView, me = v.entries.find(x => x.me), a = $('fxArena'), left = pvpLeft(v), lock = !!me && left <= PVP_LOCK;
+  const key = [v.id, v.state, !!me, lock, pvpFee].join('|');
   if (key !== pvpKey){
     pvpKey = key; arenaSeats = [];
     a.innerHTML =
@@ -154,18 +162,21 @@ function renderArena(){
         `<div class="ar-bank" id="arBank"><small>${$t("Банк")}</small><b id="arBankV">${fmt(v.bank)}</b><em>GRAM</em><span class="ar-time" id="arTime"></span></div>` +
         `<div class="ar-seats" id="arSeats"></div></div></div>` +
       `<p class="ar-hint" id="arHint"></p>` +
-      `<div class="ar-pick${me ? ' locked' : ''}" id="arPick">` +
-        `<div class="ar-tkrow"><div class="ar-tk" id="arTk"></div>${me ? '' : `<button class="ar-dice" id="arDice" aria-label="${$t("Случайный")}">${svg(DICE)}</button>`}</div>` +
+      `<div class="ar-pick${lock ? ' locked' : ''}" id="arPick">` +
+        `<div class="ar-tkrow"><div class="ar-tk" id="arTk"></div>${lock ? '' : `<button class="ar-dice" id="arDice" aria-label="${$t("Случайный")}">${svg(DICE)}</button>`}</div>` +
         `<div class="ar-track" id="arTrack">${TIERS.map(t => `<i style="--c:${t.c}"></i>`).join('')}<b class="ar-thumb" id="arThumb"></b></div>` +
-        `<div class="ar-tiers">${TIERS.map((t, i) => `<button data-ti="${i}" style="--c:${t.c}"${me ? ' disabled' : ''}><b>${t.name}</b><small>x${t.min}–${t.max}</small></button>`).join('')}</div></div>`;
-    bindArena(); showTicket(me ? me.guess : pvpGuess);
+        `<div class="ar-tiers">${TIERS.map((t, i) => `<button data-ti="${i}" style="--c:${t.c}"${lock ? ' disabled' : ''}><b>${t.name}</b><small>x${t.min}–${t.max}</small></button>`).join('')}</div></div>`;
+    if (me && !pvpChange.wait) pvpGuess = me.guess;
+    bindArena(); showTicket(pvpGuess);
   }
   seatsSync(v);
   // таймер: кольцо вокруг горнила тает, последние 5 секунд — красное и пульсирует
   const C = 2 * Math.PI * 82, ring = $('arRing');
   ring.style.strokeDasharray = C; ring.style.strokeDashoffset = (C * (1 - left / PVP_TIME)).toFixed(1);
   $('arTime').textContent = mmss(left); $('arPit').classList.toggle('hot', left <= 5);
-  $('arHint').innerHTML = me ? `${$t("Ты на арене")} · <b>${$t("старт через {0}", mmss(left))}</b>` : $t("Выбери тикет и займи свободное место");
+  $('arHint').innerHTML = !me ? $t("Выбери тикет и займи свободное место")
+    : lock ? `${$t("Тикеты зафиксированы")} · <b>${$t("старт через {0}", mmss(left))}</b>`
+    : `${$t("Ты на арене · тикет можно сменить ещё {0}", mmss(left - PVP_LOCK))}`;
   $('arHint').classList.toggle('me', !!me);
 }
 // места на трибунах: ты — внизу; свободные (пока ты не в игре) — с «+», тап по ним садит в бой; новенький кидает монету в банк
@@ -211,6 +222,19 @@ function setGuess(n, quiet){
   n = Math.max(0, Math.min(TICKETS - 1, Math.round(n)));
   const ti0 = tierOfTicket(pvpGuess); pvpGuess = n; showTicket(n);
   if (!quiet){ Sfx.tick(.5); if (tierOfTicket(n) !== ti0) selHaptic(); }
+  pvpChangeSoon();
+}
+// уже на арене: новый тикет отправляем, когда палец отпустил ползунок (через паузу) — не на каждое движение
+function pvpChangeSoon(){
+  const me = pvpView?.entries.find(x => x.me); if (!me || me.guess === pvpGuess) return;
+  clearTimeout(pvpChangeSoon.t); pvpChange.wait = true; pvpChangeSoon.t = setTimeout(pvpChange, 450);
+}
+async function pvpChange(){
+  const me = pvpView?.entries.find(x => x.me); if (!me){ pvpChange.wait = false; return; }
+  const r = await API.pvpChange(pvpFee, pvpGuess); pvpChange.wait = false;
+  if (r.ok){ pvpView = r.room; haptic('light'); return; }
+  haptic('rigid'); pvpGuess = me.guess; showTicket(pvpGuess);
+  notify({ type: 'warn', icon: 'fire', title: r.error === 'taken' ? $t("Этот тикет уже занят") : $t("Тикеты уже зафиксированы"), text: r.error === 'taken' ? $t("Оставили прежний — выбери другой") : $t("За 5 секунд до старта менять нельзя") });
 }
 // кубик и тап по рангу: ползунок пролетает к новому тикету, число бежит за ним
 function sweepTo(n){
@@ -238,7 +262,8 @@ function bindArena(){
 function arenaRules(){
   haptic();
   const rules = [$t("Все вносят одинаковый взнос и загадывают тикет. Один тикет — один игрок."), $t("Старт — по таймеру. Один на арене — крафт твой."),
-    $t("Ближе всех к выпавшему тикету — крафтит на весь банк с этим тикетом: множитель — его ранга."), $t("Ничья — банк поровну.")];
+    $t("Ближе всех к выпавшему тикету — крафтит на весь банк с этим тикетом: множитель — его ранга."), $t("Ничья — банк поровну."),
+    $t("Тикет можно сменить после входа — до 5 секунд до старта. Дальше тикеты зафиксированы и уходят в розыгрыш.")];
   modal(`<h4>${$t("Правила арены")}</h4><ol class="ar-rules">${rules.map(x => `<li>${x}</li>`).join('')}</ol>` +
     `<div class="ar-hash"><small>${$t("Хеш зерна комнаты — показан до взносов. После старта зерно раскроется, и исход можно проверить.")}</small><code>${pvpView.commitment}</code></div>` +
     `<button class="btn-main" id="arOk">${$t("Понятно")}</button>`, '#ff8a3c');

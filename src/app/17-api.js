@@ -33,6 +33,8 @@ const API = {
   /* POST /pvp/join {fee_nano, guess} — взнос списывается сервером. Ответ {ok, room} | {ok:false, error:'taken'|'closed'|'already'} */
   async pvpJoin(fee, guess){ track('pvp_join', { fee }); return pvpJoinMock(fee, guess); },
   /* GET /pvp/:id — состояние; после таймера — тикет, победители, твой итог (my: доля, множитель, выплата) и доказательство (domain 'pvp') */
+  /* POST /pvp/change {fee_nano, guess} — сменить тикет после входа; можно, пока до старта > 5 с. {ok, room} | {ok:false, error:'locked'|'taken'|'closed'} */
+  async pvpChange(fee, guess){ track('pvp_change', { fee }); return pvpChangeMock(fee, guess); },
   async pvpState(fee){ return pvpStateMock(fee); },
   /* --- предикты (эксперимент, 16b-bets.js) --- */
   /* POST /bets {bets: [{bet, sel, amount_nano}], client_seed} → тикет, какие ставки сыграли, выплата и доказательство (domain 'bets').
