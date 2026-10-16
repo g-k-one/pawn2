@@ -1,4 +1,4 @@
-<title>Rive-лаборатория Цезаря</title>
+<title>Лаборатория эффектов</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -67,19 +67,11 @@ code { font: 13px var(--mono); color: var(--gold) }
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">Заставка арены · Rive</div>
-    <h1>Цезарь и <em>эффекты</em></h1>
-    <p>Последняя сборка заставки и новые частицы на текстурах. Заставка — сцена Rive, собранная из кода; эффекты — наш движок частиц на WebGL, тот же, что в игре.</p>
+    <div class="eyebrow">Pawn · эффекты</div>
+    <h1>Лаборатория <em>эффектов</em></h1>
+    <p>Все эффекты — наш движок частиц на WebGL, тот же код, что в игре (Дебаг → «Эффекты частиц»). Принципы и рецепты — docs/VFX.md.</p>
   </header>
 
-  <section class="hero">
-    <div class="stage tall"><canvas id="cv-Caesar" data-board="Caesar" data-src="caesar"></canvas></div>
-    <div class="info">
-      <div class="row"><h2>Заставка: Цезарь</h2><span class="tag">как в игре</span></div>
-      <p>Та же сцена, что играет перед PvP-боем по кнопке «Старт сейчас»: Цезарь поднимается из-за стены, хохочет (смена рта и глаз), бьёт молниями из глаз в песок. Голова собрана как у Wukong: сетки по контуру, глаза в масках, венок и волосы на цепочках костей.</p>
-      <button class="again" data-again="Caesar">Заново</button>
-    </div>
-  </section>
 
   <section class="fx">
     <div class="fx-head">
@@ -388,7 +380,7 @@ code { font: 13px var(--mono); color: var(--gold) }
     <h3>Что сделали мягче</h3>
     <dl>
       <div><dt>Почему эффекты не на Rive</dt>
-        <dd>Файлы Rive со скриптами на бесплатном тарифе показывают логотип RIVE 2–3 секунды при каждом запуске. Заставка Цезаря скриптов не содержит — у неё логотипа нет, она остаётся на Rive. Частицы перенесли в свой код: те же атласы и настройки, логотипа нет, вес — 25 КБ кода и 282 КБ картинок.</dd></div>
+        <dd>Файлы Rive со скриптами на бесплатном тарифе показывают логотип RIVE 2–3 секунды при каждом запуске.</dd></div>
       <div><dt>Без чисто чёрного и выбитого белого</dt>
         <dd>Тёмная ступень каждого цвета — насыщенная (бордовый, лавандово-серый), светлая — кремовая, а не белая. Ядра и свечения тусклее, чем в первой пробе.</dd></div>
       <div><dt>Плавные кривые прозрачности</dt>
@@ -409,27 +401,4 @@ code { font: 13px var(--mono); color: var(--gold) }
   st.forEach(el => { if (!Particles.play(el.dataset.fx, { el, loop: true })) el.insertAdjacentHTML('beforeend', '<div class="err">WebGL недоступен</div>'); });
 })();
 </script>
-<script src="rive.js"></script>
-<script>
-(() => {
-  const boards = [...document.querySelectorAll('canvas[data-board]')], live = {};
-  const fail = (cv, msg) => { const d = document.createElement('div'); d.className = 'err'; d.textContent = msg; cv.parentElement.appendChild(d); };
-  if (!window.rive){ boards.forEach(cv => fail(cv, 'Рантайм Rive не загрузился')); return; }
-  rive.RuntimeLoader.setWasmUrl('rive.wasm');
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const get = f => fetch(f + '.riv.txt').then(r => { if (!r.ok) throw new Error(f + '.riv ' + r.status); return r.text(); })
-    .then(t => Uint8Array.from(atob(t.trim()), c => c.charCodeAt(0)).buffer);
-  get('caesar')
-    .then(caesarBuf => {
-      const start = cv => { const name = cv.dataset.board; live[name]?.cleanup();
-        const dpr = Math.min(2, devicePixelRatio || 1); cv.width = cv.clientWidth * dpr; cv.height = cv.clientHeight * dpr;
-        live[name] = new rive.Rive({ buffer: caesarBuf.slice(0), canvas: cv, stateMachine: 'SM', autoplay: !reduce,
-          layout: new rive.Layout({ fit: rive.Fit.Contain, alignment: rive.Alignment.Center }),
-          onLoad: () => live[name].resizeDrawingSurfaceToCanvas(), onLoadError: () => fail(cv, 'Сцена не открылась') }); };
-      boards.forEach(start);
-      document.querySelectorAll('[data-again]').forEach(b => b.addEventListener('click', () => start(document.getElementById('cv-' + b.dataset.again))));
-      let t; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => boards.forEach(start), 250); });
-    })
-    .catch(e => boards.forEach(cv => fail(cv, 'Не удалось загрузить сцену: ' + e.message)));
-})();
-</script>
+
