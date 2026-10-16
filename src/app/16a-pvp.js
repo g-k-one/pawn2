@@ -177,17 +177,19 @@ const SWORDS = `<svg class="ar-swords" viewBox="0 0 64 64" aria-hidden="true"><g
 const AR_SEAT_R = .43;   // места — по кругу на трибунах (доля стороны арены)
 let arSeat = null, arSpin = 0;   // своё место; инерция колеса
 /* дым у трибун: одна картинка клуба (assets/arena-puff.webp), 8 копий по кругу — каждая медленно и по-своему плавает,
-   поворачивается и то густеет, то тает. Только сдвиг, поворот и прозрачность — это делает видеокарта, без перерисовки и без WebGL
+   поворачивается и то густеет, то тает. Только по краю колизея и по бокам — не заходит на таймер, тикет и ставку. Только сдвиг, поворот и прозрачность — это делает видеокарта, без перерисовки и без WebGL
    (живой дым Горна грел iPhone в Telegram). Траектории случайные, но у всех копий одна картинка — один файл на загрузку */
 function smokePuffs(box){
   if (box.childElementCount) return;
-  for (let i = 0; i < 8; i++){
-    const a = (i + Math.random() * .6) / 8 * Math.PI * 2, r = 36 + Math.random() * 8, sz = 30 + Math.random() * 14;   // в % от коробки: кольцо у трибун
+  // только по краю колизея (его радиус — 28% коробки дыма) и только по бокам: сверху таймер и тикет, снизу ставка — их дым не трогает
+  const ANG = [-40, -12, 16, 40, 140, 168, 196, 220];
+  for (let i = 0; i < ANG.length; i++){
+    const a = (ANG[i] + (Math.random() - .5) * 10) * Math.PI / 180, r = 27 + Math.random() * 3, sz = 17 + Math.random() * 6;   // в % от коробки
     const im = document.createElement('img'); im.src = 'assets/arena-puff.webp'; im.alt = ''; im.className = 'puff';
     im.style.cssText = `left:${(50 + Math.cos(a) * r - sz / 2).toFixed(1)}%;top:${(50 + Math.sin(a) * r - sz / 2).toFixed(1)}%;width:${sz.toFixed(1)}%`;
     box.appendChild(im);
-    const R = () => (Math.random() - .5) * 2, dx = R() * 9, dy = R() * 9, rot = R() * 50, s0 = .85 + Math.random() * .2;
-    im.animate([{ transform: `translate(0,0) rotate(0deg) scale(${s0})`, opacity: .15 }, { transform: `translate(${dx}%,${dy}%) rotate(${rot / 2}deg) scale(${s0 + .12})`, opacity: .75, offset: .5 },
+    const R = () => (Math.random() - .5) * 2, dx = R() * 12, dy = R() * 16, rot = R() * 50, s0 = .85 + Math.random() * .2;   // сдвиг — в % от самого клуба: плавают у края, не уходя к центру
+    im.animate([{ transform: `translate(0,0) rotate(0deg) scale(${s0})`, opacity: .15 }, { transform: `translate(${dx}%,${dy}%) rotate(${rot / 2}deg) scale(${s0 + .12})`, opacity: .9, offset: .5 },
       { transform: `translate(${-dy / 2}%,${dx / 2}%) rotate(${rot}deg) scale(${s0})`, opacity: .2 }],
       { duration: 9000 + Math.random() * 7000, delay: -Math.random() * 16000, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
   }
