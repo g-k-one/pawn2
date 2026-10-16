@@ -370,7 +370,9 @@ function pvpResult(v){
 }
 async function pvpStart(v){
   ++pvpTok; clearTimeout(pvpPoll); tgBack(false); arSeat = null;   // опрос останавливаем; pvpGo остаётся true до следующей комнаты; во время боя «Назад» нет
-  const r = pvpResult(v), fast = S.lite, a = $('fxArena');   // быстрый крафт на арену не действует — бой всегда целиком (кроме экономного режима)
+  // бой всегда целиком и одинаковой длины у всех в комнате: ни «Быстрый крафт», ни экономный режим его не укорачивают —
+  // иначе в экономном режиме исход было видно раньше соперников. В экономном только без тяжёлых украшений (свечение, частицы)
+  const r = pvpResult(v), fast = false, a = $('fxArena');
   // все слетаются к банку, горнило вспыхивает
   if (!fast && arenaOn){   // только старый экран арены; в Арене (tab2) сразу заставка — без паузы и лишнего свиста
     $('arPit')?.classList.add('fire'); FullGlow.set(FIRE_GLOW); FullGlow.punch(0, 1); FX.gainTo = 1; Sfx.whoosh(); haptic('heavy');
@@ -406,7 +408,7 @@ async function pvpAfter(r){
   chips.forEach((c, i) => { const x = sorted[i]; c.querySelector('.pvd').textContent = '±' + x.dist.toLocaleString(LOC); c.classList.add(x.win ? 'win' : 'lose');
     if (x.win && tie) c.insertAdjacentHTML('beforeend', `<em class="pvtie">${$t("ничья")}</em>`); });
   haptic('heavy'); r.pvp.won ? Sfx.rank(3) : Sfx.lock();
-  await wait(S.lite ? 500 : 1700);
+  await wait(1700);
   if (r.pvp.won) return showDrop(r).then(() => pvpWinDrop(r));
   pvpLoseDrop(r);
 }
