@@ -1573,3 +1573,8 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .bt-res:not(.won) img{filter:grayscale(.7) brightness(.7)}
 .bt-res>b{font-size:52px;line-height:1;font-variant-numeric:tabular-nums}
 .bt-res .pvp-chips{max-width:340px}
+/* предикты: ставка «на очереди» пульсирует перед раскрытием */
+.pvc.pend{animation:btPend .3s ease-in-out infinite alternate}
+@keyframes btPend{to{transform:scale(1.08);box-shadow:inset 0 0 0 2px #fff}}
+.pvp-bank .bt-sum{display:inline-block;color:#3fe06a;font-size:22px}
+.fx.btspin .fx-need{display:none}

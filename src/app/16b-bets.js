@@ -117,16 +117,29 @@ async function betsSpin(){
   $('fxPvp').innerHTML = `<div class="pvp-bank">${svg(TARGET)} ${$t("Предикты · ставка {0} GRAM", fmt(tot))}</div><div class="pvp-chips">` +
     r.bets.map(b => `<span class="pvc bt" style="--tc:${b.bet === 'rank' ? TIERS[b.sel].c : '#b9a6ff'}"><b>${betLabel(b.bet, b.sel)}</b><em>${fmt(b.amount)} · x${fmt(betMult(b.bet, b.sel))}</em><i class="pvd"></i></span>`).join('') + `</div>`;
   const fi = $('fxIn'); await fi.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' }).finished;
-  $('fx').classList.remove('bets'); betsOn = false; fi.getAnimations().forEach(x => x.cancel());
+  $('fx').classList.remove('bets'); $('fx').classList.add('btspin'); betsOn = false; fi.getAnimations().forEach(x => x.cancel());   // btspin: в раскрытии ставок нет строки «не хватило до ранга» — она про крафт
   Sfx.clang(); FullGlow.punch(0, .8);
   betsSpin.on = false;
   await reveal(r, S.fast || S.lite);
 }
 // после того как тикет встал: сыгравшие ставки — зелёные с выплатой, остальные гаснут; затем итог
 async function betsAfter(r){
-  [...$('fxPvp').querySelectorAll('.pvc')].forEach((c, i) => { const b = r.bets[i]; c.classList.add(b.won ? 'win' : 'lose'); c.querySelector('.pvd').textContent = b.won ? '+' + fmt(b.pay) : ''; });
-  haptic('heavy'); r.win > 0 ? Sfx.coin() : Sfx.lock();
-  await wait(S.lite ? 500 : 1500);
+  // саспенс: ставки раскрываются по одной — от частых исходов к редким (самая крупная — последней), выплата растёт на глазах.
+  // Исход уже известен и проверяем; меняется только порядок показа
+  const chips = [...$('fxPvp').querySelectorAll('.pvc')], bank = $('fxPvp').querySelector('.pvp-bank');
+  const order = r.bets.map((b, i) => i).sort((x, y) => betMult(r.bets[x].bet, r.bets[x].sel) - betMult(r.bets[y].bet, r.bets[y].sel));
+  const step = S.lite || S.fast ? 160 : 520; let sum = 0;
+  for (const i of order){
+    const b = r.bets[i], c = chips[i]; if (!c) continue;
+    c.classList.add('pend'); await wait(step * .55);
+    c.classList.remove('pend'); c.classList.add(b.won ? 'win' : 'lose');
+    if (b.won){ sum = Math.round((sum + b.pay) * 100) / 100; c.querySelector('.pvd').textContent = '+' + fmt(b.pay); Sfx.coin(); haptic('medium');
+      bank.innerHTML = `${svg(TARGET)} ${$t("Выплата")} <b class="bt-sum">+${fmt(sum)}</b> GRAM`; bank.querySelector('.bt-sum').animate([{ scale: 1.5 }, { scale: 1 }], { duration: 320, easing: 'cubic-bezier(.3,1.5,.5,1)' }); }
+    else { Sfx.tick(.6); haptic('light'); }
+    await wait(step * .45);
+  }
+  haptic(r.win > 0 ? 'heavy' : 'rigid');
+  await wait(S.lite ? 300 : 900);
   const won = r.bets.filter(b => b.won);
   // итог: сумма крупно, ниже — все ставки раунда: сыгравшие зелёные с выплатой, остальные приглушены
   $('fxDrop').innerHTML = `<div class="pz bt-res${r.win > 0 ? ' won' : ''}"><img src="assets/hero-gem.webp" alt=""><b>${r.win > 0 ? '+' + fmt(r.win) : '0'}<i class="u">GRAM</i></b>` +
@@ -147,7 +160,7 @@ async function betsAfter(r){
 async function betsBack(again){
   haptic(); const fi = $('fxIn');
   await fi.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' }).finished;
-  $('fx').classList.remove('done', 'fail'); $('fxDrop').innerHTML = $('fxWin').innerHTML = $('fxBtns').innerHTML = $('fxPvp').innerHTML = ''; Tilt.drop($('fxDrop'));
+  $('fx').classList.remove('done', 'fail', 'btspin'); $('fxDrop').innerHTML = $('fxWin').innerHTML = $('fxBtns').innerHTML = $('fxPvp').innerHTML = ''; Tilt.drop($('fxDrop'));
   betsBoard = { ...(betsLast || {}) }; $('fx').classList.add('bets'); betsOn = true; FullGlow.set(BETS_GLOW); FX.gainTo = .5; tgBackBets(true);
   renderBets(); fi.getAnimations().forEach(x => x.cancel());
   if (again) betsSpin();
