@@ -175,7 +175,23 @@ const AR_SLOTS = 4;
 const SWORDS = `<svg class="ar-swords" viewBox="0 0 64 64" aria-hidden="true"><g fill="#fff"><path d="M12 6l4-2 30 34-4 4z"/><path d="M38 40l6-6 4 4-6 6z"/><path d="M44 46l4-4 8 8-4 4z"/>` +
   `<path d="M52 6l-4-2-30 34 4 4z"/><path d="M26 40l-6-6-4 4 6 6z"/><path d="M20 46l-4-4-8 8 4 4z"/></g></svg>`;
 const AR_SEAT_R = .43;   // места — по кругу на трибунах (доля стороны арены)
-let arSeat = null, arSpin = 0;   // своё местоом; инерция колеса
+let arSeat = null, arSpin = 0;   // своё место; инерция колеса
+/* дым у трибун: одна картинка клуба (assets/arena-puff.webp), 8 копий по кругу — каждая медленно и по-своему плавает,
+   поворачивается и то густеет, то тает. Только сдвиг, поворот и прозрачность — это делает видеокарта, без перерисовки и без WebGL
+   (живой дым Горна грел iPhone в Telegram). Траектории случайные, но у всех копий одна картинка — один файл на загрузку */
+function smokePuffs(box){
+  if (box.childElementCount) return;
+  for (let i = 0; i < 8; i++){
+    const a = (i + Math.random() * .6) / 8 * Math.PI * 2, r = 36 + Math.random() * 8, sz = 30 + Math.random() * 14;   // в % от коробки: кольцо у трибун
+    const im = document.createElement('img'); im.src = 'assets/arena-puff.webp'; im.alt = ''; im.className = 'puff';
+    im.style.cssText = `left:${(50 + Math.cos(a) * r - sz / 2).toFixed(1)}%;top:${(50 + Math.sin(a) * r - sz / 2).toFixed(1)}%;width:${sz.toFixed(1)}%`;
+    box.appendChild(im);
+    const R = () => (Math.random() - .5) * 2, dx = R() * 9, dy = R() * 9, rot = R() * 50, s0 = .85 + Math.random() * .2;
+    im.animate([{ transform: `translate(0,0) rotate(0deg) scale(${s0})`, opacity: .15 }, { transform: `translate(${dx}%,${dy}%) rotate(${rot / 2}deg) scale(${s0 + .12})`, opacity: .75, offset: .5 },
+      { transform: `translate(${-dy / 2}%,${dx / 2}%) rotate(${rot}deg) scale(${s0})`, opacity: .2 }],
+      { duration: 9000 + Math.random() * 7000, delay: -Math.random() * 16000, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
+  }
+}
 const AR_TIMER = .30;                                                       // радиус кольца таймера (доля стороны арены)
 const tkDeg = n => ticketToP(n) / TIERS.length * 360;
 const degTk = d => pToTicket(Math.min(TIERS.length - 1e-6, (((d % 360) + 360) % 360) / 360 * TIERS.length));
@@ -221,7 +237,7 @@ function renderArena(){
         `${arWheel(lock)}<button class="round" id="arDice" aria-label="${$t("Случайный")}"${lock ? ' disabled' : ''}>${svg(DICE)}</button></div>`;
     if (me && !pvpChange.wait) pvpGuess = me.guess;
     bindArena(); showTicket(pvpGuess); try { if (Telegram.WebApp.initData) $('arBack').hidden = true; } catch(_){}
-    if (!S.lite) $('arFxs').innerHTML = '<img class="sm1" src="assets/arena-smoke.webp" alt=""><img class="sm2" src="assets/arena-smoke.webp" alt="">';   // туман по краям — картинка, плывёт по кругу (как в 16g-tab2.js)
+    if (!S.lite) smokePuffs($('arFxs'));   // туман по краям — клубы-картинки (как в Арене, 16g-tab2.js)
   }
   seatsSync(v);
   const C = 2 * Math.PI * AR_TIMER * 400, ring = $('arRing');

@@ -1916,17 +1916,9 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .lite .t2fan{animation:none}
 @keyframes t2flash{0%,95%,100%{opacity:0}96.5%{opacity:1}}
 .t2fx{width:calc(var(--r) * 3.6);aspect-ratio:1}
-/* дым: два слоя одной картинки плывут по кругу навстречу друг другу и дышат — только поворот и прозрачность, это делает видеокарта */
-.t2fx img,.ar-fxs img{position:absolute;inset:0;display:block;width:100%;height:100%;will-change:transform,opacity}
-.t2fx .sm1,.ar-fxs .sm1{opacity:.6;animation:smA 60s linear infinite,smB 9s ease-in-out infinite alternate}
-.t2fx .sm2,.ar-fxs .sm2{opacity:.45;transform:scale(1.08) rotate(140deg);animation:smC 85s linear infinite,smD 12s ease-in-out -4s infinite alternate}
-@keyframes smA{to{rotate:360deg}}
-@keyframes smC{to{rotate:-360deg}}
-@keyframes smB{from{opacity:.45}to{opacity:.7}}
-@keyframes smD{from{opacity:.3}to{opacity:.55}}
+.t2fx img,.ar-fxs img{position:absolute;display:block;height:auto;aspect-ratio:1;will-change:transform,opacity}
 .t2fx,.ar-fxs{opacity:.85;transition:opacity .6s}
 .t2a.hot .t2fx,.ar-col.hot .ar-fxs{opacity:1}   /* последние 5 секунд — дым гуще */
-.t2fxon .t2fx img,.lite .t2fx img{animation-play-state:paused}
 .t2ring{overflow:visible}
 .t2a.hot .ar-tfg{stroke:#ff4c35;filter:drop-shadow(0 0 6px rgba(255,60,40,.95));animation:arHot .5s ease-in-out infinite alternate}
 .t2seats{width:0;height:0}
@@ -1993,6 +1985,8 @@ html[lang=en] .bcase.free::before{content:"Free"}
 /* итог боя в арене — в системе экрана дропа: сверху крупно кто забрал банк (на месте приза), ниже одна карточка 16/22 со всеми игроками.
    В каждой строке одно и то же: ник, тикет и расстояние; справа — итог (+выплата победителю, −взнос остальным) */
 .fx.done.pvpl .fx-drop{height:auto;margin:24px 0 0;width:100%;max-width:340px}
+/* итог арены: тикет сверху — та же плитка барабана, только мельче, чтобы список из 6 игроков не уводил кнопки вниз */
+.fx.done.pvpl .digits{--dz:.7;margin:-15px 0 -17px}
 .pvl-top{display:flex;flex-direction:column;align-items:center;gap:8px}
 .pvl-top .pvl-ava{display:flex}
 .pvl-top .tav{width:72px;height:72px;font-size:32px;box-shadow:none}
@@ -2160,8 +2154,3 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .fx-win .t3res .pvc b{display:inline;font-size:15px;line-height:1.1;background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--tc)}
 .fx-win .t3res .pvc.win b{color:#fff}
 .t3lose img{filter:grayscale(.8) brightness(.55)}
-/* итог арены: при 6 игроках список не уводит кнопки вниз — строки плотнее, аватарки меньше */
-.pvls .trow,.pvls .trow.me{padding:6px 0}
-.pvls .trow .tav{width:36px;height:36px;font-size:17px}
-.pvls .tn b{font-size:17px;line-height:20px}
-.pvl-nft img{width:32px;height:32px}
