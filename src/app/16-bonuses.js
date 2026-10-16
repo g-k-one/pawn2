@@ -3,11 +3,12 @@
    Сегодня (задания дня, неделя, супер дроп) · Пасс · Кейсы · Профиль (таблетки: друзья | топ | достижения)
    casesTab — что показано: today · super (страница супер дропа внутри «Сегодня») · pass · cases · ach · refs · top
    ========================================================= */
-let casesTab = 'today', friendsSeg = 'refs';
+let casesTab = 'today', friendsSeg = 'ach';
 const BTAB_OF = { today: 'today', tasks: 'today', super: 'today', pass: 'pass', cases: 'cases', ach: 'friends', refs: 'friends', top: 'friends' };
 function openCases(tab){ if (tab){ casesTab = tab === 'tasks' ? 'today' : tab; if (tab === 'refs' || tab === 'top' || tab === 'ach') friendsSeg = tab; } swapDrawer('casesDrawer', renderCases); }
-const sdBanner = () => `<button class="sdban" data-go="super"><img class="sdb-l" src="assets/superdrop-logo.webp" alt="Super Drop"><span><small>${$t("Выбей тикет первым — NFT твой")}</small>` +
-  `<b>${tk(SUPER.target)}</b></span><span class="sdb-p">${SUPER.nft ? `<img src="${SUPER.nft.nft.src}" alt="">` : ''}<em>${fmt(SUPER.nft ? SUPER.nft.value : 0)}${GU}</em></span><i>›</i></button>`;
+// баннер супер дропа: слева — что делать и тикет крупно, справа — сам приз крупно со свечением и ценой
+const sdBanner = () => `<button class="sdban" data-go="super"><span class="sdb-t"><small>${$t("Супер дроп")}</small><b>${tk(SUPER.target)}</b>` +
+  `<em>${$t("Выбей этот тикет первым — NFT твой")}</em></span>${SUPER.nft ? `<img class="sdb-n" src="${SUPER.nft.nft.src}" alt="">` : ''}</button>`;
 const GEM_S = '<img class="gm" src="assets/gem-small.svg" alt="">';
 const backRow = (k, t) => `<button class="bback" data-go="${k}">${svg('<path d="M15 5l-7 7 7 7"/>')}${t}</button>`;
 // пасс: экономику ещё считаем — пока макет двух дорожек, чтобы оценить место в структуре
@@ -44,11 +45,11 @@ const achRow = ([id, t, rw, ok, act, prog]) => {
 };
 function renderCases(){
   const cur = BTAB_OF[casesTab] || 'today';
-  $('casesTabs').innerHTML = [['today', $t("Сегодня")], ['pass', $t("Пасс")], ['cases', $t("Кейсы")], ['friends', $t("Профиль")]].map(([k, t]) => `<button class="tab${k === cur ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
+  $('casesTabs').innerHTML = [['today', $t("Сегодня")], ['cases', $t("Кейсы")], ['friends', $t("Профиль")]].map(([k, t]) => `<button class="tab${k === cur ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
   $('casesTabs').querySelector('.on')?.scrollIntoView({ inline: 'center', block: 'nearest' });
   const b = $('casesBody');
   // «Профиль»: таблетки внутри вкладки
-  const seg = `<div class="bseg seg">${[['refs', $t("Друзья")], ['top', $t("Топ")], ['ach', $t("Достижения")]].map(([k, t]) => `<button class="${k === casesTab ? 'on' : ''}" data-go="${k}">${t}</button>`).join('')}</div>`;
+  const seg = `<div class="bseg seg">${[['ach', $t("Достижения")], ['refs', $t("Друзья")], ['top', $t("Топ")]].map(([k, t]) => `<button class="${k === casesTab ? 'on' : ''}" data-go="${k}">${t}</button>`).join('')}</div>`;
   if (casesTab === 'cases'){
     b.innerHTML = `<div class="bgrid">${CASES.map(caseCard).join('')}</div>` +
       `<p class="bnote">${$t("Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить и открывать по одному, когда захочешь.")}</p>`;
@@ -260,8 +261,8 @@ syncBalBtn();
   for (let i = 0; i < 3; i++){ const c = CASES[i % 2], r = await rollCase(c), it = c.items[r.idx]; S.hist.cases.push({ kind: 'case', t: Date.now() - (i + 1) * 5 * 3600000, r, label: it.t === 'nft' ? (it.rare ? NFTS[9].name : NFTS[1].name) : null, img: it.t === 'nft' ? (it.rare ? NFTS[9].src : NFTS[1].src) : null }); }
   S.lastFair = null;
   await revealEpoch(false);                                // прошлые игры — в уже раскрытой эпохе
-  S.hist.wallet.push({ type: 'dep', t: Date.now() - 26 * 3600000, amount: 250, method: 'Tonkeeper' }, { type: 'nft', t: Date.now() - 50 * 3600000, name: NFTS[40].name, img: NFTS[40].src, bg: NFTS[40].bg, value: NFTS[40].price, method: $t("в Telegram · комиссия 0.3 GRAM") },
-    { type: 'nftin', t: Date.now() - 74 * 3600000, name: NFTS[12].name, img: NFTS[12].src, bg: NFTS[12].bg, value: NFTS[12].price, method: '@pawngift' },
+  S.hist.wallet.push({ type: 'dep', t: Date.now() - 26 * 3600000, amount: 250, method: 'Tonkeeper' }, { type: 'nft', t: Date.now() - 50 * 3600000, name: NFTS[40].name, num: NFTS[40].num, model: NFTS[40].model, img: NFTS[40].src, bg: NFTS[40].bg, value: NFTS[40].price, method: $t("в Telegram · комиссия 0.3 GRAM") },
+    { type: 'nftin', t: Date.now() - 74 * 3600000, name: NFTS[12].name, num: NFTS[12].num, model: NFTS[12].model, img: NFTS[12].src, bg: NFTS[12].bg, value: NFTS[12].price, method: '@pawngift' },
     { type: 'dep', t: Date.now() - 98 * 3600000, amount: 150, method: 'Telegram Wallet' });
   S.hist.rewards.push({ kind: 'task', id: TASKS[0][0], rw: TASKS[0][3], t: Date.now() - 3 * 3600000 });   // утреннее задание уже выполнено
   checkAch(true);                                          // то, что уже было сделано, отмечаем без наград
@@ -309,7 +310,8 @@ async function strike(power = .5, back = WIND){
   ANV.animate([{ transform: 'none' }, { transform: `translateY(${1 + 2 * power}px) scale(${1 + .08 * power},${1 - .14 * power})` }, { transform: 'none' }], { duration: 260, easing: 'ease-out' });
   CB.animate([{ scale: 1 }, { scale: 1 - .07 * power }, { scale: 1 + .05 * power }, { scale: 1 }], { duration: 380, easing: 'ease-out' });
   if (!S.lite){
-    CB.querySelector('.orb').animate([{ filter: 'brightness(1)' }, { filter: `brightness(${1.3 + .9 * power}) saturate(1.2)` }, { filter: 'brightness(1)' }], { duration: 420 });
+    const orb = CB.querySelector('.orb'), f0 = (s => s === 'none' ? '' : s + ' ')(getComputedStyle(orb).filter);
+    orb.animate([{ filter: f0 + 'brightness(1)' }, { filter: f0 + `brightness(${1.3 + .9 * power}) saturate(1.2)` }, { filter: f0 + 'brightness(1)' }], { duration: 420 });
     sparks(Math.round(5 + 18 * power), power);
     shock(power);
   }
@@ -319,7 +321,7 @@ async function strike(power = .5, back = WIND){
 function settle(){ return hamTo([{ rotate: getRot() + 'deg' }, { rotate: REST + 'deg' }], { duration: 420, easing: 'cubic-bezier(.3,1.5,.5,1)' }).then(() => { hamAnim?.cancel(); hamAnim = null; CRAFT.classList.remove('live'); }); }
 function shock(power){
   const r = document.createElement('i'); r.className = 'ring'; CB.appendChild(r);
-  r.style.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--tier');
+  r.style.borderColor = getComputedStyle(CB).getPropertyValue('--tier');
   r.animate([{ transform: 'scale(.7)', opacity: .9 }, { transform: `scale(${1.4 + 1.2 * power})`, opacity: 0 }], { duration: 450 + 350 * power, easing: 'cubic-bezier(.2,.8,.3,1)' }).onfinish = () => r.remove();
 }
 /* искры из точки удара — веером вверх, цветом тира */

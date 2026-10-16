@@ -267,6 +267,9 @@ img{display:block;-webkit-user-drag:none}
 .mrow em{margin-left:auto;font-style:normal;color:rgba(255,255,255,.4);font-size:18px}
 .mrow .mt{display:flex;flex-direction:column;line-height:1.15;min-width:0}
 .mrow .mt small{font-size:15px;color:rgba(255,255,255,.42);font-weight:400;margin-top:2px}
+.dbg-tabs{position:sticky;top:0;z-index:2;display:flex;gap:4px;padding:4px;margin-bottom:16px;border-radius:999px;background:rgba(20,20,28,.92);backdrop-filter:blur(8px)}
+.dbg-tab{flex:1;padding:8px 4px;border-radius:999px;font-size:15px;line-height:20px;text-transform:uppercase;color:rgba(255,255,255,.72);white-space:nowrap}
+.dbg-tab.on{background:#fff;color:#000}
 .dbg-l{font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.45);margin:4px 0 8px}
 .dbg-g{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
 .dbg-c{padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.08);font-size:18px;line-height:22px;text-transform:uppercase;color:var(--c);transition:background .2s,color .2s,transform .15s}
@@ -1252,7 +1255,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .chk svg{width:62%;height:62%;stroke-width:3.4}
 .rkbar[data-go]{cursor:pointer}
 .fx-links{display:flex;justify-content:center;gap:4px;margin-top:2px}
-#fxPfIn{color:#3fe06a}   /* «Проверить честность» после игры — зелёная, заметнее «Поделиться» */
 .pfi-rtp{display:flex;align-items:center;gap:14px;margin-top:10px;padding:14px;border-radius:22px;background:linear-gradient(135deg,rgba(18,213,61,.22),rgba(18,213,61,.06));box-shadow:inset 0 0 22px rgba(18,213,61,.35)}
 .pfi-rtp>b{flex:none;font-size:44px;line-height:1;color:#12D53D}
 .pfi-rtp span{display:flex;flex-direction:column;gap:3px}
@@ -1427,10 +1429,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .pvc.lose{opacity:.45}
 .pvp-tag{display:inline-block;margin-bottom:4px;padding:3px 12px;border-radius:999px;background:rgba(255,184,53,.16);color:#FFB835;font-size:15px;text-transform:uppercase}
 /* экран проигравшего: кто забрал банк и с каким тикетом */
-.pvp-lose{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:100%}
-.pvl-ava .tav{width:96px;height:96px;font-size:44px;box-shadow:0 0 0 3px #12D53D,0 0 40px rgba(18,213,61,.45)}
-.pvp-lose>b{font-size:28px}
-.pvp-lose small{font-size:14px;color:rgba(255,255,255,.72)}
 .hp.pvp-x{display:grid;place-items:center;font-weight:700;font-size:20px;color:rgba(255,255,255,.72)}
 
 /* ---------- АРЕНА (PvP): экран поверх главной; огонь, банк-горнило по центру, места по кругу, тикет — ползунком по шкале рангов ---------- */
@@ -1441,12 +1439,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 #pvpAgain{display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(#ff8a3c,#c2410c)}
 #pvpAgain svg{width:20px;height:20px;color:#fff}
 /* экран проигрыша: кто забрал банк, два тикета рядом */
-.pvp-lose>small{font-size:16px;color:rgba(255,255,255,.72)}
-.pvl-pair{display:flex;gap:8px;justify-content:center}
-.pvl-pair span{display:flex;flex-direction:column;align-items:center;min-width:120px;padding:10px 16px;border-radius:16px;background:rgba(255,255,255,.06)}
-.pvl-pair small{font-size:12.5px;color:rgba(255,255,255,.72)}
-.pvl-pair b{font-size:30px;color:var(--tc);font-variant-numeric:tabular-nums}
-.pvl-pair .mine{opacity:.75}
 .hk-h em svg,.mrow i svg.fire{width:14px;height:14px}
 /* удар молота на арене: силуэты раскалены, светятся огнём */
 .fx-intro.fire .fi-a,.fx-intro.fire .fi-h img{filter:brightness(0) invert(1) sepia(1) saturate(6) hue-rotate(-18deg) brightness(.95) drop-shadow(0 0 10px #ff7a1e) drop-shadow(0 0 26px rgba(255,90,0,.55))}
@@ -1652,3 +1644,489 @@ html[lang=en] .bcase.free::before{content:"Free"}
 /* QA, временно: «Старт сейчас» на арене */
 .ar-go{align-self:center;flex:none;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 14px;margin:2px auto 0;border-radius:16px;background:rgba(255,138,60,.16);color:#ffb07a;font-size:12.5px;font-weight:600}
 .ar-go svg{width:14px;height:14px}
+/* ---------- арена v3: всё вокруг центра (16a-pvp.js) ---------- */
+.fx.arena .fx-arena{gap:14px;padding:calc(var(--tgTop,0px) + 10px) 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.fx-arena .ar-back{position:absolute;left:16px;top:calc(var(--tgTop,0px) + 10px);z-index:3}
+.fx-arena .ar-back svg{width:22px;height:22px}
+.fx-arena .ar-colw{flex:1 1 auto;min-height:260px;margin:0}
+.fx-arena .ar-col{max-height:420px}
+.ar-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.ar-fxs{position:absolute;inset:0;pointer-events:none}
+.ar-dial{position:absolute;inset:0;width:100%;height:100%;overflow:visible;touch-action:none}
+.ar-seg{cursor:pointer;transition:opacity .25s}
+.ar-seg.dim{opacity:.4}
+.ar-segt{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;fill:rgba(20,8,4,.85);pointer-events:none}
+.ar-knob{fill:#fff;stroke:var(--tc);stroke-width:5;filter:drop-shadow(0 0 8px var(--tc));cursor:grab}
+.ar-dial.drag .ar-knob{stroke-width:7}
+.ar-dial.locked{pointer-events:none}
+.ar-dial.locked .ar-seg{opacity:.3}
+.ar-tbg{fill:none;stroke:rgba(0,0,0,.45);stroke-width:5}
+.ar-tfg{fill:none;stroke:#fff1c8;stroke-width:5;stroke-linecap:round;filter:drop-shadow(0 0 6px rgba(255,170,60,.9));transition:stroke-dashoffset .2s linear,stroke .3s}
+.ar-col.hot .ar-tfg{stroke:#ff4c35;animation:arHot .5s ease-in-out infinite alternate}
+.fx-arena .ar-bank b{font-size:46px}
+/* места на трибунах: свободное — каменная ячейка с «+», выбранное — горит; занятое — аватар в рамке, ник под ним */
+.fx-arena .ar-seat{width:15%}
+.fx-arena .ar-seat.free,.fx-arena .ar-seat.pick{background:radial-gradient(circle at 50% 35%,#4a3424,#1c120b);border:2px solid rgba(255,190,120,.35);box-shadow:inset 0 -4px 8px rgba(0,0,0,.5),0 4px 10px rgba(0,0,0,.5);color:#ffd9a8;animation:none}
+.fx-arena .ar-seat.pick{border-color:#ff8a3c;box-shadow:0 0 0 4px rgba(255,138,60,.25),0 0 18px rgba(255,138,60,.6);animation:arSeat 1.2s ease-in-out infinite}
+.fx-arena .ar-seat.empty{border:none;background:rgba(0,0,0,.25)}
+.fx-arena .ar-seat .tav{box-shadow:0 0 0 3px #2a1a10,0 0 0 5px rgba(255,190,120,.55),0 6px 12px rgba(0,0,0,.55)}
+.fx-arena .ar-seat.me .tav{box-shadow:0 0 0 3px #2a1a10,0 0 0 5px #ff8a3c,0 0 18px rgba(255,138,60,.7)}
+.fx-arena .ar-seat small{top:auto;bottom:-10px;margin:0;padding:1px 7px;border-radius:999px;background:rgba(10,6,4,.85);font-size:12.5px;line-height:16px;color:rgba(255,236,214,.85);max-width:120%;overflow:hidden;text-overflow:ellipsis}
+.fx-arena .ar-seat.me small{color:#ff8a3c}
+/* тикет */
+.fx-arena .ar-pick{gap:6px;margin:0}
+.fx-arena .ar-pick>small{font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,236,214,.72)}
+.fx-arena .ar-tk b{touch-action:none;cursor:ns-resize}
+.ar-tier{font-size:18px;color:var(--tc);text-transform:uppercase}
+.ar-tier em{font-style:normal;font-size:13px;color:rgba(255,236,214,.72);margin-left:6px}
+.fx-arena .ar-pick.locked .ar-tk b{opacity:.6}
+.fx-arena .ar-hint{margin:0;min-height:20px}
+/* низ — как на главной: круглая | большая | круглая */
+.ar-bar{width:100%;max-width:400px;display:flex;align-items:center;gap:10px;flex:none}
+.ar-bar .round svg{width:24px;height:24px;color:#fff}
+.ar-bar .round:disabled{opacity:.4}
+.ar-join{flex:1;width:auto;background:linear-gradient(#ff8a3c,#c2410c)}
+.ar-join:disabled{opacity:.6}
+.ar-bg{-webkit-mask-image:radial-gradient(closest-side,#000 90%,transparent 100%);mask-image:radial-gradient(closest-side,#000 90%,transparent 100%)}
+.fx-arena .ar-colw{flex:1 1 auto;margin:0 -16px;width:calc(100% + 32px)}
+.fx-arena .ar-col{max-height:460px}
+/* арена v3.1: вектор, кольца продолжаются за край и тают; туман Горна — на холсте шире арены */
+.fx-arena .ar-col{overflow:visible}
+.fx-arena .ar-art{position:absolute;left:-50%;top:-50%;width:200%;height:200%;filter:none;pointer-events:none}
+.fx-arena .ar-fxs{inset:-25%}
+.fx-arena .ar-seats{pointer-events:none}
+.fx-arena .ar-seat{pointer-events:auto}
+.fx-arena .ar-bank{pointer-events:none}
+.fx-arena .ar-go{position:absolute;right:16px;top:calc(var(--tgTop,0px) + 14px);margin:0;z-index:3}
+.fx-arena .ar-bar{justify-content:space-between}
+.fx-arena .ar-bar .ar-pick{flex:1;width:auto}
+.fx-arena .ar-tk b{width:42px;height:54px;font-size:36px}
+.fx-arena .ar-hint{order:0}
+.fx-arena .ar-seat.free{background:radial-gradient(circle at 50% 35%,#5a3e28,#22150c);border:2px dashed rgba(255,190,120,.5);animation:arSeat 1.8s ease-in-out infinite}
+/* баннер супер дропа v2: без логотипа — крупный тикет слева, крупный приз справа */
+.sdban{position:relative;gap:12px;padding:16px;border-radius:22px;overflow:hidden;background:radial-gradient(90% 140% at 100% 50%,rgba(235,87,176,.35),transparent 60%),linear-gradient(110deg,#2a0b40,#160822)}
+.sdb-t{flex:1;display:flex;flex-direction:column;min-width:0;gap:2px}
+.sdb-t small{font:700 15px/1 var(--font);letter-spacing:.08em;text-transform:uppercase;color:#EB57B0}
+.sdb-t b{font-size:44px;line-height:1;letter-spacing:.04em;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 0 18px rgba(235,87,176,.6)}
+.sdb-t em{font:400 13.5px/1.3 var(--serif);font-style:normal;color:rgba(255,255,255,.72)}
+.sdban .sdb-p{gap:4px}
+.sdban .sdb-p img{width:84px;height:84px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5)) drop-shadow(0 0 16px rgba(235,87,176,.45))}
+.sdban .sdb-p em{padding:1px 8px;border-radius:999px;background:rgba(0,0,0,.45);font-size:15px}
+/* ---------- арена v4: крупная арена сверху, ряд мест, тикет и колесо рангов ---------- */
+.fx.arena .fx-arena{gap:10px;justify-content:flex-start}
+.fx-arena .ar-colw{flex:1 1 0;min-height:200px;margin:0 -16px;width:calc(100% + 32px);display:flex;align-items:center;justify-content:center}
+.fx-arena .ar-col{height:100%;max-height:none;max-width:100%;aspect-ratio:1}
+.fx-arena .ar-dial{pointer-events:none}
+.ar-meta{margin-top:6px;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,236,214,.72)}
+.fx-arena .ar-seats{position:relative;inset:auto;display:flex;justify-content:center;gap:8px;width:100%;flex:none;padding-bottom:14px}
+.fx-arena .ar-seat{position:relative;left:auto;top:auto;transform:none;width:38px;height:38px}
+.fx-arena .ar-seat .tav{width:100%;height:100%;font-size:17px}
+.fx-arena .ar-seat.free i{font-size:22px}
+.fx-arena .ar-seat small{position:absolute;left:50%;top:100%;bottom:auto;transform:translateX(-50%);margin-top:3px;font-size:11px;line-height:14px;padding:0 5px;max-width:56px}
+.fx-arena .ar-pick{width:100%;max-width:400px;display:flex;flex-direction:column;align-items:center;gap:4px;flex:none}
+.fx-arena .ar-tkrow{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fx-arena .ar-tkrow .round svg{width:24px;height:24px;color:#fff}
+.fx-arena .ar-tkrow .round:disabled{opacity:.4}
+.fx-arena .ar-tk{gap:5px}
+.fx-arena .ar-tk b{width:48px;height:62px;font-size:44px;border-radius:14px}
+.ar-wheel{width:100%;max-width:400px;height:auto;margin-top:2px;touch-action:none;cursor:grab;-webkit-mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent)}
+.ar-wheel.drag{cursor:grabbing}
+.ar-wheel.locked{opacity:.4;pointer-events:none}
+.ar-wt{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;fill:rgba(20,8,4,.8);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.ar-wtk{stroke:rgba(255,255,255,.3);stroke-width:1.4}
+.ar-wtk.b{stroke:rgba(255,255,255,.75);stroke-width:2.4}
+.ar-wp{fill:#fff;filter:drop-shadow(0 0 6px var(--tc)) drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.fx-arena .ar-coin{width:22px;height:22px;transform:translate(-50%,-50%)}
+.fx-arena .ar-colw{container-type:size}
+.fx-arena .ar-col{width:min(100cqw,100cqh);height:min(100cqw,100cqh);aspect-ratio:auto}
+.fx-arena .ar-col{width:min(92cqw,100cqh);height:min(92cqw,100cqh)}
+.fx-arena .ar-seats{gap:6px}
+.fx-arena .ar-seat{width:36px;height:36px}
+/* арена v4.1: крупнее — арена, информация в центре, места 2×4, колесо */
+.fx-arena .ar-colw{margin:0 -16px}
+.fx-arena .ar-col{width:min(100cqw,100cqh);height:min(100cqw,100cqh)}
+.fx-arena .ar-bank small{font-size:16px}
+.fx-arena .ar-bank b{font-size:68px}
+.fx-arena .ar-bank em{font-size:16px}
+.fx-arena .ar-time{font-size:24px;margin-top:6px}
+.fx-arena .ar-meta{font-size:14px}
+.fx-arena .ar-seats{display:grid;grid-template-columns:repeat(4,52px);gap:10px 22px;justify-content:center;padding-bottom:16px}
+.fx-arena .ar-seat{width:52px;height:52px}
+.fx-arena .ar-seat .tav{font-size:22px}
+.fx-arena .ar-seat.free i{font-size:28px}
+.fx-arena .ar-seat small{font-size:12.5px;max-width:76px}
+.fx-arena .ar-tk b{width:56px;height:72px;font-size:52px;border-radius:16px}
+.fx-arena .ar-tkrow{max-width:400px}
+.fx-arena .ar-tier{font-size:30px;line-height:1}
+.fx-arena .ar-tier em{font-size:20px;color:rgba(255,236,214,.85)}
+.ar-wt{font-size:16px}
+.fx-arena .ar-fxs{-webkit-mask-image:radial-gradient(closest-side,#000 70%,transparent 100%);mask-image:radial-gradient(closest-side,#000 70%,transparent 100%)}
+.fx-arena .ar-seats{row-gap:26px}
+/* супер дроп v3: текст в одну строку, NFT крупно, выходит за край карточки и покачивается */
+.sdban{min-height:112px}
+.sdb-t{position:relative;z-index:1}
+.sdb-t em{white-space:nowrap}
+.sdban .sdb-n{position:absolute;right:-26px;top:50%;width:150px;height:150px;margin-top:-75px;object-fit:contain;pointer-events:none;
+  filter:drop-shadow(0 8px 16px rgba(0,0,0,.55)) drop-shadow(0 0 20px rgba(235,87,176,.5));animation:sdbSway 4.2s ease-in-out infinite}
+@keyframes sdbSway{0%,100%{transform:rotate(-8deg) translateY(2px) scale(1)}50%{transform:rotate(7deg) translateY(-6px) scale(1.04)}}
+@media (prefers-reduced-motion:reduce){.sdban .sdb-n{animation:none}}
+.sdban{overflow:hidden!important;isolation:isolate}
+/* режимы — таблетки в самом низу, одно место на всех режимах */
+.modes{left:50%;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:45;display:flex;gap:4px;padding:3px;border-radius:999px;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.modes button{padding:4px 14px;border-radius:999px;font-size:15px;line-height:20px;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.modes button{position:relative;z-index:1;transition:color .25s}
+.modes button.on{color:#000}
+.modes .mthumb{position:absolute;left:3px;top:3px;bottom:3px;border-radius:999px;background:#fff;transition:transform .3s cubic-bezier(.3,1.2,.5,1),width .3s cubic-bezier(.3,1.2,.5,1);will-change:transform}
+.has-modes .bar{padding-bottom:52px}
+.has-modes .fx.arena .fx-arena{padding-bottom:calc(50px + env(safe-area-inset-bottom,0px))}
+.has-modes .fx.bets .fx-bets{padding-bottom:calc(50px + env(safe-area-inset-bottom,0px))}
+/* арена v4.2: крупнее, в центре только банк и таймер; под тикетом — кубик · ранг · честность по центру */
+.fx-arena .ar-colw{margin:0 -44px;width:calc(100% + 88px)}
+.fx-arena .ar-col{width:min(100cqw,100cqh);height:min(100cqw,100cqh)}
+.fx-arena .ar-bank{gap:6px}
+.fx-arena .ar-bank b{display:flex;align-items:center;gap:8px;font-size:78px;line-height:1;color:var(--blue)}
+.fx-arena .ar-bank b .gm{width:44px;height:44px}
+.fx-arena .ar-time{font-size:28px;margin:0;padding:2px 14px;border-radius:999px;background:rgba(0,0,0,.4);color:#fff}
+.fx-arena .ar-col.hot .ar-time{background:rgba(255,76,53,.45)}
+.fx-arena .ar-tkrow{justify-content:center;gap:16px}
+.fx-arena .ar-tier{min-width:130px;text-align:center;font-size:32px}
+/* арена: барабан тикета и ранг — компоненты экрана раскрытия (.digits, .fx-tier); без «лок»-вспышки на каждую цифру */
+.fx-arena .digits{--ds:.9;margin:0}
+.fx-arena .digits span.lock{animation:none;touch-action:none;cursor:ns-resize}
+.fx-arena .ar-tier{height:auto;margin:0;min-width:130px;text-align:center;font-size:40px;line-height:1.1;transform:none}
+.fx-arena .ar-tkrow{margin-top:2px}
+/* PvP-раскрытие: строку «не хватило до ранга» не показываем — она про обычный крафт */
+.fx:has(.fx-pvp:not(:empty)) .fx-need{display:none}
+/* ---------- арена v5: раскладка как на главной ---------- */
+.fx-arena .ar-tiers{width:auto;margin:6px 0 0;display:flex;gap:16px;justify-content:center;flex:none}
+.fx-arena .ar-tiers .tier{flex:none;padding:0;opacity:.5;display:block;font-size:20px;line-height:26px}
+.fx-arena .ar-tiers .tier.on{opacity:1;transform:scale(1.08);text-shadow:0 0 14px var(--c)}
+.fx-arena .ar-tiers .tier:disabled{cursor:default}
+.fx-arena .digits{--ds:.86;margin:-4px 0;flex:none}
+.fx-arena .ar-colw{flex:1 1 0;min-height:180px}
+.fx-arena .ar-col{width:min(100cqw,100cqh);height:min(100cqw,100cqh)}
+.fx-arena .ar-bank b{font-size:64px;color:#fff;text-shadow:none}
+.fx-arena .ar-bank b .gm{width:42px;height:36px}
+.fx-arena .ar-pick{width:100%;max-width:none;flex-direction:row;align-items:center;justify-content:space-between;gap:8px;margin:0}
+.fx-arena .ar-pick .ar-wheel{flex:1;min-width:0;width:auto;margin:0}
+.fx-arena .ar-pick .round svg{width:24px;height:24px;color:#fff}
+.fx-arena .ar-pick .round:disabled{opacity:.4}
+/* раскрытие PvP: банк одной строкой, игроки — аватары, после — победитель в зелёном кольце, у каждого ±разница */
+.pvp-sum{display:flex;align-items:center;justify-content:center;gap:8px}
+.pvp-sum img{width:30px;height:auto}
+.pvp-sum b{font-size:34px;line-height:1}
+.pvp-sum small{font-size:16px;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.pvp-avas{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 10px;margin-top:14px}
+.pvc.pva{position:relative;flex-direction:column;gap:4px;padding:0;background:none;box-shadow:none;border-radius:0}
+.pvc.pva .tav{width:44px;height:44px;font-size:20px;box-shadow:0 0 0 2px rgba(255,255,255,.15)}
+.pvc.pva.me .tav{box-shadow:0 0 0 3px #ff8a3c}
+.pvc.pva.win{transform:scale(1.15)}
+.pvc.pva.win .tav{box-shadow:0 0 0 3px #12D53D,0 0 18px rgba(18,213,61,.6)}
+.pvc.pva .pvd{font-size:12.5px}
+.fx-arena .ar-tiers{margin-top:46px}
+.fx-arena .ar-bank b .gm,.pvp-sum img{filter:brightness(0) invert(1)}
+/* раскрытие PvP: кто что выбрал — сетка 4 в ряд: аватар и его тикет цветом ранга; после — ±разница, победитель в зелёном кольце */
+.pvp-avas{display:grid;grid-template-columns:repeat(4,72px);justify-content:center;gap:12px 8px}
+.pvc.pva b{font-size:20px;line-height:1;color:var(--tc);font-variant-numeric:tabular-nums}
+.pvc.pva.lose{opacity:.4}
+.modes[hidden]{display:none}
+/* ---------- арена v6: 1:1 со структурой главной ---------- */
+.fx.arena .fx-arena{gap:0;padding-top:calc(var(--tgTop,0px) + 10px)}
+.ar-head{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:40px;flex:none}
+.ar-chance{display:flex;align-items:center;gap:6px;padding:2px 8px;border-radius:999px;white-space:nowrap;background:linear-gradient(150deg,var(--a,#12d53d),var(--b,#00a07a))}
+.ar-chance small{font-weight:700;font-size:14px;line-height:19px;color:#000;text-transform:uppercase}
+.ar-chance b{font-weight:400;font-size:20px;line-height:25px;font-variant-numeric:tabular-nums}
+.fx-arena .ar-tiers{margin:0}
+.fx-arena .digits{margin:10px 0 0}
+.fx-arena .ar-colw{flex:1 1 0;min-height:160px;margin:0 -16px;width:calc(100% + 32px)}
+.fx-arena .ar-seats{position:absolute;inset:0;display:block;padding:0;pointer-events:none}
+.fx-arena .ar-seat{position:absolute;width:16%;height:auto;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none}
+.fx-arena .ar-seat.empty{background:rgba(0,0,0,.35);border:2px dashed rgba(255,190,120,.35)}
+.fx-arena .ar-seat .tav{font-size:24px}
+.fx-arena .ar-seat small{top:100%;margin-top:-6px}
+/* своё место = кнопка как кнопка крафта: шар-орб, внутри мечи; вошёл — твой аватар */
+.ar-sw{position:relative;width:86px;height:86px;flex:none;margin-top:6px;display:grid;place-items:center;z-index:2}
+.ar-sw .cb{position:relative;width:86px;height:86px}
+.ar-sw .ar-swords{position:absolute;left:21px;top:21px;width:44px;height:44px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+.ar-sw .tav{position:absolute;left:9px;top:9px;width:68px;height:68px;font-size:28px;box-shadow:0 0 0 3px #ff8a3c}
+.ar-sw:active .cb{transform:scale(.94)}
+.ar-sw:disabled{cursor:default}
+/* взнос — как плашка ставки под наковальней, не меняется */
+.ar-fee{display:flex;align-items:center;justify-content:center;gap:10px;min-width:160px;padding:12px 16px;margin-top:-10px;border-radius:999px;background:linear-gradient(#24a0ff,#005ec9);flex:none;z-index:1}
+.ar-fee img{width:40px;height:auto}
+.ar-fee b{font-weight:700;font-size:40px;line-height:48px;font-variant-numeric:tabular-nums}
+.fx-arena .ar-pick{margin-top:16px}
+/* арена: баланс и лайв-лента сверху остаются (сквозные) — экран арены начинается там же, где панель главной */
+.fx.arena{clip-path:inset(185px 0 0 0 round 64px 64px 0 0)}
+.fx.arena .fx-arena{padding-top:193px}
+.fx-arena .ar-back{top:193px}
+.fx-arena .ar-go{top:197px}
+.fx-arena .ar-head{margin-top:18px}
+/* внутри арены размеры — от её размера: на любом экране банк и таймер помещаются в круг */
+.fx-arena .ar-col{container-type:inline-size}
+.fx-arena .ar-bank b{font-size:19cqw;gap:2cqw}
+.fx-arena .ar-bank b .gm{width:11cqw;height:auto}
+.fx-arena .ar-time{font-size:7.5cqw;padding:.5cqw 4cqw}
+.fx-arena .ar-seat.empty{border-color:rgba(255,200,140,.55);background:rgba(20,10,5,.6)}
+/* ---------- tab2 (копия главной, делаем из неё новый режим): кнопка крафта и плашка ставки — оранжево-красные ---------- */
+.mode-tab2 .bet{background:linear-gradient(#ff8a3c,#c2310c)}
+.mode-tab2 .bet .plus:before,.mode-tab2 .bet .plus:after{background:#7a1c06}
+.mode-tab2 .bet img{filter:hue-rotate(165deg) saturate(1.4) brightness(1.15)}
+.mode-tab2 .cb .orb{filter:grayscale(1) sepia(1) saturate(5) hue-rotate(-22deg) brightness(1.05)}
+.mode-tab2 .cb .core{background:radial-gradient(circle at 50% 45%,rgba(255,255,255,.55),rgba(255,140,60,.2) 55%,transparent 72%)}
+/* tab2: ставка не меняется — фишек нет; внизу колесо тикета (как в PvP, ниже и толще, без затухания по краям), обходит круглые кнопки снизу */
+.mode-tab2 .chips{visibility:hidden}
+/* кнопка арены: щит и меч вместо наковальни и молота — тот же замах и удар; меч повёрнут так, чтобы бил по щиту, как молот по наковальне */
+/* заставка боя — те же щит и меч, в 3 раза крупнее (как молот с наковальней на крафте) */
+.mode-tab2 .fx-intro .fi-a{content:url(assets/arena-shield.svg);width:120px;height:82.5px;left:69px;top:111px}
+.mode-tab2 .fx-intro .fi-h img{content:url(assets/sword.svg);position:absolute;width:84px;height:103.5px;max-width:none;left:26.7px;top:-88.2px;transform-origin:93% 93%;rotate:-71deg}
+.mode-tab2 .cb .anvil{content:url(assets/arena-shield.svg);width:40px;height:27.5px;left:23px;top:37px}
+.mode-tab2 .cb .hammer img{content:url(assets/sword.svg);position:absolute;width:28px;height:34.5px;max-width:none;left:8.9px;top:-29.4px;transform-origin:93% 93%;rotate:-71deg}
+.mode-tab2 .bar{pointer-events:none;z-index:6}   /* колесо под всей полосой внизу, круглые кнопки — поверх него */
+.mode-tab2 .bar .round{pointer-events:auto}
+.t2w{left:calc(50% - 195px);top:744px;width:390px;height:100px;z-index:5;display:none;overflow:visible;cursor:grab;touch-action:none}
+.mode-tab2 .t2w{display:block}
+.t2w.drag{cursor:grabbing}
+.t2w #t2Wg{transition:transform .35s cubic-bezier(.3,1.2,.5,1)}
+.t2w.drag #t2Wg,.t2w.spin #t2Wg{transition:none}
+.t2w .t2p{fill:#fff}
+/* tab2: ты в комнате — в кнопке аватарка (75% круга) вместо молота с наковальней; в плашке — «Общий банк» в 2 строки */
+.cb .t2ava{position:absolute;left:12.5%;top:12.5%;width:75%;height:75%;border-radius:50%;object-fit:cover;display:none}
+.mode-tab2 .cb.t2in .t2ava{display:block}
+.mode-tab2 .cb.t2in .anvil,.mode-tab2 .cb.t2in .hammer,.mode-tab2 .cb.t2in .glint{visibility:hidden}
+.bet .t2bl{width:min-content;white-space:normal;font-size:18px;line-height:21px;font-weight:700;text-transform:uppercase;text-align:right;color:#fff}
+.mode-tab2 .bet.t2bank{padding:16px 28px;gap:14px}
+/* tab2: вместо подарков — «Честность» (щит с галочкой); подарков и их карточек здесь нет */
+#giftBtn .t2shield{display:none;width:48px;height:48px}
+.mode-tab2 #giftBtn .t2shield{display:block}
+.mode-tab2 #giftIco,.mode-tab2 #giftCnt,.mode-tab2 .drops{display:none}
+/* tab2: арена на месте приза — колизей, кольцо таймера, дым Горна по краям, 4 места в ряд */
+.t2a{left:50%;width:0;height:0;display:none;pointer-events:none}
+.mode-tab2 .t2a{display:block}
+.t2a>*{position:absolute;left:0;top:0;transform:translate(-50%,-50%)}
+.t2art{width:calc(var(--r) * 800 / 198);aspect-ratio:1}
+.t2art .ar-art{filter:none}
+.t2art .ar-torch{display:none}
+/* трибуны со зрителями уходят под тикет — сверху тают, тикет читается */
+.t2art{-webkit-mask-image:linear-gradient(transparent 17%,#000 31%);mask-image:linear-gradient(transparent 17%,#000 31%)}
+/* зрители плавно тают к светящейся рамке панели (сверху — под тикетом) */
+.t2art{-webkit-mask-image:linear-gradient(transparent 17%,#000 31%),linear-gradient(90deg,transparent calc(50% - 176px),#000 calc(50% - 120px),#000 calc(50% + 120px),transparent calc(50% + 176px));-webkit-mask-composite:source-in;
+  mask-image:linear-gradient(transparent 17%,#000 31%),linear-gradient(90deg,transparent calc(50% - 176px),#000 calc(50% - 120px),#000 calc(50% + 120px),transparent calc(50% + 176px));mask-composite:intersect}
+.t2flash{fill:#fff;opacity:0;animation:t2flash 6s linear infinite}
+.t2fan{animation:t2fan 8s ease-in-out infinite}
+.t2fxon .t2fan,.t2fxon .t2flash,.t2fxon .t2seats .ar-seat.empty,.t2fxon .t2lockico{animation-play-state:paused}
+@keyframes t2fan{0%,100%{opacity:1}40%,60%{opacity:0}}
+.lite .t2fan{animation:none}
+@keyframes t2flash{0%,96%,100%{opacity:0}97%{opacity:1}}
+.t2fx{width:calc(var(--r) * 3.6);aspect-ratio:1;-webkit-mask-image:radial-gradient(closest-side,#000 35%,rgba(0,0,0,.6) 65%,transparent 95%);mask-image:radial-gradient(closest-side,#000 35%,rgba(0,0,0,.6) 65%,transparent 95%)}
+.t2ring{overflow:visible}
+.t2a.hot .ar-tfg{stroke:#ff4c35;filter:drop-shadow(0 0 6px rgba(255,60,40,.95));animation:arHot .5s ease-in-out infinite alternate}
+.t2seats{width:0;height:0}
+.t2seats .ar-seat{position:absolute;transform:translate(-50%,-50%);width:60px;height:60px;overflow:visible}
+.t2seats .ar-seat .tav{font-size:24px}
+/* места — медальоны: пустое — бронзовый щит с силуэтом шлема, тихо «дышит»; занятое — аватар в золотом кольце со свечением */
+.t2seats .ar-seat.empty{border:none;background:radial-gradient(circle at 50% 30%,#4a3020,#170d07 75%);box-shadow:inset 0 0 0 2px rgba(255,190,120,.28),inset 0 0 0 5px rgba(0,0,0,.35),inset 0 -8px 12px rgba(0,0,0,.6),0 6px 12px rgba(0,0,0,.55);animation:t2wait 2.4s ease-in-out var(--d) infinite}
+.t2seats .t2helm{width:auto;height:34px;filter:invert(1) sepia(.6) saturate(1.5) hue-rotate(-12deg);opacity:.24}
+@keyframes t2wait{50%{box-shadow:inset 0 0 0 2px rgba(255,190,120,.5),inset 0 0 0 5px rgba(0,0,0,.35),inset 0 -8px 12px rgba(0,0,0,.6),0 0 14px rgba(255,150,60,.35)}}
+.t2seats .ar-seat .tav{box-shadow:0 0 0 3px #2a1a10,0 0 0 5.5px #ffb835,0 0 18px rgba(255,170,60,.6),0 6px 12px rgba(0,0,0,.55)}
+@media (prefers-reduced-motion:reduce){ .t2seats .ar-seat.empty,.t2flash,.t2fan{animation:none} }
+.t2w.locked{opacity:.5;cursor:default}
+.mode-tab2 .range{z-index:6}   /* число тикета — поверх арены */
+/* за 5 с до старта: кнопка и плашка — тёмно-серые, в кнопке замок */
+.mode-tab2 .cb{--tier:#ff6a2c}
+.cb .t2lockico{position:absolute;left:calc(50% - 12px);top:calc(50% - 16.5px);width:24px;height:31px;transform-origin:50% 50%;display:none;filter:invert(1);opacity:.5;animation:t2lockp 1.2s ease-in-out infinite}
+@keyframes t2lockp{50%{opacity:.25;scale:.9}}
+.t2lock.mode-tab2 .cb .t2lockico{display:block}
+.t2lock.mode-tab2 .cb .anvil,.t2lock.mode-tab2 .cb .hammer,.t2lock.mode-tab2 .cb .t2ava,.t2lock.mode-tab2 .cb .core,.t2lock.mode-tab2 .cb .glint{visibility:hidden}
+.t2lock.mode-tab2 .cb .orb{filter:grayscale(1) brightness(.42)}
+.t2lock.mode-tab2 .bet{background:linear-gradient(#2e2e32,#18181b)}
+.bet .t2bl.t2full{text-align:center;width:auto;max-width:7em;padding:2px 6px;color:rgba(255,255,255,.72)}
+.t2lock.mode-tab2 .bet img{filter:grayscale(1) brightness(1.4)}
+.t2seats .ar-seat small{top:auto;bottom:-12px;margin:0;padding:1px 7px;border-radius:999px;background:rgba(10,6,4,.85);line-height:16px;color:rgba(255,236,214,.85);max-width:120%;overflow:hidden;text-overflow:ellipsis}
+/* итог боя под барабаном: одна строка банка и игроки по центру — один размер текста, ровные ряды по 3 */
+.pvp-sum{gap:8px}
+.pvp-sum img{width:22px}
+.pvp-sum b,.pvp-sum small{font-size:18px;line-height:22px}
+.pvp-sum b{color:#fff}
+.pvp-avas{display:flex;flex-wrap:wrap;justify-content:center;gap:16px 20px;max-width:276px;margin:20px auto 0}
+.pvc.pva{width:72px;gap:8px}
+.pvc.pva .tav{width:48px;height:48px}
+.pvc.pva b{font-size:18px;line-height:22px}
+.pvc.pva .pvd{font-size:13.5px;line-height:16px}
+/* проигрыш в арене: карточка победителя (что выпало с крафта на банк) и все игроки по близости к тикету — строки как в истории */
+/* выигрыш в арене: приз компактнее — под суммой помещается список игроков */
+/* вход в арену: пока сервер отвечает — кнопка «дышит», иконки приглушены */
+.mode-tab2 .cb.t2wait{animation:t2wait2 .7s ease-in-out infinite alternate}
+.mode-tab2 .cb.t2wait .anvil,.mode-tab2 .cb.t2wait .hammer{opacity:.35}
+@keyframes t2wait2{to{scale:.92}}
+/* экран проигрыша — те же компоненты, что везде: обычный белый текст без градиента и теней, строки как в истории */
+/* строки игроков внутри итога: общие правила подписи итога (span — блок, 20px) сюда не относятся */
+/* определение тикета в арене: сверху крупно общий банк, внизу 6 ровных ячеек (3 × 2), пустые — с силуэтом шлема */
+.fx-pvp .pvp-bank{position:absolute;left:0;right:0;bottom:100%;margin-bottom:40px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.pvp-bank small{font-size:13.5px;line-height:18px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.72)}
+.pvp-bank b{display:flex;align-items:center;gap:10px;font-size:56px;line-height:1;color:#fff;font-variant-numeric:tabular-nums}
+.pvp-bank b img{width:52px;height:auto}   /* своя иконка GRAM — от белого к голубому */
+.pvp-avas{display:grid!important;grid-template-columns:repeat(3,1fr);gap:8px;max-width:none;width:100%;margin:20px 0 0}
+.pvc.pva{width:auto;height:132px;justify-content:center;gap:8px;border-radius:16px;background:rgba(255,255,255,.05)!important}
+.pvc.pva.me{background:rgba(255,138,60,.12)!important}
+.pvc.pva.empty{background:rgba(255,255,255,.025)!important;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.06)}
+.pvc.pva.empty img{height:30px;width:auto;filter:invert(1);opacity:.12}
+.pvc.pva .tav{width:44px;height:44px}
+.pvc.pva b{font-size:18px;line-height:22px}
+.pvc.pva .pvd{font-size:13.5px;line-height:16px;margin-top:-6px}
+.pvc.pva.win{transform:none;background:rgba(18,213,61,.16)!important;box-shadow:inset 0 0 0 1.5px #12D53D}
+/* ничья: оба победителя — зелёные, с плашкой «ничья»; в карточке итога — две аватарки внахлёст */
+.pvtie{display:inline-block;padding:1px 7px;border-radius:999px;background:#12D53D;color:#06210f;font-style:normal;font-size:12.5px;line-height:16px;text-transform:uppercase;vertical-align:2px}
+.pvc.pva .pvtie{position:absolute;top:6px;right:6px}
+.pvc.pva{position:relative}
+
+/* итог боя в арене — в системе экрана дропа: сверху крупно кто забрал банк (на месте приза), ниже одна карточка 16/22 со всеми игроками.
+   В каждой строке одно и то же: ник, тикет и расстояние; справа — итог (+выплата победителю, −взнос остальным) */
+.fx.done.pvpl .fx-drop{height:auto;margin:24px 0 0;width:100%;max-width:340px}
+.pvl-top{display:flex;flex-direction:column;align-items:center;gap:8px}
+.pvl-top .pvl-ava{display:flex}
+.pvl-top .tav{width:72px;height:72px;font-size:32px;box-shadow:none}
+.pvl-top .tav+.tav{margin-left:-20px}
+.pvl-top b{font-size:32px;line-height:36px;color:#fff}
+.pvl-top small{font-size:13.5px;line-height:18px;text-transform:uppercase;color:rgba(255,255,255,.72)}
+/* определение тикета: пустые ячейки без обводки; победитель подсвечен цветом, но размер ячейки не меняется — ничего не едет */
+.pvc.pva.empty{box-shadow:none}
+.pvc.pva,.pvc.pva.win,.pvc.pva.lose{transform:none!important;scale:none}
+.pvc.pva .tav,.pvc.pva.win .tav{box-shadow:none}
+.pvc.pva.me .tav{box-shadow:0 0 0 2px #ff8a3c}
+
+/* список игроков под итогом — блок «Топ / Друзья»; итог: выигрыш зелёный, взнос остальных — серый */
+.fx-pl{width:100%;max-width:340px;text-align:left;opacity:0;transform:translateY(14px);transition:opacity .5s .35s,transform .6s .35s cubic-bezier(.25,.9,.3,1)}
+.fx:not(.done) .fx-pl,.fx-pl:empty{display:none}
+.fx.done .fx-pl{opacity:1;transform:none}
+.fx-pl .sect{margin-top:20px}
+.fx-pl .sect-h b{font-size:18px}
+.fx-pl .trow:last-child{border-bottom:0}
+.fx-pl .tav{color:#0b0b0e}
+.tb2.pos{color:#12D53D}.tb2.x{color:rgba(255,255,255,.45);font-weight:400}
+/* определение тикета: ячейки выше; победитель — зелёной заливкой без обводки */
+.pvc.pva{gap:10px;padding:16px 8px}
+.pvc.pva.win{box-shadow:none!important;background:rgba(18,213,61,.18)!important}
+.pvc.pva.win b{color:#12D53D}
+.fx.done.pvpl:not(.pvpw) .fx-drop{display:none}
+/* определение тикета в арене: с банком сверху блок выше обычного — опускаем, чтобы стоял по центру */
+.fx:not(.done):has(.fx-pvp:not(:empty)) .fx-in{padding-top:150px}
+.hdet+.sect{margin-top:0}
+.hdet>.hd-sec:last-child{margin-bottom:2px}
+/* нижний блок (переключатель, круглые кнопки, колесо/фишки, ставка, кнопка, карточки NFT) — на 12 px выше: таблетка режимов не заходит на полоску «домой» iPhone */
+.has-modes .modes{bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+.has-modes .bar{padding-bottom:64px}
+.has-modes .bet{top:639px}
+.has-modes .craft{top:572px}
+.has-modes #slots{translate:0 -12px;z-index:2}   /* карточки подарков — над крупным призом, как были */
+.has-modes .t2w{top:732px}
+
+.tkc{font-style:normal;font-variant-numeric:tabular-nums}
+.drawer{max-height:calc(100% - var(--drTop, 60px))}
+/* стрелки комнат арены — по бокам плашки ставки */
+.t2arr{top:665px;width:44px;height:44px;display:none;place-items:center;color:rgba(255,255,255,.72);z-index:5}
+.mode-tab2 .t2arr:not([hidden]){display:grid}
+.t2arr svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.t2arr:disabled{opacity:.25}
+#t2Prev{left:calc(50% - 142px)}#t2Next{left:calc(50% + 98px)}
+/* «Ты» в списке игроков: подсветка выходит за края, а содержимое стоит ровно со всеми строками */
+/* аватар-картинка: фон кружка под ней не нужен (иначе просвечивает цветной ободок) */
+.tav:has(img){background:none}
+.hp.pvp-w .tav{width:100%;height:100%;border-radius:inherit;font-size:20px;color:#0b0b0e}
+/* ты в списке игроков: без подложки — оранжевая обводка аватара и оранжевое «Ты» */
+.pvls .trow.me{margin:0;padding:10px 0;border-radius:0;background:none;border-bottom:1px solid rgba(255,255,255,.06)}
+.pvls .trow.me .tav{box-shadow:0 0 0 2px #0b0b0e,0 0 0 4px #ff8a3c}
+.pvls .trow.me .tn b{color:#ff8a3c}
+/* победитель с NFT: картинка подарка на его фоне, цена и сдача */
+.pvl-nft{flex:none;display:flex;align-items:center;gap:8px;text-align:right}
+.pvl-nft img{width:40px;height:40px;border-radius:12px;object-fit:contain}
+.pvl-nft>span{display:flex;flex-direction:column;align-items:flex-end}
+.pvl-nft b{font-size:17px;line-height:20px;color:#12D53D}
+.pvl-nft small{font-size:12.5px;line-height:16px;color:rgba(255,255,255,.72)}
+/* лента: выигрыш на арене — круглый оранжевый значок с мечом */
+.item .cbadge.abadge{width:18px;height:18px;border-radius:50%;background:#ff8a3c;display:grid;place-items:center;overflow:hidden;box-shadow:0 0 0 1.5px rgba(0,0,0,.5)}
+.item .cbadge.abadge img{width:12px;height:12px;object-fit:contain}
+.pvls .tn small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pvl-nft img{width:36px;height:36px;border-radius:10px}
+/* правила арены: шаги как в «Честности», кнопка — цветом арены */
+.ar-steps{text-align:left}
+.ar-steps .pfi-step:first-child{margin-top:0}
+.ar-steps .pfi-step b{display:block;font-size:17px;line-height:22px;text-transform:uppercase}
+.ar-steps .pfi-step p{margin:2px 0 0;font-size:13.5px;line-height:1.4;color:rgba(255,255,255,.72)}
+.ar-steps .ar-pf i svg{width:18px;height:18px;fill:none;stroke:#06121a;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.ar-steps .ar-pf code{display:block;margin-top:8px;font-size:12.5px;line-height:1.35;word-break:break-all;color:rgba(255,255,255,.6)}
+.btn-main.ar-ok{margin-top:20px;background:linear-gradient(#ff8a3c,#c2310c)}
+.ar-steps{padding:4px 16px;border-radius:22px;background:rgba(255,255,255,.05)}
+.ar-steps .pfi-step{margin:0;padding:12px 0;border-radius:0;background:none}
+.ar-steps .pfi-step+.pfi-step{border-top:1px solid rgba(255,255,255,.06)}
+.ar-steps .pfi-step>i{width:28px;height:28px;font-size:16px}
+.ar-steps .pfi-step b{font-size:16px;line-height:20px}
+.ar-steps .pfi-step p{font-size:13px;line-height:1.35}
+/* история: строки наград, кошелька и рефералки — тем же видом, что игры (плашка-тип и время сверху) */
+.hcard.hl{display:block}   /* отступы — как у всех карточек истории (16 px) */
+.hl-b{display:flex;align-items:center;gap:12px;margin-top:12px}
+.hl-b>.hp,.hl-b>.hk-ic{flex:none}
+.hl-b .hk-v{flex:1;min-width:0}
+.hl-b .hk-v b{display:block;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hseg{margin:0 auto 12px;width:max-content}
+/* правила арены: заголовок насыщенно-оранжевый, фон окна теплее */
+.modal.armodal .mbox{background:radial-gradient(110% 70% at 50% 0%,rgba(255,90,31,.42),transparent 72%),linear-gradient(#24160f,#0e0a08)}
+.modal.armodal .mbox h4{color:#ff7a2e;background:linear-gradient(#ffb070 10%,#ff5a1f);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hl-b .hk-s.win{flex:none}
+.hl-b>.hk-v b{font-size:17px}
+/* синяя сумма GRAM — рядом всегда синий гем (тот же, что у баланса), а не бело-голубой */
+.arow em.g img,.tb2.g img,.refrow .g img,.stats b.g img,.wbal b img,.refauto .ra-v img,.sdb-p em img,.hstat.n div.g b img,.pvl-r b img{content:url(assets/gem-balance.svg)}
+/* таблетки внутри табов (профиль, игры в истории) — во всю ширину, кнопки поровну */
+.bseg.seg{display:flex;width:100%;margin:0 0 12px}
+.bseg.seg button{flex:1;text-align:center}
+.hseg{width:100%}
+.th-x small{color:#F57A37}   /* XP — всегда оранжевый */
+.pfm{margin-top:8px}
+/* строки наград/кошелька/рефералки — размеры как у кейсов и игр: сумма 22, подпись 13; название слева — 17, в 2 строки, если длинное */
+.hl-b{min-height:44px}
+.hl-b .hk-s.win .hk-v b{font-size:22px;line-height:1.1}
+.hl-b>.hk-v b{font-size:17px;line-height:1.2;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.hl-b>.hk-v small{margin-top:2px}
+.hl-b .hk-ic .tav{width:44px;height:44px;border-radius:14px;font-size:20px;color:#0b0b0e}
+.hcard.hl .hl-t b{font-size:17px;line-height:22px}
+.hcard.hl .hk-ic{width:44px;height:44px}
+/* у строк с длинным названием левая часть шире (правая — по содержимому), название — до 2 строк */
+.hcard.hl .hk-b{grid-template-columns:1fr 22px auto}
+.hcard.hl .hl-t b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:16px;line-height:20px}
+.hcard.hl .hl-t small:empty,.hcard.hl .hl-t small:only-child{display:none}
+/* аватар друга в строке истории — на весь квадрат иконки, без подложки */
+.hcard.hl .hk-ic:has(.tav){background:none;padding:0;overflow:hidden}
+.hcard.hl .hk-ic .tav{width:100%;height:100%;border-radius:inherit;font-size:20px;color:#0b0b0e}
+/* Ставки: кнопка и плашка — фиолетовые (цвет режима), вместо подарков — правила (щит) */
+.mode-tab3 .bet{background:linear-gradient(#9b7bff,#5a2fd6)}
+.mode-tab3 .cb .orb{filter:hue-rotate(40deg) saturate(1.2)}
+.mode-tab3 #giftBtn .t2shield{display:block}
+.mode-tab3 #giftIco,.mode-tab3 #giftCnt,.mode-tab3 #slots{display:none}
+.has-modes.mode-tab3 #slots{display:none}
+/* Ставки: поле на месте приза (приз и гем скрыты), номинал фишки внизу подсвечен */
+.t3b{left:50%;top:176px;width:342px;transform:translateX(-50%);display:none;z-index:4;text-align:left}
+.mode-tab3 .t3b{display:block}
+.mode-tab3 #drops,.mode-tab3 #prize{display:none}
+.t3b .bt-h{margin:12px 0 8px}
+.t3b .bt-cell{min-height:52px}
+.t3b .bt-row.dg .bt-cell{min-height:44px}
+.t3b .bt-cell.rank.sel{background:color-mix(in srgb,var(--c) 30%,transparent)}
+.t3max{text-align:center;font-size:13.5px;line-height:18px;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.t3max b{display:inline-flex;align-items:center;gap:4px;color:var(--blue);font-size:16px;vertical-align:-1px}
+.t3max b img{height:14px}
+.mode-tab3 .chips .pill.on{background:#fff;color:#000}
+/* поле ставок — компактно между множителем и кнопкой: ранги, чёт/нечет, 10 цифр в ряд; множители — строкой под полем */
+.t3b{top:352px;display:none;flex-direction:column;gap:8px}
+.mode-tab3 .t3b{display:flex}
+.t3b .bt-row .bt-cell{min-height:44px;padding:4px 2px;border-radius:14px}
+.t3b .bt-row.r2 .bt-cell{min-height:40px}
+.t3b .bt-row.r10{gap:4px}
+.t3b .bt-row.r10 .bt-cell{min-height:40px;border-radius:10px}
+.t3b .bt-row.r10 .bt-cell b{font-size:18px}
+.t3leg{display:flex;justify-content:space-between;font-size:12.5px;line-height:16px;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.t3max{margin-bottom:2px}
+.bt-res.nft>img{width:180px;height:180px;border-radius:28px;object-fit:contain}
+.bt-res.nft>b{font-size:30px}
+.bt-res .bt-ch{display:block;font-size:13.5px;color:rgba(255,255,255,.72);margin-top:4px}
+.item .cbadge.bbadge{background:#7c5cff}
+.item .cbadge.bbadge svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:2.4}

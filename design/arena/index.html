@@ -1,0 +1,197 @@
+<title>Арена PvP — прототип</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Прототип круглой арены: всё вокруг центра. Одна тема — ночной колизей, огонь. Шрифт игры — SONGER */
+@font-face{font-family:"SONGER";src:url(songer-bold.woff2) format("woff2");font-weight:700}
+@font-face{font-family:"SONGER";src:url(songer-extrabold.woff2) format("woff2");font-weight:800}
+:root{--bg:#0d0907;--fg:#fff;--muted:rgba(255,236,214,.72);--fire:#ff8a2e;--fire2:#e2541c;--line:rgba(255,200,150,.14);--tc:#ffb835;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:700 16px/1.2 "SONGER",system-ui,sans-serif;display:flex;justify-content:center;-webkit-user-select:none;user-select:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+.page{width:100%;max-width:440px;min-height:100svh;display:flex;flex-direction:column;gap:20px;padding-block:14px 22px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  background:radial-gradient(120% 60% at 50% 42%,#3a1a0c 0%,#1a0d07 45%,var(--bg) 75%)}
+/* верх */
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.round{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.07)}
+.round svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.fees{display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,.07)}
+.fees button{min-width:66px;padding:7px 12px;border-radius:999px;font-size:18px;color:var(--muted)}
+.fees button small{font-size:11px;margin-left:3px}
+.fees button.on{background:linear-gradient(#ffb347,var(--fire2));color:#fff;box-shadow:0 4px 14px rgba(255,110,30,.35)}
+/* арена */
+.arena{position:relative;width:100%;aspect-ratio:1;max-width:400px;margin:4px auto 0;touch-action:none}
+.arena svg.dial{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.seg{cursor:pointer;transition:opacity .2s}
+.seg.dim{opacity:.38}
+.ticks line{stroke:rgba(0,0,0,.35);stroke-width:2}
+.knob{cursor:grab;transition:transform .05s}
+.knob circle.k{fill:#fff;stroke:var(--tc);stroke-width:5;filter:drop-shadow(0 0 8px var(--tc))}
+.timer-bg{fill:none;stroke:rgba(0,0,0,.4);stroke-width:5}
+.timer{fill:none;stroke:#fff1c8;stroke-width:5;stroke-linecap:round;filter:drop-shadow(0 0 6px rgba(255,170,60,.9));transition:stroke .3s}
+.hot .timer{stroke:#ff4c35}
+.core{position:absolute;left:50%;top:50%;width:42%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle at 50% 40%,#ffb35a 0%,#e2541c 38%,#5a1c08 72%,#2a0d05 100%);
+  box-shadow:0 0 40px rgba(255,120,40,.45),inset 0 -8px 20px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.core small{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:#fff3dd}
+.core b{font-size:clamp(40px,13vw,56px);line-height:.95;font-weight:800;font-variant-numeric:tabular-nums;text-shadow:0 2px 12px rgba(0,0,0,.4)}
+.core .t{margin-top:4px;font-size:18px;font-variant-numeric:tabular-nums;padding:2px 10px;border-radius:999px;background:rgba(0,0,0,.35)}
+.core.bump b{animation:bump .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes bump{40%{transform:scale(1.2)}}
+.hot .core .t{color:#ffd1c4;animation:hot .5s infinite alternate}
+@keyframes hot{to{background:rgba(255,76,53,.45)}}
+/* места */
+.seat{position:absolute;width:14%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-items:center}
+.seat.free{border:2px dashed rgba(255,210,170,.35);background:rgba(0,0,0,.35);color:rgba(255,220,190,.8);font-size:26px;transition:transform .15s,border-color .2s}
+.seat.free:hover{border-color:var(--fire)}
+.seat.free:active{transform:translate(-50%,-50%) scale(.92)}
+.seat.pick{border:2px solid var(--fire);background:rgba(255,120,40,.18);color:#fff;animation:pick 1s ease-in-out infinite alternate}
+@keyframes pick{to{box-shadow:0 0 0 6px rgba(255,138,46,.18)}}
+.ava{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font-size:22px;color:#fff;box-shadow:0 0 0 2px rgba(0,0,0,.7),0 4px 10px rgba(0,0,0,.5);position:relative}
+.ava i{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-style:normal;font-size:11px;padding:1px 6px;border-radius:999px;background:rgba(0,0,0,.75);color:var(--c);white-space:nowrap;font-variant-numeric:tabular-nums}
+.seat.me .ava{box-shadow:0 0 0 3px var(--fire),0 0 16px rgba(255,138,46,.6)}
+/* тикет */
+.ticket{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:-6px}
+.ticket small{font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.digits{display:flex;gap:6px}
+.digits span{width:46px;height:58px;border-radius:14px;display:grid;place-items:center;font-size:36px;font-weight:800;font-variant-numeric:tabular-nums;
+  background:linear-gradient(rgba(255,255,255,.1),rgba(255,255,255,.03));box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--tc) 55%,transparent);color:var(--tc);touch-action:none;cursor:ns-resize}
+.tier{font-size:18px;color:var(--tc)}
+.tier em{font-style:normal;font-size:13px;color:var(--muted);margin-left:6px}
+/* низ */
+.cta{display:flex;gap:10px;margin-top:auto}
+.go{flex:1;height:64px;border-radius:20px;font-size:24px;font-weight:800;color:#fff;background:linear-gradient(#ffa43a,var(--fire2));box-shadow:0 6px 0 #8a2c0a,0 10px 24px rgba(255,100,30,.35);text-transform:uppercase}
+.go:active{transform:translateY(3px);box-shadow:0 3px 0 #8a2c0a}
+.go:disabled{filter:grayscale(.6) brightness(.8)}
+.dice{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;background:rgba(255,255,255,.1);box-shadow:0 6px 0 rgba(0,0,0,.45)}
+.dice svg{width:30px;height:30px;fill:none;stroke:#fff;stroke-width:2}
+.dice:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.45)}
+.hint{text-align:center;font-size:14px;color:var(--muted);min-height:18px;margin:0}
+.notes{font:400 13.5px/1.45 system-ui,sans-serif;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+.notes b{color:#fff;font-weight:600}
+.concepts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.concepts img{width:100%;max-width:100%;border-radius:14px;display:block}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page" id="page">
+  <div class="top">
+    <button class="round" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="fees" id="fees"></div>
+    <button class="round" aria-label="Правила"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></button>
+  </div>
+
+  <div class="arena" id="arena">
+    <svg class="dial" id="dial" viewBox="0 0 400 400"></svg>
+    <div class="core" id="core"><small>Банк</small><b id="bank">1</b><small>GRAM</small><span class="t" id="time">0:30</span></div>
+    <div id="seats"></div>
+  </div>
+
+  <div class="ticket">
+    <small>Твой тикет</small>
+    <div class="digits" id="digits"></div>
+    <div class="tier" id="tier"></div>
+  </div>
+
+  <p class="hint" id="hint"></p>
+  <div class="cta">
+    <button class="go" id="go">Войти · 1 GRAM</button>
+    <button class="dice" id="dice" aria-label="Случайный тикет"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="9" cy="9" r="1.3" fill="#fff"/><circle cx="15" cy="15" r="1.3" fill="#fff"/><circle cx="15" cy="9" r="1.3" fill="#fff"/><circle cx="9" cy="15" r="1.3" fill="#fff"/></svg></button>
+  </div>
+
+  <div class="notes">
+    <b>Концепты Magnific</b> — для вдохновения по стилю (тексты на картинках сгенерированы, их не берём):
+    <div class="concepts"><img src="concept1.webp" alt="Концепт круглой арены 1" loading="lazy"><img src="concept2.webp" alt="Концепт круглой арены 2" loading="lazy"><img src="concept3.webp" alt="Концепт круглой арены 3" loading="lazy"><img src="concept4.webp" alt="Концепт круглой арены 4" loading="lazy"></div>
+  </div>
+  <div class="notes">
+    <b>Как пробовать.</b> Тяни белую ручку по цветному кольцу — тикет бежит по рангам, на стыке рангов щелчок. Точно — веди пальцем вверх/вниз по цифре.
+    Тап по цвету — случайный тикет этого ранга, кубик — любой. Тап по любому «+» выбирает место, «Войти» садит туда (можно и сразу тапнуть место дважды).
+    Боты садятся сами, банк растёт, последние 5 с — красный таймер.
+  </div>
+</div>
+
+<script>
+(() => {
+  // ранги — как в игре; на кольце у каждого ранга равная дуга (как на ползунке), внутри дуги тикет — линейно
+  const T = [
+    { n: 'База', c: '#ffb835', from: 0, to: 56562, x: 'x0.4–0.8' }, { n: 'Удача', c: '#12d53d', from: 56563, to: 83562, x: 'x0.8–1.2' },
+    { n: 'Мега', c: '#00d9ff', from: 83563, to: 96552, x: 'x1.5–2' }, { n: 'Ультра', c: '#eb57b0', from: 96553, to: 99799, x: 'x2–3.5' },
+    { n: 'Джекпот', c: '#ff4c35', from: 99800, to: 99999, x: 'x10–14' } ];
+  const FEES = [.5, 1, 5], SLOTS = 8, TIME = 30, C = 200, R = 128, W = 30, GAP = 2.2;   // кольцо рангов: радиус и толщина, зазор между дугами (°)
+  let fee = 1, guess = 5975, seatPick = null, joined = false, left = TIME, bank = 0, players = [];
+  const $ = id => document.getElementById(id), tierOf = n => T.findIndex(t => n >= t.from && n <= t.to);
+  const vib = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (_) {} };
+  // ── кольцо рангов: тикет ↔ угол (сверху по часовой)
+  const n2a = n => { const i = tierOf(n), t = T[i]; return (i + (n - t.from) / (t.to - t.from + 1)) / T.length * 360; };
+  const a2n = a => { a = ((a % 360) + 360) % 360; const p = a / 360 * T.length, i = Math.min(T.length - 1, Math.floor(p)), t = T[i]; return Math.min(t.to, t.from + Math.floor((p - i) * (t.to - t.from + 1))); };
+  const pt = (a, r) => { const q = (a - 90) * Math.PI / 180; return [C + Math.cos(q) * r, C + Math.sin(q) * r]; };
+  const arc = (a0, a1, r) => { const [x0, y0] = pt(a0, r), [x1, y1] = pt(a1, r); return `M${x0} ${y0}A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1} ${y1}`; };
+  function dial(){
+    const seg = 360 / T.length;
+    $('dial').innerHTML =
+      `<defs><filter id="gl"><feGaussianBlur stdDeviation="4"/></filter></defs>` +
+      `<circle cx="${C}" cy="${C}" r="${R + W / 2 + 34}" fill="rgba(0,0,0,.28)" stroke="rgba(255,200,150,.08)" stroke-width="2"/>` +
+      T.map((t, i) => `<path class="seg" data-i="${i}" d="${arc(i * seg + GAP, (i + 1) * seg - GAP, R)}" stroke="${t.c}" stroke-width="${W}" fill="none" stroke-linecap="butt"/>` +
+        // подпись ранга — по дуге (снизу кольца — перевёрнутой дугой, чтобы читалась не вверх ногами)
+        (() => { const mid = i * seg + seg / 2, low = mid > 90 && mid < 270, a0 = i * seg + GAP, a1 = (i + 1) * seg - GAP, rr = R - 5;
+          const d = low ? (() => { const [x0, y0] = pt(a1, rr + 10), [x1, y1] = pt(a0, rr + 10); return `M${x0} ${y0}A${rr + 10} ${rr + 10} 0 0 0 ${x1} ${y1}`; })() : arc(a0, a1, rr);
+          return `<path id="lp${i}" d="${d}" fill="none"/><text font-size="13" font-weight="800" fill="rgba(20,8,4,.85)" letter-spacing="1" style="pointer-events:none;font-family:SONGER"><textPath href="#lp${i}" startOffset="50%" text-anchor="middle">${t.n.toUpperCase()}</textPath></text>`; })()).join('') +
+      `<circle class="timer-bg" cx="${C}" cy="${C}" r="${R - W / 2 - 10}"/><circle class="timer" id="tmr" cx="${C}" cy="${C}" r="${R - W / 2 - 10}" transform="rotate(-90 ${C} ${C})"/>` +
+      `<g class="knob" id="knob"><circle class="k" r="17"/></g>`;
+    $('dial').querySelectorAll('.seg').forEach(s => s.onclick = e => { if (drag.moved) return; const t = T[+s.dataset.i]; sweep(t.from + Math.floor(Math.random() * (t.to - t.from + 1))); });
+  }
+  function show(){
+    const i = tierOf(guess), t = T[i]; document.documentElement.style.setProperty('--tc', t.c);
+    $('digits').innerHTML = String(guess).padStart(5, '0').split('').map((d, k) => `<span data-k="${k}">${d}</span>`).join('');
+    $('tier').innerHTML = `${t.n}<em>${t.x}</em>`;
+    const [x, y] = pt(n2a(guess), R); $('knob').setAttribute('transform', `translate(${x} ${y})`);
+    $('dial').querySelectorAll('.seg').forEach(s => s.classList.toggle('dim', +s.dataset.i !== i));
+    bindDigits();
+  }
+  let lastTier = tierOf(guess);
+  const set = n => { guess = Math.max(0, Math.min(99999, n)); const ti = tierOf(guess); if (ti !== lastTier){ vib(12); lastTier = ti; } show(); };
+  // плавный пролёт ручки к новому тикету
+  function sweep(n){ const a0 = n2a(guess), a1 = n2a(n), t0 = performance.now(); vib(15);
+    const go = now => { const k = Math.min(1, (now - t0) / 600), e = 1 - (1 - k) ** 3; set(k >= 1 ? n : a2n(a0 + (a1 - a0) * e)); if (k < 1) requestAnimationFrame(go); }; requestAnimationFrame(go); }
+  // ── ручка: тянешь по кругу (угол пальца относительно центра)
+  const drag = { on: false, moved: false };
+  const angAt = e => { const r = $('arena').getBoundingClientRect(), x = e.clientX - r.left - r.width / 2, y = e.clientY - r.top - r.height / 2; return (Math.atan2(y, x) * 180 / Math.PI + 90 + 360) % 360; };
+  $('arena').addEventListener('pointerdown', e => { const r = $('arena').getBoundingClientRect(), d = Math.hypot(e.clientX - r.left - r.width / 2, e.clientY - r.top - r.height / 2) / r.width * 400;
+    if (d < R - W && d > 0) return; if (d > R + W) return; drag.on = true; drag.moved = false; $('arena').setPointerCapture(e.pointerId); });
+  $('arena').addEventListener('pointermove', e => { if (!drag.on) return; drag.moved = true; set(a2n(angAt(e))); });
+  $('arena').addEventListener('pointerup', () => { drag.on = false; setTimeout(() => drag.moved = false, 0); });
+  // ── цифры: вверх/вниз по цифре — ±1 в этом разряде (точная настройка)
+  function bindDigits(){ $('digits').querySelectorAll('span').forEach(sp => { let y0 = null, acc = 0;
+    sp.onpointerdown = e => { y0 = e.clientY; acc = 0; sp.setPointerCapture(e.pointerId); };
+    sp.onpointermove = e => { if (y0 == null) return; acc += y0 - e.clientY; y0 = e.clientY; while (Math.abs(acc) > 18){ const s = Math.sign(acc); acc -= s * 18;
+      const k = +sp.dataset.k, p = 10 ** (4 - k), d = Math.floor(guess / p) % 10, nd = (d + s + 10) % 10; set(guess + (nd - d) * p); vib(5); } };
+    sp.onpointerup = sp.onpointercancel = () => { y0 = null; }; }); }
+  // ── места: 8 по кругу; любое свободное можно выбрать
+  const NICK = ['wolf', 'nftqueen', 'boris', 'satoshi', 'kira', 'max', 'leo', 'zed'], COL = ['#7c5cff', '#12d53d', '#30a5ff', '#eb57b0', '#ffb835', '#00d9ff', '#ff4c35'];
+  function seats(){
+    $('seats').innerHTML = Array.from({ length: SLOTS }, (_, i) => { const a = i / SLOTS * 360 + 22.5, [x, y] = pt(a, R + W / 2 + 34), pl = players.find(p => p.seat === i);
+      const pos = `left:${x / 4}%;top:${y / 4}%`;
+      if (pl) return `<div class="seat${pl.me ? ' me' : ''}" style="${pos}"><span class="ava" style="background:${pl.c};--c:${T[tierOf(pl.g)].c}">${pl.me ? 'Я' : pl.n[0].toUpperCase()}<i>${String(pl.g).padStart(5, '0')}</i></span></div>`;
+      return `<button class="seat ${seatPick === i ? 'pick' : 'free'}" data-s="${i}" style="${pos}" aria-label="Свободное место">${seatPick === i ? '✓' : '+'}</button>`; }).join('');
+    $('seats').querySelectorAll('[data-s]').forEach(b => b.onclick = () => { if (joined) return; const s = +b.dataset.s; if (seatPick === s) return join(); seatPick = s; vib(10); seats(); hint(); });
+  }
+  function hint(){ $('hint').textContent = joined ? (left <= 5 ? 'Тикеты зафиксированы — старт!' : `Ты на арене · тикет можно сменить ещё ${Math.ceil(left - 5)} с`)
+    : seatPick == null ? 'Выбери место (+) или просто жми «Войти»' : 'Место выбрано — жми «Войти»'; }
+  function join(){ if (joined) return; const free = [...Array(SLOTS).keys()].filter(i => !players.some(p => p.seat === i));
+    const s = seatPick != null && free.includes(seatPick) ? seatPick : free[Math.floor(free.length / 2)]; if (s == null) return;
+    players.push({ seat: s, me: true, c: 'linear-gradient(#ffa43a,#e2541c)', g: guess, n: 'я' }); joined = true; seatPick = null; addBank(); vib(30);
+    $('go').textContent = 'Ты в бою'; $('go').disabled = true; seats(); hint(); }
+  function addBank(){ bank += fee; $('bank').textContent = String(+bank.toFixed(2)); const c = $('core'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
+  function bot(){ const free = [...Array(SLOTS).keys()].filter(i => !players.some(p => p.seat === i) && i !== seatPick); if (!free.length) return;
+    const n = NICK.find(x => !players.some(p => p.n === x)) || 'bot'; players.push({ seat: free[Math.floor(Math.random() * free.length)], c: COL[players.length % COL.length], g: Math.floor(Math.random() * 1e5), n }); addBank(); seats(); }
+  function fees(){ $('fees').innerHTML = FEES.map(f => `<button class="${f === fee ? 'on' : ''}" data-f="${f}">${f}<small>GRAM</small></button>`).join('');
+    $('fees').querySelectorAll('button').forEach(b => b.onclick = () => { if (joined) return; fee = +b.dataset.f; reset(); fees(); }); }
+  function reset(){ players = []; bank = 0; joined = false; seatPick = null; left = TIME; $('bank').textContent = '0'; $('go').disabled = false; $('go').textContent = `Войти · ${fee} GRAM`; bot(); seats(); hint(); }
+  // таймер-кольцо
+  const RT = R - W / 2 - 10, CL = 2 * Math.PI * RT;
+  setInterval(() => { left -= .1; if (left <= 0) reset(); const tm = $('tmr'); tm.style.strokeDasharray = CL; tm.style.strokeDashoffset = (CL * (1 - left / TIME)).toFixed(1);
+    $('time').textContent = `0:${String(Math.max(0, Math.ceil(left))).padStart(2, '0')}`; $('page').classList.toggle('hot', left <= 5); if (Math.random() < .012) bot(); if (joined) hint(); }, 100);
+  $('go').onclick = join; $('dice').onclick = () => sweep(Math.floor(Math.random() * 1e5));
+  dial(); fees(); reset(); show();
+})();
+</script>

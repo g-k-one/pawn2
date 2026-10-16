@@ -1,4 +1,4 @@
-<title>Лаборатория эффектов</title>
+<title>Горн — лаборатория</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -68,7 +68,7 @@ code { font: 13px var(--mono); color: var(--gold) }
 <div class="wrap">
   <header>
     <div class="eyebrow">Pawn · эффекты</div>
-    <h1>Лаборатория <em>эффектов</em></h1>
+    <h1>Горн — <em>эффекты</em> Pawn</h1>
     <p>Все эффекты — наш движок частиц на WebGL, тот же код, что в игре (Дебаг → «Эффекты частиц»). Принципы и рецепты — docs/VFX.md.</p>
   </header>
 
@@ -397,8 +397,8 @@ code { font: 13px var(--mono); color: var(--gold) }
 // эффекты: тот же движок, что в игре; каждый привязан к своему стенду (следует за прокруткой, обрезается по нему)
 (() => {
   const st = [...document.querySelectorAll('[data-fx]')];
-  if (typeof Particles === 'undefined' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  st.forEach(el => { if (!Particles.play(el.dataset.fx, { el, loop: true })) el.insertAdjacentHTML('beforeend', '<div class="err">WebGL недоступен</div>'); });
+  if (typeof Forge === 'undefined' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  st.forEach(el => { if (!Forge.play(el.dataset.fx, { el, loop: true })) el.insertAdjacentHTML('beforeend', '<div class="err">WebGL недоступен</div>'); });
 })();
 </script>
 

@@ -36,7 +36,9 @@ async function betsMock(bets){
     result: { wins: res.wins, payout_nano: String(res.payout) } };
   ep.proofs.push(proof);
   const stake = Math.round(bets.reduce((a, b) => a + b.amount, 0) * 100) / 100;
-  return S.lastFair = { kind: 'bets', proof, ticket: roll, ti: tierOfTicket(roll), stake, tonStake: stake, gifts: [], win: Number(res.payout) / 1e9, nft: null, change: 0,
+  const win = Number(res.payout) / 1e9, nn = win >= NFT_FROM ? NFTS.filter(x => x.price <= win).slice(-1)[0] : null;   // выигрыш от порога — NFT + сдача, как в крафте
+  const nft = nn ? { id: 'w' + Date.now(), num: nn.num, nft: nn, a: nn.bg[0], b: nn.bg[1], p: nn.bg[2], value: nn.price } : null;
+  return S.lastFair = { kind: 'bets', proof, ticket: roll, ti: tierOfTicket(roll), stake, tonStake: stake, gifts: [], win, nft, change: nft ? Math.floor((win - nft.value) * 100) / 100 : 0,
     bets: bets.map((b, i) => ({ ...b, won: res.wins[i], pay: res.wins[i] ? Math.floor(b.amount * betMult(b.bet, b.sel) * 100) / 100 : 0 })) };
 }
 
@@ -57,7 +59,7 @@ const BETS_GLOW = ['#7c5cff', '#3b1e9e', '#30a5ff', '#d9ccff'];
 const tgBackBets = on => { try { const b = Telegram.WebApp.BackButton; b.offClick(leaveBets); if (on){ b.onClick(leaveBets); b.show(); } else b.hide(); } catch(_){} };
 
 async function openBets(){
-  if (S.demo){ notify({ type: 'demo', icon: 'coin', title: $t("Предикты — только на GRAM"), text: $t("Выключи демо в меню") }); return; }
+  if (S.demo){ notify({ type: 'demo', icon: 'coin', title: $t("Ставки — только на GRAM"), text: $t("Выключи демо в меню") }); return; }
   if (betsOn || S.busy) return;
   if (openDrawer){ hideDrawer(); await wait(220); }
   betsOn = true; S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto);
@@ -79,7 +81,7 @@ function renderBets(){
   const tot = betsTotal(), max = betsMaxWin();
   $('fxBets').innerHTML =
     `<div class="ar-top"><button class="ar-back" id="btBack" aria-label="${$t("Назад")}">${svg('<path d="M15 5l-7 7 7 7"/>')}</button>` +
-      `<div class="ar-title bt"><i>${svg(TARGET)}</i><b>${$t("Предикты")}</b><span class="beta">β</span></div></div>` +
+      `<div class="ar-title bt"><i>${svg(TARGET)}</i><b>${$t("Ставки")}</b><span class="beta">β</span></div></div>` +
     orbHTML(tot, max) +
     `<p class="bt-hint">${tot ? $t("Столько даст шар, если предсказание сбудется") : $t("Тапни по исходу — фишка, долгое нажатие — снять")}</p>` +
     `<div class="ar-sub"><div class="bt-chips">${BETS_CHIPS.map(c => `<button class="${c === betsChip ? 'on' : ''}" data-chip="${c}">${fmt(c)}</button>`).join('')}</div>` +
@@ -118,7 +120,7 @@ function betsRulesModal(){
   haptic();
   const rules = [$t("Загадай исходы одного тикета 00000–99999: ранг, чёт или нечет, последнюю цифру. Можно сразу несколько."), $t("Выплата каждой ставки — по шансу исхода, возврат 95% на любой ставке."),
     $t("За раунд: ставка — до {0} GRAM, выигрыш при любом тикете — до {1} GRAM, как в крафте.", BET_MAX, BETS_MAX_WIN), $t("Тикет честный: хеш зерна виден до игры, исход можно проверить.")];
-  modal(`<h4>${$t("Правила предиктов")}</h4><ol class="ar-rules">${rules.map(x => `<li>${x}</li>`).join('')}</ol>` +
+  modal(`<h4>${$t("Правила ставок")}</h4><ol class="ar-rules">${rules.map(x => `<li>${x}</li>`).join('')}</ol>` +
     `<button class="btn-main" id="btOk">${$t("Понятно")}</button>`, '#7c5cff');
   $('btOk').onclick = closeModal;
 }
@@ -157,14 +159,15 @@ async function betsAfter(r){
   await wait(S.lite ? 300 : 900);
   const won = r.bets.filter(b => b.won);
   // итог: сумма крупно, ниже — все ставки раунда: сыгравшие зелёные с выплатой, остальные приглушены
-  $('fxDrop').innerHTML = `<div class="pz bt-res${r.win > 0 ? ' won' : ''}"><img src="assets/hero-gem.webp" alt=""><b>${r.win > 0 ? '+' + fmt(r.win) : '0'}<i class="u">GRAM</i></b>` +
+  $('fxDrop').innerHTML = `<div class="pz bt-res${r.win > 0 ? ' won' : ''}${r.nft ? ' nft' : ''}">${r.nft ? `<img src="${r.nft.nft.src}" alt="" style="background:linear-gradient(160deg,${r.nft.a},${r.nft.b})"><b>${r.nft.nft.name}</b><small class="bt-ch">${fmt(r.nft.value)} GRAM${r.change > 0 ? ` · ${$t("и на баланс +{0} GRAM", fmt(r.change))}` : ''}</small>` : `<img src="assets/hero-gem.webp" alt=""><b>${r.win > 0 ? '+' + fmt(r.win) : '0'}<i class="u">GRAM</i></b>`}` +
     `<div class="pvp-chips">${r.bets.map(b => `<span class="pvc bt ${b.won ? 'win' : 'lose'}" style="--tc:${b.bet === 'rank' ? TIERS[b.sel].c : '#b9a6ff'}"><b>${betLabel(b.bet, b.sel)}</b><em>${b.won ? '+' + fmt(b.pay) : fmt(b.amount)}</em></span>`).join('')}</div></div>`;
   $('fxWin').innerHTML = `<span>${$t("Ставка {0} GRAM", fmt(r.stake))} · ${won.length ? $t("сбылось {0} из {1}", won.length, r.bets.length) : $t("предсказание не сбылось")}</span>`;
   $('fxBtns').innerHTML = `<button class="btn-main" id="btAgain">${$t("Ещё раз · {0} GRAM", fmt(r.stake))}</button><button class="btn-ghost" id="btEdit">${$t("Изменить ставки")}</button>` +
     `<div class="fx-links"><button class="btn-link pf" id="fxPfIn">${$t("Проверить честность")}</button><button class="btn-link pf" id="btHome">${$t("На главную")}</button></div>`;
   $('fx').classList.add('done'); if (r.win > 0 && !S.lite) setTimeout(burst, 200);
-  if (r.win > 0) setBalance(S.balance + r.win);
+  if (r.nft){ INV.unshift(r.nft); if (r.change > 0) setBalance(S.balance + r.change); } else if (r.win > 0) setBalance(S.balance + r.win);   // NFT — в инвентарь, сдача — на баланс
   if (!S.demo){ logCraft(r, 'bets'); addXp(r.stake * .5); }
+  if (r.win > 0) setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win, bets: true })), 300);   // выигрыш в ленту «лайв»
   setTimeout(() => { FX.hot = false; }, 900);
   $('fxPfIn').onclick = () => openPF(r);
   $('btAgain').onclick = () => betsBack(true);

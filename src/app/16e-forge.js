@@ -1,13 +1,14 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   ЧАСТИЦЫ (FX) — свой движок на WebGL, без Rive.
+   ГОРН (Forge) — наш движок частиц на WebGL, без Rive.
    Перенос лаборатории design/rive/lab-fx (те же атласы и настройки): рисованные маски из Magnific,
    перекрашенные по ступеням (atlas.mjs → assets/fx/fx-<эффект>.webp + карта FX_ATLAS).
    Один холст поверх экрана, кадр — по одному вызову отрисовки на эффект; без эффектов цикл стоит.
-   Particles.play('fire', { x, y, size, loop, el }) → { stop() }. Эффект задуман в квадрате 360×360:
+   Forge.play('fire', { x, y, size, loop, el }) → { stop() }. Эффект задуман в квадрате 360×360:
    x, y — центр квадрата на экране, size — его сторона в px; el — следовать за элементом (и обрезать по нему).
    Файл самодостаточный (без общих переменных приложения) — его же грузит лаборатория.
    ═══════════════════════════════════════════════════════════════════════════ */
-const Particles = (() => {
+// makeForge(host): host — элемент, внутри которого свой холст (эффект под интерфейсом, как фон арены); без host — общий холст поверх экрана
+function makeForge(host){
   const R = (a, b) => a + Math.random() * (b - a), PI = Math.PI;
   const easeOut = t => { const u = 1 - Math.min(1, Math.max(0, t)); return 1 - u * u * u; };
   let base = 'assets/fx/';
@@ -294,6 +295,8 @@ const Particles = (() => {
     portal: [[0, '0a0420'], [.3, '3a1478'], [.55, '7a3ae8'], [.75, 'd070ff'], [.9, 'ffc2ff'], [1, 'ffffff']],
     pink: [[0, '2a0420'], [.35, '8a1460'], [.6, 'e83aa8'], [.8, 'ff9ad8'], [1, 'fff0fa']],
     redsph: [[0, '3a0204'], [.4, '9a0a0c'], [.65, 'e8201c'], [.85, 'ff7a4a'], [1, 'ffe0c0']],
+    // мягкий дым/туман: тёплый тёмно-серый → светлый бежевый (плазма внутри круга — клубится, а не плоское пятно)
+    haze: [[0, '1a120e'], [.35, '3a2c24'], [.65, '6e5a4a'], [.88, 'a89580'], [1, 'd8c8b4']],
     smoke: [[0, '1c1622'], [.35, '3a2e3c'], [.65, '5e4c5a'], [.9, '8c7884'], [1, 'b4a2aa']],
     sw_purple: [[0, '4a12b0'], [.5, '9a3ce8'], [.8, 'e070f0'], [1, 'ffc0ff']],
     sw_blue: [[0, '1a3ad8'], [.5, '2a8cff'], [.8, '5ad8ff'], [1, 'c8ffff']],
@@ -317,8 +320,8 @@ const Particles = (() => {
   }
   function setup(){
     cv = document.createElement('canvas'); cv.className = 'fx-cv';
-    cv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9000';
-    document.body.appendChild(cv);
+    cv.style.cssText = host ? 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none' : 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9000';
+    (host || document.body).appendChild(cv);
     gl = cv.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false });
     if (!gl) return false;
     const sh = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); return s; };
@@ -1352,6 +1355,55 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
       sprite(c, 180, 180, 300 * pl, 0, .8, 1, at.map['ring:W0'], 1, [1, .55, .7]);
       } };
 
+  /* ── арена PvP: лёгкий туман и пыль по краю арены. Холст больше арены в 1.5 раза (край трибун — радиус ≈120 из 360):
+     мягкие клубы дыма медленно плывут по кругу у трибун и за ними, рвутся по шуму и тают; в воздухе висит тёплая пыль.
+     s.hot = 1 — последние 5 секунд: туман чуть гуще и теплее, плывёт быстрее; s.dense — множитель плотности (tab2 — гуще) */
+  DEF.arena = { atlas: 'aura', gfx: { speed: .5, ramp: 'smoke' },
+    puff(s, at, age){ const a = R(0, 6.28), r = R(128, 185);
+      spawn(s.fog, { x: 180 + Math.cos(a) * r, y: 180 + Math.sin(a) * r, a, r, rot: R(0, 6.28), vr: R(-.15, .15), size: R(110, 180), grow: .4, life: R(5, 8), age,
+        cells: [0], mode: 18.4, ramp: 'haze', add: .12, alpha: R(.22, .38) * (s.dense || 1), heat: [[0, .9], [1, .75]], ero: [[0, .3], [.5, .18], [1, .4]], ph: R(0, 9), fadeIn: .3, fadeOut: .35, pul: 0 }); },
+    init(s, at){ Object.assign(s, { fog: [], dust: [], hotK: 0 }); for (let i = 0; i < 16; i++) this.puff(s, at, R(0, 5)); },
+    update(s, dt, at){
+      s.hotK += ((s.hot ? 1 : 0) - s.hotK) * Math.min(1, dt * 2);
+      emit(s.acc, 1, 2.2 + s.hotK * 1.5, dt, () => this.puff(s, at, 0));
+      emit(s.acc, 2, 6, dt, () => { const a = R(0, 6.28), r = R(60, 175);
+        spawn(s.dust, { x: 180 + Math.cos(a) * r, y: 180 + Math.sin(a) * r, vx: R(-6, 6), vy: R(-10, -2), size: R(3, 6), life: R(2, 4), sway: 4,
+          cells: [at.map['glow:W0']], add: 1, alpha: R(.25, .55), tint: [1, .8, .55], fadeIn: .3, fadeOut: .4, pul: .2, pf: R(2, 5) }); });
+      // клубы плывут по кругу (медленнее у края), чуть дышат по радиусу
+      const w = (.05 + s.hotK * .06) * dt;
+      for (const p of s.fog){ p.a += w * (150 / p.r); const rr = p.r + Math.sin(s.t * .3 + p.ph) * 4; p.x = 180 + Math.cos(p.a) * rr; p.y = 180 + Math.sin(p.a) * rr; p.age += dt; }
+      for (let i = s.fog.length; i--;) if (s.fog[i].age >= s.fog[i].life){ s.fog[i] = s.fog[s.fog.length - 1]; s.fog.pop(); }
+      step(s.dust, dt);
+    },
+    render(s, c){
+      for (const p of s.fog) p.tint = [1, 1 - s.hotK * .15, 1 - s.hotK * .3]; draw(c, s.fog); draw(c, s.dust); } };
+
+  /* ── искры удара молота по наковальне (крафт и арена): вспышка в точке удара, веер раскалённых искр во все стороны
+     с гравитацией и отскоком; несколько крупных «летят в камеру» — растут, размываются, проносятся мимо и гаснут.
+     Цвет — s.tint (цвет ранга / огонь арены). Эффект задуман в px: size = 360 → 1 ед. = 1 px */
+  DEF.anvil = { atlas: 'aura', period: 1.8,
+    init: s => Object.assign(s, { sp: [], near: [], fired: false, tint: [1, .75, .35] }),
+    update(s, dt, at){
+      if (!s.fired){ s.fired = true; s.shake = 7; const hot = [1, .88, .55], warm = [1, .58, .2];
+        // раскалённые искры — во все стороны (вверх чуть больше), разная скорость, лёгкая гравитация: летят дугами и гаснут
+        for (let i = 0; i < 110; i++){ const a = R(0, 6.28), v = R(180, 980) * (Math.sin(a) < 0 ? 1.15 : .85);
+          spawn(s.sp, { x: 180 + R(-5, 5), y: 180 + R(-3, 3), vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: R(14, 34), life: R(.4, 1.15), drag: 2, grav: 520, orient: true, speedStretch: .003,
+            cells: [at.map['shard:W0']], add: 1, tint: Math.random() < .5 ? hot : warm, fadeIn: .01, fadeOut: .55, pul: 0 }); }
+        // мелкая искристая пыль — светящиеся точки, мерцают и гаснут
+        for (let i = 0; i < 50; i++){ const a = R(0, 6.28), v = R(60, 340);
+          spawn(s.sp, { x: 180, y: 180, vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: R(4, 9), life: R(.5, 1.2), drag: 2.5, grav: 120, cells: [at.map['glow:W0']], add: 1, tint: hot, fadeIn: .01, fadeOut: .6, pul: .3, pf: 18 }); }
+        // «в камеру»: крупные искры летят на нас — быстро растут, становятся мягким бликом и проносятся за край экрана
+        for (let i = 0; i < 16; i++){ const a = R(0, 6.28), v = R(360, 820);
+          spawn(s.near, { x: 180, y: 180, vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: R(12, 22), sc: [[0, .5], [.4, 3.5], [1, 12]], life: R(.35, .7), drag: -.6,
+            orient: true, speedStretch: .0012, cells: [at.map['glow:W0']], add: 1, alpha: .8, tint: i % 2 ? hot : warm, fadeIn: .05, fadeOut: .55, pul: 0 }); }
+      }
+      step(s.sp, dt); step(s.near, dt);
+    },
+    render(s, c){ const at = c.at, t = s.cycle, T = s.tint;
+      if (t < .3){ const k = t / .3; sprite(c, 180, 180, 240 + 320 * easeOut(k), 0, (1 - k) * .95, 1, at.map['sglow:W0'], 1, T); sprite(c, 180, 180, 180 + 220 * k, k * .5, 1 - k, 1, at.map['star:W0'], 1, [1, .95, .85]);
+        sprite(c, 180, 180, 80 + 520 * easeOut(k), 0, (1 - k) * .8, 1, at.map['ring:W0'], .7, [1, .8, .5]); sprite(c, 180, 180, 40 + 760 * easeOut(Math.min(1, k * 1.4)), 0, (1 - k) * .45, 1, at.map['ring:W0'], .6, [1, .6, .25]); }
+      draw(c, s.sp); draw(c, s.near); } };
+
   /* ── запуск и цикл ── */
   const live = new Set();
   let raf = 0, last = 0, ok = null, idle30 = true;
@@ -1371,13 +1423,15 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
     gap = gap * .9 + Math.min(100, now - lastDraw) * .1;
     if (auto && quality > 0 && live.size){ slow = gap > 24 && gap < 90 ? slow + (now - lastDraw) : 0; if (slow > 1500){ quality--; slow = 0; } }
     lastDraw = now;
-    const w = innerWidth, h = innerHeight, d = Math.min(maxDpr, DPR[quality], devicePixelRatio || 1);
+    const HR = host ? host.getBoundingClientRect() : null, w = HR ? HR.width : innerWidth, h = HR ? HR.height : innerHeight, d = Math.min(maxDpr, DPR[quality], devicePixelRatio || 1);
+    if (HR && !host.isConnected){ live.clear(); raf = 0; return; }
     if (w !== W || h !== H || d !== dpr){ W = w; H = h; dpr = d; cv.width = Math.round(w * d); cv.height = Math.round(h * d); gl.viewport(0, 0, cv.width, cv.height); }
     gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniform2f(loc.res, cv.width, cv.height); gl.uniform1f(loc.tm, (now / 1000) % 200); gl.uniform1f(loc.lq, quality < 2 ? 1 : 0);   // время по кругу: большие числа в шейдере теряют точность — шум «ступенится»
     for (const e of live){
       if (e.el){ if (!e.el.isConnected){ live.delete(e); continue; }
-        const r = e.el.getBoundingClientRect(); e.ox = r.left + r.width / 2; e.oy = r.top + r.height / 2; e.k = r.width / 360; e.clip = r; }
+        let r = e.el.getBoundingClientRect(); if (HR) r = { left: r.left - HR.left, top: r.top - HR.top, right: r.right - HR.left, bottom: r.bottom - HR.top, width: r.width, height: r.height };
+        e.ox = r.left + r.width / 2; e.oy = r.top + r.height / 2; e.k = r.width / 360; e.clip = r; }
       const vis = !e.clip || (e.clip.bottom > 0 && e.clip.top < h && e.clip.right > 0 && e.clip.left < w);
       if (!vis) continue;                                                      // за экраном — не считаем и не рисуем
       e.s.t += dt; e.s.cycle += dt;
@@ -1418,11 +1472,15 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
       if (ok === null){ ok = setup(); if (typeof S !== 'undefined' && S.lite) quality = 0; } if (!ok) return null;
       const a = FX_ATLAS[def.atlas];
       const e = { def, at: a, tex: texture(def.atlas), s: { t: 0, cycle: 0, acc: {} }, loop: !!o.loop, el: o.el || null, fade: 1, stopping: false,
-        ox: o.x ?? innerWidth / 2, oy: o.y ?? innerHeight / 2, k: (o.size || Math.min(innerWidth, innerHeight)) / 360, clip: null };
+        ox: o.x ?? (host ? host.clientWidth : innerWidth) / 2, oy: o.y ?? (host ? host.clientHeight : innerHeight) / 2, k: (o.size || Math.min(innerWidth, innerHeight)) / 360, clip: null };
       def.init.call(def, e.s, a);
       live.add(e); kick();
-      return { stop(){ e.stopping = true; }, kill(){ live.delete(e); } };
+      return { stop(){ e.stopping = true; }, kill(){ live.delete(e); }, alive: () => live.has(e), set(k, v){ e.s[k] = v; } };
     },
     stopAll(){ live.forEach(e => e.stopping = true); },
+    // заранее: холст и атлас — чтобы первый эффект (удар молота на первом крафте) не пропал, пока грузится картинка
+    preload(atlas){ if (ok === null){ ok = setup(); if (typeof S !== 'undefined' && S.lite) quality = 0; } if (ok) texture(atlas); },
   };
-})();
+}
+const Forge = makeForge(null);
+setTimeout(() => { try { Forge.preload('aura'); } catch(_){} }, 800);

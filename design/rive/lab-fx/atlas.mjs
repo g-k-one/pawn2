@@ -130,6 +130,6 @@ for (const [fx, spec] of Object.entries(FX)){
   console.log(`fx-strips.webp: полос ${res[1]}, ${(buf.length / 1024).toFixed(0)} КБ`); }
 await b.close();
 writeFileSync(dir + 'atlases.luau', lua + '}\n');
-// та же карта для JS-движка игры (src/app/16e-fx.js); картинки — assets/fx/
-writeFileSync(game + 'src/app/16e-fx-atlas.js', '// создано design/rive/lab-fx/atlas.mjs: карта ячеек атласов частиц (не править руками)\nconst FX_ATLAS = ' + JSON.stringify(js) + ';\n');
+// та же карта для JS-движка игры (src/app/16e-forge.js); картинки — assets/fx/
+writeFileSync(game + 'src/app/16e-forge-atlas.js', '// создано design/rive/lab-fx/atlas.mjs: карта ячеек атласов частиц (не править руками)\nconst FX_ATLAS = ' + JSON.stringify(js) + ';\n');
 console.log('всего', (total / 1024).toFixed(0), 'КБ');

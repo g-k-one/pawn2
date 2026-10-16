@@ -10,10 +10,11 @@ function liveHTML(n, o = {}){
   const stake = o.stake ?? [.5, 1, 1, 2, 2, 3, 5, 5, 10, 20][Math.random() * 10 | 0];
   const win = o.win ?? Math.round(stake * mult * 100) / 100;
   const nft = win >= NFT_FROM ? NFTS.filter(x => x.price <= win).slice(-1)[0] : null;
-  const img = nft ? nft.src : 'assets/hero-gem.webp', who = o.me ? $t("твой дроп") : '@' + pick(NICKS);
+  const img = nft ? nft.src : 'assets/hero-gem.webp', who = o.me ? $t("твой дроп") : o.who || '@' + pick(NICKS), ar = o.arena;
   const label = win >= 100 ? Math.round(win) : win >= 10 ? String(Math.round(win * 10) / 10) : fmt(win);
-  return `<div class="item${ti >= 3 ? ' hi' : ''}${o.me ? ' me' : ''}" style="--c:${t.c}" data-n="${n}" data-w="${win}" data-m="${mult}" data-who="${who}" data-img="${img}" data-nft="${nft ? nft.name : ''}">` +
-    `<span class="glow"></span><img src="${img}" alt=""><i><img src="assets/gem-small.svg" alt="">${label}</i>${ti >= 3 ? '<span class="shine"></span>' : ''}</div>`;
+  // арена: значок «меч» в углу, в данных — банк и сколько игроков
+  return `<div class="item${ti >= 3 ? ' hi' : ''}${o.me ? ' me' : ''}${ar ? ' iarena' : ''}${o.bets ? ' ibets' : ''}" style="--c:${t.c}" data-n="${n}" data-w="${win}" data-m="${mult}" data-who="${who}" data-img="${img}" data-nft="${nft ? nft.name : ''}"${ar ? ` data-bank="${ar.bank}" data-pl="${ar.n}"` : ''}>` +
+    `<span class="glow"></span><img src="${img}" alt="">${ar ? '<span class="cbadge abadge"><img src="assets/sword.svg" alt=""></span>' : o.bets ? `<span class="cbadge abadge bbadge">${svg(TARGET)}</span>` : ''}<i><img src="assets/gem-small.svg" alt="">${label}</i>${ti >= 3 ? '<span class="shine"></span>' : ''}</div>`;
 }
 // открытие кейса в ленте: приз + маленький значок кейса
 function liveCaseHTML(c, it, o = {}){
@@ -22,7 +23,9 @@ function liveCaseHTML(c, it, o = {}){
   return `<div class="item icase${it.rare ? ' hi' : ''}${it.t === 'xp' ? ' ixp' : ''}${o.me ? ' me' : ''}" style="--c:${itemColor(it)}" data-case="${c.id}" data-who="${o.me ? $t("твой кейс") : '@' + pick(NICKS)}" data-lbl="${o.label || itemName(it)}" data-img="${img}">` +
     `<span class="glow"></span><img src="${img}" alt=""><span class="cbadge"><img src="${c.img}" alt=""></span><i><img src="${it.t === 'xp' ? 'assets/xp.webp' : 'assets/gem-small.svg'}" alt="">${v}</i>${it.rare ? '<span class="shine"></span>' : ''}</div>`;
 }
-const liveItem = () => { if (Math.random() < .3){ const c = pick(CASES), it = weighted(c); return liveCaseHTML(c, it); } return liveHTML(Math.random() * TICKETS | 0); };
+// арена в ленте: банк = взнос комнаты × игроки, победитель крафтит на весь банк
+const liveArena = () => { const pl = 2 + (Math.random() * 5 | 0), bank = Math.round(pick(PVP_FEES) * pl * 100) / 100; return liveHTML(Math.random() * TICKETS | 0, { stake: bank, arena: { bank, n: pl } }); };
+const liveItem = () => { const q = Math.random(); if (q < .3){ const c = pick(CASES), it = weighted(c); return liveCaseHTML(c, it); } if (q < .45) return liveArena(); if (q < .55) return liveHTML(Math.random() * TICKETS | 0, { stake: pick([.5, 1, 2, 5]), bets: true }); return liveHTML(Math.random() * TICKETS | 0); };
 liveEl.innerHTML = [67890, 1345, 97890, 76789, 99912, 40210, 88123].map(n => liveHTML(n)).join('');
 function pushLive(html){
   liveEl.insertAdjacentHTML('afterbegin', html || liveItem());
@@ -38,6 +41,9 @@ liveEl.addEventListener('click', e => {
   const it = e.target.closest('.item'); if (!it) return;
   if (it.dataset.case){ const c = caseById(it.dataset.case); haptic(); notify({ img: it.dataset.img, color: c.c, title: c.name, text: `${it.dataset.who} ${$t("— выпало:")} ${it.dataset.lbl}` }); return; }
   const n = +it.dataset.n, t = TIERS[tierOfTicket(n)]; haptic();
+  if (it.classList.contains('ibets')){ notify({ img: it.dataset.img, color: '#7c5cff', title: `${$t("Ставки")} · ${$t("тикет")} ${tk(n)}`, text: `${it.dataset.who} — ${it.dataset.nft || '+' + fmt(+it.dataset.w) + ' GRAM'}` }); return; }
+  if (it.dataset.bank){ notify({ img: it.dataset.img, color: t.c, title: `${$t("Арена")} · ${t.name} · x${it.dataset.m}`,
+    text: `${it.dataset.who} — ${it.dataset.nft || '+' + fmt(+it.dataset.w) + ' GRAM'} · ${$t("тикет")} ${tk(n)}` }); return; }
   notify({ img: it.dataset.img, color: t.c, title: `${t.name} · x${it.dataset.m}`, text: `${it.dataset.who} ${$t("— {0} · тикет", it.dataset.nft || '+' + fmt(+it.dataset.w) + ' GRAM')} ${tk(n)}` });
 });
 let liveN = 0;

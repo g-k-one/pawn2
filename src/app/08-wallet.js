@@ -53,7 +53,7 @@ function relayerFlow(){
   // прототип: через пару секунд «приходит» подарок
   setTimeout(() => { const n = pick(NFTS.slice(0, 9)), bg = n.bg;
     const g = { id: 'r' + Date.now(), num: n.num, nft: n, a: bg[0], b: bg[1], p: bg[2], value: n.price }; INV = [g, ...INV];
-    S.hist.wallet.unshift({ type: 'nftin', t: Date.now(), name: n.name, img: n.src, bg: n.bg, value: n.price, method: RELAYER });   // депозит NFT-подарком — в историю
+    S.hist.wallet.unshift({ type: 'nftin', t: Date.now(), name: n.name, num: n.num, model: n.model, img: n.src, bg: n.bg, value: n.price, method: RELAYER });   // депозит NFT-подарком — в историю
     S.ach.nftDep = true; notify({ type: 'ok', img: n.src, title: `${n.name} ${$t("получен")}`, text: $t("Подарок уже в инвентаре") });
     if (openDrawer === $('giftsDrawer')) renderInv(); if (openDrawer === $('walletDrawer')) renderWallet(); checkAch(); }, 3500);
 }
@@ -129,7 +129,7 @@ $('walletGo').onclick = async () => {
         notify({ type: 'err', icon: 'err', ms: 6000, title: `${$t("Сначала напиши")} ${RELAYER}`, text: $t("Без сообщения релееру вывод не пройдёт. NFT остались у тебя, комиссия не списана"), action: { label: $t("Написать"), fn: () => tgOpen('https://t.me/' + RELAYER.slice(1)) } }); break; }
       if (!res.ok){ INV.unshift(g); haptic('rigid');                                  // этот не прошёл — вернулся в инвентарь
         notify({ type: 'err', key: 'out' + g.id, img: g.nft.src, ms: 5000, title: `${g.nft.name} #${g.num} ${$t("не выведен")}`, text: $t("NFT остался в инвентаре, комиссия не списана — попробуй ещё раз") }); continue; }
-      S.hist.wallet.unshift({ type: 'nft', t: Date.now(), name: g.nft.name, img: g.nft.src, bg: [g.a, g.b], value: g.value, fee: OUT_FEE, method: `${$t("в Telegram · комиссия {0} GRAM", OUT_FEE)}`, status: $t("в пути") });
+      S.hist.wallet.unshift({ type: 'nft', t: Date.now(), name: g.nft.name, num: g.num ?? g.nft.num, model: g.nft.model, img: g.nft.src, bg: [g.a, g.b], value: g.value, fee: OUT_FEE, method: `${$t("в Telegram · комиссия {0} GRAM", OUT_FEE)}`, status: $t("в пути") });
       setBalance(Math.round((S.balance - OUT_FEE) * 100) / 100);
       notify({ type: 'ok', key: 'out' + g.id, img: g.nft.src, title: `${g.nft.name} #${g.num} ${$t("отправлен")}`, text: `${$t("Придёт в профиль Telegram · комиссия {0} GRAM", fmt(OUT_FEE))}` });
     }

@@ -65,8 +65,14 @@ function renderSlots(){
 
 /* ---------- шторки ---------- */
 let openDrawer = null, drawerStack = [];   // стек шторок: из бонусов можно вернуться в меню
+// шторы не выше верхнего края ленты «лайв»: она и баланс над ней остаются видны
+function drawerTop(el){
+  const lv = document.querySelector('.live'), par = el.offsetParent; if (!lv || !par) return;
+  const pr = par.getBoundingClientRect(), k = pr.height / (par.offsetHeight || pr.height) || 1;
+  par.style.setProperty('--drTop', Math.max(0, (lv.getBoundingClientRect().top - pr.top) / k) + 'px');
+}
 function showDrawer(id){
-  openDrawer = $(id); openDrawer.classList.add('open'); $('backdrop').classList.add('on'); haptic();
+  openDrawer = $(id); drawerTop(openDrawer); openDrawer.classList.add('open'); $('backdrop').classList.add('on'); haptic();
 }
 function hideDrawer(){
   if (!openDrawer) return;
@@ -182,7 +188,7 @@ $('giftsF').addEventListener('click', e => {
     API.sellNfts(list).then(({ ok, amount: sum }) => { if (!ok) return notify({ type: 'err', icon: 'err', title: $t("Продажа не прошла"), text: $t("Подарки остались в инвентаре") });
     INV = INV.filter(g => !list.includes(g)); S.gifts = S.gifts.filter(g => INV.includes(g));
     setBalance(S.balance + sum); haptic('medium'); Sfx.coin();
-    S.hist.wallet.unshift({ type: 'sell', t: Date.now(), amount: sum, name: list.length > 1 ? `${list.length} NFT` : list[0].nft.name, img: list[0].nft.src, bg: [list[0].a, list[0].b], method: $t("продажа") });
+    S.hist.wallet.unshift({ type: 'sell', t: Date.now(), amount: sum, name: list.length > 1 ? `${list.length} NFT` : list[0].nft.name, num: list.length > 1 ? null : list[0].num ?? list[0].nft.num, model: list.length > 1 ? null : list[0].nft.model, img: list[0].nft.src, bg: [list[0].a, list[0].b], method: $t("продажа") });
     notify({ type: 'ok', img: list[0].nft.src, color: '#12D53D', title: `${$t("Продано: +{0} GRAM", fmt(sum))}`, text: list.length > 1 ? `${list.length} ${$n("подарок|подарка|подарков", list.length)}` : list[0].nft.name });
     sellMode = false; sellSel.clear(); renderInv(); giftsFoot(); renderBet(); });
   }
@@ -216,8 +222,7 @@ function renderMenu(){
     `<div class="mban2"><button class="mb2 hist" data-go="hist"><span class="mb2-t"><b>${$t("История")}</b><small>${$t("игры, кошелёк и бонусы")}</small></span><span class="mb2-art">${histFan()}</span></button>` +
     `<button class="mb2 pf" data-go="pfi"><span class="mb2-t"><b>${$t("Честность")}</b><small>${$t("проверь любой результат")}</small></span><span class="mb2-art"><i class="mb2-sh">${svg(IC.shield)}</i><em>00000</em></span></button></div>` +
     `<div class="mgrp-t">${$t("Игра")}</div><div class="mgrp">` +
-      (S.dbg.pvp ? row(IC.fire, `${$t("PvP крафт")} <span class="beta">β</span>`, '#FFB835', $t("эксперимент"), ' data-go="pvp"') : '') +
-      (S.dbg.bets ? row(IC.target, `${$t("Предикты")} <span class="beta">β</span>`, '#7c5cff', $t("эксперимент"), ' data-go="bets"') : '') +
+      (S.dbg.bets ? row(IC.target, `${$t("Ставки")} <span class="beta">β</span>`, '#7c5cff', $t("эксперимент"), ' data-go="bets"') : '') +
       sw('fastRow', '#FFB835', NICON.bolt, $t("Быстрый крафт"), $t("сразу число и дроп"), S.fast) +
       sw('liteRow', '#12D53D', NICON.leaf, $t("Экономный режим"), $t("без анимаций — для слабых телефонов"), S.lite) +
       sw('demoRow', '#AE3FC4', NICON.candy, $t("Демо-режим"), $t("фантики вместо GRAM"), S.demo) +
