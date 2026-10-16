@@ -333,7 +333,7 @@ function arenaRules(){
   // шторка снизу, как остальные экраны правил; закрывается свайпом или тапом мимо — кнопка «Понятно» не нужна
   const html = `<div class="ar-steps">` + steps.map(([c, t, d], i) => `<div class="pfi-step" style="--c:${c}"><i>${i + 1}</i><div><b>${t}</b><p>${d}</p></div></div>`).join('') +
     `<div class="pfi-step ar-pf" style="--c:#12D53D"><i>${svg(IC.shield)}</i><div><b>${$t("Честность")}</b><p>${$t("Хеш зерна комнаты известен до взносов. После старта зерно раскроется — исход можно проверить.")}</p><code>${pvpView.commitment}</code></div></div></div>`;
-  swapDrawer('arRulesDrawer', () => { $('arRulesBody').innerHTML = html; });
+  swapDrawer('arRulesDrawer', () => { $('arRulesT').textContent = $t("Правила арены"); $('arRulesBody').innerHTML = html; });
 }
 
 // сесть на место = вступить в бой с выбранным тикетом

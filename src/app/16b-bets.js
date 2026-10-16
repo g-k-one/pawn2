@@ -17,11 +17,21 @@ const BET_KINDS = {
   parity:{ count: () => TICKETS / 2, win: (s, n) => n % 2 === s },               // 0 — чёт, 1 — нечет
   half:  { count: () => TICKETS / 2, win: (s, n) => (n >= TICKETS / 2 ? 1 : 0) === s },   // 0 — 00000–49999, 1 — 50000–99999
   digit: { count: () => TICKETS / 10, win: (s, n) => n % 10 === s },             // последняя цифра
+  // узоры тикета (sel всегда 0): «есть 7» — хоть одна семёрка; «все разные» — пять разных цифр; «пара» — две одинаковые рядом;
+  // «зеркало» — читается одинаково с обеих сторон. Сколько тикетов подходит — перебором всех 100 000: 40951 · 30240 · 34390 · 1000
+  has7:  { count: () => 40951, win: (s, n) => { const d = dg(n); return d[0] === 7 || d[1] === 7 || d[2] === 7 || d[3] === 7 || d[4] === 7; } },
+  diff:  { count: () => 30240, win: (s, n) => { const d = dg(n); let m = 0; for (const x of d){ if (m & 1 << x) return false; m |= 1 << x; } return true; } },
+  pair:  { count: () => 34390, win: (s, n) => { const d = dg(n); return d[0] === d[1] || d[1] === d[2] || d[2] === d[3] || d[3] === d[4]; } },
+  mirror:{ count: () => 1000, win: (s, n) => { const d = dg(n); return d[0] === d[4] && d[1] === d[3]; } },
 };
+// цифры тикета слева направо — арифметикой, без строк: лимит выигрыша перебирает все 100 000 тикетов на каждую фишку
+const DG = [0, 0, 0, 0, 0]; function dg(n){ for (let i = 4; i >= 0; i--){ DG[i] = n % 10; n = (n - DG[i]) / 10; } return DG; }
+const BET_SELS = k => k === 'rank' ? TIERS.map((_, i) => i) : k === 'digit' ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] : k === 'parity' || k === 'half' ? [0, 1] : [0];
+const BET_PATS = ['has7', 'diff', 'pair', 'mirror'];
 const betsRules = () => ({ kind: 'bets', rtp_ppm: String(BETS_RTP), tickets: TICKETS, max_win_nano: String(nano(BETS_MAX_WIN)),
-  table: Object.entries(BET_KINDS).flatMap(([k, d]) => (k === 'rank' ? TIERS.map((_, i) => i) : k === 'digit' ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] : [0, 1]).map(s => ({ bet: k, sel: s, count: d.count(s) }))) });
+  table: Object.entries(BET_KINDS).flatMap(([k, d]) => BET_SELS(k).map(s => ({ bet: k, sel: s, count: d.count(s) }))) });
 const betMultPpm = (rules, bet, sel) => BETS_RTP * BigInt(rules.tickets) * 1000000n / BigInt(rules.table.find(x => x.bet === bet && x.sel === sel).count) / 1000000n;   // множитель, ppm
-const betMult = (bet, sel) => Number(betMultPpm(betsRules(), bet, sel)) / 1e6;
+let RULES_C = null; const betMult = (bet, sel) => Number(betMultPpm(RULES_C ||= betsRules(), bet, sel)) / 1e6;   // правила не меняются — считаем один раз
 // судья: какие ставки сыграли и сколько выплатить (общий для мока и для проверки честности в checkProof)
 function betsJudge(rules, bets, n){
   const wins = bets.map(b => BET_KINDS[b.bet].win(+b.sel, n));
@@ -44,14 +54,19 @@ async function betsMock(bets){
 
 /* ---------- экран: поле ставок поверх главной (как арена) ---------- */
 let betsOn = false, betsChip = .5, betsBoard = {}, betsLast = null;   // betsBoard: 'rank:2' → сумма, GRAM
-const betLabel = (bet, sel) => bet === 'rank' ? TIERS[sel].name : bet === 'parity' ? (sel ? $t("Нечет") : $t("Чёт")) : bet === 'half' ? (sel ? '50000–99999' : '00000–49999') : $t("Последняя {0}", sel);
+const PAT_NAME = { has7: () => $t("Есть 7"), diff: () => $t("Все разные"), pair: () => $t("Пара"), mirror: () => $t("Зеркало") };
+const PAT_EX = { has7: '30718', diff: '61294', pair: '48853', mirror: '27472' };   // пример подходящего тикета — на карточке исхода
+const betLabel = (bet, sel) => bet === 'rank' ? TIERS[sel].name : bet === 'parity' ? (sel ? $t("Нечет") : $t("Чёт")) : bet === 'half' ? (sel ? '50000–99999' : '00000–49999') : PAT_NAME[bet] ? PAT_NAME[bet]() : $t("Последняя {0}", sel);
 const betsTotal = () => Math.round(Object.values(betsBoard).reduce((a, v) => a + v, 0) * 100) / 100;
-// сколько можно выиграть за раунд при самом удачном тикете: ранг и последняя цифра независимы (в каждом ранге есть все цифры),
-// чёт/нечет задаётся цифрой — перебираем 5 × 10 сочетаний
+// сколько можно выиграть за раунд при самом удачном тикете. Без узоров: ранг и последняя цифра независимы (в каждом ранге есть все цифры),
+// чёт/нечет задаётся цифрой — 5 × 10 сочетаний. С узорами — честный перебор всех 100 000 тикетов
 function betsMaxWin(board = betsBoard){
   const pay = k => board[k] ? Math.floor(board[k] * betMult(...k.split(':').map((x, i) => i ? +x : x)) * 100) / 100 : 0;
   let best = 0;
-  for (let r = 0; r < TIERS.length; r++) for (let d = 0; d < 10; d++) best = Math.max(best, pay('rank:' + r) + pay('digit:' + d) + pay('parity:' + d % 2));
+  const pats = Object.keys(board).filter(k => board[k] && BET_PATS.includes(k.split(':')[0]));
+  if (!pats.length){ for (let r = 0; r < TIERS.length; r++) for (let d = 0; d < 10; d++) best = Math.max(best, pay('rank:' + r) + pay('digit:' + d) + pay('parity:' + d % 2)); }
+  else { const bs = Object.keys(board).filter(k => board[k]).map(k => { const [b, s] = k.split(':'); return [BET_KINDS[b].win, +s, pay(k)]; });
+    for (let n = 0; n < TICKETS; n++){ let v = 0; for (const [w, s, p] of bs) if (w(s, n)) v += p; if (v > best) best = v; } }
   return Math.round(best * 100) / 100;
 }
 const betsList = () => Object.entries(betsBoard).filter(([, v]) => v > 0).map(([k, v]) => { const [bet, sel] = k.split(':'); return { bet, sel: +sel, amount: v }; });
@@ -116,13 +131,17 @@ function betsAdd(k){
   const el = $('btBoard').querySelector(`[data-k="${k}"]`); el?.animate([{ scale: .9 }, { scale: 1.06, offset: .6 }, { scale: 1 }], { duration: 260, easing: 'cubic-bezier(.3,1.5,.5,1)' });
   if (!S.lite) $('btOrb').animate([{ filter: 'brightness(1.8)', scale: 1.06 }, { filter: 'brightness(1)', scale: 1 }], { duration: 420, easing: 'cubic-bezier(.3,1.4,.5,1)' });   // шар вспыхивает на каждую фишку
 }
+// правила ставок — та же шторка и те же шаги, что у правил арены (16a-pvp.js): цветной номер, заголовок, строка пояснения
 function betsRulesModal(){
   haptic();
-  const rules = [$t("Загадай исходы одного тикета 00000–99999: ранг, чёт или нечет, последнюю цифру. Можно сразу несколько."), $t("Выплата каждой ставки — по шансу исхода, возврат 95% на любой ставке."),
-    $t("За раунд: ставка — до {0} GRAM, выигрыш при любом тикете — до {1} GRAM, как в крафте.", BET_MAX, BETS_MAX_WIN), $t("Тикет честный: хеш зерна виден до игры, исход можно проверить.")];
-  modal(`<h4>${$t("Правила ставок")}</h4><ol class="ar-rules">${rules.map(x => `<li>${x}</li>`).join('')}</ol>` +
-    `<button class="btn-main" id="btOk">${$t("Понятно")}</button>`, '#7c5cff');
-  $('btOk').onclick = closeModal;
+  const steps = [[TIERS[0].c, $t("Загадай исходы тикета"), $t("Ранг — кнопками внизу, остальное — тапом по полю. Можно сразу несколько исходов.")],
+    [TIERS[2].c, $t("Чёт, нечет, последняя цифра"), $t("По последней цифре тикета: чёт или нечет — x{0}, точная цифра — x{1}.", fmt(betMult('parity', 0)), fmt(betMult('digit', 0)))],
+    [TIERS[1].c, $t("Узор тикета"), $t("Есть 7 — хоть одна семёрка. Все разные — пять разных цифр. Пара — две одинаковые рядом. Зеркало — читается одинаково с обеих сторон, как 27472.")],
+    [TIERS[3].c, $t("Выплата — по шансу"), $t("Чем реже исход, тем больше множитель; возврат 95% на любой ставке.")],
+    [TIERS[4].c, $t("Лимиты"), $t("За раунд: ставка — до {0} GRAM, выигрыш при любом тикете — до {1} GRAM, как в крафте.", BET_MAX, BETS_MAX_WIN)]];
+  const html = `<div class="ar-steps">` + steps.map(([c, t, d], i) => `<div class="pfi-step" style="--c:${c}"><i>${i + 1}</i><div><b>${t}</b><p>${d}</p></div></div>`).join('') +
+    `<div class="pfi-step ar-pf" style="--c:#12D53D"><i>${svg(IC.shield)}</i><div><b>${$t("Честность")}</b><p>${$t("Тикет честный: хеш зерна виден до игры, исход можно проверить.")}</p></div></div></div>`;
+  swapDrawer('arRulesDrawer', () => { $('arRulesT').textContent = $t("Правила ставок"); $('arRulesBody').innerHTML = html; });
 }
 /* крутить: та же анимация тикета, на экране — твои ставки; когда тикет встал — сыгравшие подсвечиваются */
 async function betsSpin(){
@@ -140,7 +159,8 @@ async function betsSpin(){
   await reveal(r, S.fast || S.lite);
 }
 // после того как тикет встал: сыгравшие ставки — зелёные с выплатой, остальные гаснут; затем итог
-async function betsAfter(r){
+async function betsAfter(r){ await betsChipsReveal(r); betsResult(r); }
+async function betsChipsReveal(r){
   // саспенс: ставки раскрываются по одной — от частых исходов к редким (самая крупная — последней), выплата растёт на глазах.
   // Исход уже известен и проверяем; меняется только порядок показа
   const chips = [...$('fxPvp').querySelectorAll('.pvc')], bank = $('fxPvp').querySelector('.pvp-bank');
@@ -157,6 +177,8 @@ async function betsAfter(r){
   }
   haptic(r.win > 0 ? 'heavy' : 'rigid');
   await wait(S.lite ? 300 : 900);
+}
+function betsResult(r){
   const won = r.bets.filter(b => b.won);
   // итог: сумма крупно, ниже — все ставки раунда: сыгравшие зелёные с выплатой, остальные приглушены
   $('fxDrop').innerHTML = `<div class="pz bt-res${r.win > 0 ? ' won' : ''}${r.nft ? ' nft' : ''}">${r.nft ? `<img src="${r.nft.nft.src}" alt="" style="background:linear-gradient(160deg,${r.nft.a},${r.nft.b})"><b>${r.nft.nft.name}</b><small class="bt-ch">${fmt(r.nft.value)} GRAM${r.change > 0 ? ` · ${$t("и на баланс +{0} GRAM", fmt(r.change))}` : ''}</small>` : `<img src="assets/hero-gem.webp" alt=""><b>${r.win > 0 ? '+' + fmt(r.win) : '0'}<i class="u">GRAM</i></b>`}` +

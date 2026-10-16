@@ -1596,14 +1596,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 @keyframes orbFog{to{rotate:360deg}}
 @keyframes orbTw{from{opacity:.35}to{opacity:1}}
 @keyframes orbQ{0%,100%{opacity:.45;scale:.94}50%{opacity:.9;scale:1.04}}
-/* раскрытие предиктов: тикет крутится внутри сияющего шара */
-.fx.btspin .digits::before{content:"";position:absolute;left:50%;top:50%;width:372px;height:372px;margin:-186px 0 0 -186px;z-index:-1;border-radius:50%;pointer-events:none;
-  background:radial-gradient(ellipse 30% 18% at 32% 18%,rgba(255,255,255,.3),rgba(255,255,255,0) 70%),radial-gradient(circle at 50% 56%,rgba(110,60,230,.55),rgba(45,18,120,.5) 46%,rgba(14,5,48,.65) 72%,rgba(5,1,15,.2) 100%);
-  box-shadow:inset 0 -24px 50px rgba(185,140,255,.35),0 0 60px rgba(124,92,255,.45),0 0 140px rgba(124,92,255,.25);animation:orbQ 3s ease-in-out infinite}
-.fx.btspin .digits::after{content:"";position:absolute;left:50%;top:50%;width:372px;height:372px;margin:-186px 0 0 -186px;z-index:-1;border-radius:50%;pointer-events:none;
-  mix-blend-mode:screen;filter:blur(10px);background:conic-gradient(from 0deg,transparent,rgba(200,160,255,.35),transparent 30%,rgba(110,200,255,.22),transparent 60%,rgba(255,130,230,.28),transparent 85%);
-  animation:orbFog 9s linear infinite}
-.fx.btspin.done .digits::before,.fx.btspin.done .digits::after{opacity:0;transition:opacity .5s}
 
 /* бонусы: «Сегодня» — баннер супер дропа, возврат со страницы; «Друзья и топ» — переключатель; пасс — макет дорожек */
 .sdban{width:100%;display:flex;align-items:center;gap:12px;margin-top:20px;padding:12px 16px;border-radius:22px;text-align:left;background:linear-gradient(110deg,#3a0f55,#1b0a2c);box-shadow:inset 0 0 0 1.5px rgba(235,87,176,.4)}
@@ -2032,18 +2024,20 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .hdet+.sect{margin-top:0}
 .hdet>.hd-sec:last-child{margin-bottom:2px}
 /* нижний блок (переключатель, круглые кнопки, колесо/фишки, ставка, кнопка, карточки NFT) — на 12 px выше: таблетка режимов не заходит на полоску «домой» iPhone */
-/* таб-бар режимов — под кнопками ставки: на iPhone вырез снизу (34 px) прибавлялся к отступу, и таблетка наезжала на +0.1…+5 */
-.has-modes .modes{bottom:max(12px,calc(env(safe-area-inset-bottom,0px) - 8px))}
-.has-modes .bar{padding-bottom:64px}
-.has-modes .bet{top:639px}
-.has-modes .craft{top:572px}
+/* таб-бар режимов над полоской «домой» iPhone (вырез снизу 34 px), а весь нижний блок — кнопки, ставка, наковальня, колесо арены —
+   поднят на столько же (--lift ≈ 20 px на iPhone, 0 там, где выреза нет), чтобы таблетка не наезжала на +0.1…+5 */
+:root{--lift:max(0px,calc(env(safe-area-inset-bottom,0px) - 14px))}
+.has-modes .modes{bottom:max(12px,calc(env(safe-area-inset-bottom,0px) + 4px))}
+.has-modes .bar{padding-bottom:calc(64px + var(--lift))}
+.has-modes .bet{top:calc(639px - var(--lift))}
+.has-modes .craft{top:calc(572px - var(--lift))}
 .has-modes #slots{translate:0 -12px;z-index:2}   /* карточки подарков — над крупным призом, как были */
-.has-modes .t2w{top:732px}
+.has-modes .t2w{top:calc(732px - var(--lift))}
 
 .tkc{font-style:normal;font-variant-numeric:tabular-nums}
 .drawer{max-height:calc(100% - var(--drTop, 60px))}
 /* стрелки комнат арены — по бокам плашки ставки */
-.t2arr{top:665px;width:44px;height:44px;display:none;place-items:center;color:rgba(255,255,255,.72);z-index:5}
+.t2arr{top:calc(665px - var(--lift));width:44px;height:44px;display:none;place-items:center;color:rgba(255,255,255,.72);z-index:5}
 .mode-tab2 .t2arr:not([hidden]){display:grid}
 .t2arr svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 .t2arr:disabled{opacity:.25}
@@ -2132,17 +2126,42 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .t3max b img{height:14px}
 .mode-tab3 .chips .pill.on{background:#fff;color:#000}
 /* поле ставок — компактно между множителем и кнопкой: ранги, чёт/нечет, 10 цифр в ряд; множители — строкой под полем */
-.t3b{top:352px;display:none;flex-direction:column;gap:8px}
+.t3b{top:340px;display:none;flex-direction:column;gap:8px}
 .mode-tab3 .t3b{display:flex}
 .t3b .bt-row .bt-cell{min-height:44px;padding:4px 2px;border-radius:14px}
-.t3b .bt-row.r2 .bt-cell{min-height:40px}
+.t3b .bt-row.r2 .bt-cell{min-height:36px}
 .t3b .bt-row.r10{gap:4px}
 .t3b .bt-row.r10 .bt-cell{min-height:40px;border-radius:10px}
 .t3b .bt-row.r10 .bt-cell b{font-size:18px}
-.t3leg{display:flex;justify-content:space-between;font-size:12.5px;line-height:16px;text-transform:uppercase;color:rgba(255,255,255,.72)}
 .t3max{margin-bottom:2px}
+/* поле ставок: заголовки рядов, цифры — плитками барабана тикета, узоры — карточки с примером тикета */
+.t3b{gap:5px}
+.t3h{display:flex;justify-content:space-between;align-items:baseline;margin-top:2px;font-size:12.5px;line-height:14px;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.t3h b{color:#c9b8ff;font-weight:700}
+.t3b .bt-row.r2 .bt-cell{flex-direction:row;gap:8px}
+.t3b .bt-row.r2 .bt-cell small{color:#c9b8ff}
+.t3b .bt-cell.drum{background:linear-gradient(rgba(255,255,255,.1),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),inset 0 -6px 10px rgba(0,0,0,.35)}
+.t3b .bt-cell.drum b{font-size:22px;font-variant-numeric:tabular-nums}
+.t3b .bt-cell.drum.on{box-shadow:inset 0 0 0 2px var(--c),0 0 14px color-mix(in srgb,var(--c) 40%,transparent)}
+.t3b .bt-row.r4{grid-template-columns:repeat(4,1fr);gap:6px}
+.t3b .pat .bt-cell{min-height:52px;gap:0;padding:4px 2px}
+.t3b .pat .bt-cell b{font-size:13px}
+.t3b .pat .ex{font-size:12.5px;line-height:15px;letter-spacing:.06em;color:rgba(255,255,255,.45);font-variant-numeric:tabular-nums}
+.t3b .pat .ex i{font-style:normal;color:#fff}
+.t3b .pat .bt-cell small{color:#c9b8ff}
 .bt-res.nft>img{width:180px;height:180px;border-radius:28px;object-fit:contain}
 .bt-res.nft>b{font-size:30px}
 .bt-res .bt-ch{display:block;font-size:13.5px;color:rgba(255,255,255,.72);margin-top:4px}
 .item .cbadge.bbadge{background:#7c5cff}
 .item .cbadge.bbadge svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:2.4}
+.t3res{margin-top:10px}
+/* фишки ставок под суммой выигрыша: у подписи итога крупные стили для span и b — здесь возвращаем вид фишек, как при раскрытии */
+.fx-win .t3res .pvc{display:flex;margin:0;font-size:inherit;color:inherit}
+.fx-win .t3res .pvc b{display:inline;font-size:15px;line-height:1.1;background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--tc)}
+.fx-win .t3res .pvc.win b{color:#fff}
+.t3lose img{filter:grayscale(.8) brightness(.55)}
+/* итог арены: при 6 игроках список не уводит кнопки вниз — строки плотнее, аватарки меньше */
+.pvls .trow,.pvls .trow.me{padding:6px 0}
+.pvls .trow .tav{width:36px;height:36px;font-size:17px}
+.pvls .tn b{font-size:17px;line-height:20px}
+.pvl-nft img{width:32px;height:32px}

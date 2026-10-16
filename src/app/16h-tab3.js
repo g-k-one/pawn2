@@ -29,12 +29,19 @@ function t3Leave(){ t3Tier = S.tier; if (t3Gifts){ S.gifts = t3Gifts.filter(g =>
 
 // поле ставок на месте приза
 const t3Board = (() => { const el = document.createElement('div'); el.className = 'abs t3b'; el.id = 't3Board'; $('bet').parentNode.insertBefore(el, $('prize')); return el; })();
+// пример тикета на карточке узора: подходящие цифры подсвечены (семёрка, пара, края зеркала) — без слов понятно, что это за исход
+const patEx = k => { const t = PAT_EX[k], hi = k === 'has7' ? [2] : k === 'pair' ? [2, 3] : k === 'mirror' ? [0, 1, 3, 4] : [0, 1, 2, 3, 4];
+  return [...t].map((c, i) => hi.includes(i) ? `<i>${c}</i>` : c).join(''); };
+function t3Cell(k, inner, cls = ''){ const v = betsBoard[k] || 0; return `<button class="bt-cell ${cls}${v ? ' on' : ''}" data-k="${k}">${inner}${v ? `<em>${fmt(v)}</em>` : ''}</button>`; }
 function t3Render(){
   if (!isT3()) return; const tot = betsTotal();
-  t3Board.innerHTML = `<div class="t3max">${tot ? `${$t("Даст до")} <b><img src="assets/gem-balance.svg" alt="">${fmt(betsMaxWin())}</b>` : $t("Ставка на ранг — кнопками внизу, на чёт и цифру — тапом по полю")}</div>` +
-    `<div class="bt-row r2">${cellHTML('parity', 0)}${cellHTML('parity', 1)}</div>` +
-    `<div class="bt-row r10 dg">${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(d => cellHTML('digit', d)).join('')}</div>` +
-    `<div class="t3leg"><span>${$t("Чёт / нечет")} x${fmt(betMult('parity', 0))}</span><span>${$t("Последняя цифра")} x${fmt(betMult('digit', 0))}</span></div>`;
+  // сверху вниз — от частых исходов к редким: чёт/нечет, последняя цифра, узоры тикета. Множитель — в каждой ячейке или в заголовке ряда
+  t3Board.innerHTML = `<div class="t3max">${tot ? `${$t("Даст до")} <b><img src="assets/gem-balance.svg" alt="">${fmt(betsMaxWin())}</b>` : $t("На ранг — кнопками внизу, на исходы — тапом")}</div>` +
+    `<div class="bt-row r2">${[0, 1].map(i => t3Cell('parity:' + i, `<b>${betLabel('parity', i)}</b><small>x${fmt(betMult('parity', i))}</small>`)).join('')}</div>` +
+    `<div class="t3h"><span>${$t("Последняя цифра")}</span><b>x${fmt(betMult('digit', 0))}</b></div>` +
+    `<div class="bt-row r10 dg">${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(d => t3Cell('digit:' + d, `<b>${d}</b>`, 'drum')).join('')}</div>` +
+    `<div class="t3h"><span>${$t("Узор тикета")}</span></div>` +
+    `<div class="bt-row r4 pat">${BET_PATS.map(k => t3Cell(k + ':0', `<b>${betLabel(k, 0)}</b><span class="ex">${patEx(k)}</span><small>x${fmt(betMult(k, 0))}</small>`)).join('')}</div>`;
   document.querySelectorAll('.chips [data-add]').forEach(b => b.classList.toggle('on', +b.dataset.add === betsChip));
 }
 // фишка на исход — те же лимиты, что у ставок: выигрыш за раунд и общая ставка
@@ -80,14 +87,44 @@ async function t3Play(){
   $('fx').classList.add('btspin');
   await reveal(r, fast);
 }
-// итог — как у крафта: одна кнопка «Забрать», под ней «Проверить честность · Поделиться»; поле остаётся — «ещё раз» в один тап
+// итог — тот же экран дропа, что у крафта: NFT — «Продать за …» и «Забрать», GRAM — «Забрать»; под суммой — все ставки раунда.
+// Начисление — по кнопке, как у крафта. Не сыграло ничего — тусклый гем и «Ещё раз»; поле остаётся с теми же ставками
 const _betsAfter3 = betsAfter;
 betsAfter = async r => {
-  await _betsAfter3(r); if (!isT3()) return;
-  $('fxBtns').innerHTML = `<button class="btn-main" id="btT3">${$t("Забрать")}</button>` + PF_LINK;
+  if (!isT3()) return _betsAfter3(r);
+  await betsChipsReveal(r);
+  const won = r.bets.filter(b => b.won), tag = won.length ? $t("сбылось {0} из {1}", won.length, r.bets.length) : $t("предсказание не сбылось");
+  const list = `<div class="pvp-chips t3res">${r.bets.map(b => `<span class="pvc bt ${b.won ? 'win' : 'lose'}" style="--tc:${b.bet === 'rank' ? TIERS[b.sel].c : '#b9a6ff'}"><b>${betLabel(b.bet, b.sel)}</b><em>${b.won ? '+' + fmt(b.pay) : fmt(b.amount)}</em></span>`).join('')}</div>`;
+  $('fxPvp').innerHTML = '';
+  if (r.win > 0){
+    await showDrop(r);
+    if (!r.nft) $('fxWin').innerHTML = `<b>+${fmt(r.win)} GRAM</b><span>${$t("ставка {0} GRAM", fmt(r.stake))} · ${tag}</span>`;
+    else $('fxWin').insertAdjacentHTML('beforeend', `<span>${$t("ставка {0} GRAM", fmt(r.stake))} · ${tag}</span>`);
+    $('fxWin').insertAdjacentHTML('beforeend', list);
+    $('fxTake').onclick = () => t3Finish(r, 'take'); if ($('fxSell')) $('fxSell').onclick = () => t3Finish(r, 'sell');
+    $('fxShare').onclick = () => shareWin(r.nft ? $t("Выиграл {0} #{1} на ставках в Pawn", r.nft.nft.name, r.nft.num) : $t("Выиграл +{0} GRAM на ставках в Pawn", fmt(r.win)), r.nft);
+  } else {
+    $('fxDrop').innerHTML = `<div class="pz"><div class="tw t3lose" id="pz"><img src="assets/hero-gem.webp" alt=""></div></div>`;
+    $('fxWin').innerHTML = `<b>0 GRAM</b><span>${$t("ставка {0} GRAM", fmt(r.stake))} · ${tag}</span>` + list;
+    $('fxBtns').innerHTML = `<button class="btn-main" id="fxTake">${$t("Ещё раз")}</button>` + PF_LINK;
+    $('fx').classList.add('done'); setTimeout(() => { FX.hot = false; }, 900);
+    $('fxTake').onclick = () => t3Finish(r, 'take');
+    $('fxShare').onclick = () => shareWin($t("Ставлю на тикет в Pawn"));
+  }
   $('fxPfIn').onclick = () => openPF(r);
-  $('fxShare').onclick = () => shareWin($t("Поставил на тикет в Pawn"));
-  $('btT3').onclick = async () => { haptic(); await closeFx(); $('fx').classList.remove('btspin'); CRAFT.classList.remove('busy'); S.busy = false; t3Render(); renderBet(); };
 };
+async function t3Finish(r, how){
+  if (t3Finish.on) return; t3Finish.on = true;
+  const add = r.nft ? (how === 'sell' ? r.nft.value : 0) + (r.change || 0) : r.win;
+  if (r.nft && how !== 'sell') INV = [{ ...r.nft, id: 'g' + Date.now() }, ...INV];
+  haptic('medium'); if (add > 0) Sfx.coin();
+  if (!S.demo){ logCraft(r, r.nft ? how : 'bets'); addXp(r.stake * .5); }
+  await closeFx(); $('fx').classList.remove('btspin');
+  if (add > 0) moveBal(add);
+  if (r.nft) notify({ type: 'ok', img: r.nft.nft.src, title: how === 'sell' ? $t("Продано: +{0} GRAM", fmt(add)) : `${r.nft.nft.name} ${$t("в инвентаре")}`, text: r.change > 0 && how !== 'sell' ? $t("На баланс +{0} GRAM", fmt(r.change)) : $t("Выигрыш ставок") });
+  else if (add > 0) notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(add)} GRAM`, text: $t("Выигрыш ставок зачислен") });
+  if (r.win > 0) setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win, bets: true })), 300);
+  CRAFT.classList.remove('busy'); S.busy = false; t3Finish.on = false; t3Render(); renderBet();
+}
 // кнопка подарков в ставках — правила (щит, как в Арене)
 $('giftBtn').addEventListener('click', e => { if (!isT3()) return; e.stopImmediatePropagation(); betsRulesModal(); }, true);
