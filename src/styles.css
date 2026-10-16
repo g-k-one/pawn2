@@ -1630,7 +1630,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .bback{display:flex;align-items:center;gap:4px;margin:0 0 8px;font-size:18px;text-transform:uppercase;color:rgba(255,255,255,.72)}
 .bback svg{width:20px;height:20px}
 .bseg{margin:0 auto 12px;width:max-content}
-.bseg button{min-width:110px;font-size:17px}
+.bseg button{min-width:96px;font-size:17px}
 .pass-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:16px;border-radius:22px;background:linear-gradient(135deg,rgba(255,184,53,.16),rgba(124,92,255,.14))}
 .pass-h b{font-size:26px;text-transform:uppercase}
 .pass-h .soon{font-style:normal;padding:2px 10px;border-radius:999px;background:rgba(255,184,53,.2);color:#ffb835;font-size:14px;text-transform:uppercase}

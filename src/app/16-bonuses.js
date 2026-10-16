@@ -1,11 +1,11 @@
 /* =========================================================
-   БОНУСЫ — 5 вкладок по смыслу:
-   Сегодня (задания дня, неделя, супер дроп) · Пасс · Кейсы · Достижения · Друзья и топ (рефералка | топ)
+   БОНУСЫ — 4 вкладки по смыслу:
+   Сегодня (задания дня, неделя, супер дроп) · Пасс · Кейсы · Профиль (таблетки: друзья | топ | достижения)
    casesTab — что показано: today · super (страница супер дропа внутри «Сегодня») · pass · cases · ach · refs · top
    ========================================================= */
 let casesTab = 'today', friendsSeg = 'refs';
-const BTAB_OF = { today: 'today', tasks: 'today', super: 'today', pass: 'pass', cases: 'cases', ach: 'ach', refs: 'friends', top: 'friends' };
-function openCases(tab){ if (tab){ casesTab = tab === 'tasks' ? 'today' : tab; if (tab === 'refs' || tab === 'top') friendsSeg = tab; } swapDrawer('casesDrawer', renderCases); }
+const BTAB_OF = { today: 'today', tasks: 'today', super: 'today', pass: 'pass', cases: 'cases', ach: 'friends', refs: 'friends', top: 'friends' };
+function openCases(tab){ if (tab){ casesTab = tab === 'tasks' ? 'today' : tab; if (tab === 'refs' || tab === 'top' || tab === 'ach') friendsSeg = tab; } swapDrawer('casesDrawer', renderCases); }
 const sdBanner = () => `<button class="sdban" data-go="super"><img class="sdb-l" src="assets/superdrop-logo.webp" alt="Super Drop"><span><small>${$t("Выбей тикет первым — NFT твой")}</small>` +
   `<b>${tk(SUPER.target)}</b></span><span class="sdb-p">${SUPER.nft ? `<img src="${SUPER.nft.nft.src}" alt="">` : ''}<em>${fmt(SUPER.nft ? SUPER.nft.value : 0)}${GU}</em></span><i>›</i></button>`;
 const GEM_S = '<img class="gm" src="assets/gem-small.svg" alt="">';
@@ -44,14 +44,16 @@ const achRow = ([id, t, rw, ok, act, prog]) => {
 };
 function renderCases(){
   const cur = BTAB_OF[casesTab] || 'today';
-  $('casesTabs').innerHTML = [['today', $t("Сегодня")], ['pass', $t("Пасс")], ['cases', $t("Кейсы")], ['ach', $t("Достижения")], ['friends', $t("Друзья и топ")]].map(([k, t]) => `<button class="tab${k === cur ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
+  $('casesTabs').innerHTML = [['today', $t("Сегодня")], ['pass', $t("Пасс")], ['cases', $t("Кейсы")], ['friends', $t("Профиль")]].map(([k, t]) => `<button class="tab${k === cur ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
   $('casesTabs').querySelector('.on')?.scrollIntoView({ inline: 'center', block: 'nearest' });
   const b = $('casesBody');
+  // «Профиль»: таблетки внутри вкладки
+  const seg = `<div class="bseg seg">${[['refs', $t("Друзья")], ['top', $t("Топ")], ['ach', $t("Достижения")]].map(([k, t]) => `<button class="${k === casesTab ? 'on' : ''}" data-go="${k}">${t}</button>`).join('')}</div>`;
   if (casesTab === 'cases'){
     b.innerHTML = `<div class="bgrid">${CASES.map(caseCard).join('')}</div>` +
       `<p class="bnote">${$t("Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить и открывать по одному, когда захочешь.")}</p>`;
   } else if (casesTab === 'ach'){
-    b.innerHTML = `<div class="sect"><div class="sect-h"><span><b>${$t("Достижения")}</b><small>${$t("засчитываются по кнопке «Проверить»")}</small></span><em class="cnt">${ACH.filter(a => S.ach.got[a[0]]).length}/${ACH.length}</em></div>` + ACH.filter(a => !S.ach.got[a[0]]).map(achRow).join('') +
+    b.innerHTML = seg + `<div class="sect"><div class="sect-h"><span><b>${$t("Достижения")}</b><small>${$t("засчитываются по кнопке «Проверить»")}</small></span><em class="cnt">${ACH.filter(a => S.ach.got[a[0]]).length}/${ACH.length}</em></div>` + ACH.filter(a => !S.ach.got[a[0]]).map(achRow).join('') +
       // выполненные — свёрнуты: сверху то, что ещё можно сделать
       (ACH.some(a => S.ach.got[a[0]]) ? `<details class="achdone"><summary>${$t("Выполненные · {0}", ACH.filter(a => S.ach.got[a[0]]).length)}</summary>${ACH.filter(a => S.ach.got[a[0]]).map(achRow).join('')}</details>` : '') + `</div>` + rulesHTML([$t("Достижения засчитываются один раз — по кнопке «Проверить».")]);
   } else if (casesTab === 'pass'){
@@ -76,7 +78,6 @@ function renderCases(){
       rulesHTML([$t("Super Drop забирает тот, кто первым выбьет загаданный тикет."), $t("Учитываются крафты со ставкой от 0.5 GRAM."), $t("Обычный выигрыш крафта при этом тоже зачисляется на баланс."), $t("После выпадения загадывается новый тикет и новый NFT.")]);
     tiltCard($('sdCard'), 1.2); upgradeImg($('sdCard').querySelector('.nc-img'), sd.nft); Tilt.grab($('sdCard').querySelector('.nc-t'), () => openNft(sd));   // крутить пальцем, тап — в Telegram
   } else if (casesTab === 'refs'){
-    const seg = `<div class="bseg seg">${[['refs', $t("Друзья")], ['top', $t("Топ")]].map(([k, t]) => `<button class="${k === casesTab ? 'on' : ''}" data-go="${k}">${t}</button>`).join('')}</div>`;
     b.innerHTML = seg + `<div class="refpct"><div><b>10%</b><small>${$t("от первого депозита")}</small></div><div><b>5%</b><small>${$t("от активности")}</small></div></div>` +
       `<a class="banner amb" data-act="amb"><span><b>${$t("Программа для амбассадоров")}</b><small>${$t("больше процент для блогеров и комьюнити")}</small></span><img src="assets/referrals.webp" alt=""></a>` +
       `<div class="refbox rgap"><div class="refrow"><span>${svg(IC.users)} ${$t("Друзей:")} <b>${REF.friends.length}</b></span><span class="g"><img src="assets/gem-small.svg" alt="">${fmt(REF.total)}</span></div>` +
@@ -88,7 +89,6 @@ function renderCases(){
       `<div class="sect rgap"><div class="sect-h"><span><b>${$t("Твои друзья")}</b></span></div>` + REF.friends.map(([n, cr, g]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${cr ? cr + (" " + $t("крафтов")) : $t("ещё не крафтил")}</small></span><span class="tb2 g"><img src="assets/gem-small.svg" alt="">${fmt(g)}</span></div>`).join('') + `</div>` +
       rulesHTML(REF_RULES);
   } else {
-    const seg = `<div class="bseg seg">${[['refs', $t("Друзья")], ['top', $t("Топ")]].map(([k, t]) => `<button class="${k === casesTab ? 'on' : ''}" data-go="${k}">${t}</button>`).join('')}</div>`;
     const me = 34;
     const ri = rankOf(S.xp), nx = RANKS[ri + 1], kx = nx ? (S.xp - RANKS[ri][1]) / (nx[1] - RANKS[ri][1]) : 1;
     b.innerHTML = seg + `<div class="tophero"><img class="ava" src="assets/avatar.webp" alt=""><div class="th"><div class="th-n"><b>GK</b><em>${me} ${$t("место")}</em></div><span class="th-r">${RANKS[ri][0]}</span>` +
@@ -100,7 +100,7 @@ function renderCases(){
 $('casesTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; casesTab = t.dataset.k === 'friends' ? friendsSeg : t.dataset.k; haptic(); renderCases(); $('casesBody').scrollTop = 0; });
 $('casesBody').addEventListener('click', e => {
   const go = e.target.closest('[data-go]');
-  if (go){ casesTab = go.dataset.go; if (casesTab === 'refs' || casesTab === 'top') friendsSeg = casesTab; haptic(); renderCases(); $('casesBody').scrollTop = 0; return; }
+  if (go){ casesTab = go.dataset.go; if (casesTab === 'refs' || casesTab === 'top' || casesTab === 'ach') friendsSeg = casesTab; haptic(); renderCases(); $('casesBody').scrollTop = 0; return; }
   const o = e.target.closest('[data-open]'), q = e.target.closest('[data-info]'), cl = e.target.closest('[data-claim]');
   if (cl){ claimAch(cl.dataset.claim, cl); return; }
   if (o){ e.stopPropagation(); if (o.classList.contains('off')){ haptic('rigid'); return; } tryOpenCase(caseById(o.dataset.open)); return; }
