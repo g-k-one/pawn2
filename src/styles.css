@@ -1648,3 +1648,5 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .achdone summary::-webkit-details-marker{display:none}
 .achdone summary::after{content:" +";color:rgba(255,255,255,.45)}
 .achdone[open] summary::after{content:" −"}
+/* арена: холст заставки с гладиаторами — поверх эффектов, клики не ловит */
+.glad-cv{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none}
