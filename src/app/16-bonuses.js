@@ -1,10 +1,10 @@
 /* =========================================================
-   БОНУСЫ — 4 вкладки по смыслу:
-   Сегодня (задания дня, неделя, супер дроп) · Пасс · Кейсы · Друзья и топ (рефералка | топ, звания и достижения)
-   casesTab — что показано: today · super (страница супер дропа внутри «Сегодня») · pass · cases · refs · top
+   БОНУСЫ — 5 вкладок по смыслу:
+   Сегодня (задания дня, неделя, супер дроп) · Пасс · Кейсы · Достижения · Друзья и топ (рефералка | топ)
+   casesTab — что показано: today · super (страница супер дропа внутри «Сегодня») · pass · cases · ach · refs · top
    ========================================================= */
 let casesTab = 'today', friendsSeg = 'refs';
-const BTAB_OF = { today: 'today', tasks: 'today', super: 'today', pass: 'pass', cases: 'cases', refs: 'friends', top: 'friends' };
+const BTAB_OF = { today: 'today', tasks: 'today', super: 'today', pass: 'pass', cases: 'cases', ach: 'ach', refs: 'friends', top: 'friends' };
 function openCases(tab){ if (tab){ casesTab = tab === 'tasks' ? 'today' : tab; if (tab === 'refs' || tab === 'top') friendsSeg = tab; } swapDrawer('casesDrawer', renderCases); }
 const sdBanner = () => `<button class="sdban" data-go="super"><img class="sdb-l" src="assets/superdrop-logo.webp" alt="Super Drop"><span><small>${$t("Выбей тикет первым — NFT твой")}</small>` +
   `<b>${tk(SUPER.target)}</b></span><span class="sdb-p">${SUPER.nft ? `<img src="${SUPER.nft.nft.src}" alt="">` : ''}<em>${fmt(SUPER.nft ? SUPER.nft.value : 0)}${GU}</em></span><i>›</i></button>`;
@@ -44,12 +44,16 @@ const achRow = ([id, t, rw, ok, act, prog]) => {
 };
 function renderCases(){
   const cur = BTAB_OF[casesTab] || 'today';
-  $('casesTabs').innerHTML = [['today', $t("Сегодня")], ['pass', $t("Пасс")], ['cases', $t("Кейсы")], ['friends', $t("Друзья и топ")]].map(([k, t]) => `<button class="tab${k === cur ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
+  $('casesTabs').innerHTML = [['today', $t("Сегодня")], ['pass', $t("Пасс")], ['cases', $t("Кейсы")], ['ach', $t("Достижения")], ['friends', $t("Друзья и топ")]].map(([k, t]) => `<button class="tab${k === cur ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
   $('casesTabs').querySelector('.on')?.scrollIntoView({ inline: 'center', block: 'nearest' });
   const b = $('casesBody');
   if (casesTab === 'cases'){
     b.innerHTML = `<div class="bgrid">${CASES.map(caseCard).join('')}</div>` +
       `<p class="bnote">${$t("Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить и открывать по одному, когда захочешь.")}</p>`;
+  } else if (casesTab === 'ach'){
+    b.innerHTML = `<div class="sect"><div class="sect-h"><span><b>${$t("Достижения")}</b><small>${$t("засчитываются по кнопке «Проверить»")}</small></span><em class="cnt">${ACH.filter(a => S.ach.got[a[0]]).length}/${ACH.length}</em></div>` + ACH.filter(a => !S.ach.got[a[0]]).map(achRow).join('') +
+      // выполненные — свёрнуты: сверху то, что ещё можно сделать
+      (ACH.some(a => S.ach.got[a[0]]) ? `<details class="achdone"><summary>${$t("Выполненные · {0}", ACH.filter(a => S.ach.got[a[0]]).length)}</summary>${ACH.filter(a => S.ach.got[a[0]]).map(achRow).join('')}</details>` : '') + `</div>` + rulesHTML([$t("Достижения засчитываются один раз — по кнопке «Проверить».")]);
   } else if (casesTab === 'pass'){
     b.innerHTML = passHTML();
   } else if (casesTab === 'today'){
@@ -89,9 +93,6 @@ function renderCases(){
     const ri = rankOf(S.xp), nx = RANKS[ri + 1], kx = nx ? (S.xp - RANKS[ri][1]) / (nx[1] - RANKS[ri][1]) : 1;
     b.innerHTML = seg + `<div class="tophero"><img class="ava" src="assets/avatar.webp" alt=""><div class="th"><div class="th-n"><b>GK</b><em>${me} ${$t("место")}</em></div><span class="th-r">${RANKS[ri][0]}</span>` +
       `<div class="th-x">${XPI}<i><b style="width:${(kx * 100).toFixed(1)}%"></b></i><small>${xpFmt(S.xp)} / ${xpFmt((nx || RANKS[ri])[1])}</small></div></div><span class="cupw"><img class="cup" src="assets/top.webp" alt=""></span></div>` +
-      `<div class="sect"><div class="sect-h"><span><b>${$t("Достижения")}</b><small>${$t("засчитываются по кнопке «Проверить»")}</small></span><em class="cnt">${ACH.filter(a => S.ach.got[a[0]]).length}/${ACH.length}</em></div>` + ACH.filter(a => !S.ach.got[a[0]]).map(achRow).join('') +
-      // выполненные — свёрнуты, чтобы топ не уезжал вниз
-      (ACH.some(a => S.ach.got[a[0]]) ? `<details class="achdone"><summary>${$t("Выполненные · {0}", ACH.filter(a => S.ach.got[a[0]]).length)}</summary>${ACH.filter(a => S.ach.got[a[0]]).map(achRow).join('')}</details>` : '') + `</div>` +
       `<div class="sect"><div class="sect-h"><span><b>${$t("Топ по XP")}</b></span></div>${TOP.map(([n, xp], i) => `<div class="trow"><em class="${i < 3 ? 'm' + i : ''}">${i + 1}</em><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${RANKS[rankOf(xp)][0]}</small></span><span class="txp">${XPI}${xpFmt(xp)}</span></div>`).join('')}</div>` +
       rulesHTML(TOP_RULES);
   }
