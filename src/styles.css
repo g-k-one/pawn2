@@ -1861,7 +1861,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .fx-arena .ar-time{font-size:7.5cqw;padding:.5cqw 4cqw}
 .fx-arena .ar-seat.empty{border-color:rgba(255,200,140,.55);background:rgba(20,10,5,.6)}
 /* ---------- tab2 (копия главной, делаем из неё новый режим): кнопка крафта и плашка ставки — оранжево-красные ---------- */
-.mode-tab2 .bet{background:linear-gradient(#ff8a3c,#c2310c)}
+.mode-tab2 .bet{background:linear-gradient(#ff9a4a,#e0501a)}   /* светлее: на iPhone низ плашки уходил почти в коричневый */
 .mode-tab2 .bet .plus:before,.mode-tab2 .bet .plus:after{background:#7a1c06}
 .mode-tab2 .bet img{filter:hue-rotate(165deg) saturate(1.4) brightness(1.15)}
 .mode-tab2 .cb .orb{filter:grayscale(1) sepia(1) saturate(5) hue-rotate(-22deg) brightness(1.05)}
@@ -1941,7 +1941,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .t2lock.mode-tab2 .cb .t2lockico{display:block}
 .t2lock.mode-tab2 .cb .anvil,.t2lock.mode-tab2 .cb .hammer,.t2lock.mode-tab2 .cb .t2ava,.t2lock.mode-tab2 .cb .core,.t2lock.mode-tab2 .cb .glint{visibility:hidden}
 .t2lock.mode-tab2 .cb .orb{filter:grayscale(1) brightness(.42)}
-.t2lock.mode-tab2 .bet{background:linear-gradient(#2e2e32,#18181b)}
+.t2lock.mode-tab2 .bet{background:linear-gradient(#55555e,#34343a)}   /* закрыто — серая, но заметная на тёмном фоне */
 .bet .t2bl.t2full{text-align:center;width:auto;max-width:7em;padding:2px 6px;color:rgba(255,255,255,.72)}
 .t2lock.mode-tab2 .bet img{filter:grayscale(1) brightness(1.4)}
 .t2seats .ar-seat small{top:auto;bottom:-12px;margin:0;padding:1px 7px;border-radius:999px;background:rgba(10,6,4,.85);line-height:16px;color:rgba(255,236,214,.85);max-width:120%;overflow:hidden;text-overflow:ellipsis}
@@ -2148,9 +2148,10 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .bt-res .bt-ch{display:block;font-size:13.5px;color:rgba(255,255,255,.72);margin-top:4px}
 .item .cbadge.bbadge{background:#7c5cff}
 .item .cbadge.bbadge svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:2.4}
-.t3res{margin-top:10px}
-/* фишки ставок под суммой выигрыша: у подписи итога крупные стили для span и b — здесь возвращаем вид фишек, как при раскрытии */
-.fx-win .t3res .pvc{display:flex;margin:0;font-size:inherit;color:inherit}
-.fx-win .t3res .pvc b{display:inline;font-size:15px;line-height:1.1;background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--tc)}
-.fx-win .t3res .pvc.win b{color:#fff}
-.t3lose img{filter:grayscale(.8) brightness(.55)}
+/* плитки ставок под тикетом — карточки игроков арены (.pvc.pva): 3 в ряд, неполный ряд добит пустыми, как свободные места */
+.pvp-avas.bt-avas .pvc.pva.many,.pvp-avas.bt-avas .pvc.pva.empty.many{height:104px;gap:4px;padding:8px 6px}
+.pvp-avas.bt-avas .pvc.pva.many .tav{width:38px;height:38px;font-size:13px}   /* больше 6 ставок — те же карточки, что у игроков арены, только ниже: 4 ряда влезают */
+.btt .tav{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;font-style:normal;font-size:14px;font-weight:700;color:#0b0b0e;background:var(--tc)}
+.pvc.pva.btt b{font-size:14px;line-height:18px;text-transform:uppercase;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.pvc.pva.btt .pvd{margin-top:0}
+.fx-pl .bt-avas{margin-top:12px}

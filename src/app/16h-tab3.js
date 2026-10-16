@@ -47,6 +47,7 @@ function t3Render(){
 // фишка на исход — те же лимиты, что у ставок: выигрыш за раунд и общая ставка
 function t3Add(k){
   const next = Math.round(((betsBoard[k] || 0) + betsChip) * 100) / 100;
+  if (!betsBoard[k] && betsList().length >= BETS_MAX_N){ haptic('rigid'); notify({ type: 'warn', icon: 'coin', title: $t("Максимум {0} ставок за раунд", BETS_MAX_N), text: $t("Добавь сумму к уже выбранным исходам или убери лишний") }); return; }
   if (betsMaxWin({ ...betsBoard, [k]: next }) > BETS_MAX_WIN){ haptic('rigid'); notify({ type: 'warn', icon: 'coin', title: $t("Выигрыш за раунд — до {0} GRAM", BETS_MAX_WIN), text: $t("Возьми фишку меньше или другой исход") }); return; }
   if (betsTotal() + betsChip > BET_MAX + 1e-9){ haptic('rigid'); notify({ type: 'warn', icon: 'coin', title: $t("Максимальная ставка {0} GRAM", BET_MAX), text: $t("За один раунд, на все исходы вместе") }); return; }
   betsBoard[k] = next; Sfx.coin(); haptic('light'); t3Render(); renderBet(true);
@@ -81,33 +82,33 @@ async function t3Play(){
   let r = null; try { r = await pr; } catch(_){}
   if (!r){ setBalance(S.balance + amt); await closeFx(); CRAFT.classList.remove('busy'); S.busy = false; notify({ type: 'err', icon: 'coin', title: $t("Ставка не прошла"), text: $t("GRAM вернулись на баланс") }); return; }
   betsLast = { ...betsBoard };
-  // под барабаном — сумма ставок и сами ставки
-  $('fxPvp').innerHTML = `<div class="pvp-bank"><small>${$t("Ставки")}</small><b><img src="assets/ton.svg" alt="">${fmt(amt)}</b></div><div class="pvp-chips">` +
-    r.bets.map(b => `<span class="pvc bt" style="--tc:${b.bet === 'rank' ? TIERS[b.sel].c : '#b9a6ff'}"><b>${betLabel(b.bet, b.sel)}</b><em>${fmt(b.amount)} · x${fmt(betMult(b.bet, b.sel))}</em><i class="pvd"></i></span>`).join('') + `</div>`;
+  // под барабаном — как на арене: сверху сумма ставок, ниже плитки ставок (карточки игроков арены: 3 в ряд, больше 6 ставок — карточки ниже)
+  $('fxPvp').innerHTML = `<div class="pvp-bank"><small>${$t("Ставки")}</small><b><img src="assets/ton.svg" alt="">${fmt(amt)}</b></div><div class="pvp-avas bt-avas">` +
+    r.bets.map(b => betTile(b, r.bets.length > 6)).join('') + `<span class="pvc pva empty${r.bets.length > 6 ? ' many' : ''}"></span>`.repeat((3 - r.bets.length % 3) % 3) + `</div>`;
   $('fx').classList.add('btspin');
   await reveal(r, fast);
 }
-// итог — тот же экран дропа, что у крафта: NFT — «Продать за …» и «Забрать», GRAM — «Забрать»; под суммой — все ставки раунда.
-// Начисление — по кнопке, как у крафта. Не сыграло ничего — тусклый гем и «Ещё раз»; поле остаётся с теми же ставками
+// итог — как у арены: выиграл — приз крупно (экран дропа крафта: NFT — «Продать» / «Забрать», GRAM — «Забрать»), под суммой — ставка и сколько сбылось;
+// не сыграло ничего — карточка «Ставки» с теми же плитками и «Вернуться». Начисление — по кнопке; поле остаётся с теми же ставками
 const _betsAfter3 = betsAfter;
 betsAfter = async r => {
   if (!isT3()) return _betsAfter3(r);
   await betsChipsReveal(r);
-  const won = r.bets.filter(b => b.won), tag = won.length ? $t("сбылось {0} из {1}", won.length, r.bets.length) : $t("предсказание не сбылось");
-  const list = `<div class="pvp-chips t3res">${r.bets.map(b => `<span class="pvc bt ${b.won ? 'win' : 'lose'}" style="--tc:${b.bet === 'rank' ? TIERS[b.sel].c : '#b9a6ff'}"><b>${betLabel(b.bet, b.sel)}</b><em>${b.won ? '+' + fmt(b.pay) : fmt(b.amount)}</em></span>`).join('')}</div>`;
-  $('fxPvp').innerHTML = '';
+  const won = r.bets.filter(b => b.won), line = `${$t("ставка {0} GRAM", fmt(r.stake))} · ${won.length ? $t("сбылось {0} из {1}", won.length, r.bets.length) : $t("предсказание не сбылось")}`;
   if (r.win > 0){
+    $('fxPvp').innerHTML = '';
     await showDrop(r);
-    if (!r.nft) $('fxWin').innerHTML = `<b>+${fmt(r.win)} GRAM</b><span>${$t("ставка {0} GRAM", fmt(r.stake))} · ${tag}</span>`;
-    else $('fxWin').insertAdjacentHTML('beforeend', `<span>${$t("ставка {0} GRAM", fmt(r.stake))} · ${tag}</span>`);
-    $('fxWin').insertAdjacentHTML('beforeend', list);
+    if (!r.nft) $('fxWin').innerHTML = `<b>+${fmt(r.win)} GRAM</b><span>${line}</span>`;
+    else $('fxWin').insertAdjacentHTML('beforeend', `<span>${line}</span>`);
     $('fxTake').onclick = () => t3Finish(r, 'take'); if ($('fxSell')) $('fxSell').onclick = () => t3Finish(r, 'sell');
     $('fxShare').onclick = () => shareWin(r.nft ? $t("Выиграл {0} #{1} на ставках в Pawn", r.nft.nft.name, r.nft.num) : $t("Выиграл +{0} GRAM на ставках в Pawn", fmt(r.win)), r.nft);
   } else {
-    $('fxDrop').innerHTML = `<div class="pz"><div class="tw t3lose" id="pz"><img src="assets/hero-gem.webp" alt=""></div></div>`;
-    $('fxWin').innerHTML = `<b>0 GRAM</b><span>${$t("ставка {0} GRAM", fmt(r.stake))} · ${tag}</span>` + list;
-    $('fxBtns').innerHTML = `<button class="btn-main" id="fxTake">${$t("Ещё раз")}</button>` + PF_LINK;
-    $('fx').classList.add('done'); setTimeout(() => { FX.hot = false; }, 900);
+    const tiles = $('fxPvp').querySelector('.bt-avas')?.outerHTML || ''; $('fxPvp').innerHTML = '';
+    $('fxDrop').innerHTML = ''; $('fxWin').innerHTML = '';
+    let el = $('fxPl'); if (!el){ el = document.createElement('div'); el.className = 'fx-pl'; el.id = 'fxPl'; $('fxWin').after(el); }
+    el.innerHTML = `<div class="sect pvls"><div class="sect-h"><span><b>${$t("Ставки")}</b><small>${line}</small></span></div>${tiles}</div>`;
+    $('fx').classList.add('pvpl', 'done'); setTimeout(() => { FX.hot = false; }, 900);
+    $('fxBtns').innerHTML = `<button class="btn-main" id="fxTake">${$t("Вернуться")}</button>` + PF_LINK;
     $('fxTake').onclick = () => t3Finish(r, 'take');
     $('fxShare').onclick = () => shareWin($t("Ставлю на тикет в Pawn"));
   }

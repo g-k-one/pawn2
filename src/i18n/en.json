@@ -687,5 +687,8 @@
  "Выиграл +{0} GRAM на ставках в Pawn": "Won +{0} GRAM on bets in Pawn",
  "Ставлю на тикет в Pawn": "Betting on the ticket in Pawn",
  "Выигрыш ставок": "Bets win",
- "Выигрыш ставок зачислен": "Bets win credited"
+ "Выигрыш ставок зачислен": "Bets win credited",
+ "Цифра {0}": "Digit {0}",
+ "Максимум {0} ставок за раунд": "Up to {0} bets per round",
+ "Добавь сумму к уже выбранным исходам или убери лишний": "Add to the outcomes you picked or remove one"
 }

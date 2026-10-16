@@ -8,7 +8,7 @@
    Честность: тот же протокол, что у крафта и кейсов — эпоха, client seed, общий nonce, домен "bets"; в доказательстве —
    таблица ставок (правила), твои ставки и какие сыграли. Разбор режима — docs/BETS-MODE.md
    ========================================================= */
-const BETS_CHIPS = [.1, .5, 1, 5], BETS_MAX_WIN = 700, BETS_RTP = 950000n;   // фишки, GRAM; потолок выигрыша за раунд, GRAM; RTP в ppm
+const BETS_CHIPS = [.1, .5, 1, 5], BETS_MAX_WIN = 700, BETS_MAX_N = 12, BETS_RTP = 950000n;   // фишки, GRAM; потолок выигрыша за раунд, GRAM; ставок за раунд — до 12; RTP в ppm
 const TARGET = '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/>';
 IC.target = TARGET;
 // виды ставок: ключ, на что (sel), сколько тикетов подходят, выиграла ли при тикете n
@@ -57,6 +57,11 @@ let betsOn = false, betsChip = .5, betsBoard = {}, betsLast = null;   // betsBoa
 const PAT_NAME = { has7: () => $t("Есть 7"), diff: () => $t("Все разные"), pair: () => $t("Пара"), mirror: () => $t("Зеркало") };
 const PAT_EX = { has7: '30718', diff: '61294', pair: '48853', mirror: '27472' };   // пример подходящего тикета — на карточке исхода
 const betLabel = (bet, sel) => bet === 'rank' ? TIERS[sel].name : bet === 'parity' ? (sel ? $t("Нечет") : $t("Чёт")) : bet === 'half' ? (sel ? '50000–99999' : '00000–49999') : PAT_NAME[bet] ? PAT_NAME[bet]() : $t("Последняя {0}", sel);
+// плитка ставки — тот же компонент, что игрок на арене (16a-pvp.js): кружок, под ним строка и сумма.
+// В кружке — множитель, под ним — название исхода, ниже — сумма ставки, после раскрытия — выплата. Размер плитки всегда один
+const betShort = (bet, sel) => bet === 'digit' ? $t("Цифра {0}", sel) : betLabel(bet, sel);
+const betTile = (b, many) => { const c = b.bet === 'rank' ? TIERS[b.sel].c : '#b9a6ff';
+  return `<span class="pvc pva btt${many ? ' many' : ''}" style="--tc:${c}"><i class="tav">x${fmt(betMult(b.bet, b.sel))}</i><b>${betShort(b.bet, b.sel)}</b><i class="pvd">${fmt(b.amount)}</i></span>`; };
 const betsTotal = () => Math.round(Object.values(betsBoard).reduce((a, v) => a + v, 0) * 100) / 100;
 // сколько можно выиграть за раунд при самом удачном тикете. Без узоров: ранг и последняя цифра независимы (в каждом ранге есть все цифры),
 // чёт/нечет задаётся цифрой — 5 × 10 сочетаний. С узорами — честный перебор всех 100 000 тикетов
@@ -171,7 +176,8 @@ async function betsChipsReveal(r){
     c.classList.add('pend'); await wait(step * .55);
     c.classList.remove('pend'); c.classList.add(b.won ? 'win' : 'lose');
     if (b.won){ sum = Math.round((sum + b.pay) * 100) / 100; c.querySelector('.pvd').textContent = '+' + fmt(b.pay); Sfx.coin(); haptic('medium');
-      bank.innerHTML = `${svg(TARGET)} ${$t("Выплата")} <b class="bt-sum">+${fmt(sum)}</b> GRAM`; bank.querySelector('.bt-sum').animate([{ scale: 1.5 }, { scale: 1 }], { duration: 320, easing: 'cubic-bezier(.3,1.5,.5,1)' }); }
+      // сверху вместо суммы ставок — растущая выплата, тем же видом, что банк арены
+      bank.innerHTML = `<small>${$t("Выплата")}</small><b class="bt-sum"><img src="assets/ton.svg" alt="">+${fmt(sum)}</b>`; bank.querySelector('.bt-sum').animate([{ scale: 1.3 }, { scale: 1 }], { duration: 320, easing: 'cubic-bezier(.3,1.5,.5,1)' }); }
     else { Sfx.tick(.6); haptic('light'); }
     await wait(step * .45);
   }
