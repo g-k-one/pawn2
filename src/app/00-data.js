@@ -165,6 +165,8 @@ function fit(){
   // верх контента в Telegram fullscreen: статус-бар + кнопки Telegram
   let tgTop = 0, tgRow = 0; try { const tg = Telegram.WebApp; if (tg.isFullscreen){ const st = tg.safeAreaInset?.top || 0, ct = tg.contentSafeAreaInset?.top || 0; tgTop = st + ct; if (ct) tgRow = st + ct / 2; } } catch(_){}
   stage.style.setProperty('--tgTop', tgTop / k + 'px');
+  // строка кнопок Telegram (Close/Back и ⌄•••): её центр — для заголовков экранов вроде арены; класс — чтобы прятать свои «Назад»
+  stage.style.setProperty('--tgRow', tgRow / k + 'px'); document.body.classList.toggle('tgfull', !!tgRow);
   // уведомления — на уровне ленты «лайв»: выше их перекрывают кнопки и шапка Telegram
   stage.style.setProperty('--noteTop', Math.max(tgTop / k + 8, H - 844 + 106) + 'px');
   // Telegram fullscreen: баланс — точно по центру строки с кнопками Telegram («Close» и «⌄ •••»), под статус-баром и островом.

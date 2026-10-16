@@ -8,8 +8,9 @@ const pfRow = (k, v) => `<div class="pf-row"><small>${k}</small><code>${v}</code
 const tk = n => String(n).padStart(5, '0');   // тикет везде одинаково — пять цифр, как на барабане
 function pfHTML(r){
   const isCase = r.kind === 'case', c = isCase ? caseById(r.caseId) : null, it = isCase ? c.items[r.idx] : null, t = isCase ? null : TIERS[r.ti];
-  const col = isCase ? itemColor(it) : t.c, res = isCase ? itemName(it) : `${t.name} · x${r.mult}`;
+  const isBets = r.kind === 'bets', col = isCase ? itemColor(it) : t.c, res = isCase ? itemName(it) : isBets ? t.name : `${t.name} · x${r.mult}`;
   const rng = isCase ? `${$t("«{0}» в кейсе — это тикеты от {1} до {2}. Тикет {3} внутри — значит, приз верный.", itemName(it), tk(it.from), tk(it.to), tk(r.ticket))}`
+            : isBets ? $t("Каждая ставка сверена с тикетом {0} по таблице выплат (RTP 95%): сыграло {1} из {2}, выплата {3} GRAM.", tk(r.ticket), r.bets.filter(b => b.won).length, r.bets.length, fmt(r.win))
                      : `${$t("Ранг «{0}» — это тикеты от {1} до {2}. Тикет {3} внутри — значит, ранг и множитель x{4} верные.", t.name, tk(t.from), tk(t.to), tk(r.ticket), r.mult)}`;
   const P = r.proof;
   let tech = `<div class="pf-row"><small>${$t("Server seed — секретное зерно сервера")}</small><code class="pf-seed">${P.server_seed || $t("раскроется при смене ключа")}</code></div>` + pfRow($t("Commitment — SHA-256 зерна, показан до игры"), P.commitment) +

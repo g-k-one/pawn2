@@ -822,8 +822,6 @@ img{display:block;-webkit-user-drag:none}
 
 /* v24 */
 .slot .nc-pr{background:none;text-shadow:0 1px 3px rgba(0,0,0,.45)}
-.dr-sub{margin:6px 0 0;font-size:15px;color:rgba(255,255,255,.5)}
-.dr-sub b{color:#fff;font-weight:700}
 .dr-f.two{display:flex;gap:8px}
 .dr-f.two .btn-ghost{flex:0 0 38%}
 .dr-f.two .btn-main{flex:1}
@@ -1052,7 +1050,6 @@ img{display:block;-webkit-user-drag:none}
 .bnote,.rules ol,.pfc p,.pfi-hero p,.pfi-env p,.pfi-step p,.pfi-p,.hnote,.gin p,.lead,.muted{font-size:13.5px;line-height:1.45}
 .sect-h small,.facts span,.dr-sub,.banner.amb small,.mb-t>small,.note-t small,.sdtarget p,.refauto small,.refauto em,.pfnote,.dbg-n{font-size:12.5px;line-height:1.4}
 .note-t small{font-size:12.5px}
-.dr-sub b,.pfi-p b{font-family:var(--font);font-weight:700}
 .rules li::marker{font-family:var(--font);color:rgba(255,255,255,.5)}
 /* персонаж стоит за сундуком, сбоку — сундук на переднем плане */
 .cart{aspect-ratio:1/1}
@@ -1409,25 +1406,132 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .dr-b.fade-t{-webkit-mask-image:linear-gradient(transparent,#000 24px);mask-image:linear-gradient(transparent,#000 24px)}
 .dr-b.fade-b{-webkit-mask-image:linear-gradient(#000 calc(100% - 24px),transparent);mask-image:linear-gradient(#000 calc(100% - 24px),transparent)}
 .dr-b.fade-t.fade-b{-webkit-mask-image:linear-gradient(transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(transparent,#000 24px,#000 calc(100% - 24px),transparent)}
-/* ---------- крафт в складчину (эксперимент): золотой акцент, цифры тикета — как в супер дропе ---------- */
-.beta{display:inline-block;font-family:system-ui,-apple-system,sans-serif;font-weight:800;margin-left:6px;padding:0 7px;border-radius:999px;background:#FFB835;color:#2a1a00;font-size:14px;line-height:20px;vertical-align:middle}
-.pool-h{display:flex;align-items:center;gap:4px;margin:4px 2px 0}
-.pool-h b{font-size:30px;line-height:1.05;text-transform:uppercase}
-.pool-lead{margin-top:8px}
-.pool-fees{display:flex;gap:8px;margin-top:20px}
-.pool-fees .pill-btn{flex:1}
-.pool-fees .pill-btn:disabled{opacity:.4}
-.pool-stats{margin-top:8px}
-.pool-pick{margin-top:8px;background:linear-gradient(135deg,#4d3305,#1f1406);box-shadow:inset 0 0 22px rgba(255,184,53,.4)}
-.pool-pick .sddig b{color:#2a1a00;background:linear-gradient(#fff6df,#ffd88a);box-shadow:0 4px 0 #b77a10}
-.pool-res.won{box-shadow:inset 0 0 26px rgba(18,213,61,.55)}
-.pool-res .sddig.res b{background:linear-gradient(#fff,#e2f7ff);color:#03263a;box-shadow:0 4px 0 #1d7fb0}
-.pool-in{display:flex;justify-content:center;gap:8px}
-.pool-in input{width:120px;padding:7px 12px;border:0;border-radius:999px;background:rgba(0,0,0,.35);color:#fff;font:700 20px/1.2 var(--font);letter-spacing:.12em;text-align:center;outline:none}
-.pool-in input:focus{box-shadow:0 0 0 2px #FFB835}
-.trow.win{border-radius:16px;background:rgba(18,213,61,.12);padding-left:10px;padding-right:10px}
-.trow.win .tb2{color:#3fe06a}
-.pool-fair{margin-top:20px;padding:16px;border-radius:22px;background:rgba(255,255,255,.045);display:flex;flex-direction:column;gap:6px}
-.pool-fair small{font:400 12.5px/1.35 var(--serif);color:rgba(255,255,255,.72)}
-.pool-fair code{font-size:12.5px;line-height:1.35;color:#fff;word-break:break-all}
-.pool-fair .pool-check{margin-top:8px}
+
+/* ---------- PvP крафт (эксперимент): золотой акцент; барабан и тикеты подкрашены под ранг тикета ---------- */
+.beta{display:inline-block;margin-left:6px;padding:0 7px;border-radius:999px;background:#FFB835;color:#2a1a00;font-family:system-ui,-apple-system,sans-serif;font-weight:800;font-size:14px;line-height:20px;vertical-align:middle}
+/* на экране крафта: игроки и их тикеты; после остановки — победитель зелёный, остальные гаснут */
+.fx-pvp:empty{display:none}
+.fx-pvp{width:100%;max-width:350px;margin-top:14px}
+.fx.done .fx-pvp{display:none}
+.pvp-bank{text-align:center;font-size:17px;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.pvp-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:8px}
+.pvc{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:999px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tc) 60%,transparent);transition:opacity .4s,transform .4s,background .4s}
+.pvc .tav{width:28px;height:28px;font-size:14px}
+.pvc b{font-size:19px;color:var(--tc);font-variant-numeric:tabular-nums}
+.pvc em{font-style:normal;font-size:12.5px;color:rgba(255,255,255,.72)}
+.pvc .pvd{font-style:normal;font-size:12.5px;color:rgba(255,255,255,.72)}
+.pvc .pvd:empty{display:none}
+.pvc.me{background:rgba(255,184,53,.14)}
+.pvc.win{background:rgba(18,213,61,.2);box-shadow:inset 0 0 0 2px #12D53D;transform:scale(1.08)}
+.pvc.win .pvd{color:#3fe06a}
+.pvc.lose{opacity:.45}
+.pvp-tag{display:inline-block;margin-bottom:4px;padding:3px 12px;border-radius:999px;background:rgba(255,184,53,.16);color:#FFB835;font-size:15px;text-transform:uppercase}
+/* экран проигравшего: кто забрал банк и с каким тикетом */
+.pvp-lose{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:100%}
+.pvl-ava .tav{width:96px;height:96px;font-size:44px;box-shadow:0 0 0 3px #12D53D,0 0 40px rgba(18,213,61,.45)}
+.pvp-lose>b{font-size:28px}
+.pvp-lose small{font-size:14px;color:rgba(255,255,255,.72)}
+.hp.pvp-x{display:grid;place-items:center;font-weight:700;font-size:20px;color:rgba(255,255,255,.72)}
+
+/* ---------- АРЕНА (PvP): экран поверх главной; огонь, банк-горнило по центру, места по кругу, тикет — ползунком по шкале рангов ---------- */
+.fx-arena{display:none}
+.fx.arena .fx-top,.fx.arena .fx-drop,.fx.arena .fx-win,.fx.arena .fx-btns,.fx.arena .fx-case{display:none}
+.fx.arena .fx-arena{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:calc(var(--tgTop,0px) + 14px) 20px calc(26px + env(safe-area-inset-bottom,0px))}
+.pvp-bank svg,.pvp-tag svg,#pvpAgain svg{width:16px;height:16px;vertical-align:-2px;color:#ff7a2e}
+#pvpAgain{display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(#ff8a3c,#c2410c)}
+#pvpAgain svg{width:20px;height:20px;color:#fff}
+/* экран проигрыша: кто забрал банк, два тикета рядом */
+.pvp-lose>small{font-size:16px;color:rgba(255,255,255,.72)}
+.pvl-pair{display:flex;gap:8px;justify-content:center}
+.pvl-pair span{display:flex;flex-direction:column;align-items:center;min-width:120px;padding:10px 16px;border-radius:16px;background:rgba(255,255,255,.06)}
+.pvl-pair small{font-size:12.5px;color:rgba(255,255,255,.72)}
+.pvl-pair b{font-size:30px;color:var(--tc);font-variant-numeric:tabular-nums}
+.pvl-pair .mine{opacity:.75}
+.hk-h em svg,.mrow i svg.fire{width:14px;height:14px}
+/* удар молота на арене: силуэты раскалены, светятся огнём */
+.fx-intro.fire .fi-a,.fx-intro.fire .fi-h img{filter:brightness(0) invert(1) sepia(1) saturate(6) hue-rotate(-18deg) brightness(.95) drop-shadow(0 0 10px #ff7a1e) drop-shadow(0 0 26px rgba(255,90,0,.55))}
+/* ---------- арена v2: колизей сверху, места на трибунах — вход в бой ---------- */
+.fx.arena .fx-arena{padding:calc(var(--tgTop,0px) + 12px) 16px calc(22px + env(safe-area-inset-bottom,0px))}
+.ar-top{position:relative;width:100%;height:44px;display:flex;align-items:center;justify-content:center;flex:none}
+.ar-back{position:absolute;left:0;top:2px;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.08)}
+.ar-back svg{width:22px;height:22px}
+.ar-title{display:flex;align-items:center;gap:8px}
+.ar-title i{width:26px;height:26px;color:#ff7a2e;filter:drop-shadow(0 0 8px rgba(255,110,30,.7))}
+.ar-title i svg{width:100%;height:100%}
+.ar-title b{font-size:34px;line-height:1;text-transform:uppercase;letter-spacing:.02em}
+.ar-title .beta{margin-left:0}
+/* в полноэкранном Telegram: своя «Назад» не нужна (системная), заголовок — по центру строки кнопок Telegram */
+.tgfull .fx.arena .fx-arena{padding-top:calc(var(--tgTop,0px) + 6px)}
+.tgfull .ar-top{position:absolute;left:0;right:0;top:calc(var(--tgRow,0px) - 22px);pointer-events:none}
+.tgfull .ar-back{display:none}
+.tgfull .ar-sub{margin-top:0}
+.ar-sub{position:relative;width:100%;display:flex;justify-content:center;margin-top:10px;flex:none}
+.ar-fees{display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,.07)}
+.ar-fees button{min-width:64px;padding:6px 14px;border-radius:999px;font-size:18px;font-weight:700;color:rgba(255,255,255,.72)}
+.ar-fees button.on{background:linear-gradient(#ffb347,#e2541c);color:#fff}
+.ar-fees button:disabled:not(.on){opacity:.4}
+.ar-fees button::after{content:' GRAM';font-size:12.5px}
+.ar-info{position:absolute;right:0;top:0;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.08);color:#3fe06a}
+.ar-info svg{width:20px;height:20px}
+.ar-rules{margin:0;padding-left:20px;text-align:left;display:flex;flex-direction:column;gap:8px;font:400 13.5px/1.45 var(--serif);color:rgba(255,255,255,.85)}
+.ar-hash{margin-top:20px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);text-align:left;display:flex;flex-direction:column;gap:6px}
+.ar-hash small{font:400 12.5px/1.35 var(--serif);color:rgba(255,255,255,.72)}
+.ar-hash code{font-size:12.5px;line-height:1.35;word-break:break-all}
+/* колизей: занимает всё свободное место по высоте, всегда квадратный */
+.ar-colw{flex:1 1 auto;min-height:230px;width:100%;display:flex;align-items:center;justify-content:center;margin:8px 0 4px}
+.ar-col{position:relative;height:100%;max-height:370px;max-width:100%;aspect-ratio:1}
+.ar-art{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 10px 30px rgba(0,0,0,.6))}
+.ar-fire{animation:arFlick 2.4s ease-in-out infinite;transform-origin:50% 50%}
+.ar-torch{animation:arTorch 1.3s ease-in-out infinite alternate}
+@keyframes arFlick{50%{opacity:.82;transform:scale(1.04)}}
+@keyframes arTorch{to{opacity:.55}}
+.ar-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.ar-ring circle{fill:none;stroke-width:5;stroke-linecap:round}
+.ar-ring .bg{stroke:rgba(0,0,0,.35)}
+.ar-ring .fg{stroke:#fff1c8;filter:drop-shadow(0 0 6px rgba(255,170,60,.9));transition:stroke-dashoffset .2s linear,stroke .3s}
+.ar-col.hot .fg{stroke:#ff4c35;animation:arHot .5s ease-in-out infinite alternate}
+@keyframes arHot{to{stroke-width:8}}
+.ar-bank{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;text-shadow:0 1px 8px rgba(80,20,0,.9)}
+.ar-bank small{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#fff3dd}
+.ar-bank b{font-size:52px;line-height:1;font-variant-numeric:tabular-nums;color:#fff}
+.ar-bank em{font-style:normal;font-size:13px;color:#fff3dd}
+.ar-bank.bump b{animation:arBump .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes arBump{40%{scale:1.18}}
+.ar-time{margin-top:4px;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff}
+.ar-col.hot .ar-time{color:#ffd1c4}
+.ar-col.fire .ar-fire{animation-duration:.4s}
+/* места на трибунах; свободное — с «+» и мерцанием, это и есть кнопка «в бой» */
+.ar-seats{position:absolute;inset:0}
+.ar-seat{position:absolute;width:13%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-items:center;padding:0}
+.ar-seat .tav{width:100%;height:100%;font-size:20px;box-shadow:0 0 0 2px rgba(0,0,0,.7),0 4px 10px rgba(0,0,0,.5)}
+.ar-seat.empty{border:1.5px dashed rgba(255,220,180,.18);background:rgba(0,0,0,.25)}
+.ar-seat.free{background:rgba(255,140,50,.16);border:1.5px solid rgba(255,170,80,.7);color:#ffd9a8;animation:arSeat 1.6s ease-in-out infinite}
+.ar-seat.free i{font-style:normal;font-size:26px;font-weight:700;line-height:1}
+@keyframes arSeat{50%{box-shadow:0 0 0 6px rgba(255,140,50,.18),0 0 18px rgba(255,140,50,.45)}}
+.ar-seat.me .tav{box-shadow:0 0 0 2.5px #FFB835,0 0 16px rgba(255,184,53,.65)}
+.ar-seat small{position:absolute;top:100%;margin-top:3px;font-size:12.5px;color:#FFB835;white-space:nowrap}
+.ar-coin{position:absolute;width:6%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 0 6px rgba(48,165,255,.8))}
+.ar-hint{margin:6px 0 0;font-size:16px;text-transform:uppercase;color:rgba(255,236,210,.72);text-align:center;flex:none}
+.ar-hint.me{color:#FFB835}
+.ar-hint b{color:#fff}
+/* тикет: число в цвете ранга, кубик рядом, ползунок по шкале рангов */
+.ar-pick{width:100%;max-width:358px;display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:14px;flex:none}
+.ar-tkrow{display:flex;align-items:center;gap:10px}
+.ar-tk{display:flex;gap:4px}
+.ar-tk b{width:44px;height:56px;display:grid;place-items:center;border-radius:12px;background:color-mix(in srgb,var(--tc) 16%,rgba(255,255,255,.04));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tc) 55%,transparent);font-size:40px;font-weight:700;color:var(--tc);font-variant-numeric:tabular-nums;transition:color .25s,box-shadow .25s,background .25s}
+.ar-dice{width:48px;height:48px;display:grid;place-items:center;border-radius:14px;background:rgba(255,255,255,.08);color:#fff}
+.ar-dice svg{width:24px;height:24px}
+.ar-dice:active{background:rgba(255,255,255,.16)}
+.ar-track{position:relative;width:100%;height:36px;display:flex;align-items:center;gap:3px;touch-action:none;cursor:pointer}
+.ar-track i{flex:1;height:8px;border-radius:4px;background:var(--c);opacity:.5}
+/* бегунок — светящаяся «искра» цвета ранга, без белого круга */
+.ar-thumb{position:absolute;top:50%;width:14px;height:32px;margin:-16px -7px;border-radius:7px;background:linear-gradient(color-mix(in srgb,var(--tc) 40%,#fff),var(--tc));box-shadow:0 0 0 2px rgba(0,0,0,.55),0 0 14px var(--tc),0 0 28px color-mix(in srgb,var(--tc) 50%,transparent);transition:height .15s,margin .15s}
+.ar-track.drag .ar-thumb{height:40px;margin-top:-20px}
+.ar-tiers{width:100%;display:flex;margin-top:-8px}
+.ar-tiers button{flex:1;display:flex;flex-direction:column;align-items:center;padding:2px 0;color:var(--c);opacity:.55;transition:opacity .2s}
+.ar-tiers b{font-size:14px;font-weight:700;text-transform:uppercase}
+.ar-tiers small{font-size:12.5px;opacity:.85}
+.ar-tiers button.on{opacity:1}
+.ar-pick.locked .ar-track{pointer-events:none}
+.ar-pick.locked .ar-track i{opacity:.28}
+@media (prefers-reduced-motion:reduce){ .ar-fire,.ar-torch,.ar-seat.free,.ar-col.hot .fg{animation:none} }

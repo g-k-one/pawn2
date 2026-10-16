@@ -73,7 +73,7 @@ function hideDrawer(){
   openDrawer.classList.remove('open'); openDrawer.style.transform = ''; $('backdrop').classList.remove('on'); openDrawer = null;
   drawerStack = []; document.querySelectorAll('.dr-back').forEach(b => b.remove());
 }
-const DRAWER_NAMES = { menuDrawer: $t("Меню"), casesDrawer: $t("Бонусы"), histDrawer: $t("История"), pfiDrawer: $t("Честность"), walletDrawer: $t("Кошелёк"), pfDrawer: $t("Проверка"), dbgDrawer: $t("Дебаг"), giftsDrawer: $t("Подарки"), caseDrawer: $t("Кейс"), poolDrawer: $t("Складчина") };
+const DRAWER_NAMES = { menuDrawer: $t("Меню"), casesDrawer: $t("Бонусы"), histDrawer: $t("История"), pfiDrawer: $t("Честность"), walletDrawer: $t("Кошелёк"), pfDrawer: $t("Проверка"), dbgDrawer: $t("Дебаг"), giftsDrawer: $t("Подарки"), caseDrawer: $t("Кейс") };
 // кнопка «‹ Назад» в шторке, открытой из другой шторки
 function setBack(dr){
   dr.querySelector('.dr-back')?.remove(); const prev = drawerStack[drawerStack.length - 1]; if (!prev) return;
@@ -216,7 +216,8 @@ function renderMenu(){
     `<div class="mban2"><button class="mb2 hist" data-go="hist"><span class="mb2-t"><b>${$t("История")}</b><small>${$t("игры, кошелёк и бонусы")}</small></span><span class="mb2-art">${histFan()}</span></button>` +
     `<button class="mb2 pf" data-go="pfi"><span class="mb2-t"><b>${$t("Честность")}</b><small>${$t("проверь любой результат")}</small></span><span class="mb2-art"><i class="mb2-sh">${svg(IC.shield)}</i><em>00000</em></span></button></div>` +
     `<div class="mgrp-t">${$t("Игра")}</div><div class="mgrp">` +
-      (S.dbg.pool ? row(IC.users, `${$t("Крафт в складчину")} <span class="beta">β</span>`, '#FFB835', $t("эксперимент"), ' data-go="pool"') : '') +
+      (S.dbg.pvp ? row(IC.fire, `${$t("PvP крафт")} <span class="beta">β</span>`, '#FFB835', $t("эксперимент"), ' data-go="pvp"') : '') +
+      (S.dbg.bets ? row(IC.target, `${$t("Предикты")} <span class="beta">β</span>`, '#7c5cff', $t("эксперимент"), ' data-go="bets"') : '') +
       sw('fastRow', '#FFB835', NICON.bolt, $t("Быстрый крафт"), $t("сразу число и дроп"), S.fast) +
       sw('liteRow', '#12D53D', NICON.leaf, $t("Экономный режим"), $t("без анимаций — для слабых телефонов"), S.lite) +
       sw('demoRow', '#AE3FC4', NICON.candy, $t("Демо-режим"), $t("фантики вместо GRAM"), S.demo) +
@@ -235,7 +236,7 @@ $('menuBtn').onclick = () => { renderMenu(); showDrawer('menuDrawer'); };
 $('menuBody').addEventListener('click', e => {
   if (e.target.closest('.menu-top')){ openWallet('dep'); return; }
   const go = e.target.closest('[data-go]')?.dataset.go;
-  if (go){ haptic(); if (go === 'cases') openCases('tasks'); else if (go === 'top') openCases('top'); else if (go === 'support') tgOpen(SUPPORT); else if (go === 'refs') openCases('refs'); else if (go === 'withdraw') openWallet('out'); else if (go === 'hist') openHistory(); else if (go === 'pfi') swapDrawer('pfiDrawer', renderPFInfo); else if (go === 'pool') openPool(); return; }
+  if (go){ haptic(); if (go === 'cases') openCases('tasks'); else if (go === 'top') openCases('top'); else if (go === 'support') tgOpen(SUPPORT); else if (go === 'refs') openCases('refs'); else if (go === 'withdraw') openWallet('out'); else if (go === 'hist') openHistory(); else if (go === 'pfi') swapDrawer('pfiDrawer', renderPFInfo); else if (go === 'pvp') openPvp(); else if (go === 'bets') openBets(); return; }
   const lg = e.target.closest('[data-lang]');
   // язык: запоминаем и перезапускаем — все тексты строятся заново на выбранном языке
   if (lg){ if (S.lang === lg.dataset.lang) return; haptic(); try { localStorage.setItem('bm-lang', lg.dataset.lang); } catch(_){} location.reload(); return; }

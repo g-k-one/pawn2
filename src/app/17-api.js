@@ -27,13 +27,17 @@ const API = {
   async confirmDeposit(amount, boc){ track('deposit', { amount }); return { ok: true }; },
   /* POST /inventory/sell {gift_ids} → {balance}. Мок: сумма по оценке подарков */
   async sellNfts(list){ track('sell', { n: list.length }); return { ok: true, amount: Math.round(list.reduce((a, g) => a + g.value, 0) * 100) / 100 }; },
-  /* --- крафт в складчину (эксперимент, 16a-pool.js) --- */
-  /* GET /pool?fee_nano → открытый пул: {id, fee, commitment, state, seats, bank, entries[]} (чужие тикеты скрыты до розыгрыша) */
-  async poolOpen(fee){ track('pool_open', { fee }); return poolOpenMock(fee); },
-  /* POST /pool/join {fee_nano, guess} — взнос списывается сервером. Ответ {ok, pool} | {ok:false, error:'taken'|'closed'|'already'} */
-  async poolJoin(fee, guess){ track('pool_join', { fee }); return poolJoinMock(fee, guess); },
-  /* GET /pool/:id — состояние; после розыгрыша — тикет, победители и доказательство (domain 'pool', зерно раскрыто) */
-  async poolState(fee){ return poolStateMock(fee); },
+  /* --- PvP крафт (эксперимент, 16a-pvp.js) --- */
+  /* GET /pvp?fee_nano → текущая комната: {id, fee, commitment, state, endsAt, bank, entries[]} (чужие тикеты скрыты до розыгрыша) */
+  async pvpOpen(fee){ track('pvp_open', { fee }); return pvpOpenMock(fee); },
+  /* POST /pvp/join {fee_nano, guess} — взнос списывается сервером. Ответ {ok, room} | {ok:false, error:'taken'|'closed'|'already'} */
+  async pvpJoin(fee, guess){ track('pvp_join', { fee }); return pvpJoinMock(fee, guess); },
+  /* GET /pvp/:id — состояние; после таймера — тикет, победители, твой итог (my: доля, множитель, выплата) и доказательство (domain 'pvp') */
+  async pvpState(fee){ return pvpStateMock(fee); },
+  /* --- предикты (эксперимент, 16b-bets.js) --- */
+  /* POST /bets {bets: [{bet, sel, amount_nano}], client_seed} → тикет, какие ставки сыграли, выплата и доказательство (domain 'bets').
+     Ставку списывает и выплату зачисляет сервер; лимиты — BET_MAX на раунд и BETS_CAP на выигрыш одной ставки */
+  async bets(list){ track('bets', { n: list.length, total: list.reduce((a, b) => a + b.amount, 0) }); return betsMock(list); },
 };
 
 /* ---------- аналитика: события воронки. Мок копит их в window.__pawnEvents; в бою — отправка на сервер/в счётчик ---------- */
