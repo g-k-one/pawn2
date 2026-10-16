@@ -128,8 +128,10 @@ async function betsAfter(r){
   haptic('heavy'); r.win > 0 ? Sfx.coin() : Sfx.lock();
   await wait(S.lite ? 500 : 1500);
   const won = r.bets.filter(b => b.won);
-  $('fxDrop').innerHTML = `<div class="pz bt-res${r.win > 0 ? ' won' : ''}"><img src="assets/hero-gem.webp" alt=""><b>${r.win > 0 ? '+' + fmt(r.win) : '0'}</b><small>GRAM</small></div>`;
-  $('fxWin').innerHTML = `<span>${won.length ? $t("Сыграло {0} из {1}: {2}", won.length, r.bets.length, won.map(b => betLabel(b.bet, b.sel)).join(', ')) : $t("Ни одна ставка не сыграла")}</span>`;
+  // итог: сумма крупно, ниже — все ставки раунда: сыгравшие зелёные с выплатой, остальные приглушены
+  $('fxDrop').innerHTML = `<div class="pz bt-res${r.win > 0 ? ' won' : ''}"><img src="assets/hero-gem.webp" alt=""><b>${r.win > 0 ? '+' + fmt(r.win) : '0'}<i class="u">GRAM</i></b>` +
+    `<div class="pvp-chips">${r.bets.map(b => `<span class="pvc bt ${b.won ? 'win' : 'lose'}" style="--tc:${b.bet === 'rank' ? TIERS[b.sel].c : '#b9a6ff'}"><b>${betLabel(b.bet, b.sel)}</b><em>${b.won ? '+' + fmt(b.pay) : fmt(b.amount)}</em></span>`).join('')}</div></div>`;
+  $('fxWin').innerHTML = `<span>${$t("Ставка {0} GRAM", fmt(r.stake))} · ${won.length ? $t("сыграло {0} из {1}", won.length, r.bets.length) : $t("ни одна не сыграла")}</span>`;
   $('fxBtns').innerHTML = `<button class="btn-main" id="btAgain">${$t("Ещё раз · {0} GRAM", fmt(r.stake))}</button><button class="btn-ghost" id="btEdit">${$t("Изменить ставки")}</button>` +
     `<div class="fx-links"><button class="btn-link pf" id="fxPfIn">${$t("Проверить честность")}</button><button class="btn-link pf" id="btHome">${$t("На главную")}</button></div>`;
   $('fx').classList.add('done'); if (r.win > 0 && !S.lite) setTimeout(burst, 200);
