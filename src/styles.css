@@ -1441,7 +1441,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 /* экран проигрыша: кто забрал банк, два тикета рядом */
 .hk-h em svg,.mrow i svg.fire{width:14px;height:14px}
 /* удар молота на арене: силуэты раскалены, светятся огнём */
-.fx-intro.fire .fi-a,.fx-intro.fire .fi-h img{filter:brightness(0) invert(1) sepia(1) saturate(6) hue-rotate(-18deg) brightness(.95) drop-shadow(0 0 10px #ff7a1e) drop-shadow(0 0 26px rgba(255,90,0,.55))}
+/* меч и щит арены перед тикетом — такие же серые, как молот и наковальня крафта (без жёлтого огня) */
 /* ---------- арена v2: колизей сверху, места на трибунах — вход в бой ---------- */
 .fx.arena .fx-arena{padding:calc(var(--tgTop,0px) + 12px) 16px calc(22px + env(safe-area-inset-bottom,0px))}
 .ar-top{position:relative;width:100%;height:44px;display:flex;align-items:center;justify-content:center;flex:none}
@@ -1887,7 +1887,9 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .t2w{left:calc(50% - 195px);top:744px;width:390px;height:100px;z-index:5;display:none;overflow:visible;cursor:grab;touch-action:none}
 .mode-tab2 .t2w{display:block}
 .t2w.drag{cursor:grabbing}
-.t2w #t2Wg{transition:transform .35s cubic-bezier(.3,1.2,.5,1)}
+.t2w .t2disc{position:absolute;transform-origin:50% 50%;will-change:transform;transition:transform .35s cubic-bezier(.3,1.2,.5,1)}
+.t2w .t2disc svg,.t2w .t2ptr{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.t2w .t2ptr{width:390px;height:100px}
 .t2w.drag #t2Wg,.t2w.spin #t2Wg{transition:none}
 .t2w .t2p{fill:#fff}
 /* tab2: ты в комнате — в кнопке аватарка (75% круга) вместо молота с наковальней; в плашке — «Общий банк» в 2 строки */
@@ -1912,24 +1914,40 @@ html[lang=en] .bcase.free::before{content:"Free"}
 /* зрители плавно тают к светящейся рамке панели (сверху — под тикетом) */
 .t2art{-webkit-mask-image:linear-gradient(transparent 17%,#000 31%),linear-gradient(90deg,transparent calc(50% - 176px),#000 calc(50% - 120px),#000 calc(50% + 120px),transparent calc(50% + 176px));-webkit-mask-composite:source-in;
   mask-image:linear-gradient(transparent 17%,#000 31%),linear-gradient(90deg,transparent calc(50% - 176px),#000 calc(50% - 120px),#000 calc(50% + 120px),transparent calc(50% + 176px));mask-composite:intersect}
-.t2flash{fill:#fff;opacity:0;animation:t2flash 6s linear infinite}
-.t2fan{animation:t2fan 8s ease-in-out infinite}
-.t2fxon .t2fan,.t2fxon .t2flash,.t2fxon .t2seats .ar-seat.empty,.t2fxon .t2lockico{animation-play-state:paused}
-@keyframes t2fan{0%,100%{opacity:1}40%,60%{opacity:0}}
+.t2flash{opacity:0;animation:t2flash 6s linear infinite;will-change:opacity}
+.t2flash.f1{animation-duration:7.3s;animation-delay:-3.1s}
+.t2fan{animation:t2fan 8s ease-in-out infinite;will-change:opacity}
+.t2fan.f1{animation-duration:9.5s;animation-delay:-4s}
+.t2fan.f2{animation-duration:11s;animation-delay:-7.5s}
+.t2fxon .t2fan,.t2fxon .t2flash,.t2fxon .t2seats .ar-seat.empty::after,.t2fxon .t2lockico{animation-play-state:paused}
+@keyframes t2fan{0%,100%{opacity:1}40%,60%{opacity:.15}}
 .lite .t2fan{animation:none}
-@keyframes t2flash{0%,96%,100%{opacity:0}97%{opacity:1}}
-.t2fx{width:calc(var(--r) * 3.6);aspect-ratio:1;-webkit-mask-image:radial-gradient(closest-side,#000 35%,rgba(0,0,0,.6) 65%,transparent 95%);mask-image:radial-gradient(closest-side,#000 35%,rgba(0,0,0,.6) 65%,transparent 95%)}
+@keyframes t2flash{0%,95%,100%{opacity:0}96.5%{opacity:1}}
+.t2fx{width:calc(var(--r) * 3.6);aspect-ratio:1}
+/* дым: два слоя одной картинки плывут по кругу навстречу друг другу и дышат — только поворот и прозрачность, это делает видеокарта */
+.t2fx img,.ar-fxs img{position:absolute;inset:0;display:block;width:100%;height:100%;will-change:transform,opacity}
+.t2fx .sm1,.ar-fxs .sm1{opacity:.6;animation:smA 60s linear infinite,smB 9s ease-in-out infinite alternate}
+.t2fx .sm2,.ar-fxs .sm2{opacity:.45;transform:scale(1.08) rotate(140deg);animation:smC 85s linear infinite,smD 12s ease-in-out -4s infinite alternate}
+@keyframes smA{to{rotate:360deg}}
+@keyframes smC{to{rotate:-360deg}}
+@keyframes smB{from{opacity:.45}to{opacity:.7}}
+@keyframes smD{from{opacity:.3}to{opacity:.55}}
+.t2fx,.ar-fxs{opacity:.85;transition:opacity .6s}
+.t2a.hot .t2fx,.ar-col.hot .ar-fxs{opacity:1}   /* последние 5 секунд — дым гуще */
+.t2fxon .t2fx img,.lite .t2fx img{animation-play-state:paused}
 .t2ring{overflow:visible}
 .t2a.hot .ar-tfg{stroke:#ff4c35;filter:drop-shadow(0 0 6px rgba(255,60,40,.95));animation:arHot .5s ease-in-out infinite alternate}
 .t2seats{width:0;height:0}
 .t2seats .ar-seat{position:absolute;transform:translate(-50%,-50%);width:60px;height:60px;overflow:visible}
 .t2seats .ar-seat .tav{font-size:24px}
 /* места — медальоны: пустое — бронзовый щит с силуэтом шлема, тихо «дышит»; занятое — аватар в золотом кольце со свечением */
-.t2seats .ar-seat.empty{border:none;background:radial-gradient(circle at 50% 30%,#4a3020,#170d07 75%);box-shadow:inset 0 0 0 2px rgba(255,190,120,.28),inset 0 0 0 5px rgba(0,0,0,.35),inset 0 -8px 12px rgba(0,0,0,.6),0 6px 12px rgba(0,0,0,.55);animation:t2wait 2.4s ease-in-out var(--d) infinite}
+.t2seats .ar-seat.empty{border:none;background:radial-gradient(circle at 50% 30%,#4a3020,#170d07 75%);box-shadow:inset 0 0 0 2px rgba(255,190,120,.28),inset 0 0 0 5px rgba(0,0,0,.35),inset 0 -8px 12px rgba(0,0,0,.6),0 6px 12px rgba(0,0,0,.55)}
+/* «дыхание» пустого места — светящееся кольцо на отдельном слое меняет только прозрачность (анимация тени перерисовывала место каждый кадр) */
+.t2seats .ar-seat.empty::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(255,190,120,.5),0 0 14px rgba(255,150,60,.35);opacity:0;animation:t2wait 2.4s ease-in-out var(--d) infinite;will-change:opacity}
 .t2seats .t2helm{width:auto;height:34px;filter:invert(1) sepia(.6) saturate(1.5) hue-rotate(-12deg);opacity:.24}
-@keyframes t2wait{50%{box-shadow:inset 0 0 0 2px rgba(255,190,120,.5),inset 0 0 0 5px rgba(0,0,0,.35),inset 0 -8px 12px rgba(0,0,0,.6),0 0 14px rgba(255,150,60,.35)}}
+@keyframes t2wait{50%{opacity:1}}
 .t2seats .ar-seat .tav{box-shadow:0 0 0 3px #2a1a10,0 0 0 5.5px #ffb835,0 0 18px rgba(255,170,60,.6),0 6px 12px rgba(0,0,0,.55)}
-@media (prefers-reduced-motion:reduce){ .t2seats .ar-seat.empty,.t2flash,.t2fan{animation:none} }
+@media (prefers-reduced-motion:reduce){ .t2seats .ar-seat.empty::after,.t2flash,.t2fan{animation:none} }
 .t2w.locked{opacity:.5;cursor:default}
 .mode-tab2 .range{z-index:6}   /* число тикета — поверх арены */
 /* за 5 с до старта: кнопка и плашка — тёмно-серые, в кнопке замок */
@@ -2014,7 +2032,8 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .hdet+.sect{margin-top:0}
 .hdet>.hd-sec:last-child{margin-bottom:2px}
 /* нижний блок (переключатель, круглые кнопки, колесо/фишки, ставка, кнопка, карточки NFT) — на 12 px выше: таблетка режимов не заходит на полоску «домой» iPhone */
-.has-modes .modes{bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+/* таб-бар режимов — под кнопками ставки: на iPhone вырез снизу (34 px) прибавлялся к отступу, и таблетка наезжала на +0.1…+5 */
+.has-modes .modes{bottom:max(12px,calc(env(safe-area-inset-bottom,0px) - 8px))}
 .has-modes .bar{padding-bottom:64px}
 .has-modes .bet{top:639px}
 .has-modes .craft{top:572px}
@@ -2055,7 +2074,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .ar-steps .pfi-step p{margin:2px 0 0;font-size:13.5px;line-height:1.4;color:rgba(255,255,255,.72)}
 .ar-steps .ar-pf i svg{width:18px;height:18px;fill:none;stroke:#06121a;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .ar-steps .ar-pf code{display:block;margin-top:8px;font-size:12.5px;line-height:1.35;word-break:break-all;color:rgba(255,255,255,.6)}
-.btn-main.ar-ok{margin-top:20px;background:linear-gradient(#ff8a3c,#c2310c)}
 .ar-steps{padding:4px 16px;border-radius:22px;background:rgba(255,255,255,.05)}
 .ar-steps .pfi-step{margin:0;padding:12px 0;border-radius:0;background:none}
 .ar-steps .pfi-step+.pfi-step{border-top:1px solid rgba(255,255,255,.06)}
@@ -2070,8 +2088,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .hl-b .hk-v b{display:block;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hseg{margin:0 auto 12px;width:max-content}
 /* правила арены: заголовок насыщенно-оранжевый, фон окна теплее */
-.modal.armodal .mbox{background:radial-gradient(110% 70% at 50% 0%,rgba(255,90,31,.42),transparent 72%),linear-gradient(#24160f,#0e0a08)}
-.modal.armodal .mbox h4{color:#ff7a2e;background:linear-gradient(#ffb070 10%,#ff5a1f);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .hl-b .hk-s.win{flex:none}
 .hl-b>.hk-v b{font-size:17px}
 /* синяя сумма GRAM — рядом всегда синий гем (тот же, что у баланса), а не бело-голубой */

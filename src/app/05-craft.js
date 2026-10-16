@@ -71,42 +71,13 @@ function dbgWant(){
   if (d.near && TIERS[d.tier + 1]){ const m = Math.max(150, Math.floor((t.to - t.from + 1) * .04)); return n => n > t.to - m && n <= t.to; }   // «не хватило совсем чуть-чуть»
   return n => n >= t.from && n <= t.to;
 }
-// QA: эффекты частиц (16e-forge.js) — разовые играют один раз, постоянные (огонь, портал…) 4 с и гаснут
-const FX_TEST = [['fire', () => $t("Костёр")], ['firetoon', () => $t("Костёр мультяшный")], ['firering', () => $t("Рамка: огонь")], ['fbolt', () => $t("Фрактал: молния")], ['julia', () => $t("Фрактал: Жюлиа")], ['crystal', () => $t("Фрактал: кристалл")], ['cracks', () => $t("Фрактал: трещины")], ['plasma', () => $t("Фрактал: плазма")], ['sparkring', () => $t("Рамка: блёстки")], ['boom', () => $t("Взрыв")], ['portal', () => $t("Портал")], ['bolt', () => $t("Молния")], ['coins', () => $t("Награда")],
-  ['confetti', () => $t("Конфетти")], ['charge', () => $t("Заряд")], ['sparkle', () => $t("Волшебная пыль")], ['smoke', () => $t("Дым")], ['shock', () => $t("Удар о землю")], ['comets', () => $t("Кометы")],
-  ['twinkle', () => $t("Аура: мерцание")], ['spirit', () => $t("Аура: дух")], ['starburst', () => $t("Аура: звезда")], ['cloud', () => $t("Аура: облако")],
-  ['threads', () => $t("Аура: нити")], ['nebula', () => $t("Аура: туманность")], ['ring', () => $t("Аура: кольцо")],
-  ['reveal', () => $t("Раскрытие")], ['combo', () => $t("Комбо")], ['slash', () => $t("Взмах")], ['button', () => $t("Кнопка")],
-  ['toonboom', () => $t("Мультяшный взрыв")], ['mushroom', () => $t("Гриб-взрыв")], ['eruption', () => $t("Извержение")], ['sphere', () => $t("Энергосфера")], ['hexreveal', () => $t("Раскрытие героя")], ['swirl', () => $t("Спираль-фон")], ['bubble', () => $t("Снаряд с хвостом")], ['hit', () => $t("Попадание")], ['starwave', () => $t("Волна звёзд")]];
-function fxTest(name){
-  const h = Forge.play(name, { size: Math.min(innerWidth, innerHeight * .7) });
-  if (h && !['boom', 'bolt', 'coins', 'confetti', 'charge', 'shock', 'reveal', 'combo', 'toonboom', 'mushroom', 'eruption', 'hexreveal', 'hit', 'starwave', 'fbolt', 'cracks', 'crystal'].includes(name)) setTimeout(() => h.stop(), 4000);
-}
-// QA: замер эффектов поверх экрана — кадров в секунду, мс на кадр, частиц, перерисовка экрана, ступень качества
-let fxMeter = null;
-function fxMeterToggle(){
-  if (fxMeter){ clearInterval(fxMeter.t); fxMeter.el.remove(); fxMeter = null; return; }
-  const el = document.createElement('div');
-  el.style.cssText = 'position:fixed;left:8px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:9001;pointer-events:none;font:600 12px/1.35 monospace;color:#fff;background:rgba(0,0,0,.6);padding:6px 8px;border-radius:8px;white-space:pre';
-  document.body.appendChild(el);
-  fxMeter = { el, t: setInterval(() => { const s = Forge.stats; el.textContent = `${(s.fps || 0).toFixed(0)} fps · ${s.ms.toFixed(2)} ms\n${$t("частиц")} ${s.quads} · ×${(s.over || 0).toFixed(1)}\n${$t("качество")} ${s.q ?? 2}${Forge.auto ? ' ' + $t("авто") : ''}`; }, 500) };
-}
 const dbgLabel = () => S.dbg.ticket != null ? `${$t("тикет")} ${S.dbg.ticket}` : S.dbg.tier < 0 ? $t("выкл") : TIERS[S.dbg.tier].name + (S.dbg.near ? (" " + $t("· у порога")) : '') + (S.dbg.keep ? (" " + $t("· всегда")) : '');
 let dbgTab = 'craft';
-// группы эффектов в Дебаге (имена — в FX_TEST)
-const FX_NAME = Object.fromEntries(FX_TEST);
-const FX_GROUPS = [
-  [() => $t("Огонь и взрывы"), ['fire', 'firetoon', 'boom', 'toonboom', 'mushroom', 'eruption', 'bolt', 'shock', 'smoke']],
-  [() => $t("Магия"), ['portal', 'charge', 'sphere', 'comets', 'sparkle', 'confetti', 'coins']],
-  [() => $t("Раскрытия и удары"), ['reveal', 'hexreveal', 'combo', 'slash', 'hit', 'starwave', 'bubble']],
-  [() => $t("Ауры, рамки, фоны"), ['twinkle', 'spirit', 'starburst', 'cloud', 'threads', 'nebula', 'ring', 'firering', 'sparkring', 'swirl', 'button']],
-  [() => $t("Фракталы"), ['fbolt', 'julia', 'crystal', 'cracks', 'plasma']],
-];
 function renderDbg(){
   const d = S.dbg, last = TIERS.length - 1;
   const chip = (k, v, label, c, dis) => `<button class="dbg-c${d[k] === v ? ' on' : ''}" data-k="${k}" data-v="${v}" style="--c:${c || '#fff'}"${dis ? ' disabled' : ''}>${label}</button>`;
   // вкладки: всё по смыслу, чтобы не листать длинный список
-  const tabs = [['craft', $t("Крафт")], ['fx', $t("Эффекты")], ['player', $t("Игрок")], ['exp', $t("Эксперименты")]];
+  const tabs = [['craft', $t("Крафт")], ['player', $t("Игрок")], ['exp', $t("Эксперименты")]];
   const sec = {
     craft: () =>
       `<div class="dbg-l">${$t("Точный тикет")}</div><div class="dbg-t"><input id="dbgTicket" type="number" inputmode="numeric" min="0" max="99999" placeholder="0 – 99 999" value="${d.ticket ?? ''}"><button class="dbg-c" data-k="ticketClear" data-v="1">${$t("Сброс")}</button></div>` +
@@ -117,10 +88,6 @@ function renderDbg(){
       `<div class="dbg-l">${$t("Супер дроп")}</div><div class="dbg-g"><button class="dbg-c${d.ticket === SUPER.target ? ' on' : ''}" data-k="super" data-v="1" style="--c:#EB57B0">${$t("Выбить супер дроп · тикет")} ${SUPER.target}</button></div>` +
       `<div class="dbg-l">${$t("NFT на главной при смене ставки")}</div><div class="dbg-g">${chip('prevDelay', null, $t("Сразу"))}${chip('prevDelay', 1500, $t("Ответ 1.5 с"))}${chip('prevDelay', 4000, $t("Ответ 4 с"))}</div>` +
       `<p class="dbg-n">${$t("Для ранга подбирается настоящий server seed — проверка честности сходится, но хеш до игры будет другим. Точный тикет подставляется напрямую, проверка для него не сойдётся. Только для тестов прототипа.")}</p>`,
-    // эффекты Горна: качество и замер сверху, ниже — все эффекты по группам; тап — эффект поверх экрана
-    fx: () =>
-      `<div class="dbg-l">${$t("Качество эффектов")}</div><div class="dbg-g">${[[-1, $t("Авто")], [2, $t("Полное")], [1, $t("Среднее")], [0, $t("Эконом")]].map(([v, l]) => `<button class="dbg-c${(v < 0 ? Forge.auto : !Forge.auto && Forge.quality === v) ? ' on' : ''}" data-k="fxq" data-v="${v}" style="--c:#30A5FF">${l}</button>`).join('')}<button class="dbg-c${fxMeter ? ' on' : ''}" data-k="fxMeter" data-v="1" style="--c:#30A5FF">${$t("Замер на экране")}</button></div>` +
-      FX_GROUPS.map(([g, list]) => `<div class="dbg-l">${g()}</div><div class="dbg-g">${list.map(n => `<button class="dbg-c" data-k="fx" data-v="${n}" style="--c:#FFB835">${FX_NAME[n] ? FX_NAME[n]() : n}</button>`).join('')}</div>`).join(''),
     player: () =>
       `<div class="dbg-l">${$t("Кошелёк")}</div><div class="dbg-g">${[[null, $t("Не подключён")], ['Tonkeeper', 'Tonkeeper'], ['Telegram Wallet', 'Telegram Wallet']].map(([w, l]) => `<button class="dbg-c${(S.wallet?.name || null) === w && (!w || S.wallet?.fake) ? ' on' : ''}" data-k="wallet" data-v="${w || ''}" style="--c:#30A5FF">${l}</button>`).join('')}</div>` +
       `<div class="dbg-l">${$t("Запас бесплатных кейсов")}</div><div class="dbg-g">${[['beast', $t("Бист"), '#EB57B0'], ['musk', $t("Маск"), '#FF4C35']].map(([id, n, c]) => [0, 1, 3, 5].map(v => `<button class="dbg-c${S.stock[id] === v ? ' on' : ''}" data-k="stock" data-id="${id}" data-v="${v}" style="--c:${c}">${n} ×${v}</button>`).join('')).join('')}</div>` +
@@ -146,9 +113,6 @@ $('dbgBody').addEventListener('click', e => {
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
   if (k === 'stock'){ S.stock[c.dataset.id] = +v; haptic(); renderDbg(); return; }
   if (k === 'onbNow'){ hideDrawer(); setTimeout(() => Onb.start(true), 300); return; }
-  if (k === 'fx'){ haptic(); hideDrawer(); setTimeout(() => fxTest(v), 300); return; }
-  if (k === 'fxq'){ Forge.auto = +v < 0; Forge.quality = +v >= 0 ? +v : S.lite ? 0 : 2; haptic(); renderDbg(); return; }
-  if (k === 'fxMeter'){ fxMeterToggle(); haptic(); renderDbg(); return; }
   if (k === 'bets'){ S.dbg.bets = v === 'true'; try { localStorage.setItem('bm-bets', S.dbg.bets ? '1' : '0'); } catch(_){} haptic(); renderDbg(); renderModes(); return; }
   if (k === 'pvp'){ S.dbg.pvp = v === 'true'; try { localStorage.setItem('bm-pvp', S.dbg.pvp ? '1' : '0'); } catch(_){} haptic(); renderDbg(); renderModes(); return; }
   if (k === 'noOnb'){ S.dbg.noOnb = v === 'true'; try { localStorage.setItem('bm-onb-off', S.dbg.noOnb ? '1' : '0'); } catch(_){} haptic(); renderDbg(); return; }

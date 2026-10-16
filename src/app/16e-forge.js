@@ -1453,7 +1453,7 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
     }
     stats.ms = stats.ms * .95 + (performance.now() - t0) * .05; stats.js = stats.js * .95 + js * .05; stats.quads = q; stats.fps = 1000 / gap; stats.q = quality; stats.over = stats.over * .9 + fill / (w * h) * .1;   // перерисовка: сколько раз в среднем закрашен каждый пиксель экрана
     if (live.size && !document.hidden) raf = requestAnimationFrame(frame);
-    else gl.clear(gl.COLOR_BUFFER_BIT);
+    else { gl.clear(gl.COLOR_BUFFER_BIT); if (!live.size) cv.style.display = 'none'; }   // простой: холст убираем совсем — пустой слой на весь экран iPhone всё равно склеивает каждый кадр
   }
   const kick = () => { if (!raf && live.size){ last = performance.now(); raf = requestAnimationFrame(frame); } };
   document.addEventListener('visibilitychange', kick);
@@ -1474,7 +1474,7 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
       const e = { def, at: a, tex: texture(def.atlas), s: { t: 0, cycle: 0, acc: {} }, loop: !!o.loop, el: o.el || null, fade: 1, stopping: false,
         ox: o.x ?? (host ? host.clientWidth : innerWidth) / 2, oy: o.y ?? (host ? host.clientHeight : innerHeight) / 2, k: (o.size || Math.min(innerWidth, innerHeight)) / 360, clip: null };
       def.init.call(def, e.s, a);
-      live.add(e); kick();
+      cv.style.display = ''; live.add(e); kick();
       return { stop(){ e.stopping = true; }, kill(){ live.delete(e); }, alive: () => live.has(e), set(k, v){ e.s[k] = v; } };
     },
     stopAll(){ live.forEach(e => e.stopping = true); },

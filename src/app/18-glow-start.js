@@ -123,11 +123,13 @@ void main(){
     if (ok) gl.viewport(0, 0, W, H);
   }
   let ph = 0, last = 0, drawn = 0;
+  // цикл не будит страницу каждый кадр экрана (60–120 раз в секунду): между кадрами свечения — таймер, в простое — редкая проверка
+  function tick(now){ const d = frame(now); if (d > 0) setTimeout(() => requestAnimationFrame(tick), d); else requestAnimationFrame(tick); }
   function frame(now){
-    requestAnimationFrame(frame);
-    if (!ok || document.hidden || S.lite || (opt.active && !opt.active())) return;
-    // в покое — ~30 к/с (на 120 Гц экранах это вчетверо меньше работы); при ударе и переходах — каждый кадр
-    if (!(energy(now) > .01 || (opt.hot && opt.hot())) && now - drawn < 31) return;
+    if (!ok || document.hidden || S.lite || (opt.active && !opt.active())) return 100;
+    // в покое — ~20 к/с: свет течёт медленно (циклы 7–24 с), глаз разницы не видит, а iPhone в Telegram греется заметно меньше; при ударе и переходах — каждый кадр
+    const calm = !(energy(now) > .01 || (opt.hot && opt.hot()));
+    if (calm && now - drawn < 44) return 48 - (now - drawn);
     drawn = now;
     if (Math.round(opt.size()[0] * SC) !== W || Math.round(opt.size()[1] * SC) !== H) resize();
     const dt = last ? Math.min(.1, (now - last) / 1000) : 0; last = now;
@@ -161,9 +163,10 @@ void main(){
     gl.uniform4f(U.uWave, wt >= 0 && wt < 1 ? 1 - wt * (2 - wt) * .96 : 0, wt >= 0 && wt < 1 ? 1.4 : 0, 1.3, 4.1);
     gl.uniform1f(U.uWamp, 7); gl.uniform1f(U.uM, w);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    return calm ? 40 : 0;
   }
   resize(); addEventListener('resize', resize);
-  requestAnimationFrame(frame);
+  requestAnimationFrame(tick);
   /* энергия: быстрый подъём, затем мягкий спад ~1.8 с */
   let punchAt = -1e9;
   let punchPow = 1;
@@ -172,7 +175,8 @@ void main(){
 }
 /* рамка панели: отступ медленно «плывёт» 0…20 px (цикл ~24 с), скругление = 64 − отступ */
 const panelRect = (now, top = 0) => { const m = 10 + 10 * Math.sin(now / 1000 * Math.PI * 2 / 24); return { m, x: m, y: top + m - 1, w: SW - 2 * m, h: 659 - (m - 1) - (m + 4), r: Math.max(8, 64 - m) }; };
-const Glow = makeGlow($('glow'), { main: true, size: () => [SW, 659], rect: now => panelRect(now), active: () => !FX.cover });
+// свет мягкий: 1 точка холста на 1 px макета — вдвое меньше работы, чем 1.5
+const Glow = makeGlow($('glow'), { main: true, size: () => [SW, 659], maxSc: 1, rect: now => panelRect(now), active: () => !FX.cover });
 /* рамка экрана крафта: на весь экран, проявляется из черноты */
 const FX = { on: false, gain: 0, gainTo: 0, last: 0, morph: 1, cover: false, hot: false };
 const fxH = () => { const st = $('stage'); return st.offsetHeight || 844; };

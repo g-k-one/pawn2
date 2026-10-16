@@ -41,7 +41,7 @@ function renderHist(detail){
     bindPF(b, rec.r); $('hBack').onclick = () => renderHist(); b.scrollTop = 0; return;
   }
   if (histTab === 'games'){
-    const seg = `<div class="bseg seg hseg">${[['crafts', $t("Крафты")], ['arena', $t("Арена")], ['bets', $t("Ставки")]].map(([k, t]) => `<button class="${k === gameSeg ? 'on' : ''}" data-seg="${k}">${t}</button>`).join('')}</div>`;
+    const seg = `<div class="bseg seg hseg">${[['crafts', $t("Крафты")], ['arena', $t("Арены")], ['bets', $t("Ставки")]].map(([k, t]) => `<button class="${k === gameSeg ? 'on' : ''}" data-seg="${k}">${t}</button>`).join('')}</div>`;
     const L = S.hist.crafts.map((c, i) => [c, i]).filter(([c]) => gameKind(c) === gameSeg);
     const empty = { crafts: $t("Крафтов пока нет"), arena: $t("Боёв на арене пока нет"), bets: $t("Ставок пока нет") }[gameSeg];
     b.innerHTML = seg + (L.length ? L.map(([c, i]) => craftCard(c, i)).join('') : `<p class="hempty">${empty}</p>`);
@@ -90,7 +90,7 @@ function renderHist(detail){
       `<div class="hsec">${$t("Ранги в твоих крафтах")}</div><div class="bars">${TIERS.map((t, i) => { const pc = n ? by[i] / n * 100 : 0;
         return `<div style="--c:${t.c}"><span>${t.name}</span><i><b style="width:${Math.max(pc, 1.5).toFixed(1)}%"></b><em style="left:${t.chance}%"></em></i><small>${by[i]} · ${pc.toFixed(0)}%</small></div>`; }).join('')}</div>` +
       `<p class="hnote">${$t("Белая черта — честный шанс ранга. Чем больше крафтов, тем ближе к ней твои доли.")}</p>` +
-      `<div class="hsec">${$t("Арена")}</div><div class="hstat n">${tile($t("Боёв"), A.length)}${tile($t("Побед"), aWins.length, A.length ? Math.round(aWins.length / A.length * 100) + '%' : '')}` +
+      `<div class="hsec">${$t("Арены")}</div><div class="hstat n">${tile($t("Боёв"), A.length)}${tile($t("Побед"), aWins.length, A.length ? Math.round(aWins.length / A.length * 100) + '%' : '')}` +
         `${tile($t("Взносы"), G(aIn), '', 'g')}${tile($t("Выиграно"), G(aWon), '', 'g')}</div>` +
       `<div class="hsec">${$t("Ставки")}</div><div class="hstat n">${tile($t("Ставок"), bAll)}${tile($t("Сбылось"), bHit, bAll ? Math.round(bHit / bAll * 100) + '%' : '')}` +
         `${tile($t("Поставлено"), G(bIn), '', 'g')}${tile($t("Выиграно"), G(bWon), '', 'g')}</div>` +

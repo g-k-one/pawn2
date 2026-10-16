@@ -105,9 +105,11 @@ const t2Wheel = (() => {
     defs += `<linearGradient id="t2g${i}" gradientUnits="userSpaceOnUse" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"><stop offset="0" stop-color="${t.a}"/><stop offset="1" stop-color="${t.b}"/></linearGradient>`;
     const [p0x, p0y] = pt(a0, R), [p1x, p1y] = pt(a1, R);
     g += `<path d="M${cx} ${cy}L${p0x.toFixed(1)} ${p0y.toFixed(1)}A${R} ${R} 0 0 1 ${p1x.toFixed(1)} ${p1y.toFixed(1)}Z" fill="url(#t2g${i})"/>`; });
-  const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  el.setAttribute('class', 'abs t2w'); el.id = 't2Wheel'; el.setAttribute('viewBox', '0 0 390 100');
-  el.innerHTML = `<defs>${defs}</defs><g id="t2Wg" style="transform-origin:${cx}px ${cy}px">${g}</g><path class="t2p" d="M${cx - 10} 0h20l-10 28z"/>`;
+  // диск — отдельный слой (div с картинкой круга), крутим его целиком: поворот делает видеокарта.
+  // Раньше крутилась группа внутри SVG — iPhone перерисовывал весь круг с градиентами каждый кадр, колесо лагало
+  const el = document.createElement('div'); el.className = 'abs t2w'; el.id = 't2Wheel';
+  el.innerHTML = `<div class="t2disc" id="t2Wg" style="left:${cx - R}px;top:${cy - R}px;width:${2 * R}px;height:${2 * R}px"><svg viewBox="${cx - R} ${cy - R} ${2 * R} ${2 * R}" aria-hidden="true"><defs>${defs}</defs>${g}</svg></div>` +
+    `<svg class="t2ptr" viewBox="0 0 390 100" aria-hidden="true"><path class="t2p" d="M${cx - 10} 0h20l-10 28z"/></svg>`;
   $('bet').parentNode.appendChild(el); return el;
 })();
 let t2Deg = 0;   // угол колеса — копится без обрезки, чтобы при переходе через 0 оно не крутилось назад через весь круг
@@ -139,17 +141,20 @@ const T2_HELM = `<img class="t2helm" src="assets/helm.svg" alt="">`;
 /* зрители: за колизеем — кольца трибун с публикой (точки-головы приглушённых цветов, дальше — темнее), кое-где вспышки камер */
 const T2_CROWD = (() => {
   let rnd = 7; const R = () => (rnd = (rnd * 16807) % 2147483647) / 2147483647, cols = ['#a0714a', '#7a5a9a', '#4a7a9a', '#9a4a4a', '#d0a878', '#5a8a5a', '#c08a5a', '#8a8a9a'];
-  let s = `<svg class="ar-art t2crowd" viewBox="-200 -200 800 800" aria-hidden="true">`, flash = '', live = '';
+  // «живые» зрители и вспышки — не по одному (анимация каждой точки внутри SVG перерисовывает весь колизей каждый кадр — грело iPhone),
+  // а группами: каждая группа — свой слой, гаснет и загорается целиком (это делает видеокарта, без перерисовки)
+  let s = `<svg class="ar-art t2crowd" viewBox="-200 -200 800 800" aria-hidden="true">`, flash = ['', ''], live = ['', '', ''], nl = 0, nf = 0;
   for (let k = 0; k < 6; k++){ const r = 224 + k * 16, n = Math.floor(2 * Math.PI * r / 22), op = (.66 - k * .08).toFixed(2);
     s += `<circle cx="200" cy="200" r="${r + 6}" fill="none" stroke="rgba(40,26,16,${(.55 - k * .06).toFixed(2)})" stroke-width="15"/><g opacity="${op}">`;
     for (let i = 0; i < n; i++){ if (R() < .3) continue; const a = (i + R() * .4) / n * 2 * Math.PI, rr = r + R() * 4;
       const x = (200 + Math.cos(a) * rr).toFixed(1), y = (200 + Math.sin(a) * rr).toFixed(1);
       // каждый четвёртый зритель то уходит, то возвращается — места на трибунах живут
       const dot = `<circle cx="${x}" cy="${y}" r="${(3 + R() * 1.2).toFixed(1)}" fill="${cols[Math.floor(R() * cols.length)]}"`;
-      if (R() < .12) live += `${dot} opacity="${op}" class="t2fan" style="animation-duration:${(5 + R() * 6).toFixed(1)}s;animation-delay:-${(R() * 11).toFixed(1)}s"/>`; else s += dot + '/>';
-      if (R() < .02) flash += `<circle class="t2flash" cx="${x}" cy="${y}" r="6" style="animation-delay:${(R() * 6).toFixed(2)}s"/>`; }
+      if (R() < .12) live[nl++ % 3] += `${dot} opacity="${op}"/>`; else s += dot + '/>';
+      if (R() < .02) flash[nf++ % 2] += `<circle cx="${x}" cy="${y}" r="6" fill="#fff"/>`; }
     s += `</g>`; }
-  return s + `</svg><svg class="ar-art t2crowd" viewBox="-200 -200 800 800" aria-hidden="true">${live}${flash}</svg>`;
+  const layer = (cls, body) => `<svg class="ar-art t2crowd ${cls}" viewBox="-200 -200 800 800" aria-hidden="true">${body}</svg>`;
+  return s + `</svg>` + live.map((b, i) => layer('t2fan f' + i, b)).join('') + flash.map((b, i) => layer('t2flash f' + i, b)).join('');
 })();
 /* арена: крупный колизей (тот же вектор, что в PvP) на месте приза — кольцо таймера вокруг, дым Горна по краям, 4 места соперников в ряд */
 const T2A = { y: 492, r: 152, ring: 138, slots: 5, seat: 60, gap: 18, rows: [[2, -36], [3, 38]] };   // центр по высоте, радиус колизея, кольцо таймера; места: размер, зазор, ряды [сколько, сдвиг по высоте]
@@ -163,13 +168,13 @@ const t2Arena = (() => {
       return `<span class="ar-seat empty" style="left:${x}px;top:${dy}px;--d:${((ri * 2 + i) * .35).toFixed(2)}s">${T2_HELM}</span>`; })).join('')}</div>`;
   $('bet').parentNode.insertBefore(el, $('prize')); return el;
 })();
-let t2Fx = null, t2Forge = null, t2SeatIds = [];
-function t2Smoke(on){ if (!on || S.lite){ t2Fx?.kill(); t2Fx = null; return; }
-  if (!t2Forge){ t2Forge = makeForge($('t2Fx')); t2Forge.maxDpr = .6; }   // дым и так размытый — рисуем в 0.6 пикселя: вчетверо меньше работы, края мягче
-  if (!t2Fx || !t2Fx.alive()){ const w = $('t2Fx').offsetWidth; if (!w) return; t2Fx = t2Forge.play('arena', { el: $('t2Fx'), loop: true, size: w * .72 }); t2Fx?.set('dense', 2.2); } }
+let t2SeatIds = [];
+// дым у трибун — картинка (снята с эффекта Горна) двумя слоями, которые медленно плывут по кругу в разные стороны и дышат.
+// Вращение картинки делает видеокарта без перерисовки — живой дым на WebGL грел iPhone в Telegram
+function t2Smoke(on){ const box = $('t2Fx'); if (!box.firstChild) box.innerHTML = '<img class="sm1" src="assets/arena-smoke.webp" alt="" decoding="async"><img class="sm2" src="assets/arena-smoke.webp" alt="" decoding="async">'; box.hidden = !on || S.lite; }
 // за 5 с до старта закрыто для всех: колесо, ранги и вход (кнопка и ставка приглушены); бой начался — тем, кто не в нём, сразу открывается следующая комната
 function t2Ring(){ t2Wheel.classList.toggle('locked', t2Locked()); document.body.classList.toggle('t2lock', t2Locked() || t2Full()); if (!!$('bet').dataset.full !== t2Full()) renderBet(); const left = t2End ? Math.max(0, (t2End - Date.now()) / 1000) : PVP_TIME, C = 2 * Math.PI * T2A.ring, hot = t2End > 0 && left <= 5;
-  $('t2Ring').style.strokeDashoffset = (C * (1 - Math.min(1, left / PVP_TIME))).toFixed(1); t2Arena.classList.toggle('hot', hot); t2Fx?.set('hot', hot ? 1 : 0); }
+  $('t2Ring').style.strokeDashoffset = (C * (1 - Math.min(1, left / PVP_TIME))).toFixed(1); t2Arena.classList.toggle('hot', hot); }
 // места соперников: по порядку входа; новенький — с лёгким «пружинящим» появлением
 let t2Quiet = false;
 function t2Seats(quiet){

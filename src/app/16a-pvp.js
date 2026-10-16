@@ -107,7 +107,7 @@ async function openPvp(){
   pvpLoop();
 }
 async function leaveArena(){
-  if (!arenaOn) return; arenaOn = false; haptic(); tgBack(false); arFx?.kill(); arFx = null; arSeat = null;  if (pvpView?.entries.some(x => x.me) && pvpView.state === 'open') notify({ type: 'info', icon: 'fire', title: $t("Ты в игре"), text: $t("Вернём на арену к старту") });
+  if (!arenaOn) return; arenaOn = false; haptic(); tgBack(false); arSeat = null;  if (pvpView?.entries.some(x => x.me) && pvpView.state === 'open') notify({ type: 'info', icon: 'fire', title: $t("Ты в игре"), text: $t("Вернём на арену к старту") });
   await closeFx(); $('fx').classList.remove('arena'); CRAFT.classList.remove('busy'); S.busy = false; restartAuto();
 }
 async function pvpLoad(){ pvpGo = false; pvpView = await API.pvpOpen(pvpFee); pvpKey = ''; renderArena(); pvpLoop(); }
@@ -175,7 +175,7 @@ const AR_SLOTS = 4;
 const SWORDS = `<svg class="ar-swords" viewBox="0 0 64 64" aria-hidden="true"><g fill="#fff"><path d="M12 6l4-2 30 34-4 4z"/><path d="M38 40l6-6 4 4-6 6z"/><path d="M44 46l4-4 8 8-4 4z"/>` +
   `<path d="M52 6l-4-2-30 34 4 4z"/><path d="M26 40l-6-6-4 4 6 6z"/><path d="M20 46l-4-4-8 8 4 4z"/></g></svg>`;
 const AR_SEAT_R = .43;   // места — по кругу на трибунах (доля стороны арены)
-let arSeat = null, arFx = null, arHost = null, arForge = null, arSpin = 0;   // своё место; туман — свой Горн с холстом под интерфейсом; инерция колеса
+let arSeat = null, arSpin = 0;   // своё местоом; инерция колеса
 const AR_TIMER = .30;                                                       // радиус кольца таймера (доля стороны арены)
 const tkDeg = n => ticketToP(n) / TIERS.length * 360;
 const degTk = d => pToTicket(Math.min(TIERS.length - 1e-6, (((d % 360) + 360) % 360) / 360 * TIERS.length));
@@ -221,13 +221,12 @@ function renderArena(){
         `${arWheel(lock)}<button class="round" id="arDice" aria-label="${$t("Случайный")}"${lock ? ' disabled' : ''}>${svg(DICE)}</button></div>`;
     if (me && !pvpChange.wait) pvpGuess = me.guess;
     bindArena(); showTicket(pvpGuess); try { if (Telegram.WebApp.initData) $('arBack').hidden = true; } catch(_){}
-    if (arHost) $('arFxs').replaceWith(arHost); else { arHost = $('arFxs'); arForge = makeForge(arHost); }   // холст переживает перерисовку; туман по краям
-    if (!S.lite && (!arFx || !arFx.alive())) arFx = arForge.play('arena', { el: arHost, loop: true });
+    if (!S.lite) $('arFxs').innerHTML = '<img class="sm1" src="assets/arena-smoke.webp" alt=""><img class="sm2" src="assets/arena-smoke.webp" alt="">';   // туман по краям — картинка, плывёт по кругу (как в 16g-tab2.js)
   }
   seatsSync(v);
   const C = 2 * Math.PI * AR_TIMER * 400, ring = $('arRing');
   ring.style.strokeDasharray = C; ring.style.strokeDashoffset = (C * (1 - left / PVP_TIME)).toFixed(1);
-  $('arTime').textContent = mmss(left); $('arPit').classList.toggle('hot', left <= 5); arFx?.set('hot', left <= 5 ? 1 : 0);
+  $('arTime').textContent = mmss(left); $('arPit').classList.toggle('hot', left <= 5);
 }
 // места — ряд под ареной: ты — на выбранном, остальные — по порядку входа; тап по свободному «+» — сразу вход
 // всего 5 мест: 4 соперника — по кругу на трибунах, пятое — твоё, это кнопка с мечами (как кнопка крафта): вошёл — в ней твой аватар
@@ -331,11 +330,12 @@ function arenaRules(){
     [TIERS[1].c, $t("Ближе всех — крафтит банк"), $t("Весь банк уходит в крафт с выпавшим тикетом, множитель — по его рангу. Один в комнате — крафт твой.")],
     [TIERS[3].c, $t("Ничья — пополам"), $t("Двое одинаково близко, выше и ниже тикета: каждый крафтит свою половину.")],
     [TIERS[4].c, $t("За 5 секунд — стоп"), $t("Тикеты фиксируются, войти или сменить тикет уже нельзя.")]];
-  modal(`<h4>${$t("Правила арены")}</h4><div class="ar-steps">` + steps.map(([c, t, d], i) => `<div class="pfi-step" style="--c:${c}"><i>${i + 1}</i><div><b>${t}</b><p>${d}</p></div></div>`).join('') +
-    `<div class="pfi-step ar-pf" style="--c:#12D53D"><i>${svg(IC.shield)}</i><div><b>${$t("Честность")}</b><p>${$t("Хеш зерна комнаты известен до взносов. После старта зерно раскроется — исход можно проверить.")}</p><code>${pvpView.commitment}</code></div></div></div>` +
-    `<button class="btn-main ar-ok" id="arOk">${$t("Понятно")}</button>`, '#ff5a1f'); $('modal').classList.add('armodal');
-  $('arOk').onclick = closeModal;
+  // шторка снизу, как остальные экраны правил; закрывается свайпом или тапом мимо — кнопка «Понятно» не нужна
+  const html = `<div class="ar-steps">` + steps.map(([c, t, d], i) => `<div class="pfi-step" style="--c:${c}"><i>${i + 1}</i><div><b>${t}</b><p>${d}</p></div></div>`).join('') +
+    `<div class="pfi-step ar-pf" style="--c:#12D53D"><i>${svg(IC.shield)}</i><div><b>${$t("Честность")}</b><p>${$t("Хеш зерна комнаты известен до взносов. После старта зерно раскроется — исход можно проверить.")}</p><code>${pvpView.commitment}</code></div></div></div>`;
+  swapDrawer('arRulesDrawer', () => { $('arRulesBody').innerHTML = html; });
 }
+
 // сесть на место = вступить в бой с выбранным тикетом
 async function pvpJoinClick(seat){
   const v = pvpView; if (!v || v.entries.some(x => x.me) || pvpJoinClick.on) return;
@@ -370,14 +370,16 @@ function pvpResult(v){
 }
 async function pvpStart(v){
   ++pvpTok; clearTimeout(pvpPoll); tgBack(false); arSeat = null;   // опрос останавливаем; pvpGo остаётся true до следующей комнаты; во время боя «Назад» нет
-  const r = pvpResult(v), fast = S.lite, a = $('fxArena');   // быстрый крафт на арену не действует — бой всегда целиком (кроме экономного режима)
+  // бой всегда целиком и одинаковой длины у всех в комнате: ни «Быстрый крафт», ни экономный режим его не укорачивают —
+  // иначе в экономном режиме исход было видно раньше соперников. В экономном только без тяжёлых украшений (свечение, частицы)
+  const r = pvpResult(v), fast = false, a = $('fxArena');
   // все слетаются к банку, горнило вспыхивает
   if (!fast && arenaOn){   // только старый экран арены; в Арене (tab2) сразу заставка — без паузы и лишнего свиста
     $('arPit')?.classList.add('fire'); FullGlow.set(FIRE_GLOW); FullGlow.punch(0, 1); FX.gainTo = 1; Sfx.whoosh(); haptic('heavy');
     [...($('arSeats')?.children || [])].forEach((s, i) => s.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(-120px) scale(.3)', opacity: 0 }], { duration: 520, delay: i * 30, easing: 'cubic-bezier(.5,0,.3,1)', fill: 'forwards' }));
     await wait(560);
   }
-  if (arenaOn) await a.animate([{ opacity: 1 }, { opacity: 0, filter: 'blur(6px)' }], { duration: 260, fill: 'forwards' }).finished; arFx?.kill(); arFx = null;
+  if (arenaOn) await a.animate([{ opacity: 1 }, { opacity: 0, filter: 'blur(6px)' }], { duration: 260, fill: 'forwards' }).finished;
   // заставка старта боя — удар молота по наковальне
   if (!fast){
     const box = $('fxIntro'), ham = box.querySelector('.fi-h'), anv = box.querySelector('.fi-a'), orb = box.querySelector('.fi-orb');
@@ -406,7 +408,7 @@ async function pvpAfter(r){
   chips.forEach((c, i) => { const x = sorted[i]; c.querySelector('.pvd').textContent = '±' + x.dist.toLocaleString(LOC); c.classList.add(x.win ? 'win' : 'lose');
     if (x.win && tie) c.insertAdjacentHTML('beforeend', `<em class="pvtie">${$t("ничья")}</em>`); });
   haptic('heavy'); r.pvp.won ? Sfx.rank(3) : Sfx.lock();
-  await wait(S.lite ? 500 : 1700);
+  await wait(1700);
   if (r.pvp.won) return showDrop(r).then(() => pvpWinDrop(r));
   pvpLoseDrop(r);
 }
