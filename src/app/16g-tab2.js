@@ -169,9 +169,8 @@ const t2Arena = (() => {
   $('bet').parentNode.insertBefore(el, $('prize')); return el;
 })();
 let t2SeatIds = [];
-// дым у трибун — картинка (снята с эффекта Горна) двумя слоями, которые медленно плывут по кругу в разные стороны и дышат.
-// Вращение картинки делает видеокарта без перерисовки — живой дым на WebGL грел iPhone в Telegram
-function t2Smoke(on){ const box = $('t2Fx'); if (!box.firstChild) box.innerHTML = '<img class="sm1" src="assets/arena-smoke.webp" alt="" decoding="async"><img class="sm2" src="assets/arena-smoke.webp" alt="" decoding="async">'; box.hidden = !on || S.lite; }
+// дым у трибун — клубы-картинки, плавают сами (smokePuffs, 16a-pvp.js); в экономном режиме и вне арены — скрыт
+function t2Smoke(on){ const box = $('t2Fx'); smokePuffs(box); box.hidden = !on || S.lite; }
 // за 5 с до старта закрыто для всех: колесо, ранги и вход (кнопка и ставка приглушены); бой начался — тем, кто не в нём, сразу открывается следующая комната
 function t2Ring(){ t2Wheel.classList.toggle('locked', t2Locked()); document.body.classList.toggle('t2lock', t2Locked() || t2Full()); if (!!$('bet').dataset.full !== t2Full()) renderBet(); const left = t2End ? Math.max(0, (t2End - Date.now()) / 1000) : PVP_TIME, C = 2 * Math.PI * T2A.ring, hot = t2End > 0 && left <= 5;
   $('t2Ring').style.strokeDashoffset = (C * (1 - Math.min(1, left / PVP_TIME))).toFixed(1); t2Arena.classList.toggle('hot', hot); }
