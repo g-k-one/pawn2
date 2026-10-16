@@ -1645,7 +1645,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .achdone summary::after{content:" +";color:rgba(255,255,255,.45)}
 .achdone[open] summary::after{content:" −"}
 /* арена: холст заставки с гладиаторами — поверх эффектов, клики не ловит */
-.glad-cv{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none}
 /* верх арены — один ряд: «‹», взнос по центру, правила; в Telegram «‹» системная, ряд — сразу под зоной кнопок Telegram */
 .ar-sub{position:relative;width:100%;min-height:44px;display:flex;align-items:center;justify-content:center;flex:none}
 .ar-back{position:absolute;left:0;top:2px;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.08)}

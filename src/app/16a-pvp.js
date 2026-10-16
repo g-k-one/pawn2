@@ -114,7 +114,6 @@ const ARENA_SVG = (() => {
 async function openPvp(){
   if (S.demo){ notify({ type: 'demo', icon: 'fire', title: $t("PvP крафт — только на GRAM"), text: $t("Выключи демо в меню") }); return; }
   if (arenaOn || (S.busy && !arenaOn)) return;
-  gladLoad();                                                      // заставку (гладиаторы скрещивают мечи) грузим заранее, пока игрок в комнате
   if (openDrawer){ hideDrawer(); await wait(220); }
   arenaOn = true; S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto);
   pvpGo = false; pvpView = await API.pvpOpen(pvpFee); if (pvpGuess == null) pvpGuess = pvpRand(); pvpKey = ''; renderArena();
@@ -313,9 +312,8 @@ async function pvpStart(v){
     await wait(560);
   }
   await a.animate([{ opacity: 1 }, { opacity: 0, filter: 'blur(6px)' }], { duration: 260, fill: 'forwards' }).finished;
-  // гладиаторы скрещивают мечи (16c); не успели — удар молота
-  const glad = !fast && await gladClash();
-  if (!fast && !glad){
+  // заставка старта боя — удар молота по наковальне
+  if (!fast){
     const box = $('fxIntro'), ham = box.querySelector('.fi-h'), anv = box.querySelector('.fi-a'), orb = box.querySelector('.fi-orb');
     // все анимации блока — и завершённые «залипшие» тоже — снимаем: иначе силуэты оставались висеть поверх итога
     const clear = () => document.getAnimations().forEach(x => { const t = x.effect?.target; if (t && (t === box || box.contains(t)) && !t.classList.contains('fi-sp')) x.cancel(); });
