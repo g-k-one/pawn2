@@ -2128,21 +2128,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .t3b .bt-row.r10 .bt-cell{min-height:40px;border-radius:10px}
 .t3b .bt-row.r10 .bt-cell b{font-size:18px}
 .t3max{margin-bottom:2px}
-/* поле ставок: заголовки рядов, цифры — плитками барабана тикета, узоры — карточки с примером тикета */
-.t3b{gap:5px}
-.t3h{display:flex;justify-content:space-between;align-items:baseline;margin-top:2px;font-size:12.5px;line-height:14px;text-transform:uppercase;color:rgba(255,255,255,.72)}
-.t3h b{color:#c9b8ff;font-weight:700}
-.t3b .bt-row.r2 .bt-cell{flex-direction:row;gap:8px}
-.t3b .bt-row.r2 .bt-cell small{color:#c9b8ff}
-.t3b .bt-cell.drum{background:linear-gradient(rgba(255,255,255,.1),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),inset 0 -6px 10px rgba(0,0,0,.35)}
-.t3b .bt-cell.drum b{font-size:22px;font-variant-numeric:tabular-nums}
-.t3b .bt-cell.drum.on{box-shadow:inset 0 0 0 2px var(--c),0 0 14px color-mix(in srgb,var(--c) 40%,transparent)}
-.t3b .bt-row.r4{grid-template-columns:repeat(4,1fr);gap:6px}
-.t3b .pat .bt-cell{min-height:52px;gap:0;padding:4px 2px}
-.t3b .pat .bt-cell b{font-size:13px}
-.t3b .pat .ex{font-size:12.5px;line-height:15px;letter-spacing:.06em;color:rgba(255,255,255,.45);font-variant-numeric:tabular-nums}
-.t3b .pat .ex i{font-style:normal;color:#fff}
-.t3b .pat .bt-cell small{color:#c9b8ff}
 .bt-res.nft>img{width:180px;height:180px;border-radius:28px;object-fit:contain}
 .bt-res.nft>b{font-size:30px}
 .bt-res .bt-ch{display:block;font-size:13.5px;color:rgba(255,255,255,.72);margin-top:4px}
@@ -2155,3 +2140,37 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .pvc.pva.btt b{font-size:14px;line-height:18px;text-transform:uppercase;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .pvc.pva.btt .pvd{margin-top:0}
 .fx-pl .bt-avas{margin-top:12px}
+/* ставки: колода таро на месте приза — карта по центру крупнее, соседние выглядывают; листается нативной прокруткой с привязкой к карте */
+.mode-tab3 .t3b{left:0;width:100%;transform:none;top:calc(330px - var(--lift) * .5);gap:0}
+.t3deck{position:relative;display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;padding:8px calc(50% - 68px) 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x}
+.t3deck::-webkit-scrollbar{display:none}
+.tcard{--tc:#e8c46a;flex:none;position:relative;width:136px;height:198px;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:22px 8px 12px;border-radius:16px;
+  background:radial-gradient(120% 80% at 50% 35%,#34205a,#130a26 70%);box-shadow:inset 0 0 0 1.5px rgba(232,196,106,.6),inset 0 0 0 5px #160c2c,inset 0 0 0 6px rgba(232,196,106,.25);
+  scale:.86;opacity:.5;transition:scale .25s cubic-bezier(.3,1.2,.5,1),opacity .25s,box-shadow .25s;cursor:pointer}
+.tcard.cur{scale:1;opacity:1}
+.tcard.on,.tcard.duo:has(.tc-half.on){box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 5px #160c2c,inset 0 0 0 6px var(--tc),0 0 24px color-mix(in srgb,var(--tc) 55%,transparent)}
+.tc-num{position:absolute;top:8px;left:0;right:0;text-align:center;font-style:normal;font-size:13px;line-height:14px;letter-spacing:.12em;color:rgba(232,196,106,.85)}
+.tc-art{width:74px;height:74px;fill:none;stroke:var(--tc);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.tc-name{font-size:15px;line-height:17px;text-transform:uppercase;text-align:center;color:#f3e3b5}
+.tc-x{font-size:12.5px;line-height:15px;color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
+.tc-more{font-size:12.5px;line-height:15px;color:#e8c46a}
+.tc-chip{position:absolute;top:-6px;right:-4px;min-width:28px;padding:2px 8px;border-radius:999px;background:#fff;color:#0b0b0e;font-size:12.5px;font-weight:700;font-style:normal;text-align:center}
+.tcard.duo{gap:2px;padding:22px 6px 8px}
+.tc-half{position:relative;display:flex;flex-direction:column;align-items:center;width:100%;padding:3px 0;border-radius:12px}
+.tc-half .tc-art{width:46px;height:46px}
+.tc-half .tc-name{font-size:12.5px;line-height:15px}
+.tc-half.on{background:rgba(232,196,106,.16);box-shadow:inset 0 0 0 1.5px #e8c46a}
+.tc-half .tc-chip{top:-4px;right:2px}
+.tc-drum{display:flex;flex-direction:column;align-items:center;line-height:1;padding:2px 22px;border-radius:12px;background:rgba(0,0,0,.3);box-shadow:inset 0 6px 10px rgba(0,0,0,.5),inset 0 -6px 10px rgba(0,0,0,.5);touch-action:none;cursor:ns-resize}
+.tc-drum span{font-size:17px;line-height:22px;color:rgba(255,255,255,.28);font-variant-numeric:tabular-nums}
+.tc-drum b{font-size:42px;line-height:44px;color:#f3e3b5;font-variant-numeric:tabular-nums}
+/* фон: круг зодиака медленно вращается целиком (поворот слоя), глаз в центре стоит */
+.t3zod,.t3eye{position:absolute;left:50%;top:50%;width:400px;height:400px;margin:-200px 0 0 -200px;pointer-events:none;z-index:-1}
+.t3zod{opacity:.32;animation:zrot 180s linear infinite;will-change:transform}
+.t3eye{opacity:.22}
+.t3zod svg,.t3eye svg{width:100%;height:100%;fill:none;stroke:#e8c46a;stroke-width:1.2}
+.t3zod text{fill:#e8c46a;stroke:none;font-size:20px;text-anchor:middle}
+.t3zod .zs,.t3eye .zs{fill:#e8c46a;stroke:none}
+@keyframes zrot{to{rotate:360deg}}
+.lite .t3zod{animation:none}
+.mode-tab3 .bet .t3n{font-size:24px;font-weight:700;color:rgba(255,255,255,.8)}

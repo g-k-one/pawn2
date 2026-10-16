@@ -120,8 +120,13 @@ function t2Set(n){ if (t2Locked() || !isT2()) return;   // ушёл с арен�
   n = Math.max(0, Math.min(TICKETS - 1, Math.round(n))); const ti = tierOfTicket(n), d0 = Math.floor(tkDeg(t2Ticket) / 2);
   t2Ticket = n; if (Math.floor(tkDeg(n) / 2) !== d0) Sfx.tick(.35);
   if (ti !== S.tier){ selHaptic(); setTier(ti, { keepTicket: true }); }
-  $('t2Wg').style.transform = `rotate(${(-t2Deg).toFixed(3)}deg)`; t2Show();
+  $('t2Wg').style.transform = `rotate(${(-t2Deg).toFixed(3)}deg)`; t2ShowSoon();
 }
+// пока колесо крутится, крупное число тикета перерисовываем не чаще ~11 раз в секунду (каждое движение пальца — лишняя
+// перерисовка большого текста, на iPhone колесо подлагивало); последнее значение показывается всегда — по таймеру хвостом
+let t2ShowT = 0, t2ShowTm = 0;
+function t2ShowSoon(){ const now = performance.now(); clearTimeout(t2ShowTm);
+  if (now - t2ShowT > 90){ t2ShowT = now; t2Show(); } else t2ShowTm = setTimeout(() => { t2ShowT = performance.now(); t2Show(); }, 90 - (now - t2ShowT)); }
 { const wh = t2Wheel; let drag = false, lx = 0, vel = 0, lt = 0, spin = 0;
   const pxDeg = () => 180 / Math.PI / (T2W.R * wh.getBoundingClientRect().width / 390);   // градусов колеса на пиксель пальца
   wh.addEventListener('pointerdown', e => { if (S.busy) return; if (t2Locked()){ haptic('rigid'); return; } drag = true; cancelAnimationFrame(spin); wh.classList.remove('spin'); lx = e.clientX; lt = performance.now(); vel = 0;
@@ -140,7 +145,7 @@ function t2Set(n){ if (t2Locked() || !isT2()) return;   // ушёл с арен�
 const T2_HELM = `<img class="t2helm" src="assets/helm.svg" alt="">`;
 /* зрители: за колизеем — кольца трибун с публикой (точки-головы приглушённых цветов, дальше — темнее), кое-где вспышки камер */
 const T2_CROWD = (() => {
-  let rnd = 7; const R = () => (rnd = (rnd * 16807) % 2147483647) / 2147483647, cols = ['#a0714a', '#7a5a9a', '#4a7a9a', '#9a4a4a', '#d0a878', '#5a8a5a', '#c08a5a', '#8a8a9a'];
+  let rnd = 7; const R = () => (rnd = (rnd * 16807) % 2147483647) / 2147483647, cols = ['#b5652a', '#d9833a', '#8a4a22', '#e8a05a', '#a0502a', '#c9773a', '#6e3a1c', '#f0b06a'];   // зрители — оттенки оранжевого, в тон арене
   // «живые» зрители и вспышки — не по одному (анимация каждой точки внутри SVG перерисовывает весь колизей каждый кадр — грело iPhone),
   // а группами: каждая группа — свой слой, гаснет и загорается целиком (это делает видеокарта, без перерисовки)
   let s = `<svg class="ar-art t2crowd" viewBox="-200 -200 800 800" aria-hidden="true">`, flash = ['', ''], live = ['', '', ''], nl = 0, nf = 0;
