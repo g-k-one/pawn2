@@ -83,7 +83,7 @@ function renderHist(detail){
     const back = allIn ? Math.round(allWon / allIn * 100) : 0;
     b.innerHTML = `<div class="hstat-hero one net"><div style="--c:#12D53D"><small>${$t("Выиграно в играх")}</small><b>${G(allWon)}</b>` +
         `<i class="nbar"><b style="width:${Math.min(100, back)}%"></b></i>` +
-        `<span>${$t("Поставлено {0} GRAM · вернулось {1}%", fmt(allIn), back)}</span></div></div>` +
+        `<span>${$t("Крафты, арены и ставки")} · ${$t("поставлено {0} GRAM · вернулось {1}%", fmt(allIn), back)}</span></div></div>` +
       `<div class="hsec">${$t("Крафты")}</div><div class="hstat n">${tile($t("Крафтов"), n)}${tile($t("Лучший множитель"), best.mult ? 'x' + best.mult : '—')}` +
         `${tile($t("Поставлено"), G(staked), '', 'g')}${tile($t("Выиграно"), G(won), '', 'g')}</div>` +
       `<div class="pfi-rtp"><b>${(+RTP_PPM / 1e4).toFixed(0)}%</b><span><b>${$t("Целевой RTP")}</b><small>${n ? `${$t("Твой RTP за {0} {1} — {2}%.", n, $n("крафт|крафта|крафтов", n), Math.round(won / staked * 100))} ` : ''}${$t("Крафт на длинной дистанции возвращает игрокам 95% ставок; на коротком отрезке твой может быть выше или ниже.")}</small></span></div>` +

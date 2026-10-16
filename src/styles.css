@@ -2174,3 +2174,10 @@ html[lang=en] .bcase.free::before{content:"Free"}
 @keyframes zrot{to{rotate:360deg}}
 .lite .t3zod{animation:none}
 .mode-tab3 .bet .t3n{font-size:24px;font-weight:700;color:rgba(255,255,255,.8)}
+/* ставки: искорки вокруг колоды мерцают и всплывают; вспышка искр при ставке на карту */
+.t3spk{position:absolute;inset:0;pointer-events:none;z-index:-1}
+.t3spk i{position:absolute;width:14px;height:14px;margin:-7px;opacity:0;animation:t3spk 4s ease-in-out infinite;will-change:transform,opacity}
+.t3spk svg,.t3b-sp svg{width:100%;height:100%;fill:#f3dca0}
+@keyframes t3spk{0%,100%{opacity:0;transform:translateY(6px) scale(calc(var(--s) * .4))}50%{opacity:.9;transform:translateY(-8px) scale(var(--s))}}
+.lite .t3spk{display:none}
+.t3b-sp{position:absolute;width:14px;height:14px;pointer-events:none;z-index:6;filter:drop-shadow(0 0 4px #f3dca0)}

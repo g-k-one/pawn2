@@ -612,7 +612,6 @@
  "Кейсов открыто": "Cases opened",
  "Пополнено": "Deposited",
  "NFT пришло": "NFT received",
- "Поставлено {0} GRAM · вернулось {1}%": "Staked {0} GRAM · {1}% returned",
  "Не подключён": "Not connected",
  "комиссия {0} GRAM за каждый": "fee {0} GRAM each",
  "засчитываются по кнопке «Проверить»": "counted when you tap “Check”",
@@ -695,5 +694,7 @@
  "Уменьши сумму или сними редкую карту": "Lower the amount or remove a rare card",
  "Выбери карту": "Pick a card",
  "Листай колоду и тапни по исходу": "Swipe the deck and tap an outcome",
- "Кнопками внизу — сумма на каждую карту": "Use the buttons below — amount per card"
+ "Кнопками внизу — сумма на каждую карту": "Use the buttons below — amount per card",
+ "Крафты, арены и ставки": "Crafts, arenas and bets",
+ "поставлено {0} GRAM · вернулось {1}%": "staked {0} GRAM · returned {1}%"
 }

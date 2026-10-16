@@ -56,9 +56,20 @@ function t3Cards(){
     BET_PATS.map((k, i) => card(3 + i, k + ':0', t3Art(k), betLabel(k, 0), k, 0)).join('');
 }
 const EYE_SVG = '<svg viewBox="0 0 400 400"><path d="M140 200q60-52 120 0q-60 52-120 0z"/><circle cx="200" cy="200" r="20"/><circle cx="200" cy="200" r="8" class="zs"/><path d="M200 120v18M200 262v18M120 200h-16M280 200h16"/></svg>';
+// лёгкая магия: золотые искорки вокруг колоды мерцают и чуть всплывают — только прозрачность и сдвиг (видеокарта); в экономном режиме — нет
+const SPARK = '<svg viewBox="0 0 20 20"><path d="M10 0c1 6 4 9 10 10c-6 1-9 4-10 10c-1-6-4-9-10-10c6-1 9-4 10-10z"/></svg>';
+const T3_SPARKS = Array.from({ length: 12 }, (_, i) => { const a = i / 12 * Math.PI * 2 + .3, r = 120 + (i * 37 % 60);
+  return `<i style="left:calc(50% + ${(Math.cos(a) * r * 1.25).toFixed(0)}px);top:calc(50% + ${(Math.sin(a) * r * .8).toFixed(0)}px);--s:${(.5 + (i * 7 % 10) / 14).toFixed(2)};animation-duration:${(3 + i % 4).toFixed(1)}s;animation-delay:-${(i * .7).toFixed(1)}s">${SPARK}</i>`; }).join('');
+// фишка на карту — короткая вспышка искр из центра карты
+function t3Burst(el){ if (S.lite || !el) return; const r = el.getBoundingClientRect(), box = t3Board.getBoundingClientRect();
+  for (let i = 0; i < 8; i++){ const sp = document.createElement('i'); sp.className = 't3b-sp'; sp.innerHTML = SPARK; t3Board.appendChild(sp);
+    const a = i / 8 * Math.PI * 2 + Math.random() * .5, d = 60 + Math.random() * 40;
+    sp.style.left = (r.left + r.width / 2 - box.left) / K + 'px'; sp.style.top = (r.top + r.height / 2 - box.top) / K + 'px';
+    sp.animate([{ transform: 'translate(-50%,-50%) scale(.3)', opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * d}px),calc(-50% + ${Math.sin(a) * d}px)) scale(1) rotate(90deg)`, opacity: 0 }],
+      { duration: 600 + Math.random() * 300, easing: 'cubic-bezier(.2,.8,.3,1)' }).onfinish = () => sp.remove(); } }
 const t3Board = (() => { const el = document.createElement('div'); el.className = 'abs t3b'; el.id = 't3Board';
   // круг зодиака крутится целиком отдельным слоем (видеокарта), глаз — свой слой поверх и стоит на месте
-  el.innerHTML = `<div class="t3zod" aria-hidden="true">${ZODIAC_SVG()}</div><div class="t3eye" aria-hidden="true">${EYE_SVG}</div><div class="t3deck" id="t3Deck"></div>`; $('bet').parentNode.insertBefore(el, $('prize')); return el; })();
+  el.innerHTML = `<div class="t3zod" aria-hidden="true">${ZODIAC_SVG()}</div><div class="t3eye" aria-hidden="true">${EYE_SVG}</div><div class="t3spk" aria-hidden="true">${T3_SPARKS}</div><div class="t3deck" id="t3Deck"></div>`; $('bet').parentNode.insertBefore(el, $('prize')); return el; })();
 function ZODIAC_SVG(){
   // круг зодиака: 12 знаков (текстовые символы, не эмодзи), деления, звёзды; в центре — глаз
   const g = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'].map((z, i) => { const a = (i * 30 - 75) * Math.PI / 180;
@@ -82,7 +93,7 @@ function t3Toggle(k){
   if (t3Sel.size >= BETS_MAX_N){ haptic('rigid'); notify({ type: 'warn', icon: 'coin', title: $t("Максимум {0} ставок за раунд", BETS_MAX_N), text: $t("Сними одну из карт — повторный тап") }); return; }
   if (!t3Fits(t3Stake, t3Sel.size + 1, k)) return;
   t3Sel.add(k); t3Sync(); Sfx.coin(); haptic('light'); t3Render(); renderBet(true);
-  t3Board.querySelector(`[data-k="${k}"]`)?.animate([{ scale: .92 }, { scale: 1.05, offset: .6 }, { scale: 1 }], { duration: 300, easing: 'cubic-bezier(.3,1.5,.5,1)' });
+  const el = t3Board.querySelector(`[data-k="${k}"]`); el?.animate([{ scale: .92 }, { scale: 1.05, offset: .6 }, { scale: 1 }], { duration: 300, easing: 'cubic-bezier(.3,1.5,.5,1)' }); t3Burst(el);
 }
 // проверка лимитов для суммы v на n карт (k — добавляемая карта)
 function t3Fits(v, n, k){
