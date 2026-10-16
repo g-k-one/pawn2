@@ -114,7 +114,7 @@ const ARENA_SVG = (() => {
 async function openPvp(){
   if (S.demo){ notify({ type: 'demo', icon: 'fire', title: $t("PvP крафт — только на GRAM"), text: $t("Выключи демо в меню") }); return; }
   if (arenaOn || (S.busy && !arenaOn)) return;
-  gladLoad();                                                      // заставку с гладиаторами грузим заранее, пока игрок в комнате
+  caesarLoad(); gladLoad();                                        // заставки (Цезарь, запасная — гладиаторы) грузим заранее, пока игрок в комнате
   if (openDrawer){ hideDrawer(); await wait(220); }
   arenaOn = true; S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto);
   pvpGo = false; pvpView = await API.pvpOpen(pvpFee); if (pvpGuess == null) pvpGuess = pvpRand(); pvpKey = ''; renderArena();
@@ -122,8 +122,7 @@ async function openPvp(){
   pvpLoop();
 }
 async function leaveArena(){
-  if (!arenaOn) return; arenaOn = false; haptic(); tgBack(false);
-  if (pvpView?.entries.some(x => x.me) && pvpView.state === 'open') notify({ type: 'info', icon: 'fire', title: $t("Ты в игре"), text: $t("Вернём на арену к старту") });
+  if (!arenaOn) return; arenaOn = false; haptic(); tgBack(false);  if (pvpView?.entries.some(x => x.me) && pvpView.state === 'open') notify({ type: 'info', icon: 'fire', title: $t("Ты в игре"), text: $t("Вернём на арену к старту") });
   await closeFx(); $('fx').classList.remove('arena'); CRAFT.classList.remove('busy'); S.busy = false; restartAuto();
 }
 async function pvpLoad(){ pvpGo = false; pvpView = await API.pvpOpen(pvpFee); pvpKey = ''; renderArena(); pvpLoop(); }
@@ -154,15 +153,18 @@ function renderArena(){
   if (key !== pvpKey){
     pvpKey = key; arenaSeats = [];
     a.innerHTML =
-      `<div class="ar-top"><button class="ar-back" id="arBack" aria-label="${$t("Назад")}">${svg('<path d="M15 5l-7 7 7 7"/>')}</button>` +
-        `<div class="ar-title"><i>${svg(FIRE)}</i><b>${$t("Арена")}</b><span class="beta">β</span></div></div>` +
-      `<div class="ar-sub"><div class="ar-fees">${PVP_FEES.map(f => `<button class="${f === pvpFee ? 'on' : ''}" data-fee="${f}"${me ? ' disabled' : ''}>${fmt(f)}</button>`).join('')}</div>` +
+      // верх — один ряд: «‹» (в Telegram — системная), взнос, правила. Заголовка нет: колизей с огнём и так говорит, где ты.
+      // В Telegram ряд встаёт сразу под зону его кнопок — строка Close / ⌄••• остаётся пустой
+      `<div class="ar-sub"><button class="ar-back" id="arBack" aria-label="${$t("Назад")}">${svg('<path d="M15 5l-7 7 7 7"/>')}</button>` +
+        `<div class="ar-fees">${PVP_FEES.map(f => `<button class="${f === pvpFee ? 'on' : ''}" data-fee="${f}"${me ? ' disabled' : ''}>${fmt(f)}</button>`).join('')}</div>` +
         `<button class="ar-info" id="arInfo" aria-label="${$t("Правила")}">${svg(IC.shield)}</button></div>` +
       `<div class="ar-colw"><div class="ar-col" id="arPit">${ARENA_SVG}` +
         `<svg class="ar-ring" viewBox="0 0 400 400"><circle cx="200" cy="200" r="82" class="bg"/><circle cx="200" cy="200" r="82" class="fg" id="arRing"/></svg>` +
         `<div class="ar-bank" id="arBank"><small>${$t("Банк")}</small><b id="arBankV">${fmt(v.bank)}</b><em>GRAM</em><span class="ar-time" id="arTime"></span></div>` +
         `<div class="ar-seats" id="arSeats"></div></div></div>` +
       `<p class="ar-hint" id="arHint"></p>` +
+      // QA, временно: старт без ожидания таймера (уберём вместе с экспериментом)
+      (v.state === 'open' && !lock ? `<button class="ar-go" id="arGo">${svg(FIRE)} ${$t("Старт сейчас (QA)")}</button>` : '') +
       `<div class="ar-pick${lock ? ' locked' : ''}" id="arPick">` +
         `<div class="ar-tkrow"><div class="ar-tk" id="arTk"></div>${lock ? '' : `<button class="ar-dice" id="arDice" aria-label="${$t("Случайный")}">${svg(DICE)}</button>`}</div>` +
         `<div class="ar-track" id="arTrack">${TIERS.map(t => `<i style="--c:${t.c}"></i>`).join('')}<b class="ar-thumb" id="arThumb"></b></div>` +
@@ -248,6 +250,7 @@ function sweepTo(n){
 function bindArena(){
   $('arBack').onclick = leaveArena;
   $('arInfo').onclick = arenaRules;
+  if ($('arGo')) $('arGo').onclick = pvpForceStart;
   $('fxArena').querySelectorAll('[data-fee]').forEach(b => b.onclick = () => { if (b.disabled) return; pvpFee = +b.dataset.fee; Sfx.swipe(); haptic(); pvpLoad(); });
   if ($('arPick').classList.contains('locked')) return;
   $('fxArena').querySelectorAll('[data-ti]').forEach(b => b.onclick = () => { const t = TIERS[+b.dataset.ti]; sweepTo(t.from + Math.floor(Math.random() * (t.to - t.from + 1))); });
@@ -282,6 +285,15 @@ async function pvpJoinClick(seat){
   pvpView = r.room; pvpKey = ''; renderArena(); pvpLoop();
 }
 
+// QA, временно: не в комнате — садимся со случайным тикетом; таймер комнаты мока — в ноль, опрос сам запускает бой
+async function pvpForceStart(){
+  if (pvpForceStart.on) return; pvpForceStart.on = true; haptic();
+  try {
+    if (!pvpView.entries.some(x => x.me)){ if (pvpGuess == null) setGuess(pvpRand(), true); await pvpJoinClick(); }
+    const p = PVP_ROOMS[pvpFee]; if (p && p.state === 'open' && pvpView.entries.some(x => x.me)) p.endsAt = Date.now();
+  } finally { pvpForceStart.on = false; }
+}
+
 /* ---------- старт: огонь, все слетаются к банку, удар молота — и раскрытие тикета прямо здесь ---------- */
 // результат для экрана крафта — в той же форме, что у обычного крафта: дальше работают дроп, «Забрать/Продать», история и проверка
 function pvpResult(v){
@@ -301,8 +313,8 @@ async function pvpStart(v){
     await wait(560);
   }
   await a.animate([{ opacity: 1 }, { opacity: 0, filter: 'blur(6px)' }], { duration: 260, fill: 'forwards' }).finished;
-  // гладиаторы скрещивают мечи (Spine, 16c-gladiators.js); не успели загрузиться — удар молота, как у крафта
-  const glad = !fast && await gladClash();
+  // Цезарь хохочет и бьёт молнией (Spine, 16d-caesar.js); не успел — гладиаторы скрещивают мечи (16c), не успели и они — удар молота, как у крафта
+  const glad = !fast && (await caesarIntro() || await gladClash());
   if (!fast && !glad){
     const box = $('fxIntro'), ham = box.querySelector('.fi-h'), anv = box.querySelector('.fi-a'), orb = box.querySelector('.fi-orb');
     // все анимации блока — и завершённые «залипшие» тоже — снимаем: иначе силуэты оставались висеть поверх итога
@@ -318,8 +330,7 @@ async function pvpStart(v){
   // игроки и их тикеты — по возрастанию, цвет — ранг тикета
   $('fxPvp').innerHTML = `<div class="pvp-bank">${svg(FIRE)} ${$t("PvP · банк {0} GRAM · игроков {1}", fmt(r.pvp.bank), r.pvp.n)}</div><div class="pvp-chips">` +
     [...r.pvp.players].sort((a, b) => a.guess - b.guess).map(x => `<span class="pvc${x.me ? ' me' : ''}" style="--tc:${tierOfN(x.guess).c}">${pvpAva(x)}<b>${tk(x.guess)}</b><em>${x.me ? $t("Ты") : '@' + x.who}</em><i class="pvd"></i></span>`).join('') + `</div>`;
-  $('fx').classList.remove('arena'); arenaOn = false;
-  await reveal(r, fast);
+  $('fx').classList.remove('arena'); arenaOn = false;  await reveal(r, fast);
 }
 // после того как тикет встал: подсветить победителя, показать разницу у каждого, потом — свой экран дропа
 async function pvpAfter(r){

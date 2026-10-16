@@ -1,2 +1,5 @@
 node_modules/
 dist/
+design/rive/*/build/
+design/rive/caesar2/probe/
+design/rive/caesar2/traced.json

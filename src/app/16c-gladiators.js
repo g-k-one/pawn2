@@ -5,10 +5,12 @@
    Исходники для редактора Spine — design/spine/gladiator. Нет сети, лайт-режим или «Быстрый крафт» — старая заставка с молотом.
    ========================================================= */
 const SPINE_JS = 'https://cdn.jsdelivr.net/npm/@esotericsoftware/spine-canvas@4.3.13/dist/iife/spine-canvas.min.js';
-let gladP = null;
+let gladP = null, spineP = null;
+// рантайм Spine — один на всё (гладиаторы, огонь арены): грузится один раз
+const spineRT = () => spineP ||= new Promise((res, rej) => { if (window.spine) return res(); const sc = document.createElement('script'); sc.src = SPINE_JS; sc.onload = res; sc.onerror = () => { spineP = null; rej(new Error('spine runtime')); }; document.head.appendChild(sc); });
 function gladLoad(){
   if (S.lite) return Promise.resolve(null);
-  return gladP ||= new Promise((res, rej) => { if (window.spine) return res(); const sc = document.createElement('script'); sc.src = SPINE_JS; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); })
+  return gladP ||= spineRT()
     .then(async () => { const am = new spine.AssetManager('assets/glad/'); am.loadText('glad.json'); am.loadTextureAtlas('glad-red.atlas'); am.loadTextureAtlas('glad-blue.atlas'); await am.loadAll(); return am; })
     .catch(e => { gladP = null; console.warn('gladiators', e); return null; });
 }

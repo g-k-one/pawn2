@@ -1,0 +1,1 @@
+@rive-app/webgl2 2.44.0 (MIT, https://github.com/rive-app/rive-wasm) — веб-рантайм Rive для заставки арены. Лежит рядом с игрой, а не на CDN: так работает и в просмотрщике artifact, и без доступа к jsdelivr.
