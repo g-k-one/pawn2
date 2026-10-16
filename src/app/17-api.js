@@ -38,7 +38,7 @@ const API = {
   async pvpState(fee){ return pvpStateMock(fee); },
   /* --- предикты (эксперимент, 16b-bets.js) --- */
   /* POST /bets {bets: [{bet, sel, amount_nano}], client_seed} → тикет, какие ставки сыграли, выплата и доказательство (domain 'bets').
-     Ставку списывает и выплату зачисляет сервер; лимиты — BET_MAX на раунд и BETS_CAP на выигрыш одной ставки */
+     Ставку списывает и выплату зачисляет сервер; лимиты — BET_MAX на ставку за раунд и BETS_MAX_WIN на выигрыш за раунд при любом тикете (проверяет и сервер) */
   async bets(list){ track('bets', { n: list.length, total: list.reduce((a, b) => a + b.amount, 0) }); return betsMock(list); },
 };
 

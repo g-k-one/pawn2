@@ -143,7 +143,7 @@ function betsCard(c, i){
   const r = c.r, t = TIERS[r.ti], n = r.bets.length, w = r.bets.filter(b => b.won).length;
   return `<button class="hcard" data-i="${i}" style="--c:${r.win > 0 ? '#7c5cff' : '#8a8a96'}"><span class="hk-h"><em>${svg(IC.target)} ${$t("Предикты")} · ${tk(r.ticket)} · ${t.name}</em><small>${tAgo(c.t)}</small></span>` +
     `<span class="hk-b"><span class="hk-s"><span class="hps">${hpic('assets/gem-small.svg')}</span><span class="hk-v"><b>${fmt(r.stake)}</b><small>${n} ${$n("ставка|ставки|ставок", n)}</small></span></span>` +
-    `<i class="hk-ar">${svg(ARW)}</i><span class="hk-s win">${hpic('assets/hero-gem.webp')}<span class="hk-v"><b${r.win > 0 ? ' class="pos"' : ''}>${r.win > 0 ? '+' + fmt(r.win) : '0'}</b><small>${$t("сыграло {0} из {1}", w, n)}</small></span></span></span></button>`;
+    `<i class="hk-ar">${svg(ARW)}</i><span class="hk-s win">${hpic('assets/hero-gem.webp')}<span class="hk-v"><b${r.win > 0 ? ' class="pos"' : ''}>${r.win > 0 ? '+' + fmt(r.win) : '0'}</b><small>${$t("сбылось {0} из {1}", w, n)}</small></span></span></span></button>`;
 }
 function betsRecHead(c){ const r = c.r, t = TIERS[r.ti];
   const rows = r.bets.map(b => hdRow('assets/gem-small.svg', null, betLabel(b.bet, b.sel), `${fmt(b.amount)} GRAM · x${fmt(betMult(b.bet, b.sel))}`, b.won ? '+' + fmt(b.pay) + GU : '—', b.won)).join('');

@@ -199,6 +199,8 @@ const Sfx = (() => {
     rank: ti => { const base = [392, 440, 523, 587, 659][ti]; [0, 4, 7, 12, 16].slice(0, 2 + ti).forEach((s, i) => setTimeout(() => tone(base * 2 ** (s / 12), .5, .07, 'triangle'), i * 90)); },
     clang: () => { tone(1900, .7, .05, 'triangle'); tone(2870, .55, .035, 'sine'); tone(130, .3, .2, 'sine', 45); noise(.14, 2200, .7, .14); },
     coin: () => { tone(1320, .08, .06, 'triangle'); setTimeout(() => tone(1760, .18, .06, 'triangle'), 70); },
+    // колокольчики шара предиктов: тихое восходящее арпеджио
+    chime: () => [0, 3, 7, 10, 14].forEach((st, i) => setTimeout(() => tone(988 * 2 ** (st / 12), .9, .03, 'sine'), i * 70)),
   };
 })();
 

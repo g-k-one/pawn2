@@ -1,13 +1,14 @@
 /* =========================================================
    ПРЕДИКТЫ — ставки на исходы тикета. Эксперимент, по умолчанию выключен (Дебаг → «Эксперименты»)
    Игрок раскладывает фишки по исходам одного честного тикета 00000–99999: ранг (как в крафте), чёт/нечет,
-   меньше/больше 50000, последняя цифра. Выплата каждой ставки = ставка × RTP 95% × 100 000 / число подходящих тикетов —
-   одинаковый RTP на любой ставке, ни одна комбинация не бьёт дом. Выигрыш одной ставки — не больше BETS_CAP (лимит риска),
-   поэтому крупные ставки на редкие исходы ограничены сразу при раскладке. Выплата — GRAM. В демо недоступно.
+   последняя цифра (half — меньше/больше 50000 — есть в правилах, но на поле не выводится). Выплата каждой ставки =
+   ставка × RTP 95% × 100 000 / число подходящих тикетов — одинаковый RTP на любой ставке. Лимит риска: выигрыш за раунд
+   при любом тикете — не больше BETS_MAX_WIN (как потолок крафта: 50 GRAM × x14), общая ставка — до BET_MAX.
+   Лимит проверяется сразу при раскладке фишек. Выплата — GRAM. В демо недоступно.
    Честность: тот же протокол, что у крафта и кейсов — эпоха, client seed, общий nonce, домен "bets"; в доказательстве —
    таблица ставок (правила), твои ставки и какие сыграли. Разбор режима — docs/BETS-MODE.md
    ========================================================= */
-const BETS_CHIPS = [.1, .5, 1, 5], BETS_CAP = 1000, BETS_RTP = 950000n;   // фишки, GRAM; потолок выигрыша одной ставки, GRAM; RTP в ppm
+const BETS_CHIPS = [.1, .5, 1, 5], BETS_MAX_WIN = 700, BETS_RTP = 950000n;   // фишки, GRAM; потолок выигрыша за раунд, GRAM; RTP в ppm
 const TARGET = '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/>';
 IC.target = TARGET;
 // виды ставок: ключ, на что (sel), сколько тикетов подходят, выиграла ли при тикете n
@@ -17,7 +18,7 @@ const BET_KINDS = {
   half:  { count: () => TICKETS / 2, win: (s, n) => (n >= TICKETS / 2 ? 1 : 0) === s },   // 0 — 00000–49999, 1 — 50000–99999
   digit: { count: () => TICKETS / 10, win: (s, n) => n % 10 === s },             // последняя цифра
 };
-const betsRules = () => ({ kind: 'bets', rtp_ppm: String(BETS_RTP), tickets: TICKETS, cap_nano: String(nano(BETS_CAP)),
+const betsRules = () => ({ kind: 'bets', rtp_ppm: String(BETS_RTP), tickets: TICKETS, max_win_nano: String(nano(BETS_MAX_WIN)),
   table: Object.entries(BET_KINDS).flatMap(([k, d]) => (k === 'rank' ? TIERS.map((_, i) => i) : k === 'digit' ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] : [0, 1]).map(s => ({ bet: k, sel: s, count: d.count(s) }))) });
 const betMultPpm = (rules, bet, sel) => BETS_RTP * BigInt(rules.tickets) * 1000000n / BigInt(rules.table.find(x => x.bet === bet && x.sel === sel).count) / 1000000n;   // множитель, ppm
 const betMult = (bet, sel) => Number(betMultPpm(betsRules(), bet, sel)) / 1e6;
@@ -43,6 +44,14 @@ async function betsMock(bets){
 let betsOn = false, betsChip = .5, betsBoard = {}, betsLast = null;   // betsBoard: 'rank:2' → сумма, GRAM
 const betLabel = (bet, sel) => bet === 'rank' ? TIERS[sel].name : bet === 'parity' ? (sel ? $t("Нечет") : $t("Чёт")) : bet === 'half' ? (sel ? '50000–99999' : '00000–49999') : $t("Последняя {0}", sel);
 const betsTotal = () => Math.round(Object.values(betsBoard).reduce((a, v) => a + v, 0) * 100) / 100;
+// сколько можно выиграть за раунд при самом удачном тикете: ранг и последняя цифра независимы (в каждом ранге есть все цифры),
+// чёт/нечет задаётся цифрой — перебираем 5 × 10 сочетаний
+function betsMaxWin(board = betsBoard){
+  const pay = k => board[k] ? Math.floor(board[k] * betMult(...k.split(':').map((x, i) => i ? +x : x)) * 100) / 100 : 0;
+  let best = 0;
+  for (let r = 0; r < TIERS.length; r++) for (let d = 0; d < 10; d++) best = Math.max(best, pay('rank:' + r) + pay('digit:' + d) + pay('parity:' + d % 2));
+  return Math.round(best * 100) / 100;
+}
 const betsList = () => Object.entries(betsBoard).filter(([, v]) => v > 0).map(([k, v]) => { const [bet, sel] = k.split(':'); return { bet, sel: +sel, amount: v }; });
 const BETS_GLOW = ['#7c5cff', '#3b1e9e', '#30a5ff', '#d9ccff'];
 const tgBackBets = on => { try { const b = Telegram.WebApp.BackButton; b.offClick(leaveBets); if (on){ b.onClick(leaveBets); b.show(); } else b.hide(); } catch(_){} };
@@ -52,7 +61,7 @@ async function openBets(){
   if (betsOn || S.busy) return;
   if (openDrawer){ hideDrawer(); await wait(220); }
   betsOn = true; S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto);
-  renderBets(); await openFx(false, 'bets', BETS_GLOW); FX.gainTo = .5; tgBackBets(true);
+  renderBets(); Sfx.chime(); await openFx(false, 'bets', BETS_GLOW); FX.gainTo = .5; tgBackBets(true);
 }
 async function leaveBets(){
   if (!betsOn) return; betsOn = false; haptic(); tgBackBets(false);
@@ -60,23 +69,28 @@ async function leaveBets(){
 }
 function cellHTML(bet, sel, cls = ''){
   const k = bet + ':' + sel, v = betsBoard[k] || 0, c = bet === 'rank' ? TIERS[sel].c : '';
-  return `<button class="bt-cell ${cls}${v ? ' on' : ''}" data-k="${k}"${c ? ` style="--c:${c}"` : ''}><b>${bet === 'digit' ? sel : betLabel(bet, sel)}</b><small>x${fmt(betMult(bet, sel))}</small>${v ? `<em>${fmt(v)}</em>` : ''}</button>`;
+  return `<button class="bt-cell ${cls}${v ? ' on' : ''}" data-k="${k}"${c ? ` style="--c:${c}"` : ''}><b>${bet === 'digit' ? sel : betLabel(bet, sel)}</b>` +
+    `${bet === 'rank' ? `<small>x${fmt(betMult(bet, sel))}</small>` : ''}${v ? `<em>${fmt(v)}</em>` : ''}</button>`;
 }
+// шар: пока пусто — туман и «?»; с фишками — сколько получишь, если предсказание сбудется
+const orbHTML = (tot, max) => `<div class="bt-orb${tot ? ' on' : ''}" id="btOrb"><i class="fog"></i><i class="fog f2"></i><i class="stars"></i>` +
+  `<div class="bt-orb-v">${tot ? `<b>${fmt(max)}</b><small>GRAM</small>` : '<b class="q">?</b>'}</div></div><i class="bt-stand"></i>`;
 function renderBets(){
-  const tot = betsTotal(), maxWin = betsList().reduce((a, b) => a + b.amount * betMult(b.bet, b.sel), 0);
+  const tot = betsTotal(), max = betsMaxWin();
   $('fxBets').innerHTML =
     `<div class="ar-top"><button class="ar-back" id="btBack" aria-label="${$t("Назад")}">${svg('<path d="M15 5l-7 7 7 7"/>')}</button>` +
       `<div class="ar-title bt"><i>${svg(TARGET)}</i><b>${$t("Предикты")}</b><span class="beta">β</span></div></div>` +
+    orbHTML(tot, max) +
+    `<p class="bt-hint">${tot ? $t("Столько даст шар, если предсказание сбудется") : $t("Тапни по исходу — фишка, долгое нажатие — снять")}</p>` +
     `<div class="ar-sub"><div class="bt-chips">${BETS_CHIPS.map(c => `<button class="${c === betsChip ? 'on' : ''}" data-chip="${c}">${fmt(c)}</button>`).join('')}</div>` +
       `<button class="ar-info" id="btInfo" aria-label="${$t("Правила")}">${svg(IC.shield)}</button></div>` +
     `<div class="bt-board" id="btBoard">` +
       `<div class="bt-h">${$t("Ранг тикета")}</div><div class="bt-row r5">${TIERS.map((_, i) => cellHTML('rank', i, 'rank')).join('')}</div>` +
-      `<div class="bt-row r4">${cellHTML('parity', 0)}${cellHTML('parity', 1)}${cellHTML('half', 0, 'sm')}${cellHTML('half', 1, 'sm')}</div>` +
-      `<div class="bt-h">${$t("Последняя цифра")}</div><div class="bt-row r5 dg">${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(d => cellHTML('digit', d)).join('')}</div>` +
+      `<div class="bt-h">${$t("Чёт или нечет")} <span>x${fmt(betMult('parity', 0))}</span></div><div class="bt-row r2">${cellHTML('parity', 0)}${cellHTML('parity', 1)}</div>` +
+      `<div class="bt-h">${$t("Последняя цифра")} <span>x${fmt(betMult('digit', 0))}</span></div><div class="bt-row r10 dg">${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(d => cellHTML('digit', d)).join('')}</div>` +
     `</div>` +
-    `<p class="bt-hint">${tot ? $t("Ставка {0} GRAM · если сыграет всё — до {1} GRAM", fmt(tot), fmt(Math.floor(maxWin * 100) / 100)) : $t("Тапни по исходу — положишь фишку. Долгое нажатие — снять")}</p>` +
     `<div class="bt-act"><button class="btn-ghost" id="btClear"${tot ? '' : ' disabled'}>${$t("Сбросить")}</button>` +
-      `<button class="btn-main" id="btGo"${tot ? '' : ' disabled'}>${tot ? $t("Крутить · {0} GRAM", fmt(tot)) : (betsLast ? $t("Повторить прошлые") : $t("Крутить"))}</button></div>`;
+      `<button class="btn-main" id="btGo"${tot ? '' : ' disabled'}>${tot ? $t("Предсказать · {0} GRAM", fmt(tot)) : (betsLast ? $t("Повторить прошлые") : $t("Предсказать"))}</button></div>`;
   bindBets();
 }
 function bindBets(){
@@ -93,16 +107,17 @@ function bindBets(){
   });
 }
 function betsAdd(k){
-  const [bet, sel] = k.split(':'), next = Math.round(((betsBoard[k] || 0) + betsChip) * 100) / 100, cap = Math.floor(BETS_CAP / betMult(bet, +sel) * 100) / 100;
-  if (next > cap){ haptic('rigid'); notify({ type: 'warn', icon: 'coin', title: $t("Максимум на «{0}» — {1} GRAM", betLabel(bet, +sel), fmt(cap)), text: $t("Выигрыш одной ставки — до {0} GRAM", BETS_CAP) }); return; }
+  const next = Math.round(((betsBoard[k] || 0) + betsChip) * 100) / 100;
+  if (betsMaxWin({ ...betsBoard, [k]: next }) > BETS_MAX_WIN){ haptic('rigid'); notify({ type: 'warn', icon: 'coin', title: $t("Выигрыш за раунд — до {0} GRAM", BETS_MAX_WIN), text: $t("Как в крафте. Возьми фишку меньше или выбери исход почаще") }); return; }
   if (betsTotal() + betsChip > BET_MAX + 1e-9){ haptic('rigid'); notify({ type: 'warn', icon: 'coin', title: $t("Максимальная ставка {0} GRAM", BET_MAX), text: $t("За один раунд, на все исходы вместе") }); return; }
   betsBoard[k] = next; Sfx.coin(); haptic('light'); renderBets();
   const el = $('btBoard').querySelector(`[data-k="${k}"]`); el?.animate([{ scale: .9 }, { scale: 1.06, offset: .6 }, { scale: 1 }], { duration: 260, easing: 'cubic-bezier(.3,1.5,.5,1)' });
+  if (!S.lite) $('btOrb').animate([{ filter: 'brightness(1.8)', scale: 1.06 }, { filter: 'brightness(1)', scale: 1 }], { duration: 420, easing: 'cubic-bezier(.3,1.4,.5,1)' });   // шар вспыхивает на каждую фишку
 }
 function betsRulesModal(){
   haptic();
-  const rules = [$t("Положи фишки на исходы одного тикета 00000–99999 — сколько угодно исходов за раунд."), $t("Выплата каждой ставки — по шансу исхода, возврат 95% на любой ставке."),
-    $t("Выигрыш одной ставки — до {0} GRAM; общая ставка за раунд — до {1} GRAM.", BETS_CAP, BET_MAX), $t("Тикет честный: хеш зерна виден до игры, исход можно проверить.")];
+  const rules = [$t("Загадай исходы одного тикета 00000–99999: ранг, чёт или нечет, последнюю цифру. Можно сразу несколько."), $t("Выплата каждой ставки — по шансу исхода, возврат 95% на любой ставке."),
+    $t("За раунд: ставка — до {0} GRAM, выигрыш при любом тикете — до {1} GRAM, как в крафте.", BET_MAX, BETS_MAX_WIN), $t("Тикет честный: хеш зерна виден до игры, исход можно проверить.")];
   modal(`<h4>${$t("Правила предиктов")}</h4><ol class="ar-rules">${rules.map(x => `<li>${x}</li>`).join('')}</ol>` +
     `<button class="btn-main" id="btOk">${$t("Понятно")}</button>`, '#7c5cff');
   $('btOk').onclick = closeModal;
@@ -114,11 +129,11 @@ async function betsSpin(){
   betsSpin.on = true; tgBackBets(false);
   setBalance(S.balance - tot); haptic('medium');
   const r = await API.bets(bets); betsLast = { ...betsBoard };
-  $('fxPvp').innerHTML = `<div class="pvp-bank">${svg(TARGET)} ${$t("Предикты · ставка {0} GRAM", fmt(tot))}</div><div class="pvp-chips">` +
+  $('fxPvp').innerHTML = `<div class="pvp-bank">${svg(TARGET)} ${$t("Шар смотрит в тикет · {0} GRAM", fmt(tot))}</div><div class="pvp-chips">` +
     r.bets.map(b => `<span class="pvc bt" style="--tc:${b.bet === 'rank' ? TIERS[b.sel].c : '#b9a6ff'}"><b>${betLabel(b.bet, b.sel)}</b><em>${fmt(b.amount)} · x${fmt(betMult(b.bet, b.sel))}</em><i class="pvd"></i></span>`).join('') + `</div>`;
   const fi = $('fxIn'); await fi.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' }).finished;
   $('fx').classList.remove('bets'); $('fx').classList.add('btspin'); betsOn = false; fi.getAnimations().forEach(x => x.cancel());   // btspin: в раскрытии ставок нет строки «не хватило до ранга» — она про крафт
-  Sfx.clang(); FullGlow.punch(0, .8);
+  Sfx.chime(); FullGlow.punch(0, .8);
   betsSpin.on = false;
   await reveal(r, S.fast || S.lite);
 }
@@ -144,7 +159,7 @@ async function betsAfter(r){
   // итог: сумма крупно, ниже — все ставки раунда: сыгравшие зелёные с выплатой, остальные приглушены
   $('fxDrop').innerHTML = `<div class="pz bt-res${r.win > 0 ? ' won' : ''}"><img src="assets/hero-gem.webp" alt=""><b>${r.win > 0 ? '+' + fmt(r.win) : '0'}<i class="u">GRAM</i></b>` +
     `<div class="pvp-chips">${r.bets.map(b => `<span class="pvc bt ${b.won ? 'win' : 'lose'}" style="--tc:${b.bet === 'rank' ? TIERS[b.sel].c : '#b9a6ff'}"><b>${betLabel(b.bet, b.sel)}</b><em>${b.won ? '+' + fmt(b.pay) : fmt(b.amount)}</em></span>`).join('')}</div></div>`;
-  $('fxWin').innerHTML = `<span>${$t("Ставка {0} GRAM", fmt(r.stake))} · ${won.length ? $t("сыграло {0} из {1}", won.length, r.bets.length) : $t("ни одна не сыграла")}</span>`;
+  $('fxWin').innerHTML = `<span>${$t("Ставка {0} GRAM", fmt(r.stake))} · ${won.length ? $t("сбылось {0} из {1}", won.length, r.bets.length) : $t("предсказание не сбылось")}</span>`;
   $('fxBtns').innerHTML = `<button class="btn-main" id="btAgain">${$t("Ещё раз · {0} GRAM", fmt(r.stake))}</button><button class="btn-ghost" id="btEdit">${$t("Изменить ставки")}</button>` +
     `<div class="fx-links"><button class="btn-link pf" id="fxPfIn">${$t("Проверить честность")}</button><button class="btn-link pf" id="btHome">${$t("На главную")}</button></div>`;
   $('fx').classList.add('done'); if (r.win > 0 && !S.lite) setTimeout(burst, 200);
