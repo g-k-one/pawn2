@@ -220,7 +220,7 @@ img{display:block;-webkit-user-drag:none}
 .fx.done .fx-btns{opacity:1;transform:none;margin-top:auto}
 .btn-link{padding:8px 12px;font-size:19px;color:rgba(255,255,255,.75)}
 .btn-ghost{width:100%;padding:13px;border-radius:999px;background:rgba(255,255,255,.07);font-size:24px;font-weight:700;text-transform:uppercase;color:rgba(255,255,255,.9)}
-.fx-btns .pf{margin-top:2px;padding:6px 12px;font-size:15px;color:rgba(255,255,255,.42)}
+.fx-btns .pf{margin-top:2px;padding:6px 12px;font-size:15px;color:rgba(255,255,255,.72)}
 .burst{position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px;border-radius:50%;background:#fff;box-shadow:0 0 10px 3px var(--tc);pointer-events:none}
 .pf-row{margin-bottom:12px}
 .pf-row small{display:block;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:3px}
@@ -514,7 +514,7 @@ img{display:block;-webkit-user-drag:none}
 .mk.b{bottom:0;border-bottom:16px solid #fff}
 .rstat{min-height:26px;margin:14px 0 0;font-size:19px;color:rgba(255,255,255,.6)}
 .mbtns{display:flex;flex-direction:column;gap:2px}
-.mbtns .pf{font-size:15px;color:rgba(255,255,255,.42);margin-top:6px}
+.mbtns .pf{font-size:15px;color:rgba(255,255,255,.72);margin-top:6px}
 /* заглушка подбора NFT */
 .skel{position:relative;width:262px;height:262px;border-radius:16%;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
   background:color-mix(in srgb,var(--tc) 10%,#141416);box-shadow:inset 0 0 22px color-mix(in srgb,var(--tc) 30%,transparent)}
@@ -2178,7 +2178,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .t3strip svg{width:22px;height:22px}
 .t3strip small{font-size:12.5px;line-height:15px;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.72)}
 .t3strip .w small{color:#3fe06a}
-.t3strip .l{opacity:.45}
+.t3strip .l i{opacity:.4}   /* не сыгравшие — значок тусклый, сумма читается (серый не тусклее .72) */
 .t3lose img{filter:grayscale(.8) brightness(.55)}
 .pvc.pva.btt .tav svg{width:26px;height:26px}
 /* ставки: искорки вокруг колоды мерцают и всплывают; вспышка искр при ставке на карту */
@@ -2194,3 +2194,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .mode-tab3 .bet .t3to{display:flex;flex-direction:column;justify-content:center;margin-left:4px;padding-left:12px;border-left:2px solid rgba(255,255,255,.3);line-height:1}
 .mode-tab3 .bet .t3to small{font-size:13.5px;line-height:16px;text-transform:uppercase;color:rgba(255,255,255,.8)}
 .mode-tab3 .bet .t3to b{font-size:24px;line-height:26px;color:#fff;font-variant-numeric:tabular-nums}
+/* проигрыш: сумма итога — нейтральная, не цветом ранга (зелёный — только выигрыш) */
+.fx.lost .fx-win b{background:none;-webkit-text-fill-color:rgba(255,255,255,.72);color:rgba(255,255,255,.72)}
+.mode-tab2 .chance{display:none}   /* в Арене шанс зависит от соперников — шанс ранга ничего не говорит */

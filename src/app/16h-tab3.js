@@ -47,7 +47,7 @@ renderBet = bump => { if (!isT3()) return _renderBet3(bump); const b = $('bet');
   const tot = betsTotal(), n = betsList().length;
   // слева — сколько спишется, справа — сколько ставок и до скольки даст самый удачный тикет: плашка отвечает на «что поставил и что могу выиграть»
   b.innerHTML = `<img src="assets/ton.svg" width="49" height="41.34" alt=""><b class="ton">${fmt(tot)}</b>` +
-    (tot ? `<span class="t3to"><small>${n} ${$n("ставка|ставки|ставок", n)}</small><b>${$t("до {0}", fmt(betsMaxWin()))}</b></span>` : '');
+    (tot ? `<span class="t3to"><small>${n} ${$n("ставка|ставки|ставок", n)} · ${$t("выигрыш")}</small><b>${$t("до {0}", fmt(betsMaxWin()))}</b></span>` : '');
   if (bump) b.querySelector('.ton').classList.add('bump'); };
 function t3Enter(){
   t3Main = S.tier; t3Gifts = S.gifts; S.gifts = []; renderSlots(); $('giftCnt').hidden = true; clearInterval(auto);
@@ -61,6 +61,7 @@ function t3Leave(){ if (t3Gifts){ S.gifts = t3Gifts.filter(g => INV.includes(g))
 // верх экрана — по карте в центре: группа подчёркнута, над ней шанс, крупно — множитель; свечение рамки — цвет карты
 function t3Head(){
   if (!isT3()) return; const c = T3C[t3Idx], k = c.key(), [b, sl] = t3Bet(k), lab = tiersEl.children[c.g], root = document.documentElement.style;
+  S.tier = c.g;   // ряд сверху — группы: тап по уже выбранной группе ничего не делает, по другой — листает (раньше «Чёт/нечет» не срабатывал)
   tiersEl.querySelectorAll('.tier').forEach((el, i) => el.classList.toggle('on', i === c.g));
   $('tind').style.width = lab.offsetWidth * .7 + 'px'; $('tind').style.transform = `translateX(${lab.offsetLeft + lab.offsetWidth * .15}px)`;
   $('chanceVal').textContent = fmt(t3Chance(k)) + '%';
@@ -177,6 +178,7 @@ betsAfter = async r => {
   const won = r.bets.filter(b => b.won), line = `${$t("ставка {0} GRAM", fmt(r.stake))} · ${won.length ? $t("сбылось {0} из {1}", won.length, r.bets.length) : $t("предсказание не сбылось")}`;
   $('fxPvp').innerHTML = '';
   await showDrop(r);
+  $('fx').classList.toggle('lost', !(r.win > 0));
   if (r.nft) $('fxWin').insertAdjacentHTML('beforeend', `<span>${line}</span>`);
   else $('fxWin').innerHTML = `<b>${r.win > 0 ? '+' + fmt(r.win) : '0'} GRAM</b><span>${line}</span>`;
   let el = $('fxPl'); if (!el){ el = document.createElement('div'); el.className = 'fx-pl'; el.id = 'fxPl'; $('fxWin').after(el); }

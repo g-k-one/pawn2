@@ -52,7 +52,6 @@
  "Следующая откроется сразу после старта": "The next one opens right after the start",
  "Арена": "Arena",
  "Общий банк": "Total pot",
- "эксперимент": "experiment",
  "Включён — пункт в меню": "On — shown in menu",
  "Ты": "You",
  "Случайный": "Random",
@@ -669,7 +668,6 @@
  "Пара": "Pair",
  "Зеркало": "Mirror",
  "Загадай исходы тикета": "Predict ticket outcomes",
- "Ранг — кнопками внизу, остальное — тапом по полю. Можно сразу несколько исходов.": "Rank with the buttons below, the rest by tapping the board. You can bet on several outcomes at once.",
  "Чёт, нечет, последняя цифра": "Even, odd, last digit",
  "По последней цифре тикета: чёт или нечет — x{0}, точная цифра — x{1}.": "By the last digit of the ticket: even or odd — x{0}, exact digit — x{1}.",
  "Узор тикета": "Ticket pattern",
@@ -697,5 +695,7 @@
  "Убери ставку с другой карты — корзиной": "Remove a bet from another card with the bin",
  "Уменьши ставку на редкую карту": "Lower the bet on a rare card",
  "Листай карты и ставь кнопками внизу": "Swipe cards and bet with the buttons below",
- "до {0}": "up to {0}"
+ "до {0}": "up to {0}",
+ "выигрыш": "win",
+ "Листай карты — кнопками +0.1…+5 ставь на карту в центре. Можно на несколько карт сразу, до 12.": "Swipe the cards — bet on the centre card with +0.1…+5. You can bet on several cards, up to 12."
 }

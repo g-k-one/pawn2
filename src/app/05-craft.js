@@ -393,7 +393,7 @@ async function closeFx(){
   await wait(60);
   fadeUI(false, 360); $('fx').classList.remove('on');         // …и экран крафта тает, открывая интерфейс
   await wait(320);
-  FX.on = false; FX.hot = false; $('fx').classList.remove('done', 'case', 'pvpl', 'pvpw'); Tilt.drop($('fxDrop'));
+  FX.on = false; FX.hot = false; $('fx').classList.remove('done', 'case', 'pvpl', 'pvpw', 'lost'); Tilt.drop($('fxDrop'));
   // итог прошлой игры убираем целиком: следующий экран (крафт, бой, кейс) не должен мелькнуть старым тикетом и призом
   ['fxDrop', 'fxPvp', 'fxWin', 'fxBtns', 'fxPl'].forEach(id => $(id)?.replaceChildren()); $('fxTop').style.visibility = 'hidden';
 }
