@@ -70,11 +70,15 @@ const betShort = (bet, sel) => bet === 'digit' ? $t("Цифра {0}", sel) : bet
 const betsTotal = () => Math.round(Object.values(betsBoard).reduce((a, v) => a + v, 0) * 100) / 100;
 // сколько можно выиграть за раунд при самом удачном тикете. Без узоров: ранг и последняя цифра независимы (в каждом ранге есть все цифры),
 // чёт/нечет задаётся цифрой — 5 × 10 сочетаний. С узорами — честный перебор всех 100 000 тикетов
+// «до N» на плашке: максимальный выигрыш со всех поставленных ставок — при самом удачном тикете (ставки, которые не могут сыграть
+// вместе, например две разных ранга, не складываются: тикет попадает только в один ранг)
 function betsMaxWin(board = betsBoard){
   const pay = k => board[k] ? Math.floor(board[k] * betMult(...k.split(':').map((x, i) => i ? +x : x)) * 100) / 100 : 0;
   let best = 0;
-  const pats = Object.keys(board).filter(k => board[k] && BET_PATS.includes(k.split(':')[0]));
-  if (!pats.length){ for (let r = 0; r < TIERS.length; r++) for (let d = 0; d < 10; d++) best = Math.max(best, pay('rank:' + r) + pay('digit:' + d) + pay('parity:' + d % 2)); }
+  // быстрый перебор (5 рангов × 10 цифр) годится, только если в ставках нет ничего, кроме рангов, цифры и чёт/нечет;
+  // иначе («до/от 50000», пары последней цифры, узоры) — честный перебор всех 100 000 тикетов (~2 мс)
+  const fast = Object.keys(board).filter(k => board[k]).every(k => ['rank', 'digit', 'parity'].includes(k.split(':')[0]));
+  if (fast){ for (let r = 0; r < TIERS.length; r++) for (let d = 0; d < 10; d++) best = Math.max(best, pay('rank:' + r) + pay('digit:' + d) + pay('parity:' + d % 2)); }
   else { const bs = Object.keys(board).filter(k => board[k]).map(k => { const [b, s] = k.split(':'); return [BET_KINDS[b].win, +s, pay(k)]; });
     for (let n = 0; n < TICKETS; n++){ let v = 0; for (const [w, s, p] of bs) if (w(s, n)) v += p; if (v > best) best = v; } }
   return Math.round(best * 100) / 100;

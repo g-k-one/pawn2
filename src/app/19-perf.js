@@ -46,10 +46,13 @@ pfApply();
   el.innerHTML = '<span class="note-i img"><img src="assets/hero-gem-128.webp" alt=""></span><span class="note-t"><b>+0 GRAM</b><small>Выигрыш · win 0123456789</small></span><i class="note-bar"></i>';
   host.appendChild(el); el.offsetWidth; requestAnimationFrame(() => el.remove());
 }, { timeout: 3000 });
-// тихая предзагрузка: через несколько секунд простоя докачиваем в кэш картинки Арены и Ставок и атласы частиц первого удара —
+// тихая предзагрузка: сразу после лоадера докачиваем в кэш картинки Арены, Ставок, меню, бонусов и кейсов и атласы частиц первого удара —
 // первый вход в режим и первый крафт без подгрузки. Ничего не запускается и не рисуется (~0.5 МБ, один раз — дальше кэш)
 setTimeout(() => (window.requestIdleCallback || (f => f()))(() => {
   if (navigator.connection?.saveData) return;
   ['arena-shield.svg', 'sword.svg', 'helm.svg', 'arena-puff.webp', 'ball.svg', 'wand.svg', 'empty-gem.webp',
-   'fx/fx-strips.webp', 'fx/fx-fire.webp', 'fx/fx-aura.webp', 'fx/fx-coins.webp', 'fx/fx-confetti.webp'].forEach(f => { const im = new Image(); im.decoding = 'async'; im.src = 'assets/' + f; });
-}, { timeout: 4000 }), 4000);
+   // меню, бонусы и кейсы — открываются без подгрузки
+   'chest-durov.webp', 'chest-satoshi.webp', 'chest-beast.webp', 'chest-musk.webp', 'who-durov.webp', 'who-satoshi.webp', 'who-beast.webp', 'who-musk.webp',
+   'referrals.webp', 'superdrop-logo.webp', 'top.webp', 'xp.webp', 'gem-white.svg',
+   'fx/fx-strips.webp', 'fx/fx-fire.webp', 'fx/fx-aura.webp', 'fx/fx-coins.webp', 'fx/fx-confetti.webp'].forEach(f => { const im = new Image(); im.decoding = 'async'; im.src = 'assets/' + f; im.decode?.().catch(() => {}); });   // decode — картинка сразу готова к показу, без мигания
+}, { timeout: 2000 }), 1200);   // сразу после лоадера, как только приложение показалось

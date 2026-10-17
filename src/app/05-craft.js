@@ -326,7 +326,8 @@ async function openFx(fast, mode, glow){
   fx.className = 'fx' + (mode ? ' ' + mode : ''); $('fxIn').style.opacity = 0; fx.style.setProperty('--tc', TIERS[S.tier].c);
   FullGlow.set(TIERS[S.tier].glow, true); FX.gain = 1; FX.gainTo = 1; FX.morph = 0; FX.on = true; FX.hot = true; FullGlow.resize(); FullGlow.draw();
   fadeUI(true, fast ? 220 : 300);
-  fx.classList.add('on');                                     // холст повторяет рамку панели — шов незаметен
+  fx.classList.add('on'); if (typeof renderModes === 'function') renderModes();   // переключатель уезжает сразу, не по таймеру
+  // холст повторяет рамку панели — шов незаметен
   await wait(240);                                            // экран крафта полностью проявился поверх панели…
   document.body.classList.add('glowoff');                     // …и только теперь прячем рамку панели — двух рамок не видно
   Sfx.whoosh(); haptic('medium');
@@ -349,7 +350,7 @@ async function bigStrike(){
   const cbFade = CB.animate([{ opacity: 1, scale: 1 }, { opacity: 0, scale: .7 }], { duration: 180, easing: 'ease-in', fill: 'forwards' });
   fx.className = 'fx'; $('fxIn').style.opacity = 0; fx.style.setProperty('--tc', TIERS[S.tier].c);
   FullGlow.set(TIERS[S.tier].glow, true); FX.gain = 1; FX.gainTo = 1; FX.morph = 0; FX.on = true; FX.hot = true; FullGlow.resize(); FullGlow.draw();
-  fadeUI(true, 300); fx.classList.add('on'); Sfx.whoosh();
+  fadeUI(true, 300); fx.classList.add('on'); if (typeof renderModes === 'function') renderModes(); Sfx.whoosh();
   FullGlow.set(NEUTRAL); FX.gainTo = .4;
   setTimeout(() => document.body.classList.add('glowoff'), 240);
   const grow = box.animate([{ transform: `translate(${dx}px,${dy}px) scale(${1 / 3})` }, { transform: 'none' }], { duration: 600, easing: 'cubic-bezier(.55,0,.15,1)', ...keep });
@@ -594,7 +595,7 @@ function shareWin(text, g){
 }
 /* под призом — 2 строки колонками: подпись сверху, значение снизу (Ставка · Множитель · Сдача; на Арене — Банк, в Ставках — Сбылось).
    GRAM — гем + число синим, «пришло» (сдача) — зелёным */
-const fxGv = v => `${S.demo ? '<img src="assets/fantik.webp" alt="">' : '<i class="gm"></i>'}${fmt(v)}`;   // гем — цветом суммы (синий / зелёный); в демо — фантик
+const fxGv = v => `${S.demo ? '<i class="gm fant"></i>' : '<i class="gm"></i>'}${fmt(v)}`;   // гем — цветом суммы (синий / зелёный); в демо — фантик
 const fxStats = cols => `<div class="fx-stats">${cols.filter(Boolean).map(([l, v, c]) => `<div${c ? ` class="${c}"` : ''}><small>${l}</small><b>${v}</b></div>`).join('')}</div>`;
 const fxChange = r => r.nft && r.change > 0 ?   // сдача бывает только вместе с NFT (без NFT весь выигрыш — GRAM, он и так крупно)
    [$t("Сдача"), fxGv(r.change), 'pos'] : null;
@@ -680,7 +681,7 @@ async function finish(r, how){
   else if (!r.nft) notify({ type: 'ok', color: t.c, img: 'assets/hero-gem.webp', title: `+${fmt(add)} GRAM`, text: `${t.name} ${$t("· x{0} · зачислено на баланс", r.mult)}` });
   else if (how === 'sell') notify({ type: 'ok', color: t.c, img: r.nft.nft.src, title: `${$t("Продано: +{0} GRAM", fmt(add))}`, text: `${r.nft.nft.name} ${$t("за {0} GRAM", fmt(r.nft.value))}${r.change > 0 ? ` ${$t("и {0} GRAM сверху", fmt(r.change))}` : ''}` });
   else notify({ type: 'ok', color: t.c, img: r.nft.nft.src, title: `${r.nft.nft.name} ${$t("в инвентаре")}`, text: r.change > 0 ? `${$t("На баланс +{0} GRAM", fmt(r.change))}` : $t("Можно положить в следующий крафт") });
-  setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win, nft: r.nft, arena: r.pvp ? { bank: r.pvp.bank, n: r.pvp.n } : null })), 300);
+  if (!S.demo) setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win, nft: r.nft, arena: r.pvp ? { bank: r.pvp.bank, n: r.pvp.n } : null })), 300);
   fitBet(); CRAFT.classList.remove('busy'); S.busy = false; finish.on = false; restartAuto();
 }
 /* неудачный крафт или открытие кейса: грустный смайлик, тикет 00000, «Попробовать ещё раз» и «Вернуться» */

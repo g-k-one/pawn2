@@ -9,6 +9,9 @@
 const MODES = () => [['craft', $t("Крафт")], ['tab2', $t("Арена")], ['tab3', $t("Ставки")]];
 const modeNow = () => arenaOn ? 'pvp' : betsOn ? 'bets' : document.body.classList.contains('mode-tab2') ? 'tab2' : document.body.classList.contains('mode-tab3') ? 'tab3' : 'craft';
 const modeBar = (() => { const el = document.createElement('div'); el.className = 'abs modes'; el.id = 'modes'; $('fx').parentNode.appendChild(el); return el; })();
+// затемнение низа — привязано к переключателю режимов и лежит поверх всего, кроме него: одинаковое во всех режимах
+// (раньше тёмная полоса была частью панели и пропадала на Арене под колесом)
+const modeFade = (() => { const el = document.createElement('div'); el.className = 'abs modes-fade'; modeBar.after(el); return el; })();
 function renderModes(){
   const m = MODES(), cur = modeNow();
   // во время раскрытия крафта/боя переключатель прячем — он только на экранах выбора
@@ -42,21 +45,35 @@ let modeGone = [];
 const modeOut = (m, n) => S.lite ? 0 : Promise.all((modeGone = modeEls(m, n).map(el => el.animate(modeK(el, 1, .9), { duration: 120, easing: 'cubic-bezier(.5,0,.8,.5)', fill: 'forwards' }))).map(a => a.finished));
 const modeIn = (m, p) => { modeGone.forEach(a => a.cancel()); modeGone = []; if (S.lite) return; modeMorph(); modeEls(m, p).filter(el => !el.matches('.t2arr')).forEach((el, i) => el.animate(modeK(el, 1.06, 1), { duration: 260, delay: Math.min(i, 6) * 18, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'backwards' })); };
 // переход: из любого режима — сначала закрываем текущий, потом открываем нужный; на главной наковальня уезжает в сторону
+// переходы браузера (View Transitions) пробовали — на iPhone ломался порядок слоёв и нижний бар с затемнением прыгали отдельно. Выключено
+const VT_ON = false;
 let modeBusy = false;
 async function switchMode(next, dir = 1){
   const cur = modeNow(); if (next === cur || modeBusy) return;
   if ((next === 'tab2' || next === 'tab3') && S.demo){ haptic('rigid'); notify({ type: 'demo', img: 'assets/fantik.webp', title: next === 'tab2' ? $t("Арена — только на GRAM") : $t("Ставки — только на GRAM"), text: $t("Выключи демо в меню") }); return; }
   if (cur === 'tab2' && t2Me()){ haptic('rigid'); notify({ type: 'info', icon: 'fire', title: $t("Ты на арене"), text: $t("Дождись боя — после него можно в другой режим") }); return; }
-  modeBusy = true; modeTo = next; haptic('medium'); Sfx.swipe(); modeThumb(next); const betW = $('bet').offsetWidth;
+  modeBusy = true; modeTo = next; haptic('medium'); Sfx.swipe(); const betW = $('bet').offsetWidth;
   try {
     // все три режима — один экран: старое уходит вглубь, класс режима меняется, новое выплывает
     if (cur === 'pvp') await leaveArena(); else if (cur === 'bets') await leaveBets();
-    await modeOut(cur, next);
-    if (cur === 'tab2'){ document.body.classList.remove('mode-tab2'); t2Leave(); }
-    if (cur === 'tab3'){ document.body.classList.remove('mode-tab3'); t3Leave(); }
-    if (next === 'tab2'){ document.body.classList.add('mode-tab2'); t2Enter(); }
-    if (next === 'tab3'){ document.body.classList.add('mode-tab3'); t3Enter(); }
-    modeIn(next, cur); betMorph(betW); modeOnb(next);
+    const swap = () => {
+      if (cur === 'tab2'){ document.body.classList.remove('mode-tab2'); t2Leave(); }
+      if (cur === 'tab3'){ document.body.classList.remove('mode-tab3'); t3Leave(); }
+      if (next === 'tab2'){ document.body.classList.add('mode-tab2'); t2Enter(); }
+      if (next === 'tab3'){ document.body.classList.add('mode-tab3'); t3Enter(); }
+    };
+    // View Transitions (iOS 18+): браузер снимает старый и новый экран, общие элементы (плашка, кнопка, ранги, стрелки) перетекают сами,
+    // центр режима меняется с глубиной — анимирует видеокарта по готовым снимкам. Иначе — прежний ручной переход
+    if (VT_ON && document.startViewTransition && !S.lite){   // выключено: на iPhone ломался порядок слоёв и низ «прыгал» — ручной переход ниже
+      // подложка переключателя тоже перетекает снимком (своя CSS-анимация на время перехода выключена — класс vt)
+      const root = document.documentElement; root.classList.add('vt');
+      const vt = document.startViewTransition(() => { swap(); modeThumb(next); arrPlace(next, $('bet').offsetWidth, true); });
+      await vt.updateCallbackDone; modeMorph();
+      await vt.finished.catch(() => {}); root.classList.remove('vt'); modeOnb(next);   // шторка правил — после перехода (снимки рисуются поверх всего)
+    } else {
+      modeThumb(next); await modeOut(cur, next); swap();
+      modeIn(next, cur); betMorph(betW); modeOnb(next);
+    }
   } finally { modeBusy = false; renderModes(); }
 }
 modeBar.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b || S.busy && modeNow() === 'craft') return;
@@ -89,5 +106,5 @@ function modeOnb(m){ if ((m !== 'tab2' && m !== 'tab3') || S.dbg.noOnb) return; 
 let betMorphing = false;   // плашка меняет ширину — стрелки ведёт betMorph, остальные не переставляют (иначе брали бы промежуточную ширину)
 function betMorph(w0){ const b = $('bet'), w1 = b.offsetWidth, m = modeNow(); if (S.lite || !w0){ arrPlace(m, w1, true); return; }
   arrShow(m, w1);
-  if (Math.abs(w1 - w0) > 1){ betMorphing = true; b.animate([{ width: w0 + 'px', overflow: 'hidden' }, { width: w1 + 'px', overflow: 'hidden' }], { duration: 260, easing: 'cubic-bezier(.3,1,.5,1)' }).finished.finally(() => { betMorphing = false; }); }
+  if (Math.abs(w1 - w0) > 1){ betMorphing = true; b.animate([{ width: w0 + 'px', overflow: 'hidden' }, { width: w1 + 'px', overflow: 'hidden' }], { duration: 260, easing: 'cubic-bezier(.33,0,.2,1)' }).finished.finally(() => { betMorphing = false; }); }   // ровно, без «доезда»
 }
