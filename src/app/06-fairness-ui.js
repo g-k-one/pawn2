@@ -10,12 +10,12 @@ function pfHTML(r){
   const isCase = r.kind === 'case', c = isCase ? caseById(r.caseId) : null, it = isCase ? c.items[r.idx] : null, t = isCase ? null : TIERS[r.ti];
   const isBets = r.kind === 'bets', col = isCase ? itemColor(it) : t.c, res = isCase ? itemName(it) : isBets ? t.name : `${t.name} · x${r.mult}`;
   const rng = isCase ? `${$t("«{0}» в кейсе — это тикеты от {1} до {2}. Тикет {3} внутри — значит, приз верный.", itemName(it), tk(it.from), tk(it.to), tk(r.ticket))}`
-            : isBets ? $t("Каждая ставка сверена с тикетом {0} по таблице выплат (RTP 95%): сыграло {1} из {2}, выплата {3} GRAM.", tk(r.ticket), r.bets.filter(b => b.won).length, r.bets.length, fmt(r.win))
+            : isBets ? $t("Каждая ставка сверена с тикетом {0} по таблице выплат (RTP {4}%): сыграло {1} из {2}, выплата {3} GRAM.", tk(r.ticket), r.bets.filter(b => b.won).length, r.bets.length, fmt(r.win), +(r.proof.rules?.rtp_ppm ?? BETS_RTP) / 1e4)
                      : `${$t("Ранг «{0}» — это тикеты от {1} до {2}. Тикет {3} внутри — значит, ранг и множитель x{4} верные.", t.name, tk(t.from), tk(t.to), tk(r.ticket), r.mult)}`;
   const P = r.proof;
   let tech = `<div class="pf-row"><small>${$t("Server seed — секретное зерно сервера")}</small><code class="pf-seed">${P.server_seed || $t("раскроется при смене ключа")}</code></div>` + pfRow($t("Commitment — SHA-256 зерна, показан до игры"), P.commitment) +
     pfRow($t("Client seed — твой ключ"), P.client_seed) + pfRow($t("Эпоха"), P.epoch_id) + pfRow($t("Nonce · домен · блок"), `${P.nonce} · ${P.domain} · ${P.block_counter}`) + pfRow($t("Ролл"), P.roll);
-  return `<div class="pfres" style="--c:${col}"><small>${$t("Результат · тикет")}</small><b>${tk(r.ticket)}</b><span>${res}</span></div>` +
+  return `<div class="pfres" style="--c:${col}"><small>${$t("Результат · тикет")}</small><b>${tk(r.ticket)}</b><span>${res}</span></div>` + (isBets ? betsRtpCard(null, +(r.proof.rules?.rtp_ppm ?? BETS_RTP) / 1e4) : '') +
     `<div class="pfc" data-k="hash"><i></i><div><b>${$t("Результат не подменили")}</b><p>${$t("До игры мы показали «отпечаток» секретного ключа сервера. Теперь ключ открыт — сверим, что отпечаток тот же.")}</p><em>${$t("ждёт проверки")}</em></div></div>` +
     `<div class="pfc" data-k="ticket"><i></i><div><b>${$t("Тикет посчитан по формуле")}</b><p>${r.proof.domain === 'pvp' ? $t("Ключ комнаты + отпечаток тикетов всех игроков (в порядке входа) по открытой формуле дают тикет {0}. Тикеты зафиксированы до розыгрыша — подогнать его ни под кого нельзя.", tk(r.ticket)) : $t("Ключ сервера + твой ключ + номер игры ({0}) по открытой формуле дают тикет {1}.", r.proof.nonce, tk(r.ticket))}</p><em>${$t("ждёт проверки")}</em></div></div>` +
     `<div class="pfc" data-k="rule"><i></i><div><b>${$t("Приз выдан по правилам")}</b><p>${rng}</p><em>${$t("ждёт проверки")}</em></div></div>` +
@@ -84,7 +84,7 @@ function renderPFInfo(){
     ['#12D53D', $t("Раскрытие"), $t("Когда ты меняешь свой ключ, секретное зерно за всю эпоху раскрывается. Отпечаток совпал — значит, результаты не меняли. Любую игру эпохи можно пересчитать прямо здесь, в браузере.")],
   ];
   $('pfiBody').innerHTML = `<div class="pfi-hero"><i>${svg(IC.shield)}</i><div><h4>${$t("Что такое Provably Fair")}</h4><p>${$t("Это способ доказать, что мы не подкручиваем результат. Любой крафт и кейс можно проверить самому — без доверия к нам.")}</p></div></div>` +
-    `<div class="pfi-rtp"><b>${(+RTP_PPM / 1e4).toFixed(0)}%</b><span><b>${$t("Целевой RTP")}</b><small>${$t("Крафт на длинной дистанции возвращает игрокам 95% от суммы ставок. Это значение записано в правилах каждого доказательства крафта — target_rtp_ppm.")}</small></span></div>` +
+    `<div class="pfi-rtp"><b>${(+RTP_PPM / 1e4).toFixed(0)}%</b><span><b>${$t("Целевой RTP")}</b><small>${$t("Крафт на длинной дистанции возвращает игрокам 95% от суммы ставок. Это значение записано в правилах каждого доказательства крафта — target_rtp_ppm.")}</small></span></div>` + betsRtpCard() +
     `<div class="pfi-env"><i>${svg(ENV)}</i><div><b>${$t("Как запечатанный конверт")}</b><p>${$t("Перед игрой мы кладём результат в конверт и отдаём его тебе. После игры конверт вскрывают — внутри то же, что было до игры.")}</p></div></div>` +
     `<div class="pfi-t">${$t("Как это работает")}</div>` +
     steps.map(([c, t, d], i) => `<div class="pfi-step" style="--c:${c}"><i>${i + 1}</i><div><b>${t}</b><p>${d}</p></div></div>`).join('') +

@@ -81,8 +81,7 @@ renderBet = bump => { if (!isT3()) return _renderBet3(bump); const b = $('bet');
     (tot ? `<span class="t3to"><small>${n} ${$n("ставка|ставки|ставок", n)} · ${$t("выигрыш")}</small><b>${$t("до {0}", fmt(betsMaxWin()))}</b></span>` : '');
   if (bump) b.querySelector('.ton').classList.add('bump'); requestAnimationFrame(t3ArrPlace); };
 // стрелки колод — вплотную к краям плашки ставки: плашка шире/уже — стрелки едут вместе с ней
-function t3ArrPlace(){ if (!isT3() || typeof t3Arrows === 'undefined') return; const w = $('bet').offsetWidth / 2;
-  t3Arrows[0].style.left = `calc(50% - ${w + 46}px)`; t3Arrows[1].style.left = `calc(50% + ${w + 2}px)`; }
+function t3ArrPlace(){ if (!isT3() || typeof t3Arrows === 'undefined' || modeBusy || betMorphing) return; arrPlace('tab3'); }   // во время смены режима стрелки ведёт betMorph
 function t3Enter(){ t3SkyOn(true); setTimeout(t3Chips); t3Main = S.tier; S.tier = t3Grp; t3Gifts = S.gifts; S.gifts = []; renderSlots(); $('giftCnt').hidden = true; clearInterval(auto); t3Render(); renderBet(); requestAnimationFrame(() => requestAnimationFrame(t3Head)); }
 function t3Leave(){ t3SkyOn(false); $('chance').firstElementChild.textContent = $t("шанс"); setTimeout(t3Chips); tierMorph(TIERS.map(t => t.name), TIERS.map(t => t.c)); setTimeout(() => { if (!isT3()){ placeChance(); placeInd(); } }, 340); if (t3Gifts){ S.gifts = t3Gifts.filter(g => INV.includes(g)); t3Gifts = null; } renderBet(); _setTier3(t3Main ?? S.tier); restartAuto(); }
 
@@ -192,7 +191,7 @@ betsAfter = async r => {
   const won = r.bets.filter(b => b.won), line = `${$t("ставка {0} GRAM", fmt(r.stake))} · ${won.length ? $t("сбылось {0} из {1}", won.length, r.bets.length) : $t("не сбылось")}`;
   $('fxPvp').innerHTML = '';
   await showDrop(r);
-  $('fx').classList.toggle('lost', !(r.win > 0)); $('fx').classList.toggle('btmany', r.bets.length > 6);   // много ставок — приз компактнее, кнопки влезают
+  $('fx').classList.toggle('lost', !(r.win > 0));   // приз всегда обычного размера: полоски ставок на итоге нет — ужимать нечего
   if (r.nft) $('fxWin').insertAdjacentHTML('beforeend', `<span>${line}</span>`);
   else $('fxWin').innerHTML = `<b>${r.win > 0 ? '+' + fmt(r.win) : '0'} GRAM</b><span>${line}</span>`;
   let el = $('fxPl'); if (!el){ el = document.createElement('div'); el.className = 'fx-pl'; el.id = 'fxPl'; $('fxWin').after(el); }

@@ -2,13 +2,14 @@
    ПРЕДИКТЫ — ставки на исходы тикета. Эксперимент, по умолчанию выключен (Дебаг → «Эксперименты»)
    Игрок раскладывает фишки по исходам одного честного тикета 00000–99999: ранг (как в крафте), чёт/нечет,
    последняя цифра (half — меньше/больше 50000 — есть в правилах, но на поле не выводится). Выплата каждой ставки =
-   ставка × RTP 95% × 100 000 / число подходящих тикетов — одинаковый RTP на любой ставке. Лимит риска: выигрыш за раунд
+   ставка × RTP 76% × 100 000 / число подходящих тикетов — одинаковый RTP на любой ставке. Лимит риска: выигрыш за раунд
    при любом тикете — не больше BETS_MAX_WIN (как потолок крафта: 50 GRAM × x14), общая ставка — до BET_MAX.
    Лимит проверяется сразу при раскладке фишек. Выплата — GRAM. В демо недоступно.
    Честность: тот же протокол, что у крафта и кейсов — эпоха, client seed, общий nonce, домен "bets"; в доказательстве —
    таблица ставок (правила), твои ставки и какие сыграли. Разбор режима — docs/BETS-MODE.md
    ========================================================= */
-const BETS_CHIPS = [.1, .5, 1, 5], BETS_MAX_WIN = 700, BETS_MAX_N = 10, BETS_RTP = 950000n;   // фишки, GRAM; потолок выигрыша за раунд, GRAM; ставок за раунд — до 10; RTP в ppm
+const BETS_CHIPS = [.1, .5, 1, 5], BETS_MAX_WIN = 700, BETS_MAX_N = 10, BETS_RTP = 760000n;   // фишки, GRAM; потолок выигрыша за раунд, GRAM; ставок за раунд — до 10; RTP в ppm (76% — ниже крафта, как у букмекеров)
+const BETS_RTP_PC = Number(BETS_RTP) / 1e4;   // RTP ставок в процентах — для текстов
 const TARGET = '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/>';
 IC.target = TARGET;
 // виды ставок: ключ, на что (sel), сколько тикетов подходят, выиграла ли при тикете n
@@ -31,7 +32,7 @@ const BET_SELS = k => k === 'rank' ? TIERS.map((_, i) => i) : k === 'digit' ? [0
 const BET_PATS = ['has7', 'diff', 'pair', 'mirror'];
 const betsRules = () => ({ kind: 'bets', rtp_ppm: String(BETS_RTP), tickets: TICKETS, max_win_nano: String(nano(BETS_MAX_WIN)),
   table: Object.entries(BET_KINDS).flatMap(([k, d]) => BET_SELS(k).map(s => ({ bet: k, sel: s, count: d.count(s) }))) });
-const betMultPpm = (rules, bet, sel) => BETS_RTP * BigInt(rules.tickets) * 1000000n / BigInt(rules.table.find(x => x.bet === bet && x.sel === sel).count) / 1000000n;   // множитель, ppm
+const betMultPpm = (rules, bet, sel) => BigInt(rules.rtp_ppm) * BigInt(rules.tickets) * 1000000n / BigInt(rules.table.find(x => x.bet === bet && x.sel === sel).count) / 1000000n;   // множитель, ppm
 let RULES_C = null; const betMult = (bet, sel) => Number(betMultPpm(RULES_C ||= betsRules(), bet, sel)) / 1e6;   // правила не меняются — считаем один раз
 // судья: какие ставки сыграли и сколько выплатить (общий для мока и для проверки честности в checkProof)
 function betsJudge(rules, bets, n){
@@ -138,6 +139,8 @@ function betsAdd(k){
   const el = $('btBoard').querySelector(`[data-k="${k}"]`); el?.animate([{ scale: .9 }, { scale: 1.06, offset: .6 }, { scale: 1 }], { duration: 260, easing: 'cubic-bezier(.3,1.5,.5,1)' });
   if (!S.lite) $('btOrb').animate([{ filter: 'brightness(1.8)', scale: 1.06 }, { filter: 'brightness(1)', scale: 1 }], { duration: 420, easing: 'cubic-bezier(.3,1.4,.5,1)' });   // шар вспыхивает на каждую фишку
 }
+// RTP ставок — своя карточка цветом Ставок: он ниже, чем в крафте, и игрок это видит в «Честности», статистике и проверке ставки
+const betsRtpCard = (mine, pc = BETS_RTP_PC) => `<div class="pfi-rtp bt"><b>${pc}%</b><span><b>${$t("RTP ставок")}</b><small>${mine != null ? $t("Твой — {0}%.", mine) + ' ' : ''}${$t("Ставки на длинной дистанции возвращают игрокам {0}% — меньше, чем крафт (95%). Это значение записано в правилах каждого доказательства ставок — rtp_ppm.", pc)}</small></span></div>`;
 // правила ставок — та же шторка и те же шаги, что у правил арены (16a-pvp.js): цветной номер, заголовок, строка пояснения
 function betsRulesModal(){
   haptic();
@@ -145,7 +148,7 @@ function betsRulesModal(){
   const steps = [[TIERS[0].c, $t("Выбери фишку и исход"), $t("Внизу — номинал фишки. Тап по исходу на карте кладёт фишку, долгое нажатие — снимает. До {0} ставок за раунд.", BETS_MAX_N)],
     [TIERS[1].c, $t("Три колоды"), $t("Сверху переключай: Ранг — в какой ранг попадёт тикет. Тикет — чёт, нечет, до или от 50000, есть 7, пара. Последняя цифра — пары: 0–1, 2–3 и так далее.")],
     [TIERS[2].c, $t("Пара и есть 7"), $t("Пара — две одинаковые цифры рядом, как 44. Есть 7 — в тикете хоть одна семёрка.")],
-    [TIERS[3].c, $t("Выплата — по шансу"), $t("Чем реже исход, тем больше множитель; возврат 95% на любой ставке, как в крафте.")],
+    [TIERS[3].c, $t("Выплата — по шансу"), $t("Чем реже исход, тем больше множитель. Возврат — {0}% на любой ставке (в крафте — 95%).", BETS_RTP_PC)],
     [TIERS[4].c, $t("Лимиты"), $t("За раунд: ставка — до {0} GRAM, выигрыш при любом тикете — до {1} GRAM.", BET_MAX, BETS_MAX_WIN)]];
   const html = `<div class="ar-steps">` + steps.map(([c, t, d], i) => `<div class="pfi-step" style="--c:${c}"><i>${i + 1}</i><div><b>${t}</b><p>${d}</p></div></div>`).join('') +
     `<div class="pfi-step ar-pf" style="--c:#12D53D"><i>${svg(IC.shield)}</i><div><b>${$t("Честность")}</b><p>${$t("Тикет честный: хеш зерна виден до игры, исход можно проверить.")}</p></div></div></div>`;

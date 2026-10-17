@@ -27,11 +27,13 @@ renderBet = bump => { if (!isT2()) return _renderBet(bump); const b = $('bet'); 
   b.innerHTML = (t2Me() ? `<span class="t2bl">${$t("Общий банк")}</span>` : '') + `<img src="assets/ton.svg" width="49" height="41.34" alt=""><b class="ton">${fmt(t2Me() ? t2Room.bank : t2Fee)}</b>`; if (bump) b.querySelector('.ton').classList.add('bump'); };
 function t2Show(){ if (!isT2()) return; t2Ring();
   if (!S.busy && !t2Go && S.tier !== tierOfTicket(t2Ticket) && !t2Wheel.classList.contains('drag')) _setTier(tierOfTicket(t2Ticket));   // после боя — ранг снова по своему тикету
-  $('range').innerHTML = `<span class="xf">${tk(t2Ticket)}</span>`; t2Turn();
+  t2Html($('range'), `<span class="xf">${tk(t2Ticket)}</span>`); t2Turn();
   const left = t2End ? Math.max(0, (t2End - Date.now()) / 1000) : PVP_TIME, p = $('prize');   // никто не зашёл — таймер стоит на 0:30
-  p.className = 'abs prize empty';   // та же надпись, что «Сделай ставку» (размер, пульс), только внутри — обратный отсчёт
-  p.innerHTML = `<span class="xf">0:${String(Math.ceil(left)).padStart(2, '0')}</span>`;
+  if (p.className !== 'abs prize empty') p.className = 'abs prize empty';   // та же надпись, что «Сделай ставку» (размер, пульс), только внутри — обратный отсчёт
+  t2Html(p, `<span class="xf">0:${String(Math.ceil(left)).padStart(2, '0')}</span>`);
 }
+// разметка меняется, только если текст другой: опрос идёт 4 раза в секунду, пересборка без нужды — лишняя работа телефону
+function t2Html(el, h){ if (el.innerHTML !== h) el.innerHTML = h; }
 // вход в tab2 и выход: автолистание стоп/старт, ставка, надписи
 function t2Enter(){ t2GlowPatch(); clearInterval(auto); t2Prev = { ton: S.ton, gifts: S.gifts }; S.ton = t2Fee; S.gifts = []; renderSlots(); $('giftCnt').hidden = true; t2Main = S.tier; _setTier(t2Tier); if (tierOfTicket(t2Ticket) !== t2Tier) t2Ticket = TIERS[t2Tier].from; t2Smoke(true); t2Ava(t2Me()); renderBet(); t2Show(); t2Sync(); }   // вернулся на арену, а ты в комнате — снова аватарка и банк
 function t2Leave(){ if (t2Prev){ S.ton = t2Prev.ton; S.gifts = t2Prev.gifts.filter(g => INV.includes(g)); t2Prev = null; } t2Ava(false); t2Smoke(false); t2Tier = S.tier; renderBet(); setTier(t2Main ?? S.tier, { keepPrize: false }); restartAuto(); }
@@ -208,7 +210,8 @@ const t2Arrows = (() => {
   return [mk('t2Prev', -1), mk('t2Next', 1)];
 })();
 function t2ArrowsSync(){ const i = PVP_FEES.indexOf(t2Fee), hide = t2Me() || t2Locked() || t2Go;
-  t2Arrows[0].hidden = t2Arrows[1].hidden = hide; t2Arrows[0].disabled = i <= 0; t2Arrows[1].disabled = i >= PVP_FEES.length - 1; }
+  const set = (el, k, v) => { if (el[k] !== v) el[k] = v; };   // только если поменялось — иначе каждый опрос будит пересчёт стилей
+  set(t2Arrows[0], 'hidden', hide); set(t2Arrows[1], 'hidden', hide); set(t2Arrows[0], 'disabled', i <= 0); set(t2Arrows[1], 'disabled', i >= PVP_FEES.length - 1); }
 function t2Room2(d){
   const i = PVP_FEES.indexOf(t2Fee) + d; if (i < 0 || i >= PVP_FEES.length || t2Me() || t2Joining){ haptic('rigid'); return; }
   t2Fee = PVP_FEES[i]; S.ton = t2Fee; haptic('light'); Sfx.tick(.5);

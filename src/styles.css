@@ -2757,3 +2757,18 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .tc3.cur{background:radial-gradient(circle at 50% 45%,rgba(180,140,255,.22),transparent 60%) padding-box,conic-gradient(from 210deg at 50% 45%,#2a1650,#3b1d6e,#1b2a5e,#2a1650,#4a1d5e,#2a1650) padding-box,linear-gradient(#120a24,#120a24) padding-box,
   linear-gradient(rgba(0,0,0,.05),rgba(0,0,0,.4)) border-box,linear-gradient(90deg,#5a12b0,#1450d2 20%,#b01aa0 42%,#0e7ab8 64%,#7414b4 82%,#c81f6c) border-box;
   box-shadow:inset 0 2px 0 rgba(255,255,255,.35),inset 0 0 0 1.5px rgba(200,170,255,.35),0 20px 36px rgba(0,0,0,.6)}
+/* видеокарта: вращение и покачивание — через transform (отдельный rotate на svg и на карте браузер считал на главном потоке каждый кадр).
+   Покачивание стартует, когда карта доехала на место (.4 с), и начинается с нуля — без рывка */
+@keyframes zrotT{to{transform:rotate(360deg)}}
+.tc3.cur .tc3-bg{animation:zrotT 120s linear infinite}
+.tc3.cur::before{animation:zrotT 200s linear infinite reverse}
+@keyframes tc3swayT{0%,100%{transform:translateY(7px) rotate(0)}25%{transform:translateY(7px) rotate(1.6deg)}75%{transform:translateY(7px) rotate(-1.6deg)}}
+.tc3.cur{animation:tc3swayT 7s ease-in-out .4s infinite}
+.lite .tc3.cur,.lite .tc3.cur .tc3-bg,.lite .tc3.cur::before{animation:none}
+/* RTP ставок — карточка цветом Ставок (фиолетовая): видно, что это другой RTP, не как у крафта */
+.pfi-rtp.bt{background:linear-gradient(135deg,rgba(155,123,255,.26),rgba(90,47,214,.08));box-shadow:inset 0 0 22px rgba(155,123,255,.4)}
+.pfi-rtp.bt>b{background:#9b7bff;color:#fff}
+.pfres+.pfi-rtp{margin:0 0 10px}
+/* стрелки Арены и Ставок ведут себя одинаково: место — от ширины плашки (JS), сдвиг — вместе с её шириной */
+#t2Prev,#t2Next{transition:left .26s cubic-bezier(.3,1,.5,1)}
+#t3Prev.t3arrw,#t3Next.t3arrw{transition:left .26s cubic-bezier(.3,1,.5,1)}

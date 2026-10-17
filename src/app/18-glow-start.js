@@ -176,11 +176,11 @@ void main(){
 /* рамка панели: отступ медленно «плывёт» 0…20 px (цикл ~24 с), скругление = 64 − отступ */
 const panelRect = (now, top = 0) => { const m = 10 + 10 * Math.sin(now / 1000 * Math.PI * 2 / 24); return { m, x: m, y: top + m - 1, w: SW - 2 * m, h: 659 - (m - 1) - (m + 4), r: Math.max(8, 64 - m) }; };
 // свет мягкий: 1 точка холста на 1 px макета — вдвое меньше работы, чем 1.5
-const Glow = makeGlow($('glow'), { main: true, size: () => [SW, 659], maxSc: 1, rect: now => panelRect(now), active: () => !FX.cover });
+const Glow = makeGlow($('glow'), { main: true, size: () => [SW, 659], maxSc: .6, rect: now => panelRect(now), active: () => !FX.cover });
 /* рамка экрана крафта: на весь экран, проявляется из черноты */
 const FX = { on: false, gain: 0, gainTo: 0, last: 0, morph: 1, cover: false, hot: false };
 const fxH = () => { const st = $('stage'); return st.offsetHeight || 844; };
-const FullGlow = makeGlow($('fxGlow'), { size: () => [SW, fxH()], active: () => FX.on, hot: () => FX.hot, maxSc: 1.25, noWave: true,
+const FullGlow = makeGlow($('fxGlow'), { size: () => [SW, fxH()], active: () => FX.on, hot: () => FX.hot, maxSc: .75, noWave: true,
   gain: now => { const dt = FX.last ? Math.min(.1, (now - FX.last) / 1000) : 0; FX.last = now; FX.gain += (FX.gainTo - FX.gain) * (1 - Math.exp(-dt / .7)); return FX.gain; },
   // morph 0 — точно рамка панели (внизу экрана), 1 — рамка на весь экран
   rect: now => { const h = fxH(), a = panelRect(now, h - 659), b = { m: 12, x: 12, y: 12, w: SW - 24, h: h - 24, r: 46 }, k = FX.morph, L = (p, q) => p + (q - p) * k;

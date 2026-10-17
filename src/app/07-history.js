@@ -95,7 +95,7 @@ function renderHist(detail){
       `<div class="hsec">${$t("Арены")}</div><div class="hstat n">${tile($t("Боёв"), A.length)}${tile($t("Побед"), aWins.length, A.length ? Math.round(aWins.length / A.length * 100) + '%' : '')}` +
         `${tile($t("Взносы"), G(aIn), '', 'g')}${tile($t("Выиграно"), G(aWon), '', 'g')}</div>` +
       `<div class="hsec">${$t("Ставки")}</div><div class="hstat n">${tile($t("Ставок"), bAll)}${tile($t("Сбылось"), bHit, bAll ? Math.round(bHit / bAll * 100) + '%' : '')}` +
-        `${tile($t("Поставлено"), G(bIn), '', 'g')}${tile($t("Выиграно"), G(bWon), '', 'g')}</div>` +
+        `${tile($t("Поставлено"), G(bIn), '', 'g')}${tile($t("Выиграно"), G(bWon), '', 'g')}</div>` + betsRtpCard(bIn ? Math.round(bWon / bIn * 100) : null) +
       `<div class="hsec">${$t("Кейсы и кошелёк")}</div><div class="hstat n">${tile($t("Кейсов открыто"), S.hist.cases.length)}${tile($t("Пополнено"), G(dep), '', 'g')}` +
         `${tile($t("NFT пришло"), nftIn + ' ' + $t("шт"), `≈ ${fmt(sumV(nftList('nftin')))} GRAM`)}${tile($t("NFT выведено"), nftOut + ' ' + $t("шт"), `≈ ${fmt(sumV(nftList('nft')))} GRAM`)}</div>`;
   }

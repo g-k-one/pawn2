@@ -27,21 +27,21 @@ function modeThumb(cur){
 // смена экрана крафт ⇄ арена: старое уходит вглубь и гаснет, новое выплывает (crossfade с глубиной, как везде)
 // уходит и выплывает весь контент экрана: ранги, шанс, множитель, центр режима, кнопка и плашка — переход без рывков
 // гаснет и выплывает только то, что у режимов разное (центр, множитель); общее — кнопка, плашка, ранги — не исчезает, а перетекает
-const MODE_C = { tab2: ['t2Arena', 't2Wheel'], tab3: ['t3Sky', 't3Board'], craft: ['drops', 'prize', 'slots'] };
+const MODE_C = { tab2: ['t2Arena', 't2Wheel', 't2Prev', 't2Next'], tab3: ['t3Sky', 't3Board', 't3Prev', 't3Next'], craft: ['drops', 'prize', 'slots'] };
 const modeEls = (m, other) => [...(m === 'tab3' ? [] : ['range']), ...(MODE_C[m] || MODE_C.craft)].map($).filter(Boolean);   // ряд сверху не гаснет — подписи перетекают (tierMorph)
 // прозрачность у надписи-приза своя (пульс «Сделай ставку») — её не трогаем, только масштаб; у остального — масштаб и прозрачность
-const modeK = (el, a, b) => el.id === 'prize' ? [{ scale: a }, { scale: b }] : [{ opacity: a === 1 ? 1 : 0, scale: a }, { opacity: b === 1 ? 1 : 0, scale: b }];
+const modeK = (el, a, b) => el.matches('.t2arr') ? [{}, { opacity: 0 }] : el.id === 'prize' ? [{ scale: a }, { scale: b }] : [{ opacity: a === 1 ? 1 : 0, scale: a }, { opacity: b === 1 ? 1 : 0, scale: b }];
 // старое гаснет и остаётся невидимым, пока режим меняется (fill: forwards), — иначе на миг мелькало новое без анимации
 let modeGone = [];
 const modeOut = (m, n) => S.lite ? 0 : Promise.all((modeGone = modeEls(m, n).map(el => el.animate(modeK(el, 1, .9), { duration: 120, easing: 'cubic-bezier(.5,0,.8,.5)', fill: 'forwards' }))).map(a => a.finished));
-const modeIn = (m, p) => { modeGone.forEach(a => a.cancel()); modeGone = []; if (S.lite) return; modeMorph(); modeEls(m, p).forEach((el, i) => el.animate(modeK(el, 1.06, 1), { duration: 260, delay: Math.min(i, 6) * 18, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'backwards' })); };
+const modeIn = (m, p) => { modeGone.forEach(a => a.cancel()); modeGone = []; if (S.lite) return; modeMorph(); modeEls(m, p).filter(el => !el.matches('.t2arr')).forEach((el, i) => el.animate(modeK(el, 1.06, 1), { duration: 260, delay: Math.min(i, 6) * 18, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'backwards' })); };
 // переход: из любого режима — сначала закрываем текущий, потом открываем нужный; на главной наковальня уезжает в сторону
 let modeBusy = false;
 async function switchMode(next, dir = 1){
   const cur = modeNow(); if (next === cur || modeBusy) return;
   if ((next === 'tab2' || next === 'tab3') && S.demo){ haptic('rigid'); notify({ type: 'demo', img: 'assets/fantik.webp', title: next === 'tab2' ? $t("Арена — только на GRAM") : $t("Ставки — только на GRAM"), text: $t("Выключи демо в меню") }); return; }
   if (cur === 'tab2' && t2Me()){ haptic('rigid'); notify({ type: 'info', icon: 'fire', title: $t("Ты на арене"), text: $t("Дождись боя — после него можно в другой режим") }); return; }
-  modeBusy = true; modeTo = next; haptic('medium'); Sfx.swipe(); modeThumb(next);
+  modeBusy = true; modeTo = next; haptic('medium'); Sfx.swipe(); modeThumb(next); const betW = $('bet').offsetWidth;
   try {
     // все три режима — один экран: старое уходит вглубь, класс режима меняется, новое выплывает
     if (cur === 'pvp') await leaveArena(); else if (cur === 'bets') await leaveBets();
@@ -50,7 +50,7 @@ async function switchMode(next, dir = 1){
     if (cur === 'tab3'){ document.body.classList.remove('mode-tab3'); t3Leave(); }
     if (next === 'tab2'){ document.body.classList.add('mode-tab2'); t2Enter(); }
     if (next === 'tab3'){ document.body.classList.add('mode-tab3'); t3Enter(); }
-    modeIn(next, cur);
+    modeIn(next, cur); betMorph(betW);
   } finally { modeBusy = false; renderModes(); }
 }
 modeBar.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b || S.busy && modeNow() === 'craft') return;
@@ -61,5 +61,18 @@ setInterval(renderModes, 800);   // режим мог смениться ина�
 // общее перетекает: значок в кнопке сменяется с лёгким «впрыгиванием», плашка чуть пружинит (цвет плашки и шара переливается в CSS)
 function modeMorph(){
   ['anvil', 'hammer'].map($).filter(Boolean).forEach(el => el.animate([{ opacity: 0, scale: .4 }, { opacity: 1, scale: 1.12, offset: .7 }, { opacity: 1, scale: 1 }], { duration: 300, easing: 'cubic-bezier(.3,1.3,.5,1)' }));
-  $('bet').animate([{ scale: .94 }, { scale: 1.03, offset: .6 }, { scale: 1 }], { duration: 300, easing: 'cubic-bezier(.3,1.3,.5,1)' });
+}
+// плашка ставки не прыгает масштабом и не мигает — плавно меняет ширину и цвет под новый режим, содержимое меняется сразу
+// стрелки режима (комнаты Арены, колоды Ставок) — у краёв плашки, на одном расстоянии; при смене режима едут вместе с её шириной
+const modeArr = m => (m === 'tab2' ? ['t2Prev', 't2Next'] : m === 'tab3' ? ['t3Prev', 't3Next'] : []).map($).filter(Boolean);
+function arrPlace(m = modeNow(), w = $('bet').offsetWidth, snap){ const [a, b] = modeArr(m); if (!a) return; const h = w / 2;
+  [a, b].forEach(el => { if (snap) el.style.transition = 'none'; });
+  a.style.left = `calc(50% - ${h + 62}px)`; b.style.left = `calc(50% + ${h + 18}px)`;
+  if (snap){ a.offsetWidth; a.style.transition = b.style.transition = ''; } }
+// стрелки нового режима: сразу на своём месте и уже с нужной яркостью (крайняя — тусклая), проявляются, когда плашка доехала
+function arrShow(m, w){ arrPlace(m, w, true); modeArr(m).forEach(el => el.animate([{ opacity: 0 }, {}], { duration: 220, delay: 240, easing: 'ease-out', fill: 'backwards' })); }
+let betMorphing = false;   // плашка меняет ширину — стрелки ведёт betMorph, остальные не переставляют (иначе брали бы промежуточную ширину)
+function betMorph(w0){ const b = $('bet'), w1 = b.offsetWidth, m = modeNow(); if (S.lite || !w0){ arrPlace(m, w1, true); return; }
+  arrShow(m, w1);
+  if (Math.abs(w1 - w0) > 1){ betMorphing = true; b.animate([{ width: w0 + 'px', overflow: 'hidden' }, { width: w1 + 'px', overflow: 'hidden' }], { duration: 260, easing: 'cubic-bezier(.3,1,.5,1)' }).finished.finally(() => { betMorphing = false; }); }
 }
