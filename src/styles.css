@@ -2422,7 +2422,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 @property --b2{syntax:'<color>';inherits:false;initial-value:#005ec9}
 .bet,.mode-tab2 .bet,.mode-tab3 .bet,.t2lock.mode-tab2 .bet{background:linear-gradient(var(--b1),var(--b2));transition:padding .25s,transform .15s,--b1 .3s ease,--b2 .3s ease}
 .bet{--b1:#24a0ff;--b2:#005ec9}
-.mode-tab2 .bet{--b1:#ffad55;--b2:#ff6a1f}
+.mode-tab2 .bet{--b1:#ee8a32;--b2:#df3a12}
 .t2lock.mode-tab2 .bet{--b1:#55555e;--b2:#34343a}
 .mode-tab3 .bet{--b1:#9b7bff;--b2:#5a2fd6}
 .cb .orb{filter:grayscale(0) sepia(0) saturate(1) hue-rotate(0deg) brightness(1);transition:filter .3s ease}
@@ -2749,3 +2749,11 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .tc3:not(.cur) .tc3-b,.tc3:not(.cur) .tc3-h{opacity:0}
 /* экран итога закрыт — его подсветка не крутится вхолостую */
 .fx:not(.on) .fx-drop::before{animation:none}
+/* арена: подарки крафта прячутся сразу, как на Ставках (а не уезжают по одному) */
+.mode-tab2 #slots{display:none}
+/* карта — скругление крупнее; торец выбранной карты — нижняя кромка с переливом (фиолетовый → синий → малиновый), темнее к низу.
+   Без анимации: перелив — сам градиент, телефон его не перерисовывает */
+.tc3{border-radius:34px;border-bottom:10px solid transparent}
+.tc3.cur{background:radial-gradient(circle at 50% 45%,rgba(180,140,255,.22),transparent 60%) padding-box,conic-gradient(from 210deg at 50% 45%,#2a1650,#3b1d6e,#1b2a5e,#2a1650,#4a1d5e,#2a1650) padding-box,linear-gradient(#120a24,#120a24) padding-box,
+  linear-gradient(rgba(0,0,0,.05),rgba(0,0,0,.4)) border-box,linear-gradient(90deg,#5a12b0,#1450d2 20%,#b01aa0 42%,#0e7ab8 64%,#7414b4 82%,#c81f6c) border-box;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.35),inset 0 0 0 1.5px rgba(200,170,255,.35),0 20px 36px rgba(0,0,0,.6)}

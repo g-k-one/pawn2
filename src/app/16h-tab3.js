@@ -3,7 +3,7 @@
    Ранги сверху — как на главной (свайп/тап), над ними шанс, крупно — множитель выбранной ячейки.
    На месте приза — табло 3×2, как ячейки игроков на Арене: табло исходов — таблетки «Ранг · Тикет · Цифра» сверху, ниже крупные карточки выбранной группы.
    Тап по ячейке — сразу ставка фишкой; «+0.1 … +5» — номинал фишки; долгое нажатие — снять ставку;
-   корзина — сначала ставку с выбранной ячейки, потом всё. Одна ставка или несколько (до 12).
+   корзина — сначала ставку с выбранной ячейки, потом всё. Одна ставка или несколько (до 10).
    Плашка — сколько всего спишется и до скольки даст. Ядро, лимиты, мок и доказательство — 16b-bets.js
    ========================================================= */
 const isT3 = () => document.body.classList.contains('mode-tab3');
@@ -125,7 +125,7 @@ function t3Render(){
       `<div class="tc3-b g-${g === 'dg' ? 'dp' : g} v3">${T3C.map((c, i) => c.g === g ? t3Cell(c, i) : '').join('')}</div></div>`; }).join('') + `</div>`;
   t3Head();
 }
-// + к ставке на выбранную ячейку; лимиты — до 12 ставок, общая ставка, выигрыш за раунд
+// + к ставке на выбранную ячейку; лимиты — до 10 ставок, общая ставка, выигрыш за раунд
 function t3Add(add){
   const k = t3Key(), next = Math.round(((betsBoard[k] || 0) + add) * 100) / 100;
   if (!betsBoard[k] && betsList().length >= BETS_MAX_N){ haptic('rigid'); notify({ type: 'warn', icon: 'coin', title: $t("Максимум {0} ставок за раунд", BETS_MAX_N), text: $t("Убери ставку с другой ячейки — корзиной") }); return; }
@@ -176,7 +176,7 @@ async function t3Play(){
   if (!r){ setBalance(S.balance + amt); await closeFx(); CRAFT.classList.remove('busy'); S.busy = false; notify({ type: 'err', icon: 'coin', title: $t("Ставка не прошла"), text: $t("GRAM вернулись на баланс") }); return; }
   betsLast = { ...betsBoard }; t3Last = { ...betsBoard };
   // под барабаном — как на арене: сверху сумма ставок, ниже плитки ставок (карточки игроков арены: 3 в ряд, больше 6 ставок — карточки ниже)
-  $('fxPvp').innerHTML = `<div class="pvp-bank"><small>${$t("Ставки")}</small><b><img src="assets/ton.svg" alt="">${fmt(amt)}</b></div><div class="pvp-avas bt-avas${r.bets.length > 6 ? ' c4' : ''}">` +   // больше 6 ставок — 4 в ряд, ниже: 12 ставок = 3 ряда, влезает
+  $('fxPvp').innerHTML = `<div class="pvp-bank"><small>${$t("Ставки")}</small><b><img src="assets/ton.svg" alt="">${fmt(amt)}</b></div><div class="pvp-avas bt-avas${r.bets.length > 6 ? ' c4' : ''}">` +   // больше 6 ставок — 4 в ряд, ниже: 10 ставок = 3 ряда, влезает
     r.bets.map(b => t3Tile(b, r.bets.length > 6)).join('') + `<span class="pvc pva empty${r.bets.length > 6 ? ' many' : ''}"></span>`.repeat(r.bets.length > 6 ? (4 - r.bets.length % 4) % 4 : (3 - r.bets.length % 3) % 3) + `</div>`;
   $('fx').classList.add('btspin');
   await reveal(r, fast);
