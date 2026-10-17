@@ -188,12 +188,12 @@ const _betsAfter3 = betsAfter;
 betsAfter = async r => {
   if (!isT3()) return _betsAfter3(r);
   await betsChipsReveal(r);
-  const won = r.bets.filter(b => b.won), line = `${$t("ставка {0} GRAM", fmt(r.stake))} · ${won.length ? $t("сбылось {0} из {1}", won.length, r.bets.length) : $t("не сбылось")}`;
+  const won = r.bets.filter(b => b.won), line = fxStats([[$t("Ставка"), fxGv(r.stake), 'g'], [$t("Сбылось"), $t("{0} из {1}", won.length, r.bets.length)], fxChange(r)]);
   $('fxPvp').innerHTML = '';
   await showDrop(r);
   $('fx').classList.toggle('lost', !(r.win > 0));   // приз всегда обычного размера: полоски ставок на итоге нет — ужимать нечего
-  if (r.nft) $('fxWin').insertAdjacentHTML('beforeend', `<span>${line}</span>`);
-  else $('fxWin').innerHTML = `<b>${r.win > 0 ? '+' + fmt(r.win) : '0'} GRAM</b><span>${line}</span>`;
+  if (r.nft){ const old = $('fxWin').querySelector('.fx-stats'); if (old) old.outerHTML = line; else $('fxWin').insertAdjacentHTML('beforeend', line); }
+  else $('fxWin').innerHTML = `<b>${r.win > 0 ? '+' + fmt(r.win) : '0'} GRAM</b>${line}`;
   let el = $('fxPl'); if (!el){ el = document.createElement('div'); el.className = 'fx-pl'; el.id = 'fxPl'; $('fxWin').after(el); }
   el.innerHTML = '';   // на итоге — только строка «ставка · сбылось N из M», без списка исходов
   if (r.win > 0){
@@ -213,7 +213,7 @@ async function t3Finish(r, how){
   const add = r.nft ? (how === 'sell' ? r.nft.value : 0) + (r.change || 0) : r.win;
   if (r.nft && how !== 'sell') INV = [{ ...r.nft, id: 'g' + Date.now() }, ...INV];
   haptic('medium'); if (add > 0) Sfx.coin();
-  if (!S.demo){ logCraft(r, r.nft ? how : 'bets'); xpTurn(r.stake); }
+  if (!S.demo){ if (r.win > 0) API.claimCraft(r, how); logCraft(r, r.nft ? how : 'bets'); xpTurn(r.stake); }   // «Забрать» / «Продать» — через сервер, как у крафта
   await closeFx(); $('fx').classList.remove('btspin');
   if (add > 0) moveBal(add);
   if (r.nft) notify({ type: 'ok', img: r.nft.nft.src, title: how === 'sell' ? $t("Продано: +{0} GRAM", fmt(add)) : `${r.nft.nft.name} ${$t("в инвентаре")}`, text: r.change > 0 && how !== 'sell' ? $t("На баланс +{0} GRAM", fmt(r.change)) : $t("Выигрыш ставок") });

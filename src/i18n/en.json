@@ -71,7 +71,6 @@
  "Арена — только на GRAM": "Arena is GRAM only",
  "Боёв на арене пока нет": "No arena battles yet",
  "Ты на арене": "You're in the arena",
- "Ничья · доля банка {0} GRAM": "Tie · pot share {0} GRAM",
  "Все слоты заняты": "All slots taken",
  "Арена заполнена": "The arena is full",
  "Крафт на банк {0} GRAM": "Crafted the pot {0} GRAM",
@@ -618,7 +617,6 @@
  "Получи звание «Лудик»": "Reach the “Gambler” rank",
  "Получи звание «Криптобарон»": "Reach the “Crypto Baron” rank",
  "Получи звание «ПАВНЕД»": "Reach the “PAWNED” rank",
- "ставка {0} · x{1}": "bet {0} · x{1}",
  "В профиле Telegram: подарок → «Передать» →": "In your Telegram profile: gift → “Transfer” →",
  "Он появится здесь после проверки.": "It will appear here once verified.",
  "Подключи кошелёк": "Connect a wallet",
@@ -685,7 +683,6 @@
  "Зеркало": "Mirror",
  "Выплата — по шансу": "Payout matches the odds",
  "Лимиты": "Limits",
- "ставка {0} GRAM": "bet {0} GRAM",
  "Выиграл {0} #{1} на ставках в Pawn": "Won {0} #{1} on bets in Pawn",
  "Выиграл +{0} GRAM на ставках в Pawn": "Won +{0} GRAM on bets in Pawn",
  "Ставлю на тикет в Pawn": "Betting on the ticket in Pawn",
@@ -718,5 +715,10 @@
  "Выключена": "Off",
  "Включена": "On",
  "Выключить для замера": "Turn off to measure",
- "Как мерить: включи плашку, закрой дебаг и подержи экран 10 секунд без касаний, запомни FPS. Потом выключай по одному пункту и смотри, на каком FPS заметно вырастет — это и тормозит. Настройки сохраняются до сброса.": "How to measure: turn the overlay on, close debug and leave the screen untouched for 10 seconds, note the FPS. Then turn items off one by one and see which one raises FPS noticeably — that is what slows things down. Settings persist until reset."
+ "Как мерить: включи плашку, закрой дебаг и подержи экран 10 секунд без касаний, запомни FPS. Потом выключай по одному пункту и смотри, на каком FPS заметно вырастет — это и тормозит. Настройки сохраняются до сброса.": "How to measure: turn the overlay on, close debug and leave the screen untouched for 10 seconds, note the FPS. Then turn items off one by one and see which one raises FPS noticeably — that is what slows things down. Settings persist until reset.",
+ "Сдача": "Change",
+ "Множитель": "Multiplier",
+ "Банк": "Bank",
+ "Доля банка": "Bank share",
+ "{0} из {1}": "{0} of {1}"
 }

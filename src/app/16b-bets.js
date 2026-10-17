@@ -200,7 +200,7 @@ function betsResult(r){
     `<div class="fx-links"><button class="btn-link pf" id="fxPfIn">${$t("Проверить честность")}</button><button class="btn-link pf" id="btHome">${$t("На главную")}</button></div>`;
   $('fx').classList.add('done'); if (r.win > 0 && !S.lite) setTimeout(burst, 200);
   if (r.nft){ INV.unshift(r.nft); if (r.change > 0) setBalance(S.balance + r.change); } else if (r.win > 0) setBalance(S.balance + r.win);   // NFT — в инвентарь, сдача — на баланс
-  if (!S.demo){ logCraft(r, 'bets'); xpTurn(r.stake); }
+  if (!S.demo){ if (r.win > 0) API.claimCraft(r, r.nft ? 'take' : 'bets'); logCraft(r, 'bets'); xpTurn(r.stake); }
   if (r.win > 0) setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win, nft: r.nft, bets: true })), 300);   // выигрыш в ленту «лайв»
   setTimeout(() => { FX.hot = false; }, 900);
   $('fxPfIn').onclick = () => openPF(r);

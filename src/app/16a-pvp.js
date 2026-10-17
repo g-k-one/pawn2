@@ -456,9 +456,8 @@ function pvlWin(x, p, r){
 }
 // выигрыш: обычный экран дропа (приз крупно — и GRAM, и NFT); под суммой — на что был крафт. Все игроки — в истории
 function pvpWinDrop(r){
-  const p = r.pvp, sub = $('fxWin').querySelector('b + span');
-  const line = (p.ties > 1 ? $t("Ничья · доля банка {0} GRAM", fmt(p.share)) : $t("Крафт на банк {0} GRAM", fmt(p.share))) + ' · x' + fmt(r.mult);
-  if (sub) sub.textContent = line; else $('fxWin').insertAdjacentHTML('afterbegin', `<span>${line}</span>`);
+  const p = r.pvp, st = fxStats([[p.ties > 1 ? $t("Доля банка") : $t("Банк"), fxGv(p.share), 'g'], [$t("Множитель"), 'x' + fmt(r.mult)], fxChange(r)]);
+  const old = $('fxWin').querySelector('.fx-stats'); if (old) old.outerHTML = st; else $('fxWin').insertAdjacentHTML('beforeend', st);
 
 }
 function pvpLoseDrop(r){

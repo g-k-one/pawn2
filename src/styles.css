@@ -2820,3 +2820,11 @@ html[lang=en] .bcase.free::before{content:"Free"}
 /* сумма и кнопки появляются вместе с призом */
 .fx-win{transition:opacity .5s .12s,transform .6s .12s cubic-bezier(.25,.9,.3,1)}
 .fx-btns{transition:opacity .5s .12s,transform .6s .12s cubic-bezier(.25,.9,.3,1)}
+/* под призом — колонки «подпись / значение» (Ставка · Множитель · Сдача): читается одним взглядом, ровно 2 строки */
+.fx-stats{display:flex;justify-content:center;gap:26px;margin-top:8px}
+.fx-stats>div{display:flex;flex-direction:column;align-items:center;gap:2px}
+.fx-stats small{font-size:12.5px;line-height:16px;text-transform:uppercase;letter-spacing:.04em;color:rgba(255,255,255,.72)}
+.fx-win .fx-stats b{display:flex;align-items:center;gap:4px;font-size:22px;line-height:26px;background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#fff}
+.fx-stats b img{width:17px;height:auto}
+.fx-stats .g b{color:var(--blue)}
+.fx-stats .pos b{color:#12D53D}
