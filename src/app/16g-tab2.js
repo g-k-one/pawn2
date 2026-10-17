@@ -119,7 +119,8 @@ function t2Turn(){ if (t2Wheel.classList.contains('drag') || t2Wheel.classList.c
 function t2Set(n){ if (t2Locked() || !isT2()) return;   // ушёл с арены, а колесо ещё крутится — главный экран не трогаем
   n = Math.max(0, Math.min(TICKETS - 1, Math.round(n))); const ti = tierOfTicket(n), d0 = Math.floor(tkDeg(t2Ticket) / 2);
   t2Ticket = n; if (Math.floor(tkDeg(n) / 2) !== d0) Sfx.tick(.35);
-  if (ti !== S.tier){ selHaptic(); setTier(ti, { keepTicket: true }); }
+  // смена ранга при вращении: приз крафта не рисуем (keepPrize), а число тикета и таймер возвращаем сразу — иначе на кадр мелькали «NFT» и множители крафта
+  if (ti !== S.tier){ selHaptic(); setTier(ti, { keepTicket: true, keepPrize: true }); t2ShowT = performance.now(); t2Show(); }
   $('t2Wg').style.transform = `rotate(${(-t2Deg).toFixed(3)}deg)`; t2ShowSoon();
 }
 // пока колесо крутится, крупное число тикета перерисовываем не чаще ~11 раз в секунду (каждое движение пальца — лишняя

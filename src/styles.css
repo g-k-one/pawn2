@@ -1861,7 +1861,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .fx-arena .ar-time{font-size:7.5cqw;padding:.5cqw 4cqw}
 .fx-arena .ar-seat.empty{border-color:rgba(255,200,140,.55);background:rgba(20,10,5,.6)}
 /* ---------- tab2 (копия главной, делаем из неё новый режим): кнопка крафта и плашка ставки — оранжево-красные ---------- */
-.mode-tab2 .bet{background:linear-gradient(#ff9a4a,#e0501a)}   /* светлее: на iPhone низ плашки уходил почти в коричневый */
+.mode-tab2 .bet{background:linear-gradient(#ffad55,#ff6a1f)}   /* светлее и насыщеннее: на iPhone низ плашки уходил в коричневый */
 .mode-tab2 .bet .plus:before,.mode-tab2 .bet .plus:after{background:#7a1c06}
 .mode-tab2 .bet img{filter:hue-rotate(165deg) saturate(1.4) brightness(1.15)}
 .mode-tab2 .cb .orb{filter:grayscale(1) sepia(1) saturate(5) hue-rotate(-22deg) brightness(1.05)}
@@ -2140,47 +2140,57 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .pvc.pva.btt b{font-size:14px;line-height:18px;text-transform:uppercase;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .pvc.pva.btt .pvd{margin-top:0}
 .fx-pl .bt-avas{margin-top:12px}
-/* ставки: колода таро на месте приза — карта по центру крупнее, соседние выглядывают; листается нативной прокруткой с привязкой к карте */
-.mode-tab3 .t3b{left:0;width:100%;transform:none;top:calc(330px - var(--lift) * .5);gap:0}
-.t3deck{position:relative;display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;padding:8px calc(50% - 68px) 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x}
+/* ставки: колода на месте приза — плоские плотные карты, как остальные карточки приложения; карта по центру крупнее, соседние выглядывают.
+   Листается нативной прокруткой с привязкой к карте. Сверху над колодой — множитель карты по центру (отступ, чтобы не вплотную) */
+.mode-tab3 .t3b{left:0;width:100%;transform:none;top:calc(356px - var(--lift) * .6);gap:0;align-items:stretch}
+.t3deck{position:relative;display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;padding:8px calc(50% - 64px) 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x}
 .t3deck::-webkit-scrollbar{display:none}
-.tcard{--tc:#e8c46a;flex:none;position:relative;width:136px;height:198px;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:22px 8px 12px;border-radius:16px;
-  background:radial-gradient(120% 80% at 50% 35%,#34205a,#130a26 70%);box-shadow:inset 0 0 0 1.5px rgba(232,196,106,.6),inset 0 0 0 5px #160c2c,inset 0 0 0 6px rgba(232,196,106,.25);
+.tcard{--tc:#b9a6ff;flex:none;position:relative;width:128px;height:150px;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:16px 8px 12px;border-radius:22px;
+  background:linear-gradient(color-mix(in srgb,var(--tc) 20%,#17112a),#120c22);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--tc) 40%,transparent);
   scale:.86;opacity:.5;transition:scale .25s cubic-bezier(.3,1.2,.5,1),opacity .25s,box-shadow .25s;cursor:pointer}
 .tcard.cur{scale:1;opacity:1}
-.tcard.on,.tcard.duo:has(.tc-half.on){box-shadow:inset 0 0 0 2px var(--tc),inset 0 0 0 5px #160c2c,inset 0 0 0 6px var(--tc),0 0 24px color-mix(in srgb,var(--tc) 55%,transparent)}
-.tc-num{position:absolute;top:8px;left:0;right:0;text-align:center;font-style:normal;font-size:13px;line-height:14px;letter-spacing:.12em;color:rgba(232,196,106,.85)}
-.tc-art{width:74px;height:74px;fill:none;stroke:var(--tc);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.tc-name{font-size:15px;line-height:17px;text-transform:uppercase;text-align:center;color:#f3e3b5}
-.tc-x{font-size:12.5px;line-height:15px;color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
-.tc-more{font-size:12.5px;line-height:15px;color:#e8c46a}
-.tc-chip{position:absolute;top:-6px;right:-4px;min-width:28px;padding:2px 8px;border-radius:999px;background:#fff;color:#0b0b0e;font-size:12.5px;font-weight:700;font-style:normal;text-align:center}
-.tcard.duo{gap:2px;padding:22px 6px 8px}
-.tc-half{position:relative;display:flex;flex-direction:column;align-items:center;width:100%;padding:3px 0;border-radius:12px}
-.tc-half .tc-art{width:46px;height:46px}
-.tc-half .tc-name{font-size:12.5px;line-height:15px}
-.tc-half.on{background:rgba(232,196,106,.16);box-shadow:inset 0 0 0 1.5px #e8c46a}
-.tc-half .tc-chip{top:-4px;right:2px}
-.tc-drum{display:flex;flex-direction:column;align-items:center;line-height:1;padding:2px 22px;border-radius:12px;background:rgba(0,0,0,.3);box-shadow:inset 0 6px 10px rgba(0,0,0,.5),inset 0 -6px 10px rgba(0,0,0,.5);touch-action:none;cursor:ns-resize}
-.tc-drum span{font-size:17px;line-height:22px;color:rgba(255,255,255,.28);font-variant-numeric:tabular-nums}
-.tc-drum b{font-size:42px;line-height:44px;color:#f3e3b5;font-variant-numeric:tabular-nums}
-/* фон: круг зодиака медленно вращается целиком (поворот слоя), глаз в центре стоит */
-.t3zod,.t3eye{position:absolute;left:50%;top:50%;width:400px;height:400px;margin:-200px 0 0 -200px;pointer-events:none;z-index:-1}
-.t3zod{opacity:.32;animation:zrot 180s linear infinite;will-change:transform}
-.t3eye{opacity:.22}
-.t3zod svg,.t3eye svg{width:100%;height:100%;fill:none;stroke:#e8c46a;stroke-width:1.2}
-.t3zod text{fill:#e8c46a;stroke:none;font-size:20px;text-anchor:middle}
-.t3zod .zs,.t3eye .zs{fill:#e8c46a;stroke:none}
+.tcard.on{box-shadow:inset 0 0 0 2.5px var(--tc),0 0 22px color-mix(in srgb,var(--tc) 50%,transparent)}
+.tc-ico{width:54px;height:54px;color:var(--tc);filter:drop-shadow(0 0 10px color-mix(in srgb,var(--tc) 55%,transparent))}
+.tc-name{font-size:16px;line-height:18px;text-transform:uppercase;text-align:center;color:#fff}
+.tc-x{font-size:13.5px;line-height:16px;color:var(--tc);font-variant-numeric:tabular-nums}
+.tc-more{font-size:12.5px;line-height:15px;color:rgba(255,255,255,.72)}
+.tc-chip{position:absolute;top:-7px;right:-4px;min-width:30px;padding:2px 8px;border-radius:999px;background:#fff;color:#0b0b0e;font-size:13.5px;font-weight:700;font-style:normal;text-align:center}
+.tc-drum{display:flex;flex-direction:column;align-items:center;line-height:1;padding:0 20px;border-radius:14px;background:rgba(0,0,0,.35);box-shadow:inset 0 6px 10px rgba(0,0,0,.5),inset 0 -6px 10px rgba(0,0,0,.5);touch-action:none;cursor:ns-resize}
+.tc-drum span{font-size:16px;line-height:20px;color:rgba(255,255,255,.3);font-variant-numeric:tabular-nums}
+.tc-drum b{font-size:40px;line-height:42px;color:var(--tc);font-variant-numeric:tabular-nums}
+.t3max{margin-top:2px;text-align:center;font-size:13.5px;line-height:18px;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.t3max b{display:inline-flex;align-items:center;gap:4px;color:var(--blue);font-size:16px;vertical-align:-1px}
+.t3max b img{height:14px}
+/* фон «обсерватория»: плоский звёздный купол — как колизей у арены; медленно вращается целиком (поворот слоя) */
+.t3obs{position:absolute;left:50%;top:50%;width:340px;height:340px;margin:-170px 0 0 -170px;pointer-events:none;z-index:-2;opacity:.55;animation:zrot 200s linear infinite;will-change:transform}
+.t3obs svg{width:100%;height:100%}
 @keyframes zrot{to{rotate:360deg}}
-.lite .t3zod{animation:none}
-.mode-tab3 .bet .t3n{font-size:24px;font-weight:700;color:rgba(255,255,255,.8)}
+.lite .t3obs{animation:none}
+/* кнопка ставок — хрустальный шар и волшебная палочка вместо наковальни и молота (как меч и щит у арены) */
+.mode-tab3 .cb .anvil{content:url(assets/ball.svg);width:38px;height:35.6px;left:24px;top:30px}
+.mode-tab3 .cb .hammer img{content:url(assets/wand.svg);position:absolute;width:34px;height:42px;max-width:none;left:10px;top:-36px;transform-origin:15% 95%;rotate:-10deg}
+.mode-tab3 .fx-intro .fi-a{content:url(assets/ball.svg);width:120px;height:112.5px;left:69px;top:84px}
+.mode-tab3 .fx-intro .fi-h img{content:url(assets/wand.svg);position:absolute;width:72px;height:90px;max-width:none;left:40px;top:-80px;transform-origin:20% 95%;rotate:-20deg}
+/* итог ставок: компактная полоска всех ставок раунда под суммой */
+.t3strip{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 6px;margin:14px auto 0;max-width:330px}
+.t3strip span{display:flex;flex-direction:column;align-items:center;gap:2px;width:48px}
+.t3strip i{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--tc);color:#0b0b0e}
+.t3strip svg{width:22px;height:22px}
+.t3strip small{font-size:12.5px;line-height:15px;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.72)}
+.t3strip .w small{color:#3fe06a}
+.t3strip .l{opacity:.45}
+.t3lose img{filter:grayscale(.8) brightness(.55)}
+.pvc.pva.btt .tav svg{width:26px;height:26px}
 /* ставки: искорки вокруг колоды мерцают и всплывают; вспышка искр при ставке на карту */
 .t3spk{position:absolute;inset:0;pointer-events:none;z-index:-1}
 .t3spk i{position:absolute;width:14px;height:14px;margin:-7px;opacity:0;animation:t3spk 4s ease-in-out infinite;will-change:transform,opacity}
-.t3spk svg,.t3b-sp svg{width:100%;height:100%;fill:#f3dca0}
+.t3spk svg,.t3b-sp svg{width:100%;height:100%;fill:#d9ccff}
 @keyframes t3spk{0%,100%{opacity:0;transform:translateY(6px) scale(calc(var(--s) * .4))}50%{opacity:.9;transform:translateY(-8px) scale(var(--s))}}
 .lite .t3spk{display:none}
-.t3b-sp{position:absolute;width:14px;height:14px;pointer-events:none;z-index:6;filter:drop-shadow(0 0 4px #f3dca0)}
-/* ставки: фрактальная мандала за кругом зодиака — картинка, вращается навстречу кругу */
-.t3frac{position:absolute;left:50%;top:50%;width:360px;height:360px;margin:-180px 0 0 -180px;pointer-events:none;z-index:-2;opacity:.22;animation:zrot 240s linear infinite reverse;will-change:transform}
-.lite .t3frac{animation:none}
+.t3b-sp{position:absolute;width:14px;height:14px;pointer-events:none;z-index:6;filter:drop-shadow(0 0 4px #b9a6ff)}
+.mode-tab3 #range{pointer-events:none}   /* множитель меняется при листании — улетающая цифра не должна перекрывать ряд групп */
+.mode-tab3 .tier{white-space:nowrap}
+.mode-tab3 .tiers{gap:22px}
+.mode-tab3 .bet .t3to{display:flex;flex-direction:column;justify-content:center;margin-left:4px;padding-left:12px;border-left:2px solid rgba(255,255,255,.3);line-height:1}
+.mode-tab3 .bet .t3to small{font-size:13.5px;line-height:16px;text-transform:uppercase;color:rgba(255,255,255,.8)}
+.mode-tab3 .bet .t3to b{font-size:24px;line-height:26px;color:#fff;font-variant-numeric:tabular-nums}
