@@ -65,8 +65,8 @@ let t2Tick = 0;   // ты в комнате, но ушёл на крафт — �
 const t2Hidden = () => $('fx').classList.contains('on');
 setInterval(() => { if (t2Go && openDrawer) hideDrawer();   // во время боя шторы не открываются
   const hid = isT2() && t2Hidden(); document.body.classList.toggle('t2fxon', hid);
-  if (isT2()) t2Smoke(!hid && !modeBusy);   // дым включаем после перехода — переход не дёргается
-  if (!isT2() || hid){ if (t2Me() && ++t2Tick % 4 === 0) t2Sync(); return; } t2Show(); if (!t2Room || (t2End && Date.now() >= t2End) || ++t2Tick % 4 === 0) t2Sync(); }, 250);   // раз в секунду — свежий банк
+  t2Smoke(isT2() && !hid && !modeBusy);   // дым включаем после перехода — переход не дёргается; вне арены — на паузе
+  if (!isT2() || hid){ if (t2Me() && ++t2Tick % 4 === 0) t2Sync(); return; } t2Show(); t2ArrowsSync(); if (!t2Room || (t2End && Date.now() >= t2End) || ++t2Tick % 4 === 0) t2Sync(); }, 250);   // один таймер на арену (стрелки — здесь же)   // раз в секунду — свежий банк
 // в кнопке: аватарка вместо молота с наковальней — ты в комнате
 function t2Ava(on){ CB.classList.toggle('t2in', on); if (on && !CB.querySelector('.t2ava')) CB.insertAdjacentHTML('beforeend', `<img class="t2ava" src="assets/avatar.webp" alt="">`); }
 CB.insertAdjacentHTML('beforeend', `<img class="t2lockico" src="assets/lock.svg" alt="">`);   // за 5 с до старта — замок вместо щита с мечом (и вместо аватарки)
@@ -176,7 +176,8 @@ const t2Arena = (() => {
 })();
 let t2SeatIds = [];
 // дым у трибун — клубы-картинки, плавают сами (smokePuffs, 16a-pvp.js); в экономном режиме и вне арены — скрыт
-function t2Smoke(on){ const box = $('t2Fx'); smokePuffs(box); box.hidden = !on || S.lite; }
+function t2Smoke(on){ const box = $('t2Fx'), show = on && !S.lite; if (!box.childElementCount && !show) return; smokePuffs(box);
+  if (box.hidden === !show) return; box.hidden = !show; box.getAnimations({ subtree: true }).forEach(a => show ? a.play() : a.pause()); }   // скрыт — анимации клубов на паузе
 // за 5 с до старта закрыто для всех: колесо, ранги и вход (кнопка и ставка приглушены); бой начался — тем, кто не в нём, сразу открывается следующая комната
 function t2Ring(){ t2Wheel.classList.toggle('locked', t2Locked()); document.body.classList.toggle('t2lock', t2Locked() || t2Full()); if (!!$('bet').dataset.full !== t2Full()) renderBet(); const left = t2End ? Math.max(0, (t2End - Date.now()) / 1000) : PVP_TIME, C = 2 * Math.PI * T2A.ring, hot = t2End > 0 && left <= 5;
   $('t2Ring').style.strokeDashoffset = (C * (1 - Math.min(1, left / PVP_TIME))).toFixed(1); t2Arena.classList.toggle('hot', hot); }
@@ -215,7 +216,6 @@ function t2Room2(d){
   renderBet(true); $('bet').animate([{ translate: `${d * 14}px 0`, opacity: .4 }, { translate: '0 0', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.3,1.3,.5,1)' });
   t2ArrowsSync(); t2Show(); t2Sync();
 }
-setInterval(() => isT2() && t2ArrowsSync(), 250);
 // в Арене свайп по экрану не листает ранги — он крутит колесо (в любом месте); ранги — только тапом
 $('scene').addEventListener('pointerdown', e => {
   if (!isT2() || S.busy || e.target.closest('button, .tier, .bar, .bet, .live, #t2Wheel, #modes')) return;

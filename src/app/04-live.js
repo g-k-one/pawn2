@@ -10,7 +10,7 @@ function liveHTML(n, o = {}){
   const stake = o.stake ?? [.5, 1, 1, 2, 2, 3, 5, 5, 10, 20][Math.random() * 10 | 0];
   const win = o.win ?? Math.round(stake * mult * 100) / 100;
   const nft = win >= NFT_FROM ? NFTS.filter(x => x.price <= win).slice(-1)[0] : null;
-  const img = nft ? nft.src : 'assets/hero-gem.webp', who = o.me ? $t("твой дроп") : o.who || '@' + pick(NICKS), ar = o.arena;
+  const img = nft ? nft.src : 'assets/hero-gem-128.webp', who = o.me ? $t("твой дроп") : o.who || '@' + pick(NICKS), ar = o.arena;
   const label = win >= 100 ? Math.round(win) : win >= 10 ? String(Math.round(win * 10) / 10) : fmt(win);
   // арена: значок «меч» в углу, в данных — банк и сколько игроков
   return `<div class="item${ti >= 3 ? ' hi' : ''}${o.me ? ' me' : ''}${ar ? ' iarena' : ''}${o.bets ? ' ibets' : ''}" style="--c:${t.c}" data-n="${n}" data-w="${win}" data-m="${mult}" data-who="${who}" data-img="${img}" data-nft="${nft ? nft.name : ''}"${ar ? ` data-bank="${ar.bank}" data-pl="${ar.n}"` : ''}>` +

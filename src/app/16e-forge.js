@@ -1483,4 +1483,6 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
   };
 }
 const Forge = makeForge(null);
-setTimeout(() => { try { Forge.preload('aura'); } catch(_){} }, 800);
+// заранее, но в простое: сразу после старта подготовка (шум, текстуры) подвешивала слабый телефон на 0.2–0.75 с
+const forgeIdle = window.requestIdleCallback || (f => setTimeout(f, 2500));
+forgeIdle(() => { try { Forge.preload('aura'); } catch(_){} }, { timeout: 4000 });

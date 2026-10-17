@@ -461,7 +461,7 @@ function pvpLoseDrop(r){
   $('fxDrop').innerHTML = '';   // победитель — первым в списке игроков, отдельный блок сверху не нужен
   $('fxWin').innerHTML = ''; pvlList(p, r);
   if (p.winPay > 0) setTimeout(() => pushLive(liveHTML(r.ticket, { who: '@' + w.who, stake: p.share, win: p.winPay, arena: { bank: p.bank, n: p.n } })), 300);
-  $('fx').classList.add('pvpl');
+  $('fx').classList.add('pvpl', 'lost');
   $('fxBtns').innerHTML = `<button class="btn-main" id="pvpAgain">${$t("Вернуться")}</button>` + PF_LINK;
   $('fx').classList.add('done');
   if (!S.demo){ logCraft(r, 'lose'); addXp(p.fee * .5); }
@@ -475,7 +475,7 @@ function pvpLoseDrop(r){
 async function backToArena(){
   haptic(); const fi = $('fxIn');
   await fi.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' }).finished;
-  $('fx').classList.remove('done', 'fail'); $('fxDrop').innerHTML = $('fxWin').innerHTML = $('fxBtns').innerHTML = $('fxPvp').innerHTML = ''; Tilt.drop($('fxDrop'));
+  $('fx').classList.remove('done', 'fail', 'lost', 'pvpl'); $('fxDrop').innerHTML = $('fxWin').innerHTML = $('fxBtns').innerHTML = $('fxPvp').innerHTML = ''; Tilt.drop($('fxDrop'));
   $('fx').classList.add('arena'); arenaOn = true; FullGlow.set(FIRE_GLOW); FX.gainTo = .55; tgBack(true);
   $('fxArena').style.opacity = ''; await pvpLoad();
   fi.getAnimations().forEach(x => x.cancel());
