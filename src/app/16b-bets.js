@@ -184,8 +184,8 @@ async function betsChipsReveal(r){
     c.classList.add('pend'); await wait(step * .55);
     c.classList.remove('pend'); c.classList.add(b.won ? 'win' : 'lose');
     if (b.won){ sum = Math.round((sum + b.pay) * 100) / 100; c.querySelector('.pvd').textContent = '+' + fmt(b.pay); Sfx.coin(); haptic('medium');
-      // сверху вместо суммы ставок — растущая выплата, тем же видом, что банк арены
-      bank.innerHTML = `<small>${$t("Выплата")}</small><b class="bt-sum"><img src="assets/ton.svg" alt="">+${fmt(sum)}</b>`; bank.querySelector('.bt-sum').animate([{ scale: 1.3 }, { scale: 1 }], { duration: 320, easing: 'cubic-bezier(.3,1.5,.5,1)' }); }
+      // сверху остаётся «Ставки N» — выплата видна на плитках сыгравших ставок и на итоге
+      }
     else { Sfx.tick(.6); haptic('light'); }
     await wait(step * .45);
   }
