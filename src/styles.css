@@ -2186,3 +2186,5 @@ html[lang=en] .bcase.free::before{content:"Free"}
 /* скрытое не работает: анимации в закрытых шторках и на закрытом экране крафта — на паузе; холст полноэкранного свечения вне крафта не рисуется */
 .drawer:not(.open) *,.fx:not(.on) *{animation-play-state:paused!important}
 .fx:not(.on) #fxGlow{visibility:hidden}
+.bet .t2ghost{position:absolute;margin:0;pointer-events:none}
+.mode-tab2 .bet{overflow:hidden}   /* число уезжает внутри плашки, не вылезая за её край */   /* старое число взноса при смене комнаты */

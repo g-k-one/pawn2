@@ -213,7 +213,16 @@ function t2Room2(d){
   const i = PVP_FEES.indexOf(t2Fee) + d; if (i < 0 || i >= PVP_FEES.length || t2Me() || t2Joining){ haptic('rigid'); return; }
   t2Fee = PVP_FEES[i]; S.ton = t2Fee; haptic('light'); Sfx.tick(.5);
   t2Ver++; t2Quiet = true;   // старая комната остаётся на экране, пока не придёт новая: таймер не прыгает, места новой встают без анимации входа
-  renderBet(true); $('bet').animate([{ translate: `${d * 14}px 0`, opacity: .4 }, { translate: '0 0', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.3,1.3,.5,1)' });
+  // плашка остаётся на месте: число меняется, как цифры на барабане — старое уходит вверх (вниз — при «назад»), новое выезжает с другой стороны; плашка — лёгкий толчок
+  const b = $('bet'), old = b.querySelector('.ton'), r0 = old?.getBoundingClientRect(), br = b.getBoundingClientRect();
+  renderBet(); const nw = b.querySelector('.ton');
+  if (old && nw && !S.lite){
+    const ghost = old.cloneNode(true); ghost.classList.add('t2ghost'); b.appendChild(ghost);
+    ghost.style.left = (r0.left - br.left) / K + 'px'; ghost.style.top = (r0.top - br.top) / K + 'px';
+    ghost.animate([{ opacity: 1, translate: '0 0' }, { opacity: 0, translate: `0 ${-d * 26}px` }], { duration: 200, easing: 'cubic-bezier(.5,0,.8,.5)', fill: 'forwards' }).onfinish = () => ghost.remove();
+    nw.animate([{ opacity: 0, translate: `0 ${d * 26}px` }, { opacity: 0, translate: `0 ${d * 26}px`, offset: .3 }, { opacity: 1, translate: '0 0' }], { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.15)' });
+    b.animate([{ scale: 1 }, { scale: .96, offset: .3 }, { scale: 1 }], { duration: 320, easing: 'cubic-bezier(.3,1.4,.5,1)' });
+  }
   t2ArrowsSync(); t2Show(); t2Sync();
 }
 // в Арене свайп по экрану не листает ранги — он крутит колесо (в любом месте); ранги — только тапом
