@@ -51,7 +51,8 @@ const selHaptic = () => { if (S.vibro === false) return; try { Telegram.WebApp.H
   const movers = [['range', .55], ['prize', .28], ['drops', .42]];
   let x0 = null, y0 = 0, dx = 0, act = false, t0 = 0, pid = 0, lx = 0, lt = 0, vx = 0;
   $('scene').addEventListener('pointerdown', e => {
-    if (S.busy || openDrawer || e.target.closest('button:not(.tier), .slot, .live, .bar, .bet')) return;
+    // в Арене свайпа рангов нет вовсе (палец крутит колесо); колода ставок листается сама — её жест не переключает ранг
+    if (S.busy || openDrawer || document.body.classList.contains('mode-tab2') || e.target.closest('button:not(.tier), .slot, .live, .bar, .bet, .t3b')) return;
     x0 = e.clientX; y0 = e.clientY; dx = 0; act = false; pid = e.pointerId; t0 = lt = performance.now(); lx = e.clientX; vx = 0;
   });
   addEventListener('pointermove', e => {
