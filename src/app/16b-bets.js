@@ -54,7 +54,7 @@ async function betsMock(bets){
   const stake = Math.round(bets.reduce((a, b) => a + b.amount, 0) * 100) / 100;
   const win = Number(res.payout) / 1e9, nn = win >= NFT_FROM ? NFTS.filter(x => x.price <= win).slice(-1)[0] : null;   // выигрыш от порога — NFT + сдача, как в крафте
   const nft = nn ? { id: 'w' + Date.now(), num: nn.num, nft: nn, a: nn.bg[0], b: nn.bg[1], p: nn.bg[2], value: nn.price } : null;
-  return S.lastFair = { kind: 'bets', proof, ticket: roll, ti: tierOfTicket(roll), stake, tonStake: stake, gifts: [], win, nft, change: nft ? Math.floor((win - nft.value) * 100) / 100 : 0,
+  return S.lastFair = { kind: 'bets', proof, ticket: roll, ti: tierOfTicket(roll), stake, tonStake: stake, gifts: [], win, nft, change: nft ? (Math.round(win * 100) - Math.round(nft.value * 100)) / 100 : 0,
     bets: bets.map((b, i) => ({ ...b, won: res.wins[i], pay: res.wins[i] ? Math.floor(b.amount * betMult(b.bet, b.sel) * 100) / 100 : 0 })) };
 }
 
@@ -201,7 +201,7 @@ function betsResult(r){
   $('fx').classList.add('done'); if (r.win > 0 && !S.lite) setTimeout(burst, 200);
   if (r.nft){ INV.unshift(r.nft); if (r.change > 0) setBalance(S.balance + r.change); } else if (r.win > 0) setBalance(S.balance + r.win);   // NFT — в инвентарь, сдача — на баланс
   if (!S.demo){ logCraft(r, 'bets'); xpTurn(r.stake); }
-  if (r.win > 0) setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win, bets: true })), 300);   // выигрыш в ленту «лайв»
+  if (r.win > 0) setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win, nft: r.nft, bets: true })), 300);   // выигрыш в ленту «лайв»
   setTimeout(() => { FX.hot = false; }, 900);
   $('fxPfIn').onclick = () => openPF(r);
   $('btAgain').onclick = () => betsBack(true);

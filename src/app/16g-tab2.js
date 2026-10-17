@@ -120,19 +120,24 @@ function t2Turn(){ if (t2Wheel.classList.contains('drag') || t2Wheel.classList.c
 // тикет с колеса: ранг сверху подсвечивается сам, тикет не сбрасывается на начало ранга
 function t2Set(n){ if (t2Locked() || !isT2()) return;   // ушёл с арены, а колесо ещё крутится — главный экран не трогаем
   n = Math.max(0, Math.min(TICKETS - 1, Math.round(n))); const ti = tierOfTicket(n), d0 = Math.floor(tkDeg(t2Ticket) / 2);
-  t2Ticket = n; if (Math.floor(tkDeg(n) / 2) !== d0) Sfx.tick(.35);
-  // смена ранга при вращении: приз крафта не рисуем (keepPrize), а число тикета и таймер возвращаем сразу — иначе на кадр мелькали «NFT» и множители крафта
-  if (ti !== S.tier){ selHaptic(); setTier(ti, { keepTicket: true, keepPrize: true }); t2ShowT = performance.now(); t2Show(); }
+  const now = performance.now();
+  t2Ticket = n; if (Math.floor(tkDeg(n) / 2) !== d0 && now - t2TickT > 30){ t2TickT = now; Sfx.tick(.35); }   // щелчок — не чаще раза в 30 мс: на быстром вращении их были десятки за кадр
+  // смена ранга при вращении: приз крафта не рисуем (keepPrize), а число тикета и таймер возвращаем сразу — иначе на кадр мелькали «NFT» и множители крафта.
+  // Ранг перерисовывает весь верх (подписи, шанс, цвет рамки) — на быстром вращении не чаще ~8 раз в секунду, последний — всегда (t2TierSoon)
+  if (ti !== S.tier) t2TierSoon(ti);
   $('t2Wg').style.transform = `rotate(${(-t2Deg).toFixed(3)}deg)`; t2ShowSoon();
 }
 // пока колесо крутится, крупное число тикета перерисовываем не чаще ~11 раз в секунду (каждое движение пальца — лишняя
 // перерисовка большого текста, на iPhone колесо подлагивало); последнее значение показывается всегда — по таймеру хвостом
-let t2ShowT = 0, t2ShowTm = 0;
+let t2ShowT = 0, t2ShowTm = 0, t2TickT = 0, t2TierT = 0, t2TierTm = 0;
+function t2TierSoon(ti){ const go = () => { t2TierT = performance.now(); const t = tierOfTicket(t2Ticket); if (t !== S.tier){ selHaptic(); setTier(t, { keepTicket: true, keepPrize: true }); t2ShowT = performance.now(); t2Show(); } };
+  clearTimeout(t2TierTm); const dt = performance.now() - t2TierT; if (dt > 120) go(); else t2TierTm = setTimeout(go, 120 - dt); }
 function t2ShowSoon(){ const now = performance.now(); clearTimeout(t2ShowTm);
   if (now - t2ShowT > 90){ t2ShowT = now; t2Show(); } else t2ShowTm = setTimeout(() => { t2ShowT = performance.now(); t2Show(); }, 90 - (now - t2ShowT)); }
-{ const wh = t2Wheel; let drag = false, lx = 0, vel = 0, lt = 0, spin = 0;
-  const pxDeg = () => 180 / Math.PI / (T2W.R * wh.getBoundingClientRect().width / 390);   // градусов колеса на пиксель пальца
-  wh.addEventListener('pointerdown', e => { if (S.busy) return; if (t2Locked()){ haptic('rigid'); return; } drag = true; cancelAnimationFrame(spin); wh.classList.remove('spin'); lx = e.clientX; lt = performance.now(); vel = 0;
+{ const wh = t2Wheel; let drag = false, lx = 0, vel = 0, lt = 0, spin = 0, k = 1;
+  // градусов колеса на пиксель пальца — меряем один раз при касании (замер размера на каждом движении заставлял пересчитывать раскладку)
+  const pxDeg = () => k;
+  wh.addEventListener('pointerdown', e => { if (S.busy) return; if (t2Locked()){ haptic('rigid'); return; } drag = true; k = 180 / Math.PI / (T2W.R * wh.getBoundingClientRect().width / 390); cancelAnimationFrame(spin); wh.classList.remove('spin'); lx = e.clientX; lt = performance.now(); vel = 0;
     wh.setPointerCapture(e.pointerId); wh.classList.add('drag'); clearInterval(auto); });
   wh.addEventListener('pointermove', e => { if (!drag) return; if (t2Locked() || !isT2()){ vel = 0; drag = false; wh.classList.remove('drag'); return; } const now = performance.now(), dd = -(e.clientX - lx) * pxDeg(); lx = e.clientX;
     t2Deg += dd; vel = vel * .6 + dd / Math.max(1, now - lt) * 1000 * .4; lt = now; t2Set(degTk(t2Deg)); });
@@ -147,6 +152,9 @@ function t2ShowSoon(){ const now = performance.now(); clearTimeout(t2ShowTm);
 // силуэт шлема гладиатора на пустом месте
 const T2_HELM = `<img class="t2helm" src="assets/helm.svg" alt="">`;
 /* зрители: за колизеем — кольца трибун с публикой (точки-головы приглушённых цветов, дальше — темнее), кое-где вспышки камер */
+// маска трибун (.t2art): сверху тает 17%→31% высоты, по бокам — от 120 до 176 px от центра; координаты — в единицах svg (−200…600)
+const t2MaskAt = (x, y) => { const lin = (v, a, b) => Math.max(0, Math.min(1, (v - a) / (b - a))), W = 152 * 800 / 198, px = Math.abs((x + 200) / 800 * W - W / 2);
+  return lin((y + 200) / 800, .17, .31) * (1 - lin(px, 120, 176)); };
 const T2_CROWD = (() => {
   let rnd = 7; const R = () => (rnd = (rnd * 16807) % 2147483647) / 2147483647, cols = ['#b5652a', '#d9833a', '#8a4a22', '#e8a05a', '#a0502a', '#c9773a', '#6e3a1c', '#f0b06a'];   // зрители — оттенки оранжевого, в тон арене
   // «живые» зрители и вспышки — не по одному (анимация каждой точки внутри SVG перерисовывает весь колизей каждый кадр — грело iPhone),
@@ -158,18 +166,21 @@ const T2_CROWD = (() => {
       const x = (200 + Math.cos(a) * rr).toFixed(1), y = (200 + Math.sin(a) * rr).toFixed(1);
       // каждый четвёртый зритель то уходит, то возвращается — места на трибунах живут
       const dot = `<circle cx="${x}" cy="${y}" r="${(3 + R() * 1.2).toFixed(1)}" fill="${cols[Math.floor(R() * cols.length)]}"`;
-      if (R() < .12) live[nl++ % 3] += `${dot} opacity="${op}"/>`; else s += dot + '/>';
-      if (R() < .02) flash[nf++ % 2] += `<circle cx="${x}" cy="${y}" r="6" fill="#fff"/>`; }
+      // живые зрители и вспышки — в своём слое без маски: их мерцание не заставляет телефон каждый кадр пересобирать замаскированные трибуны.
+      // Таять к краям им помогает своя прозрачность — ровно та, что дала бы маска трибун в этой точке (см. .t2art в styles.css)
+      const ma = t2MaskAt(+x, +y), lv = R() < .12, fl = R() < .02;
+      if (lv && ma > .05) live[nl++ % 3] += `${dot} opacity="${(op * ma).toFixed(2)}"/>`; else s += dot + '/>';
+      if (fl && ma > .05) flash[nf++ % 2] += `<circle cx="${x}" cy="${y}" r="6" fill="#fff" opacity="${ma.toFixed(2)}"/>`; }
     s += `</g>`; }
   const layer = (cls, body) => `<svg class="ar-art t2crowd ${cls}" viewBox="-200 -200 800 800" aria-hidden="true">${body}</svg>`;
-  return s + `</svg>` + live.map((b, i) => layer('t2fan f' + i, b)).join('') + flash.map((b, i) => layer('t2flash f' + i, b)).join('');
+  return { still: s + `</svg>`, live: live.map((b, i) => layer('t2fan f' + i, b)).join('') + flash.map((b, i) => layer('t2flash f' + i, b)).join('') };
 })();
 /* арена: крупный колизей (тот же вектор, что в PvP) на месте приза — кольцо таймера вокруг, дым Горна по краям, 4 места соперников в ряд */
 const T2A = { y: 492, r: 152, ring: 138, slots: 5, seat: 60, gap: 18, rows: [[2, -36], [3, 38]] };   // центр по высоте, радиус колизея, кольцо таймера; места: размер, зазор, ряды [сколько, сдвиг по высоте]
 const t2Arena = (() => {
   const el = document.createElement('div'); el.className = 'abs t2a'; el.id = 't2Arena'; el.style.setProperty('--r', T2A.r + 'px'); el.style.top = T2A.y + 'px';
   const C = 2 * Math.PI * T2A.ring, d = T2A.ring * 2 + 20;
-  el.innerHTML = `<div class="t2art">${T2_CROWD}${ARENA_SVG}</div><div class="t2fx" id="t2Fx"></div>` +
+  el.innerHTML = `<div class="t2art">${T2_CROWD.still}${ARENA_SVG}</div><div class="t2art t2live">${T2_CROWD.live}</div><div class="t2fx" id="t2Fx"></div>` +
     `<svg class="t2ring" viewBox="0 0 ${d} ${d}" style="width:${d}px;height:${d}px"><circle class="ar-tbg" cx="${d / 2}" cy="${d / 2}" r="${T2A.ring}"/>` +
     `<circle class="ar-tfg" id="t2Ring" cx="${d / 2}" cy="${d / 2}" r="${T2A.ring}" transform="rotate(-90 ${d / 2} ${d / 2})" style="stroke-dasharray:${C.toFixed(1)}"/></svg>` +
     `<div class="t2seats" id="t2Seats">${T2A.rows.flatMap(([n, dy], ri) => Array.from({ length: n }, (_, i) => { const x = (i - (n - 1) / 2) * (T2A.seat + T2A.gap);

@@ -320,7 +320,7 @@ function makeForge(host){
   }
   function setup(){
     cv = document.createElement('canvas'); cv.className = 'fx-cv';
-    cv.style.cssText = host ? 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none' : 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9000';
+    cv.style.cssText = host ? 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none' : 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9000;display:none';   // до первого эффекта холст скрыт — иначе пустой слой на весь экран держит память
     (host || document.body).appendChild(cv);
     gl = cv.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false });
     if (!gl) return false;

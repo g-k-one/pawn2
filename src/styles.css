@@ -142,7 +142,6 @@ img{display:block;-webkit-user-drag:none}
 /* ---------- шторки ---------- */
 /* ---------- экран крафта ---------- */
 .fx{position:absolute;inset:0;z-index:45;background:#000;opacity:0;pointer-events:none;transition:opacity .22s ease-out}
-#glow{transition:opacity .16s}
 .glowoff #glow{opacity:0}
 .fx.on{opacity:1;pointer-events:auto}
 .fx canvas{position:absolute;inset:0;width:100%;height:100%}
@@ -2185,7 +2184,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .fx.lost .fx-win b{background:none;-webkit-text-fill-color:rgba(255,255,255,.72);color:rgba(255,255,255,.72)}
 /* скрытое не работает: анимации в закрытых шторках и на закрытом экране крафта — на паузе; холст полноэкранного свечения вне крафта не рисуется */
 .drawer:not(.open) *,.fx:not(.on) *{animation-play-state:paused!important}
-.fx:not(.on) #fxGlow{visibility:hidden}
+.fx:not(.on):not(.closing) #fxGlow{visibility:hidden}   /* при закрытии рамка видна — она сжимается в рамку панели */
 .bet .t2ghost{position:absolute;margin:0;pointer-events:none}
 .mode-tab2 .bet{overflow:hidden}   /* число уезжает внутри плашки, не вылезая за её край */   /* старое число взноса при смене комнаты */
 /* Ставки v3: табло 3×2 на месте приза — ячейки как у игроков на Арене. Выбранная — подсвечена цветом исхода (без обводки), ставка — белый бейдж */
@@ -2772,3 +2771,52 @@ html[lang=en] .bcase.free::before{content:"Free"}
 /* стрелки Арены и Ставок ведут себя одинаково: место — от ширины плашки (JS), сдвиг — вместе с её шириной */
 #t2Prev,#t2Next{transition:left .26s cubic-bezier(.3,1,.5,1)}
 #t3Prev.t3arrw,#t3Next.t3arrw{transition:left .26s cubic-bezier(.3,1,.5,1)}
+/* дебаг → «Замер»: плашка FPS и выключатели */
+.pf-hud{position:fixed;left:8px;top:calc(72px + env(safe-area-inset-top, 0px));z-index:9999;display:flex;flex-direction:column;gap:1px;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,.78);color:#fff;font:600 12.5px/1.25 system-ui,sans-serif;pointer-events:none}
+.pf-hud b{font-size:16px}
+.pf-hud small{color:rgba(255,255,255,.72);max-width:220px}
+.pf-noglow #glow,.pf-noglow #fxGlow{visibility:hidden}
+.pf-noanim *,.pf-noanim *::before,.pf-noanim *::after{animation-play-state:paused!important}
+.pf-nosmoke #t2Fx,.pf-nosmoke #t3Neb,.pf-nosmoke .t3neb{display:none!important}
+/* память видеокарты: невидимое — убрано совсем, а не прозрачное (прозрачный элемент на весь экран всё равно держит слой) */
+.fx-intro{visibility:hidden}
+.flash:not(.go){display:none}
+.tc3::before{width:490px;height:490px;margin:-245px 0 0 -245px}   /* вращающийся фон карты: хватает закрыть углы, на 1/3 меньше памяти */
+/* мерцающие зрители — свой слой без маски (они стоят только в полностью видимой зоне трибун) */
+.t2art.t2live{-webkit-mask-image:none;mask-image:none}
+.t2live .ar-art{position:absolute;inset:0;width:100%;height:100%}
+/* экран итога закрыт — прячется совсем (после затухания), а не висит прозрачным: его слои не держат память и не склеиваются */
+.fx{visibility:hidden;transition:opacity .22s ease-out,visibility 0s .22s}
+.fx.on{visibility:visible;transition:opacity .22s ease-out,visibility 0s}
+.modes.off{visibility:hidden;pointer-events:none}
+/* NFT-приз без 3D-поворота: чтобы не сливался с фоном — тень под моделью, мягкое свечение цветом ранга за ней,
+   надпись «NFT» за призом приглушена. Всё статично (рисуется один раз), движение — прежнее покачивание (только transform) */
+.drop::before{content:'';position:absolute;inset:4%;border-radius:50%;z-index:-1;pointer-events:none;background:radial-gradient(closest-side,color-mix(in srgb,var(--tier) 42%,transparent),color-mix(in srgb,var(--tier) 12%,transparent) 60%,transparent)}
+.drop .tw>img{filter:drop-shadow(0 20px 14px rgba(0,0,0,.72)) drop-shadow(0 0 2px rgba(0,0,0,.4))}
+/* тень «на полу» под призом: стоит на месте, приз над ней покачивается — видно, что он висит выше фона */
+.drop::after{content:'';position:absolute;left:18%;right:18%;bottom:-9%;height:14%;border-radius:50%;z-index:-1;pointer-events:none;background:radial-gradient(closest-side,rgba(0,0,0,.6),rgba(0,0,0,.25) 55%,transparent)}
+.prize.nft{opacity:.32}
+.lite .drop .tw>img{filter:none}
+/* карточки подарков в ставке и на экране итога — заметная тень: лежат поверх фона, а не сливаются с ним */
+.slot .nc-t,.fx-drop .nc-t{box-shadow:0 16px 26px rgba(0,0,0,.62),0 4px 8px rgba(0,0,0,.4)}
+/* возврат с экрана итога: рамка панели проявляется так же долго, как гаснет большая рамка */
+.glowx #glow{transition:none}   /* под экраном итога рамка панели включается сразу — её не видно, пока он не растает */
+/* закрытие экрана итога: он один плавно тает поверх уже готового главного экрана */
+/* закрытие экрана итога: тают чёрный фон и содержимое, а рамка остаётся яркой, пока не ляжет на рамку панели (её гасит closeFx в конце) */
+#glow{transition:opacity .16s}
+/* приз на экране итога вместо 3D-поворота: парит и чуть покачивается
+   Только transform — видеокарта, без перерисовки */
+@keyframes pzFloat{0%,100%{transform:translateY(0) rotate(-1.4deg)}50%{transform:translateY(-10px) rotate(1.4deg)}}
+.fx-drop .pz>.nc,.fx-drop .pz>.tw{animation:pzFloat 4.8s ease-in-out infinite}
+.lite .fx-drop .pz>.nc,.lite .fx-drop .pz>.tw{animation:none}
+/* параллакс без 3D: карточка наклоняется в одну сторону, картинка подарка внутри — в другую и чуть смещается (тот же ритм) */
+@keyframes pzImg{0%,100%{transform:translate(4px,2px) rotate(2.6deg) scale(1.02)}50%{transform:translate(-4px,-3px) rotate(-2.6deg) scale(1.02)}}
+.fx-drop .pz>.nc .nc-img,.fx-drop .pz>.tw>img{animation:pzImg 4.8s ease-in-out infinite}
+.lite .fx-drop .pz>.nc .nc-img,.lite .fx-drop .pz>.tw>img{animation:none}
+/* узор на фоне карточки NFT медленно плывёт по кругу (вместо блика) */
+@keyframes patDrift{0%,100%{transform:translate(-3%,-2%)}25%{transform:translate(3%,-3%)}50%{transform:translate(3%,3%)}75%{transform:translate(-3%,2%)}}
+.fx-drop .nc-pat{animation:patDrift 14s ease-in-out infinite}
+.lite .fx-drop .nc-pat{animation:none}
+/* сумма и кнопки появляются вместе с призом */
+.fx-win{transition:opacity .5s .12s,transform .6s .12s cubic-bezier(.25,.9,.3,1)}
+.fx-btns{transition:opacity .5s .12s,transform .6s .12s cubic-bezier(.25,.9,.3,1)}

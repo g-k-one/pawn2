@@ -705,5 +705,18 @@
  "Каждая ставка сверена с тикетом {0} по таблице выплат (RTP {4}%): сыграло {1} из {2}, выплата {3} GRAM.": "Each bet was checked against ticket {0} with the payout table (RTP {4}%): {1} of {2} played, payout {3} GRAM.",
  "RTP ставок": "Bets RTP",
  "Твой — {0}%.": "Yours — {0}%.",
- "Ставки на длинной дистанции возвращают игрокам {0}% — меньше, чем крафт (95%). Это значение записано в правилах каждого доказательства ставок — rtp_ppm.": "Over the long run bets return {0}% to players — less than craft (95%). This value is written into the rules of every bets proof — rtp_ppm."
+ "Ставки на длинной дистанции возвращают игрокам {0}% — меньше, чем крафт (95%). Это значение записано в правилах каждого доказательства ставок — rtp_ppm.": "Over the long run bets return {0}% to players — less than craft (95%). This value is written into the rules of every bets proof — rtp_ppm.",
+ "Рамка": "Frame glow",
+ "Вращение призов": "Prize rotation",
+ "Анимации": "Animations",
+ "Дым и туман": "Smoke and haze",
+ "Лента «лайв»": "Live feed",
+ "худший кадр {0} мс · рывков {1}%": "worst frame {0} ms · stutters {1}%",
+ "выкл:": "off:",
+ "Замер": "Perf",
+ "Плашка FPS поверх экрана": "FPS overlay",
+ "Выключена": "Off",
+ "Включена": "On",
+ "Выключить для замера": "Turn off to measure",
+ "Как мерить: включи плашку, закрой дебаг и подержи экран 10 секунд без касаний, запомни FPS. Потом выключай по одному пункту и смотри, на каком FPS заметно вырастет — это и тормозит. Настройки сохраняются до сброса.": "How to measure: turn the overlay on, close debug and leave the screen untouched for 10 seconds, note the FPS. Then turn items off one by one and see which one raises FPS noticeably — that is what slows things down. Settings persist until reset."
 }

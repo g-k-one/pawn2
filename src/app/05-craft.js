@@ -77,7 +77,7 @@ function renderDbg(){
   const d = S.dbg, last = TIERS.length - 1;
   const chip = (k, v, label, c, dis) => `<button class="dbg-c${d[k] === v ? ' on' : ''}" data-k="${k}" data-v="${v}" style="--c:${c || '#fff'}"${dis ? ' disabled' : ''}>${label}</button>`;
   // вкладки: всё по смыслу, чтобы не листать длинный список
-  const tabs = [['craft', $t("Крафт")], ['player', $t("Игрок")], ['exp', $t("Арена и ставки")]];
+  const tabs = [['craft', $t("Крафт")], ['player', $t("Игрок")], ['exp', $t("Арена и ставки")], ['perf', $t("Замер")]];
   const sec = {
     craft: () =>
       `<div class="dbg-l">${$t("Точный тикет")}</div><div class="dbg-t"><input id="dbgTicket" type="number" inputmode="numeric" min="0" max="99999" placeholder="0 – 99 999" value="${d.ticket ?? ''}"><button class="dbg-c" data-k="ticketClear" data-v="1">${$t("Сброс")}</button></div>` +
@@ -94,6 +94,7 @@ function renderDbg(){
       `<div class="dbg-l">${$t("Кейсы")}</div><div class="dbg-g">${chip('freeCases', false, $t("По условиям"))}${chip('freeCases', true, $t("Без условий"))}</div>` +
       `<div class="dbg-l">${$t("Онбординг")}</div><div class="dbg-g">${chip('noOnb', false, $t("Показывать"))}${chip('noOnb', true, $t("Выключен"))}<button class="dbg-c" data-k="onbNow" data-v="1">${$t("Показать сейчас")}</button></div>` +
       `<div class="dbg-l">${$t("Сохранённый прогресс")}</div><div class="dbg-g"><button class="dbg-c" data-k="resetSave" data-v="1" style="--c:#FF4C35">${$t("Сбросить и начать заново")}</button></div>`,
+    perf: () => pfDbg(),
     exp: () =>
       `<div class="dbg-l">${$t("Арена: исход боя")}</div><div class="dbg-g">${chip('arOut', null, $t("Как выпадет"))}${chip('arOut', 'win', $t("Победа"), '#12D53D')}${chip('arOut', 'lose', $t("Проигрыш"), '#FF4C35')}</div>` +
       `<div class="dbg-l">${$t("Арена: соперников в новой комнате")}</div><div class="dbg-g">${chip('arBots', null, $t("Случайно"))}${[0, 1, 3, 5].map(n => chip('arBots', n, String(n), '#ff8a3c')).join('')}</div>` +
@@ -286,7 +287,9 @@ function fadeUI(out, dur){
     // на арене баланс и лайв-лента остаются — они сквозные, как на главной
     const keepTop = $('fx').classList.contains('arena');
     const els = [...document.querySelectorAll('#scene > *')].filter(el => !/flash|panel/.test(el.className) && !(keepTop && /sheet/.test(el.className))).concat(keepTop ? [] : [document.querySelector('.balance')]);
-    faded = els.map(el => el.animate([{ opacity: 1, filter: 'blur(0px)' }, { opacity: 0, filter: 'blur(4px)' }], { duration: dur, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }));
+    // только прозрачность: размытие двух десятков элементов сразу — тяжёлая перерисовка, на возврате интерфейса был рывок
+    // гаснут от своей текущей яркости (без явного «1» в начале — иначе приглушённая надпись «NFT» на миг вспыхивала белым)
+    faded = els.map(el => el.animate([{}, { opacity: 0 }], { duration: dur, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }));
   } else {
     faded.forEach(a => { a.updatePlaybackRate ? a.updatePlaybackRate(a.effect.getTiming().duration / dur) : 0; a.reverse(); });
     const list = faded; faded = [];
@@ -321,7 +324,7 @@ $('craft').onclick = async () => {
 async function openFx(fast, mode, glow){
   const fx = $('fx');
   fx.className = 'fx' + (mode ? ' ' + mode : ''); $('fxIn').style.opacity = 0; fx.style.setProperty('--tc', TIERS[S.tier].c);
-  FullGlow.set(TIERS[S.tier].glow, true); FX.gain = 1; FX.gainTo = 1; FX.morph = 0; FX.on = true; FX.hot = true; FullGlow.resize();
+  FullGlow.set(TIERS[S.tier].glow, true); FX.gain = 1; FX.gainTo = 1; FX.morph = 0; FX.on = true; FX.hot = true; FullGlow.resize(); FullGlow.draw();
   fadeUI(true, fast ? 220 : 300);
   fx.classList.add('on');                                     // холст повторяет рамку панели — шов незаметен
   await wait(240);                                            // экран крафта полностью проявился поверх панели…
@@ -342,10 +345,10 @@ async function bigStrike(){
   box.getAnimations({ subtree: true }).forEach(a => a.cancel()); box.querySelectorAll('.fi-sp').forEach(x => x.remove());   // хвосты прошлого удара
   const st = stage.getBoundingClientRect(), cb = CB.getBoundingClientRect(), br = box.getBoundingClientRect();
   const dx = (cb.left + cb.width / 2 - br.left - br.width / 2) / K, dy = (cb.top + cb.height / 2 - br.top - br.height / 2) / K;
-  ham.style.rotate = '50deg'; box.style.opacity = 1; HAM.style.visibility = ANV.style.visibility = 'hidden';
+  ham.style.rotate = '50deg'; box.style.opacity = 1; box.style.visibility = 'visible'; HAM.style.visibility = ANV.style.visibility = 'hidden';
   const cbFade = CB.animate([{ opacity: 1, scale: 1 }, { opacity: 0, scale: .7 }], { duration: 180, easing: 'ease-in', fill: 'forwards' });
   fx.className = 'fx'; $('fxIn').style.opacity = 0; fx.style.setProperty('--tc', TIERS[S.tier].c);
-  FullGlow.set(TIERS[S.tier].glow, true); FX.gain = 1; FX.gainTo = 1; FX.morph = 0; FX.on = true; FX.hot = true; FullGlow.resize();
+  FullGlow.set(TIERS[S.tier].glow, true); FX.gain = 1; FX.gainTo = 1; FX.morph = 0; FX.on = true; FX.hot = true; FullGlow.resize(); FullGlow.draw();
   fadeUI(true, 300); fx.classList.add('on'); Sfx.whoosh();
   FullGlow.set(NEUTRAL); FX.gainTo = .4;
   setTimeout(() => document.body.classList.add('glowoff'), 240);
@@ -384,21 +387,30 @@ async function anvilHit(box, ham, anv, from){
   await wait(420);
   await box.animate([{ opacity: 1, filter: 'blur(0px)', scale: 1 }, { opacity: 0, filter: 'blur(10px)', scale: 1.25 }], { duration: 300, easing: 'cubic-bezier(.5,0,.8,.5)', ...keep }).finished;
   // искры не обрываем: отменённая анимация не удаляет искру, и она застывала на наковальне до следующего крафта
-  box.getAnimations({ subtree: true }).forEach(a => { if (!a.effect?.target?.classList?.contains('fi-sp')) a.cancel(); }); box.style.opacity = ''; ham.style.rotate = '';
+  box.getAnimations({ subtree: true }).forEach(a => { if (!a.effect?.target?.classList?.contains('fi-sp')) a.cancel(); }); box.style.opacity = ''; box.style.visibility = ''; ham.style.rotate = '';
 }
 async function closeFx(){
+  /* возврат с экрана итога — открытие (openFx) в обратную сторону:
+     1) содержимое итога гаснет — остаётся чёрный экран с рамкой;
+     2) рамка сжимается до рамки панели и перетекает в её цвета и яркость (на Ставках — фиолетовые, на Арене — свои);
+     3) рамка совпала с рамкой панели — под ней включается рамка панели, экран итога растворяется, интерфейс проявляется */
+  const fast = S.fast || S.lite, fx = $('fx'), g0 = FX.gain;
   FX.cover = false; FX.hot = true;
   $('fxIn').style.opacity = 0;
-  await wait(220);
-  FullGlow.set(TIERS[S.tier].glow); FX.gainTo = 1;
-  await tween(520, k => FX.morph = 1 - k);                    // рамка сжимается ровно в рамку панели…
-  document.body.classList.remove('glowoff');                  // …под ней снова появляется рамка панели…
-  await wait(60);
-  fadeUI(false, 360); $('fx').classList.remove('on');         // …и экран крафта тает, открывая интерфейс
-  await wait(320);
-  FX.on = false; FX.hot = false; $('fx').classList.remove('done', 'case', 'pvpl', 'pvpw', 'lost', 'btmany', 'btspin'); Tilt.drop($('fxDrop'));
-  // итог прошлой игры убираем целиком: следующий экран (крафт, бой, кейс) не должен мелькнуть старым тикетом и призом
-  ['fxDrop', 'fxPvp', 'fxWin', 'fxBtns', 'fxPl'].forEach(id => $(id)?.replaceChildren()); $('fxTop').style.visibility = 'hidden';
+  FullGlow.set(Glow.get() || TIERS[S.tier].glow, false, .12);
+  await wait(fast ? 140 : 220);
+  await tween(S.lite ? 0 : fast ? 280 : 440, k => { FX.morph = 1 - k; FX.gain = FX.gainTo = g0 + (1 - g0) * k; });
+  FX.morph = 0; FX.gain = FX.gainTo = 1; FullGlow.set(Glow.get() || TIERS[S.tier].glow, true); FullGlow.draw();
+  document.body.classList.add('glowx'); document.body.classList.remove('glowoff'); Glow.draw();   // под экраном итога — та же рамка панели
+  fadeUI(false, fast ? 220 : 300); fx.classList.add('closing'); fx.classList.remove('on');   // экран итога растворяется вместе с рамкой (closing — рамку не прятать), интерфейс проявляется — как при открытии, наоборот
+  if (typeof renderModes === 'function') renderModes();
+  await wait(260);
+  document.body.classList.remove('glowx');
+  FX.on = false; FX.hot = false; FX.morph = 0; fx.classList.remove('closing', 'done', 'case', 'pvpl', 'pvpw', 'lost', 'btmany', 'btspin'); Tilt.drop($('fxDrop'));
+  // итог прошлой игры убираем целиком: следующий экран (крафт, бой, кейс) не должен мелькнуть старым тикетом и призом.
+  // Экран уже скрыт — содержимое чистим сразу (иначе следующий экран мелькнёт старым), но дорогую перерисовку не ждём в этом кадре
+  $('fxTop').style.visibility = 'hidden'; ['fxDrop', 'fxPvp', 'fxWin', 'fxBtns', 'fxPl'].forEach(id => $(id)?.replaceChildren());
+  if (typeof renderModes === 'function') renderModes();   // переключатель режимов — сразу, а не по таймеру через 0.8 с
 }
 
 /* ---------- раскрытие тикета: «подъём по рангам» ----------
@@ -659,7 +671,7 @@ async function finish(r, how){
   else if (!r.nft) notify({ type: 'ok', color: t.c, img: 'assets/hero-gem.webp', title: `+${fmt(add)} GRAM`, text: `${t.name} ${$t("· x{0} · зачислено на баланс", r.mult)}` });
   else if (how === 'sell') notify({ type: 'ok', color: t.c, img: r.nft.nft.src, title: `${$t("Продано: +{0} GRAM", fmt(add))}`, text: `${r.nft.nft.name} ${$t("за {0} GRAM", fmt(r.nft.value))}${r.change > 0 ? ` ${$t("и {0} GRAM сверху", fmt(r.change))}` : ''}` });
   else notify({ type: 'ok', color: t.c, img: r.nft.nft.src, title: `${r.nft.nft.name} ${$t("в инвентаре")}`, text: r.change > 0 ? `${$t("На баланс +{0} GRAM", fmt(r.change))}` : $t("Можно положить в следующий крафт") });
-  setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win, arena: r.pvp ? { bank: r.pvp.bank, n: r.pvp.n } : null })), 300);
+  setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win, nft: r.nft, arena: r.pvp ? { bank: r.pvp.bank, n: r.pvp.n } : null })), 300);
   fitBet(); CRAFT.classList.remove('busy'); S.busy = false; finish.on = false; restartAuto();
 }
 /* неудачный крафт или открытие кейса: грустный смайлик, тикет 00000, «Попробовать ещё раз» и «Вернуться» */
@@ -709,7 +721,7 @@ async function superStage(r){
     await closeFx();
     if (how === 'sell') setBalance(S.balance + g.value);
     notify({ type: 'ok', color: '#EB57B0', img: g.nft.src, title: how === 'sell' ? `${$t("Супер дроп продан: +{0} GRAM", fmt(g.value))}` : `${$t("Супер дроп: {0} твой", g.nft.name)}`, text: $t("Новый загаданный тикет уже в бонусах") });
-    setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win })), 300);
+    setTimeout(() => pushLive(liveHTML(r.ticket, { me: true, stake: r.stake, win: r.win, nft: r.nft })), 300);
     fitBet(); CRAFT.classList.remove('busy'); S.busy = false; restartAuto();
   };
   $('sdSell').onclick = () => take('sell'); $('sdTake').onclick = () => take('take');

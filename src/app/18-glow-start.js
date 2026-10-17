@@ -126,15 +126,18 @@ void main(){
   // цикл не будит страницу каждый кадр экрана (60–120 раз в секунду): между кадрами свечения — таймер, в простое — редкая проверка
   function tick(now){ const d = frame(now); if (d > 0) setTimeout(() => requestAnimationFrame(tick), d); else requestAnimationFrame(tick); }
   function frame(now){
-    if (!ok || document.hidden || S.lite || (opt.active && !opt.active())) return 100;
-    // в покое — ~20 к/с: свет течёт медленно (циклы 7–24 с), глаз разницы не видит, а iPhone в Telegram греется заметно меньше; при ударе и переходах — каждый кадр
-    const calm = !(energy(now) > .01 || (opt.hot && opt.hot()));
-    if (calm && now - drawn < 44) return 48 - (now - drawn);
+    if (!ok || document.hidden || S.lite || S.pfOff.glow || (opt.active && !opt.active())) return 100;
+    // в покое — ~12 к/с: свет течёт медленно (циклы 7–24 с), глаз разницы не видит, а iPhone в Telegram греется заметно меньше; при ударе и переходах — каждый кадр
+    // цвет ещё перетекает в новый (смена ранга, режима, экрана) — рисуем плавно, иначе при 12 к/с переход шёл ступеньками
+    const moving = cur.some((c, i) => Math.abs(c[0] - target[i][0]) + Math.abs(c[1] - target[i][1]) + Math.abs(c[2] - target[i][2]) > .012);
+    const calm = !(energy(now) > .01 || moving || (opt.hot && opt.hot()));
+    if (calm && now - drawn < 80) return 84 - (now - drawn);
+    if (!calm && now - drawn < 15) return 16 - (now - drawn);   // в движении — не чаще 60 к/с: на экранах 120–165 Гц рамка на весь экран рисовалась бы каждый кадр
     drawn = now;
     if (Math.round(opt.size()[0] * SC) !== W || Math.round(opt.size()[1] * SC) !== H) resize();
     const dt = last ? Math.min(.1, (now - last) / 1000) : 0; last = now;
     ph = (ph + dt / 12) % 1;
-    const k = 1 - Math.exp(-dt / .22);
+    const k = 1 - Math.exp(-dt / tauC);   // tauC — скорость перетекания цвета (быстрее — при возврате с экрана итога)
     cur.forEach((c, i) => { for (let j = 0; j < 3; j++) c[j] += (target[i][j] - c[j]) * k; });
     // рамка из макета: отступ 16 по бокам, 15 сверху, скругление 44, уходит под низ панели
     // спокойное «дыхание» яркости и толщины (цикл 7 с) + всплеск энергии от кнопки крафта
@@ -163,27 +166,29 @@ void main(){
     gl.uniform4f(U.uWave, wt >= 0 && wt < 1 ? 1 - wt * (2 - wt) * .96 : 0, wt >= 0 && wt < 1 ? 1.4 : 0, 1.3, 4.1);
     gl.uniform1f(U.uWamp, 7); gl.uniform1f(U.uM, w);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    return calm ? 40 : 0;
+    return calm ? 80 : 0;
   }
   resize(); addEventListener('resize', resize);
   requestAnimationFrame(tick);
   /* энергия: быстрый подъём, затем мягкий спад ~1.8 с */
-  let punchAt = -1e9;
+  let punchAt = -1e9, lastCols = null, tauC = .22;   // lastCols — последние заданные цвета (экран итога перетекает ровно в цвета рамки панели)
   let punchPow = 1;
   function energy(now){ const t = (now - punchAt) / 1000; if (t < 0 || t > 3) return 0; return punchPow * (t < .15 ? t / .15 : Math.exp(-(t - .15) * 1.9)); }
-  return { set(cols, snap){ cols.forEach((h, i) => { target[i] = rgb(h); if (snap) cur[i] = target[i].slice(); }); }, punch(delay = 0, pow = 1){ punchAt = performance.now() + delay; punchPow = pow; }, resize };
+  // draw — нарисовать кадр сразу (при открытии экрана: иначе до первого кадра цикла был виден старый кадр холста)
+  return { draw(){ if (ok){ drawn = -1e9; frame(performance.now()); } }, get: () => lastCols, set(cols, snap, tau = .22){ lastCols = cols; tauC = tau; cols.forEach((h, i) => { target[i] = rgb(h); if (snap) cur[i] = target[i].slice(); }); }, punch(delay = 0, pow = 1){ punchAt = performance.now() + delay; punchPow = pow; }, resize };
 }
-/* рамка панели: отступ медленно «плывёт» 0…20 px (цикл ~24 с), скругление = 64 − отступ */
-const panelRect = (now, top = 0) => { const m = 10 + 10 * Math.sin(now / 1000 * Math.PI * 2 / 24); return { m, x: m, y: top + m - 1, w: SW - 2 * m, h: 659 - (m - 1) - (m + 4), r: Math.max(8, 64 - m) }; };
+/* рамка панели: отступ постоянный — 10 px (середина прежнего «плавания» 0…20), скругление = 64 − отступ */
+const panelRect = (now, top = 0) => { const m = 10; return { m, x: m, y: top + m - 1, w: SW - 2 * m, h: 659 - (m - 1) - (m + 4), r: Math.max(8, 64 - m) }; };
 // свет мягкий: 1 точка холста на 1 px макета — вдвое меньше работы, чем 1.5
-const Glow = makeGlow($('glow'), { main: true, size: () => [SW, 659], maxSc: .6, rect: now => panelRect(now), active: () => !FX.cover });
+const Glow = makeGlow($('glow'), { main: true, size: () => [SW, 659], maxSc: 1, rect: now => panelRect(now), active: () => !FX.cover });
 /* рамка экрана крафта: на весь экран, проявляется из черноты */
 const FX = { on: false, gain: 0, gainTo: 0, last: 0, morph: 1, cover: false, hot: false };
 const fxH = () => { const st = $('stage'); return st.offsetHeight || 844; };
-const FullGlow = makeGlow($('fxGlow'), { size: () => [SW, fxH()], active: () => FX.on, hot: () => FX.hot, maxSc: .75, noWave: true,
+const FullGlow = makeGlow($('fxGlow'), { size: () => [SW, fxH()], active: () => FX.on, hot: () => FX.hot, maxSc: 1.25, noWave: true,
   gain: now => { const dt = FX.last ? Math.min(.1, (now - FX.last) / 1000) : 0; FX.last = now; FX.gain += (FX.gainTo - FX.gain) * (1 - Math.exp(-dt / .7)); return FX.gain; },
   // morph 0 — точно рамка панели (внизу экрана), 1 — рамка на весь экран
-  rect: now => { const h = fxH(), a = panelRect(now, h - 659), b = { m: 12, x: 12, y: 12, w: SW - 24, h: h - 24, r: 46 }, k = FX.morph, L = (p, q) => p + (q - p) * k;
+  rect: now => {
+    const h = fxH(), a = panelRect(now, h - 659), b = { m: 12, x: 12, y: 12, w: SW - 24, h: h - 24, r: 46 }, k = FX.morph, L = (p, q) => p + (q - p) * k;
     return { m: L(a.m, b.m), x: L(a.x, b.x), y: L(a.y, b.y), w: L(a.w, b.w), h: L(a.h, b.h), r: L(a.r, b.r) }; } });
 
 /* ---------- старт ---------- */

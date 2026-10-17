@@ -1,5 +1,5 @@
 /* =========================================================
-   ПСЕВДО-3D: карточки и NFT сами медленно поворачиваются, по ним едет голографическая фольга,
+   ПСЕВДО-3D (сейчас выключено, TILT_ON внизу): карточки и NFT сами медленно поворачиваются, по ним едет голографическая фольга,
    картинка и узор фона смещаются в разные стороны (параллакс). Двигаем только transform и пару переменных у нескольких элементов
    ========================================================= */
 const Tilt = (() => {
@@ -17,7 +17,7 @@ const Tilt = (() => {
     // видимые: в DOM, не в скрытом режиме/экране (offsetParent === null) и не в закрытой шторке
     const vis = [...items].filter(it => it.t.isConnected && it.t.offsetParent !== null && !(it.dr && !it.dr.classList.contains('open')));
     items.forEach(it => { if (!it.t.isConnected) items.delete(it); });
-    if (document.hidden || !vis.length || (S.lite && !hand)){ idle = setTimeout(wake, 400); return; }
+    if (document.hidden || !vis.length || ((S.lite || S.pfOff.tilt) && !hand)){ idle = setTimeout(wake, 400); return; }
     // пальцем — каждый кадр; сама крутится — 30 к/с, а между кадрами таймер: страница не просыпается 60 раз в секунду
     if (hand) raf = requestAnimationFrame(frame); else { raf = -1; idle = setTimeout(() => { raf = requestAnimationFrame(frame); }, Math.max(0, 30 - (performance.now() - now))); }
     last = now;
@@ -46,6 +46,9 @@ const Tilt = (() => {
     const up = e => { if (e.pointerId !== pid) return; pid = null; it.grab = false; if (!moved && e.type === 'pointerup') onTap?.(); };
     t.addEventListener('pointerup', up); t.addEventListener('pointercancel', up);
   }
-  return { add(t, img, gl, k = 1, pat = null){ if (t) wake(); if (t) items.add({ t, img, gl, k, pat, o: (ph += 1.7), dr: t.closest('.drawer'), ux: 0, uy: 0, grab: false }); }, drop(root){ items.forEach(it => { if (root.contains(it.t)) items.delete(it); }); }, grab };
+  // 3D-поворот и параллакс NFT выключены (просьба заказчика: плавность на телефоне важнее) — карточки стоят ровно, цикл не запускается.
+  // Вернуть: TILT_ON = true
+  const TILT_ON = false;
+  return { add(t, img, gl, k = 1, pat = null){ if (!TILT_ON) return; if (t) wake(); if (t) items.add({ t, img, gl, k, pat, o: (ph += 1.7), dr: t.closest('.drawer'), ux: 0, uy: 0, grab: false }); }, drop(root){ items.forEach(it => { if (root.contains(it.t)) items.delete(it); }); }, grab };
 })();
 

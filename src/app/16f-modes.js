@@ -12,17 +12,23 @@ const modeBar = (() => { const el = document.createElement('div'); el.className 
 function renderModes(){
   const m = MODES(), cur = modeNow();
   // во время раскрытия крафта/боя переключатель прячем — он только на экранах выбора
-  modeBar.hidden = m.length < 2 || ($('fx').classList.contains('on') && !arenaOn && !betsOn); document.body.classList.toggle('has-modes', m.length > 1);
+  // прячем без выкидывания из раскладки (класс, а не hidden): иначе при возврате с экрана итога панель заново раскладывалась вместе с текстом — рывок
+  modeBar.hidden = m.length < 2; modeBar.classList.toggle('off', $('fx').classList.contains('on') && !arenaOn && !betsOn); document.body.classList.toggle('has-modes', m.length > 1);
   // кнопки пересобираем, только если сменился набор режимов; белая подложка переезжает под активную
   const key = m.map(x => x[0]).join();
   if (modeBar.dataset.k !== key){ modeBar.dataset.k = key; modeBar.innerHTML = `<i class="mthumb"></i>` + m.map(([k, n]) => `<button data-m="${k}">${n}</button>`).join(''); }
   modeThumb(modeBusy ? modeTo : cur);   // во время перехода подложка уже стоит на новом режиме — не прыгает назад
 }
 let modeTo = 'craft';
+// подложку меряем, только когда режим сменился: замер размеров кнопок заставляет браузер пересчитать раскладку всей страницы,
+// а renderModes зовётся каждые 0.8 с — раньше это давало рывок, особенно сразу после экрана итога
+let modeThumbAt = '';
 function modeThumb(cur){
   const b = modeBar.querySelector(`[data-m="${cur}"]`), th = modeBar.querySelector('.mthumb'); if (!b || !th) return;
+  const key = cur + '|' + modeBar.dataset.k + '|' + LANG; if (modeThumbAt === key && th.style.width) return; modeThumbAt = key;
   modeBar.querySelectorAll('[data-m]').forEach(x => x.classList.toggle('on', x === b));
-  th.style.width = b.offsetWidth + 'px'; th.style.transform = `translateX(${b.offsetLeft - 3}px)`;
+  const w = b.offsetWidth; if (!w){ modeThumbAt = ''; return; }   // панель скрыта — размеров нет, померим, когда покажется
+  th.style.width = w + 'px'; th.style.transform = `translateX(${b.offsetLeft - 3}px)`;
 }
 // смена экрана крафт ⇄ арена: старое уходит вглубь и гаснет, новое выплывает (crossfade с глубиной, как везде)
 // уходит и выплывает весь контент экрана: ранги, шанс, множитель, центр режима, кнопка и плашка — переход без рывков

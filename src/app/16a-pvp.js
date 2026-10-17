@@ -410,11 +410,11 @@ async function pvpStart(v){
     // все анимации блока — и завершённые «залипшие» тоже — снимаем: иначе силуэты оставались висеть поверх итога
     const clear = () => document.getAnimations().forEach(x => { const t = x.effect?.target; if (t && (t === box || box.contains(t)) && !t.classList.contains('fi-sp')) x.cancel(); });
     clear(); orb.style.visibility = 'hidden'; box.classList.add('fire');                         // круг кнопки крафта на огненной арене чужой — только молот и наковальня
-    box.style.opacity = 1; ham.style.rotate = '62deg';                 // конечное состояние ставим сразу, анимации — без «залипания»
+    box.style.opacity = 1; box.style.visibility = 'visible'; ham.style.rotate = '62deg';                 // конечное состояние ставим сразу, анимации — без «залипания»
     box.animate([{ opacity: 0, transform: 'scale(.5)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.3,1.3,.5,1)' });
     await ham.animate([{ rotate: '40deg' }, { rotate: '62deg' }], { duration: 500, easing: 'cubic-bezier(.3,1.2,.5,1)' }).finished;
     await anvilHit(box, ham, anv, '62deg');
-    clear(); box.style.opacity = ''; ham.style.rotate = ''; orb.style.visibility = ''; box.classList.remove('fire');
+    clear(); box.style.opacity = ''; box.style.visibility = ''; ham.style.rotate = ''; orb.style.visibility = ''; box.classList.remove('fire');
   } else if (fast){ Sfx.lock(); FullGlow.punch(0, .8); }
   a.getAnimations().forEach(x => x.cancel());
   // игроки и их тикеты — по возрастанию, цвет — ранг тикета

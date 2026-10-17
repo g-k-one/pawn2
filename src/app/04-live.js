@@ -9,7 +9,8 @@ function liveHTML(n, o = {}){
   const ti = tierOfTicket(n), t = TIERS[ti], mult = multOf(n);
   const stake = o.stake ?? [.5, 1, 1, 2, 2, 3, 5, 5, 10, 20][Math.random() * 10 | 0];
   const win = o.win ?? Math.round(stake * mult * 100) / 100;
-  const nft = win >= NFT_FROM ? NFTS.filter(x => x.price <= win).slice(-1)[0] : null;
+  // свой выигрыш — тот NFT, что реально выдали (o.nft); чужие (заглушка ленты) — самый дорогой NFT не дороже выигрыша
+  const nft = o.nft !== undefined ? (o.nft ? o.nft.nft : null) : win >= NFT_FROM ? NFTS.filter(x => x.price <= win).slice(-1)[0] : null;
   const img = nft ? nft.src : 'assets/hero-gem-128.webp', who = o.me ? $t("твой дроп") : o.who || '@' + pick(NICKS), ar = o.arena;
   const label = win >= 100 ? Math.round(win) : win >= 10 ? String(Math.round(win * 10) / 10) : fmt(win);
   // арена: значок «меч» в углу, в данных — банк и сколько игроков
@@ -47,5 +48,5 @@ liveEl.addEventListener('click', e => {
   notify({ img: it.dataset.img, color: t.c, title: `${t.name} · x${it.dataset.m}`, text: `${it.dataset.who} ${$t("— {0} · тикет", it.dataset.nft || '+' + fmt(+it.dataset.w) + ' GRAM')} ${tk(n)}` });
 });
 let liveN = 0;
-setInterval(() => { if (document.hidden || (S.lite && ++liveN % 2)) return; pushLive(); }, 3200);   // в экономном режиме — вдвое реже
+setInterval(() => { if (document.hidden || S.pfOff.live || (S.lite && ++liveN % 2)) return; pushLive(); }, 3200);   // в экономном режиме — вдвое реже
 

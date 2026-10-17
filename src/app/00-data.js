@@ -48,6 +48,8 @@ const tierOfTicket = n => Math.max(0, TIERS.findIndex(t => n >= t.from && n <= t
 const AUTO_MS = 5000;
 
 const S = { tier: 1, ton: 0, gifts: [], balance: 345.56, busy: false };
+// дебаг → «Замер»: что выключено для проверки скорости на телефоне (рамка, вращение призов, анимации, дым, лента) — запоминается в bm-perf
+S.pfOff = (() => { try { return JSON.parse(localStorage.getItem('bm-perf')) || {}; } catch(_){ return {}; } })();
 /* сохранённый прогресс прототипа (мок «базы» в localStorage, см. 17-api.js). Есть — стартовые заглушки истории не генерируются */
 const SAVE_KEY = 'pawn-state-v1';
 const SAVE = (() => { try { const v = JSON.parse(localStorage.getItem(SAVE_KEY)); return v && v.v === 1 ? v : null; } catch(_){ return null; } })();
