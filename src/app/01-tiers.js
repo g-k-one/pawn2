@@ -6,7 +6,7 @@ tiersEl.innerHTML = TIERS.map((t, i) => `<button class="tier" data-i="${i}" styl
 // плашка шанса — по центру над активным тиром; пересчитывается и при смене размера окна (иначе остаётся там, где была)
 function placeChance(){
   const lab = tiersEl.children[S.tier], pr = $('scene').getBoundingClientRect(), lr = lab.getBoundingClientRect(), k = K;
-  const cw = $('chance').offsetWidth / 2 + 10;                       // не прижимать к краю экрана
+  const cw = $('chance').offsetWidth / 2 + 4;                       // не прижимать к краю экрана
   $('chance').style.left = Math.max(cw, Math.min(SW - cw, (lr.left + lr.width / 2 - pr.left) / k)) + 'px';
 }
 function placeInd(){ const lab = tiersEl.children[S.tier]; $('tind').style.width = lab.offsetWidth * .7 + 'px'; $('tind').style.transform = `translateX(${lab.offsetLeft + lab.offsetWidth * .15}px)`; }
@@ -68,9 +68,9 @@ const selHaptic = () => { if (S.vibro === false) return; try { Telegram.WebApp.H
     const edge = (dx > 0 && S.tier === 0) || (dx < 0 && S.tier === TIERS.length - 1);
     const k = Math.min(1, Math.abs(dx) / 140) * (edge ? .3 : 1);
     movers.forEach(([id, f]) => { const el = $(id); el.style.opacity = (1 - .45 * k * f * 1.6).toFixed(3); el.style.scale = (1 - .08 * k * f * 1.6).toFixed(4); });
-    // подсветка под рангами подтягивается к соседу, за которым тянешься
+    // линия под рангами за пальцем не едет — только после переключения
     const nb = tiersEl.children[S.tier + (dx < 0 ? 1 : -1)], cur = tiersEl.children[S.tier];
-    if (nb && !edge){ const x = cur.offsetLeft + cur.offsetWidth * .15 + (nb.offsetLeft - cur.offsetLeft) * k * .45; $('tind').style.transition = 'none'; $('tind').style.transform = `translateX(${x}px)`; }
+    if (false && nb && !edge){ const x = cur.offsetLeft + cur.offsetWidth * .15 + (nb.offsetLeft - cur.offsetLeft) * k * .45; $('tind').style.transition = 'none'; $('tind').style.transform = `translateX(${x}px)`; }
   });
   const end = e => {
     if (x0 === null || (e && e.pointerId !== pid)) return;

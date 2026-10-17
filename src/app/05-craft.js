@@ -62,7 +62,7 @@ async function checkProof(p){
   return { hash: hashOk, ticket: ticketOk, rule: ticketOk && rule };
 }
 /* ---------- дебаг: выбрать исход следующего крафта ---------- */
-S.dbg = { tier: -1, near: false, keep: false, prevDelay: null, freeCases: false, ticket: null, fail: null, noOnb: (() => { try { return localStorage.getItem('bm-onb-off') === '1'; } catch(_){ return false; } })(),
+S.dbg = { arOut: null, btOut: null, arBots: null, tier: -1, near: false, keep: false, prevDelay: null, freeCases: false, ticket: null, fail: null, noOnb: (() => { try { return localStorage.getItem('bm-onb-off') === '1'; } catch(_){ return false; } })(),
   pvp: (() => { try { return localStorage.getItem('bm-pvp') === '1'; } catch(_){ return false; } })(),   // эксперимент «PvP крафт» — по умолчанию выкл
   bets: (() => { try { return localStorage.getItem('bm-bets') === '1'; } catch(_){ return false; } })() };   // эксперимент «Предикты» — по умолчанию выкл
 function dbgWant(){
@@ -77,7 +77,7 @@ function renderDbg(){
   const d = S.dbg, last = TIERS.length - 1;
   const chip = (k, v, label, c, dis) => `<button class="dbg-c${d[k] === v ? ' on' : ''}" data-k="${k}" data-v="${v}" style="--c:${c || '#fff'}"${dis ? ' disabled' : ''}>${label}</button>`;
   // вкладки: всё по смыслу, чтобы не листать длинный список
-  const tabs = [['craft', $t("Крафт")], ['player', $t("Игрок")], ['exp', $t("Эксперименты")]];
+  const tabs = [['craft', $t("Крафт")], ['player', $t("Игрок")], ['exp', $t("Арена и ставки")]];
   const sec = {
     craft: () =>
       `<div class="dbg-l">${$t("Точный тикет")}</div><div class="dbg-t"><input id="dbgTicket" type="number" inputmode="numeric" min="0" max="99999" placeholder="0 – 99 999" value="${d.ticket ?? ''}"><button class="dbg-c" data-k="ticketClear" data-v="1">${$t("Сброс")}</button></div>` +
@@ -95,7 +95,10 @@ function renderDbg(){
       `<div class="dbg-l">${$t("Онбординг")}</div><div class="dbg-g">${chip('noOnb', false, $t("Показывать"))}${chip('noOnb', true, $t("Выключен"))}<button class="dbg-c" data-k="onbNow" data-v="1">${$t("Показать сейчас")}</button></div>` +
       `<div class="dbg-l">${$t("Сохранённый прогресс")}</div><div class="dbg-g"><button class="dbg-c" data-k="resetSave" data-v="1" style="--c:#FF4C35">${$t("Сбросить и начать заново")}</button></div>`,
     exp: () =>
-      `<div class="dbg-l">${$t("Эксперименты: ставки")}</div><div class="dbg-g">${chip('bets', false, $t("Выключен"))}${chip('bets', true, $t("Включён — пункт в меню"), '#7c5cff')}</div>`,
+      `<div class="dbg-l">${$t("Арена: исход боя")}</div><div class="dbg-g">${chip('arOut', null, $t("Как выпадет"))}${chip('arOut', 'win', $t("Победа"), '#12D53D')}${chip('arOut', 'lose', $t("Проигрыш"), '#FF4C35')}</div>` +
+      `<div class="dbg-l">${$t("Арена: соперников в новой комнате")}</div><div class="dbg-g">${chip('arBots', null, $t("Случайно"))}${[0, 1, 3, 5].map(n => chip('arBots', n, String(n), '#ff8a3c')).join('')}</div>` +
+      `<div class="dbg-l">${$t("Ставки: исход")}</div><div class="dbg-g">${chip('btOut', null, $t("Как выпадет"))}${chip('btOut', 'win', $t("Выигрыш"), '#12D53D')}${chip('btOut', 'lose', $t("Проигрыш"), '#FF4C35')}</div>` +
+      `<p class="dbg-n">${$t("Подбирается настоящее зерно под нужный исход — проверка честности сходится.")}</p>`,
   };
   $('dbgBody').innerHTML =
     `<div class="dbg-tabs">${tabs.map(([k, l]) => `<button class="dbg-tab${dbgTab === k ? ' on' : ''}" data-tab="${k}">${l}</button>`).join('')}</div>` +
@@ -113,7 +116,7 @@ $('dbgBody').addEventListener('click', e => {
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
   if (k === 'stock'){ S.stock[c.dataset.id] = +v; haptic(); renderDbg(); return; }
   if (k === 'onbNow'){ hideDrawer(); setTimeout(() => Onb.start(true), 300); return; }
-  if (k === 'bets'){ S.dbg.bets = v === 'true'; try { localStorage.setItem('bm-bets', S.dbg.bets ? '1' : '0'); } catch(_){} haptic(); renderDbg(); renderModes(); return; }
+  if (k === 'arOut' || k === 'btOut' || k === 'arBots'){ S.dbg[k] = v === 'null' ? null : k === 'arBots' ? +v : v; haptic(); renderDbg(); return; }
   if (k === 'pvp'){ S.dbg.pvp = v === 'true'; try { localStorage.setItem('bm-pvp', S.dbg.pvp ? '1' : '0'); } catch(_){} haptic(); renderDbg(); renderModes(); return; }
   if (k === 'noOnb'){ S.dbg.noOnb = v === 'true'; try { localStorage.setItem('bm-onb-off', S.dbg.noOnb ? '1' : '0'); } catch(_){} haptic(); renderDbg(); return; }
   if (k === 'super'){ S.dbg.ticket = SUPER.target; S.dbg.tier = -1; haptic(); renderDbg(); return; }
@@ -393,7 +396,7 @@ async function closeFx(){
   await wait(60);
   fadeUI(false, 360); $('fx').classList.remove('on');         // …и экран крафта тает, открывая интерфейс
   await wait(320);
-  FX.on = false; FX.hot = false; $('fx').classList.remove('done', 'case', 'pvpl', 'pvpw', 'lost'); Tilt.drop($('fxDrop'));
+  FX.on = false; FX.hot = false; $('fx').classList.remove('done', 'case', 'pvpl', 'pvpw', 'lost', 'btmany'); Tilt.drop($('fxDrop'));
   // итог прошлой игры убираем целиком: следующий экран (крафт, бой, кейс) не должен мелькнуть старым тикетом и призом
   ['fxDrop', 'fxPvp', 'fxWin', 'fxBtns', 'fxPl'].forEach(id => $(id)?.replaceChildren()); $('fxTop').style.visibility = 'hidden';
 }

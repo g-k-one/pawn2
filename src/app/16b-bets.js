@@ -17,6 +17,7 @@ const BET_KINDS = {
   parity:{ count: () => TICKETS / 2, win: (s, n) => n % 2 === s },               // 0 — чёт, 1 — нечет
   half:  { count: () => TICKETS / 2, win: (s, n) => (n >= TICKETS / 2 ? 1 : 0) === s },   // 0 — 00000–49999, 1 — 50000–99999
   digit: { count: () => TICKETS / 10, win: (s, n) => n % 10 === s },             // последняя цифра
+  dpair: { count: () => TICKETS / 5, win: (s, n) => (n % 10 >> 1) === s },        // последняя цифра — пара: 0 — 0–1, 1 — 2–3 … 4 — 8–9
   // узоры тикета (sel всегда 0): «есть 7» — хоть одна семёрка; «все разные» — пять разных цифр; «пара» — две одинаковые рядом;
   // «зеркало» — читается одинаково с обеих сторон. Сколько тикетов подходит — перебором всех 100 000: 40951 · 30240 · 34390 · 1000
   has7:  { count: () => 40951, win: (s, n) => { const d = dg(n); return d[0] === 7 || d[1] === 7 || d[2] === 7 || d[3] === 7 || d[4] === 7; } },
@@ -26,7 +27,7 @@ const BET_KINDS = {
 };
 // цифры тикета слева направо — арифметикой, без строк: лимит выигрыша перебирает все 100 000 тикетов на каждую фишку
 const DG = [0, 0, 0, 0, 0]; function dg(n){ for (let i = 4; i >= 0; i--){ DG[i] = n % 10; n = (n - DG[i]) / 10; } return DG; }
-const BET_SELS = k => k === 'rank' ? TIERS.map((_, i) => i) : k === 'digit' ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] : k === 'parity' || k === 'half' ? [0, 1] : [0];
+const BET_SELS = k => k === 'rank' ? TIERS.map((_, i) => i) : k === 'digit' ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] : k === 'dpair' ? [0, 1, 2, 3, 4] : k === 'parity' || k === 'half' ? [0, 1] : [0];
 const BET_PATS = ['has7', 'diff', 'pair', 'mirror'];
 const betsRules = () => ({ kind: 'bets', rtp_ppm: String(BETS_RTP), tickets: TICKETS, max_win_nano: String(nano(BETS_MAX_WIN)),
   table: Object.entries(BET_KINDS).flatMap(([k, d]) => BET_SELS(k).map(s => ({ bet: k, sel: s, count: d.count(s) }))) });
@@ -40,11 +41,15 @@ function betsJudge(rules, bets, n){
 }
 /* мок сервера: ролл по текущей эпохе (как крафт), вызывается только из API */
 async function betsMock(bets){
-  const nonce = ++S.nonce, domain = 'bets', ep = await epochP, { roll, block } = await rollOf(ep.seed, ep.id, domain, S.clientSeed, nonce);
-  const rules = betsRules(), inputs = bets.map(b => ({ bet: b.bet, sel: b.sel, amount_nano: String(nano(b.amount)) })), res = betsJudge(rules, inputs, roll);
+  const nonce = ++S.nonce, domain = 'bets', rules = betsRules(), inputs = bets.map(b => ({ bet: b.bet, sel: b.sel, amount_nano: String(nano(b.amount)) }));
+  let ep = await epochP, { roll, block } = await rollOf(ep.seed, ep.id, domain, S.clientSeed, nonce);
+  // дебаг: нужный исход (выигрыш / проигрыш) — перебираем настоящие зерна в одноразовой эпохе, как дебаг крафта
+  const want = S.dbg.btOut, ok = r => (betsJudge(rules, inputs, r).payout > 0n) === (want === 'win');
+  if (want && !ok(roll)) for (let t = 0; t < 4000; t++){ const e = await newEpoch(), q = await rollOf(e.seed, e.id, domain, S.clientSeed, nonce); if (ok(q.roll)){ ep = Object.assign(e, { proofs: [], revealed: true }); ({ roll, block } = q); break; } }
+  const res = betsJudge(rules, inputs, roll);
   const proof = { ...proofBase(ep, nonce, domain, block, roll), rules_hash: await sha(enc(JSON.stringify(rules))), rules, inputs: { bets: inputs },
     result: { wins: res.wins, payout_nano: String(res.payout) } };
-  ep.proofs.push(proof);
+  ep.proofs.push(proof); if (ep.revealed) proof.server_seed = ep.seed;   // дебаг-эпоха раскрыта сразу
   const stake = Math.round(bets.reduce((a, b) => a + b.amount, 0) * 100) / 100;
   const win = Number(res.payout) / 1e9, nn = win >= NFT_FROM ? NFTS.filter(x => x.price <= win).slice(-1)[0] : null;   // выигрыш от порога — NFT + сдача, как в крафте
   const nft = nn ? { id: 'w' + Date.now(), num: nn.num, nft: nn, a: nn.bg[0], b: nn.bg[1], p: nn.bg[2], value: nn.price } : null;
@@ -56,7 +61,7 @@ async function betsMock(bets){
 let betsOn = false, betsChip = .5, betsBoard = {}, betsLast = null;   // betsBoard: 'rank:2' → сумма, GRAM
 const PAT_NAME = { has7: () => $t("Есть 7"), diff: () => $t("Все разные"), pair: () => $t("Пара"), mirror: () => $t("Зеркало") };
 const PAT_EX = { has7: '30718', diff: '61294', pair: '48853', mirror: '27472' };   // пример подходящего тикета — на карточке исхода
-const betLabel = (bet, sel) => bet === 'rank' ? TIERS[sel].name : bet === 'parity' ? (sel ? $t("Нечет") : $t("Чёт")) : bet === 'half' ? (sel ? '50000–99999' : '00000–49999') : PAT_NAME[bet] ? PAT_NAME[bet]() : $t("Последняя {0}", sel);
+const betLabel = (bet, sel) => bet === 'rank' ? TIERS[sel].name : bet === 'parity' ? (sel ? $t("Нечет") : $t("Чёт")) : bet === 'half' ? (sel ? '50000–99999' : '00000–49999') : bet === 'dpair' ? `${sel * 2}–${sel * 2 + 1}` : PAT_NAME[bet] ? PAT_NAME[bet]() : $t("Последняя {0}", sel);
 // короткое название исхода — для плиток раскрытия (16h-tab3.js)
 const betShort = (bet, sel) => bet === 'digit' ? $t("Цифра {0}", sel) : betLabel(bet, sel);
 const betsTotal = () => Math.round(Object.values(betsBoard).reduce((a, v) => a + v, 0) * 100) / 100;
@@ -136,11 +141,12 @@ function betsAdd(k){
 // правила ставок — та же шторка и те же шаги, что у правил арены (16a-pvp.js): цветной номер, заголовок, строка пояснения
 function betsRulesModal(){
   haptic();
-  const steps = [[TIERS[0].c, $t("Загадай исходы тикета"), $t("Листай карты — кнопками +0.1…+5 ставь на карту в центре. Можно на несколько карт сразу, до 12.")],
-    [TIERS[2].c, $t("Чёт, нечет, последняя цифра"), $t("По последней цифре тикета: чёт или нечет — x{0}, точная цифра — x{1}.", fmt(betMult('parity', 0)), fmt(betMult('digit', 0)))],
-    [TIERS[1].c, $t("Узор тикета"), $t("Есть 7 — хоть одна семёрка. Все разные — пять разных цифр. Пара — две одинаковые рядом. Зеркало — читается одинаково с обеих сторон, как 27472.")],
-    [TIERS[3].c, $t("Выплата — по шансу"), $t("Чем реже исход, тем больше множитель; возврат 95% на любой ставке.")],
-    [TIERS[4].c, $t("Лимиты"), $t("За раунд: ставка — до {0} GRAM, выигрыш при любом тикете — до {1} GRAM, как в крафте.", BET_MAX, BETS_MAX_WIN)]];
+  // правила под нынешний экран: колоды сверху, фишка внизу, тап по исходу
+  const steps = [[TIERS[0].c, $t("Выбери фишку и исход"), $t("Внизу — номинал фишки. Тап по исходу на карте кладёт фишку, долгое нажатие — снимает. До {0} ставок за раунд.", BETS_MAX_N)],
+    [TIERS[1].c, $t("Три колоды"), $t("Сверху переключай: Ранг — в какой ранг попадёт тикет. Тикет — чёт, нечет, до или от 50000, есть 7, пара. Последняя цифра — пары: 0–1, 2–3 и так далее.")],
+    [TIERS[2].c, $t("Пара и есть 7"), $t("Пара — две одинаковые цифры рядом, как 44. Есть 7 — в тикете хоть одна семёрка.")],
+    [TIERS[3].c, $t("Выплата — по шансу"), $t("Чем реже исход, тем больше множитель; возврат 95% на любой ставке, как в крафте.")],
+    [TIERS[4].c, $t("Лимиты"), $t("За раунд: ставка — до {0} GRAM, выигрыш при любом тикете — до {1} GRAM.", BET_MAX, BETS_MAX_WIN)]];
   const html = `<div class="ar-steps">` + steps.map(([c, t, d], i) => `<div class="pfi-step" style="--c:${c}"><i>${i + 1}</i><div><b>${t}</b><p>${d}</p></div></div>`).join('') +
     `<div class="pfi-step ar-pf" style="--c:#12D53D"><i>${svg(IC.shield)}</i><div><b>${$t("Честность")}</b><p>${$t("Тикет честный: хеш зерна виден до игры, исход можно проверить.")}</p></div></div></div>`;
   swapDrawer('arRulesDrawer', () => { $('arRulesT').textContent = $t("Правила ставок"); $('arRulesBody').innerHTML = html; });
@@ -186,7 +192,7 @@ function betsResult(r){
   // итог: сумма крупно, ниже — все ставки раунда: сыгравшие зелёные с выплатой, остальные приглушены
   $('fxDrop').innerHTML = `<div class="pz bt-res${r.win > 0 ? ' won' : ''}${r.nft ? ' nft' : ''}">${r.nft ? `<img src="${r.nft.nft.src}" alt="" style="background:linear-gradient(160deg,${r.nft.a},${r.nft.b})"><b>${r.nft.nft.name}</b><small class="bt-ch">${fmt(r.nft.value)} GRAM${r.change > 0 ? ` · ${$t("и на баланс +{0} GRAM", fmt(r.change))}` : ''}</small>` : `<img src="assets/hero-gem.webp" alt=""><b>${r.win > 0 ? '+' + fmt(r.win) : '0'}<i class="u">GRAM</i></b>`}` +
     `<div class="pvp-chips">${r.bets.map(b => `<span class="pvc bt ${b.won ? 'win' : 'lose'}" style="--tc:${b.bet === 'rank' ? TIERS[b.sel].c : '#b9a6ff'}"><b>${betLabel(b.bet, b.sel)}</b><em>${b.won ? '+' + fmt(b.pay) : fmt(b.amount)}</em></span>`).join('')}</div></div>`;
-  $('fxWin').innerHTML = `<span>${$t("Ставка {0} GRAM", fmt(r.stake))} · ${won.length ? $t("сбылось {0} из {1}", won.length, r.bets.length) : $t("предсказание не сбылось")}</span>`;
+  $('fxWin').innerHTML = `<span>${$t("Ставка {0} GRAM", fmt(r.stake))} · ${won.length ? $t("сбылось {0} из {1}", won.length, r.bets.length) : $t("не сбылось")}</span>`;
   $('fxBtns').innerHTML = `<button class="btn-main" id="btAgain">${$t("Ещё раз · {0} GRAM", fmt(r.stake))}</button><button class="btn-ghost" id="btEdit">${$t("Изменить ставки")}</button>` +
     `<div class="fx-links"><button class="btn-link pf" id="fxPfIn">${$t("Проверить честность")}</button><button class="btn-link pf" id="btHome">${$t("На главную")}</button></div>`;
   $('fx').classList.add('done'); if (r.win > 0 && !S.lite) setTimeout(burst, 200);

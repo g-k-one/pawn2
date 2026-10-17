@@ -19,7 +19,7 @@ let pvpSeq = 10230 + Math.floor(Math.random() * 400);   // порядковый 
 async function pvpNewRoom(fee){
   // таймер не идёт, пока в комнате пусто: стартует с первым входом (своим или соперника) — у всех ровно 30 с
   const e = await newEpoch(), t0 = Date.now() + 2000 + Math.random() * 8000, endsAt = null;
-  const n = Math.random() < .15 ? 0 : 1 + Math.floor(Math.random() * PVP_MAX), nicks = [...NICKS].sort(() => Math.random() - .5), used = new Set();
+  const n = S.dbg.arBots ?? (Math.random() < .15 ? 0 : 1 + Math.floor(Math.random() * PVP_MAX)), nicks = [...NICKS].sort(() => Math.random() - .5), used = new Set();
   const bots = Array.from({ length: n }, (_, i) => { let g; do g = pvpRand(); while (used.has(g)); used.add(g); return { who: nicks[i % nicks.length], guess: g, at: i ? t0 + Math.random() * (PVP_TIME * 1000 - 1500) : t0 }; }).sort((a, b) => a.at - b.at);
   return PVP_ROOMS[fee] = { id: e.id, no: ++pvpSeq, fee, seed: e.seed, commitment: e.commitment, state: 'open', endsAt, bots, entries: [] };
 }
@@ -30,7 +30,13 @@ function pvpAdvance(p){
 }
 async function pvpDraw(p){
   const guesses = p.entries.map(x => x.guess), hash = await sha(enc(JSON.stringify(guesses)));
-  const { roll, block } = await rollOf(p.seed, p.id, 'pvp', hash, 0);
+  let { roll, block } = await rollOf(p.seed, p.id, 'pvp', hash, 0);
+  // дебаг: нужный исход для тебя — перебираем настоящие зерна комнаты, пока не выйдет (проверка честности сходится)
+  const mi = p.entries.findIndex(x => x.me), want = S.dbg.arOut;
+  if (want && mi >= 0 && guesses.length > 1){
+    const ok = r => { const d = guesses.map(g => Math.abs(g - r)), b = Math.min(...d), w = d.flatMap((x, i) => x === b ? [i] : []); return want === 'win' ? w.includes(mi) : !w.includes(mi); };
+    for (let t = 0; t < 4000 && !ok(roll); t++){ const e = await newEpoch(); const q = await rollOf(e.seed, p.id, 'pvp', hash, 0); if (ok(q.roll)){ p.seed = e.seed; p.commitment = e.commitment; ({ roll, block } = q); } }
+  }
   const dist = guesses.map(g => Math.abs(g - roll)), best = Math.min(...dist), winners = dist.flatMap((d, i) => d === best ? [i] : []);
   const bank = nano(p.fee * guesses.length), share = bank / BigInt(Math.max(1, winners.length)) / 10000000n * 10000000n;   // доля — до сотых, вниз
   const pay = payoutOf(share, roll), rules = { kind: 'pvp', seats: 'timer', fee_nano: String(nano(p.fee)), distance: 'abs', tie: 'split', craft: CRAFT_RULES };

@@ -2188,3 +2188,564 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .fx:not(.on) #fxGlow{visibility:hidden}
 .bet .t2ghost{position:absolute;margin:0;pointer-events:none}
 .mode-tab2 .bet{overflow:hidden}   /* число уезжает внутри плашки, не вылезая за её край */   /* старое число взноса при смене комнаты */
+/* Ставки v3: табло 3×2 на месте приза — ячейки как у игроков на Арене. Выбранная — подсвечена цветом исхода (без обводки), ставка — белый бейдж */
+.t3grid{left:50%;top:calc(352px - var(--lift, 0px) * .6);width:342px;transform:translateX(-50%);display:none;grid-template-columns:repeat(3,1fr);gap:8px;z-index:4}
+.mode-tab3 .t3grid{display:grid}
+.mode-tab3 .t3b{display:none!important}
+.t3grid .pvc.pva.t3c{height:100px;padding:10px 6px;gap:4px;cursor:pointer;transition:background .2s}
+.t3grid .t3c .tav{width:36px;height:36px;display:grid;place-items:center;background:color-mix(in srgb,var(--tc) 22%,transparent);color:var(--tc);box-shadow:none}
+.t3grid .t3c .tav svg{width:22px;height:22px}
+.t3grid .t3c .t3dg b{font-size:22px;line-height:1;color:var(--tc)}
+.t3grid .t3c>b{font-size:15px;line-height:18px;color:#fff;text-transform:uppercase;white-space:nowrap}
+.t3grid .t3c .pvd{font-style:normal;font-size:13px;line-height:16px;color:rgba(255,255,255,.72)}
+.t3grid .t3c.sel{background:color-mix(in srgb,var(--tc) 24%,rgba(255,255,255,.04))!important}
+.t3grid .t3c.sel .tav{background:var(--tc);color:#0b0b0e}
+.t3grid .t3c.sel .t3dg b{color:#0b0b0e}
+.t3grid .t3c.sel .pvd{color:#fff}
+.t3chip{position:absolute;top:6px;right:6px;min-width:26px;padding:1px 7px;border-radius:999px;background:#fff;color:#0b0b0e;font-style:normal;font-size:12.5px;line-height:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.t3more{position:absolute;bottom:4px;left:4px;right:4px;font-size:11.5px;line-height:13px;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t3grid .t3hint{grid-column:1/-1;margin:2px 0 0;text-align:center;font-size:12.5px;line-height:16px;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.t3grid .t3chip{display:block;-webkit-text-fill-color:#0b0b0e}
+/* Ставки: выбрана «Цифра» — вместо рангов сверху ряд цифр 0–9 (как ранги: выбранная яркая, остальные тусклые; со ставкой — точка) */
+.t3dig{top:56px;left:50%;transform:translateX(-50%);display:none;gap:4px}
+.t3digits.mode-tab3 .t3dig{display:flex}
+.t3digits.mode-tab3 #tiers,.t3digits.mode-tab3 #tind{visibility:hidden}
+.t3dig button{position:relative;width:30px;font-size:24px;line-height:26px;font-weight:700;color:#7ad7ff;opacity:.45;transition:opacity .2s,transform .2s}
+.t3dig button.act{opacity:1;transform:scale(1.25)}
+.t3dig button.hasbet::after{content:'';position:absolute;left:50%;bottom:-8px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#fff}
+.t3dig{width:342px;margin-left:-171px;transform:none;justify-content:space-between;gap:0;height:26px}
+.t3dig button{padding:0;margin:0;order:0;flex:none;height:26px;min-width:0}
+/* Ставки: табло 3×2 пониже + ряд «Последняя цифра» 0–9 — маленькие ячейки, тот же выбор и бейдж */
+.t3grid{top:calc(344px - var(--lift, 0px) * .6)}
+.t3grid .pvc.pva.t3c{height:82px;padding:8px 4px;gap:3px}
+.t3grid .t3c .tav{width:30px;height:30px}
+.t3grid .t3c .tav svg{width:18px;height:18px}
+.t3grid .t3c>b{font-size:14px;line-height:17px}
+.t3grid .t3c .pvd{font-size:12.5px;line-height:15px}
+.t3drow{grid-column:1/-1;display:flex;flex-direction:column;gap:4px}
+.t3drow small{font-size:12.5px;line-height:15px;text-transform:uppercase;color:rgba(255,255,255,.72);text-align:center}
+.t3drow>div{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.t3d{position:relative;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.05);cursor:pointer;transition:background .2s}
+.t3d b{font-size:20px;line-height:1;color:#7ad7ff}
+.t3d.sel{background:#7ad7ff}
+.t3d.sel b{color:#0b0b0e}
+.t3d .t3chip{top:-8px;right:-4px;min-width:0;padding:0 5px;font-size:11.5px;line-height:15px}
+.t3grid .pvc.pva.t3c{height:70px;padding:6px 4px;gap:2px}
+.t3grid .t3c .tav{width:26px;height:26px}
+.t3grid .t3c .tav svg{width:16px;height:16px}
+.t3d{height:36px}
+/* ставки при раскрытии: больше 6 — 4 в ряд, ячейки ниже */
+.pvp-avas.bt-avas.c4{grid-template-columns:repeat(4,1fr);gap:6px}
+.pvp-avas.bt-avas.c4 .pvc.pva.many{height:76px;gap:3px;padding:6px 4px}
+.pvp-avas.bt-avas.c4 .pvc.pva.many .tav{width:30px;height:30px}
+.pvp-avas.bt-avas.c4 .pvc.pva.many .tav svg{width:18px;height:18px}
+.pvp-avas.bt-avas.c4 .pvc.pva.btt b{font-size:12.5px;line-height:15px}
+.pvp-avas.bt-avas.c4 .pvc.pva .pvd{font-size:12.5px;line-height:14px}
+/* итог при многих ставках — приз компактнее, полоска ставок плотнее, кнопки помещаются */
+.fx.done.btmany .fx-drop{height:210px;margin:6px 0 2px}
+.fx.btmany .fx-drop .pz{zoom:.7}
+.fx.btmany .t3strip{margin-top:8px;gap:6px 4px}
+.fx.btmany .t3strip span{width:44px}
+.fx.btmany .t3strip i{width:30px;height:30px}
+.fx.btmany .t3strip svg{width:18px;height:18px}
+/* Ставки v4: без рангов и множителя сверху — табло на весь экран: что выбрано · Ранг (5) · Тикет (4×2) · Последняя цифра (10) */
+.mode-tab3 #tiers,.mode-tab3 #tind,.mode-tab3 #chance,.mode-tab3 #range{visibility:hidden}
+.t3grid{top:calc(64px - var(--lift, 0px) * .3);display:none;flex-direction:column;gap:14px}
+.mode-tab3 .t3grid{display:flex}
+.t3top{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:52px}
+.t3top b{font-size:28px;line-height:32px;text-transform:uppercase;color:#fff}
+.t3top span{font-size:13.5px;line-height:18px;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.t3sec{display:flex;flex-direction:column;gap:6px}
+.t3sec>small{font-size:12.5px;line-height:15px;text-transform:uppercase;color:rgba(255,255,255,.72);text-align:center}
+.t3r5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.t3r4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.t3grid .pvc.pva.t3c{height:84px;padding:8px 2px;gap:3px}
+.t3grid .t3c .tav{width:30px;height:30px}
+.t3grid .t3c .tav svg{width:18px;height:18px}
+.t3grid .t3c>b{font-size:13px;line-height:15px;white-space:normal;text-align:center}
+.t3r5 .pvc.pva.t3c{height:76px}
+.t3grid .t3drow>div{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.t3d{height:44px}
+.t3grid{top:calc(234px - var(--lift, 0px) * .6);gap:10px}
+.t3grid .pvc.pva.t3c{height:64px;padding:6px 2px;gap:2px}
+.t3r5 .pvc.pva.t3c{height:64px}
+.t3grid .t3c .tav{width:24px;height:24px}
+.t3grid .t3c .tav svg{width:15px;height:15px}
+.t3grid .t3c>b{font-size:12.5px;line-height:14px}
+.t3grid .t3c .pvd{font-size:12px;line-height:14px;white-space:nowrap}
+.t3d{height:40px}
+/* Ставки v5: таблетки групп + крупные карточки исходов (иконка слева, название и множитель справа), 2 колонки; цифры — 5×2 */
+.t3grid{top:calc(201px - var(--lift, 0px) * .3);gap:14px}
+.t3seg{margin:0!important}
+.t3seg button.dot::after{content:'';display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:currentColor;vertical-align:3px}
+.t3cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.t3c{position:relative;display:flex;align-items:center;gap:12px;height:64px;padding:0 12px;border-radius:18px;background:rgba(255,255,255,.05);cursor:pointer;transition:background .2s}
+.t3c .tav{flex:none;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:color-mix(in srgb,var(--tc) 22%,transparent);color:var(--tc);box-shadow:none}
+.t3c .tav svg{width:22px;height:22px}
+.t3c .tav b{font-size:22px;line-height:1;color:inherit}
+.t3n{display:flex;flex-direction:column;min-width:0}
+.t3n b{font-size:16px;line-height:19px;color:#fff;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t3n small{font-size:13px;line-height:16px;color:rgba(255,255,255,.72);white-space:nowrap}
+.t3c.sel{background:color-mix(in srgb,var(--tc) 24%,rgba(255,255,255,.04))}
+.t3c.sel .tav{background:var(--tc);color:#0b0b0e}
+.t3c.sel .t3n small{color:#fff}
+.t3c .t3chip{top:-7px;right:-4px}
+.t3cards.g-rank .t3c:last-child{grid-column:1/-1}
+.t3cards.g-dg{grid-template-columns:repeat(2,1fr)}
+.t3c{height:60px}
+.t3cards.g-dg{grid-template-columns:repeat(5,1fr)}
+.t3cards.g-dg .t3c{flex-direction:column;justify-content:center;gap:4px;height:92px;padding:6px 2px}
+.t3cards.g-dg .t3c .tav{width:44px;height:44px}
+.t3cards.g-dg .t3c .tav b{font-size:26px}
+.t3cards.g-dg .t3n{align-items:center}
+.t3cards.g-dg .t3n b{display:none}
+/* карточки — крупнее, блок заполняет высоту до плашки */
+.t3c{height:70px;gap:14px;padding:0 14px}
+.t3c .tav{width:44px;height:44px}
+.t3c .tav svg{width:24px;height:24px}
+.t3n b{font-size:18px;line-height:21px}
+.t3n small{font-size:13.5px;line-height:17px}
+.t3cards.g-rank .t3c{height:84px}
+.t3cards.g-dg .t3c{height:120px}
+.t3cards.g-dg .t3c .tav{width:52px;height:52px}
+.t3cards.g-dg .t3c .tav b{font-size:30px}
+.t3grid .t3c .tav{width:44px;height:44px}
+.t3grid .t3c .tav svg{width:24px;height:24px}
+.t3grid .t3cards.g-dg .t3c .tav{width:52px;height:52px}
+/* Ставки v6: без табов — все группы лентой с прокруткой между лентой «лайв» и кнопкой; снизу и сверху мягко тает */
+.t3grid{bottom:auto;height:calc(560px - 201px + var(--lift, 0px) * .3 - var(--lift, 0px) * .6)}
+.t3scroll{height:100%;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding:4px 2px 40px;
+  -webkit-mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(transparent,#000 12px,#000 calc(100% - 40px),transparent)}
+.t3scroll::-webkit-scrollbar{display:none}
+.t3h{margin:14px 0 8px;font-size:13.5px;line-height:18px;text-transform:uppercase;color:rgba(255,255,255,.72);text-align:center}
+.t3h:first-child{margin-top:6px}
+.t3cards.g-dg .t3c{height:96px}
+.t3cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+.t3cards.g-dg{grid-template-columns:repeat(5,minmax(0,1fr))}
+.t3c{min-width:0}
+.t3n b{font-size:16px}
+.t3scroll{padding:10px 4px 40px}
+/* Ставки v7: всё на одном экране — ранги полосой (5), тикет 4×2, цифры 0–9; ячейки без иконок, крупный текст */
+.t3grid{height:auto;top:calc(196px - var(--lift, 0px) * .3);gap:12px}
+.t3info{display:flex;flex-direction:column;align-items:center;gap:2px}
+.t3info b{font-size:26px;line-height:30px;text-transform:uppercase;color:#fff}
+.t3info span{font-size:13.5px;line-height:18px;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.t3all{display:flex;flex-direction:column;gap:6px}
+.t3all>small{margin-top:4px;font-size:12.5px;line-height:15px;text-transform:uppercase;color:rgba(255,255,255,.6);text-align:center}
+.t3row{display:grid;gap:6px}
+.t3row.r5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.t3row.r4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.t3row.r10{grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.t3x{position:relative;min-width:0;height:60px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:color-mix(in srgb,var(--tc) 12%,rgba(255,255,255,.04));cursor:pointer;transition:background .2s,transform .15s}
+.t3x b{font-size:16px;line-height:18px;text-transform:uppercase;color:var(--tc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;padding:0 2px}
+.t3x small{font-size:13px;line-height:15px;color:rgba(255,255,255,.72)}
+.t3row.r10 .t3x{height:52px;border-radius:12px}
+.t3row.r10 .t3x b{font-size:24px;line-height:1}
+.t3x.sel{background:var(--tc)}
+.t3x.sel b,.t3x.sel small{color:#0b0b0e}
+.t3x:active{transform:scale(.95)}
+.t3x .t3chip{top:-7px;right:-3px}
+.t3row.r10 .t3chip{right:-5px;padding:0 4px;font-size:11.5px;line-height:15px}
+.t3grid{gap:8px}
+.t3x{height:54px}
+.t3row.r10 .t3x{height:46px}
+.t3all{gap:5px}
+.t3all>small{margin-top:2px}
+/* без строки «что выбрано» — ячейки крупнее */
+.t3grid{top:calc(206px - var(--lift, 0px) * .3)}
+.t3all{gap:6px}
+.t3all>small{margin-top:6px}
+.t3all>small:first-child{margin-top:0}
+.t3x{height:66px;border-radius:18px}
+.t3x b{font-size:17px;line-height:20px}
+.t3x small{font-size:13.5px;line-height:16px}
+.t3row.r10 .t3x{height:56px}
+.t3row.r10 .t3x b{font-size:26px}
+/* ставка в ячейке — внутри: метка в углу (ранг, тикет), у цифр — строкой под цифрой */
+.t3in{position:absolute;top:5px;right:5px;padding:0 6px;border-radius:999px;background:#fff;color:#0b0b0e;font-size:12px;line-height:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.t3x.sel .t3in{background:#0b0b0e;color:#fff}
+.t3row.r10 .t3x{gap:3px}
+.t3row.r10 .t3x.on b{font-size:22px}
+.t3row.r10 .t3v{font-size:12px;line-height:13px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+.t3row.r10 .t3x.sel .t3v{color:#0b0b0e}
+/* Ставки — мистика: купол-обсерватория, искры и туманность под табло; ячейки ярче, у каждого исхода свой цвет */
+.t3sky{left:50%;top:calc(196px - var(--lift, 0px) * .3);width:390px;height:400px;transform:translateX(-50%);display:none;pointer-events:none;z-index:3}
+.mode-tab3 .t3sky{display:block}
+.t3sky .t3obs{top:50%;opacity:.5}
+.t3neb{position:absolute;inset:-20px;opacity:.9;-webkit-mask-image:radial-gradient(closest-side,#000 55%,transparent);mask-image:radial-gradient(closest-side,#000 55%,transparent)}
+.t3x{background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 30%,#1a1030),color-mix(in srgb,var(--tc) 12%,#120a22));box-shadow:inset 0 1px 0 color-mix(in srgb,var(--tc) 45%,transparent)}
+.t3x b{color:color-mix(in srgb,var(--tc) 80%,#fff);text-shadow:0 0 12px color-mix(in srgb,var(--tc) 60%,transparent)}
+.t3x.sel{background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 100%,#fff 15%),var(--tc));box-shadow:0 0 20px color-mix(in srgb,var(--tc) 55%,transparent)}
+.t3x.sel b{text-shadow:none}
+.t3x{background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 18%,#1c1233),#140c26);box-shadow:inset 0 0 18px color-mix(in srgb,var(--tc) 28%,transparent),inset 0 1px 0 color-mix(in srgb,var(--tc) 50%,transparent)}
+.t3x b{color:var(--tc)}
+/* круг зодиака и туманность — крупнее, под табло; вспышки мягче */
+.t3sky{width:430px;height:430px;top:calc(176px - var(--lift, 0px) * .3)}
+.t3zod{position:absolute;left:50%;top:50%;width:440px;height:440px;margin:-220px 0 0 -220px;opacity:.32;animation:zrot 240s linear infinite;will-change:transform}
+.t3zod svg{width:100%;height:100%}
+.lite .t3zod{animation:none}
+.t3neb{inset:-40px;opacity:.7}
+.t3sky .t3obs{display:none}
+/* круг зодиака — крупнее, по центру экрана (центр сцены 422 px) */
+.t3zod{width:520px;height:520px;margin:0;left:50%;top:calc(422px - 176px + var(--lift, 0px) * .3);translate:-50% -50%;opacity:.26}
+/* карточки плотнее — не теряются на фоне */
+.t3x{background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 20%,#1a1030),#120a22 85%)}
+/* со ставкой — светится своим цветом и ярче залита (выбранная — целиком цветом, как было) */
+.t3x.on:not(.sel){background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 42%,#1a1030),color-mix(in srgb,var(--tc) 18%,#120a22));box-shadow:0 0 18px color-mix(in srgb,var(--tc) 55%,transparent),inset 0 1px 0 color-mix(in srgb,var(--tc) 70%,transparent)}
+.t3x.on:not(.sel) b{color:#fff}
+/* цифры: сумма — белая метка, как у остальных */
+.t3row.r10 .t3v{padding:0 4px;border-radius:999px;background:#fff;color:#0b0b0e;font-size:11.5px;line-height:15px}
+.t3row.r10 .t3x.sel .t3v{background:#0b0b0e;color:#fff}
+/* Ставки: без круга зодиака; туманность Горна — крупнее, на весь центр экрана */
+.t3zod{display:none}
+.t3neb{inset:-120px -60px;opacity:.85;-webkit-mask-image:radial-gradient(closest-side,#000 45%,transparent);mask-image:radial-gradient(closest-side,#000 45%,transparent)}
+.t3neb{inset:-140px -90px;-webkit-mask-image:radial-gradient(closest-side,#000 60%,transparent);mask-image:radial-gradient(closest-side,#000 60%,transparent)}
+/* Ставки: фишки внизу — круглые жетоны с номиналом, выбранная — белая с кольцом */
+/* Ставки: карточки — как ячейки игроков на Арене (ровный фон 5%, скругление 16, без свечений); со ставкой — заливка цветом исхода, как победитель */
+.t3x,.t3x.sel,.t3x.on:not(.sel){background:rgba(255,255,255,.05);box-shadow:none;border-radius:16px}
+.t3x b,.t3x.on:not(.sel) b{color:var(--tc);text-shadow:none}
+.t3x small{color:rgba(255,255,255,.72)}
+.t3x.on,.t3x.on:not(.sel){background:color-mix(in srgb,var(--tc) 22%,transparent)}
+.t3x.on b{color:#fff}
+.t3x.sel b,.t3x.sel small{color:inherit}
+.t3x.sel:not(.on) b{color:var(--tc)}
+.t3x.on b{color:var(--tc)}
+.t3x.on .t3in{background:var(--tc);color:#0b0b0e}
+.t3row.r10 .t3x.on .t3v{background:var(--tc);color:#0b0b0e}
+/* туманность — ниже и тише, не спорит с карточками */
+.t3neb{inset:-40px -90px -200px;opacity:.5;-webkit-mask-image:radial-gradient(closest-side,#000 40%,transparent);mask-image:radial-gradient(closest-side,#000 40%,transparent)}
+
+/* Ставки: фишки — те же таблетки, что на крафте, только фиолетовые; выбранная — белая */
+.mode-tab3 .chips .pill[data-add]{color:#c9b8ff}
+.mode-tab3 .chips .pill.on[data-add]{background:#fff;color:#1d1338}/* переход между режимами: цвет плашки и шара переливается, а не меняется рывком */
+@property --b1{syntax:'<color>';inherits:false;initial-value:#24a0ff}
+@property --b2{syntax:'<color>';inherits:false;initial-value:#005ec9}
+.bet,.mode-tab2 .bet,.mode-tab3 .bet,.t2lock.mode-tab2 .bet{background:linear-gradient(var(--b1),var(--b2));transition:padding .25s,transform .15s,--b1 .3s ease,--b2 .3s ease}
+.bet{--b1:#24a0ff;--b2:#005ec9}
+.mode-tab2 .bet{--b1:#ffad55;--b2:#ff6a1f}
+.t2lock.mode-tab2 .bet{--b1:#55555e;--b2:#34343a}
+.mode-tab3 .bet{--b1:#9b7bff;--b2:#5a2fd6}
+.cb .orb{filter:grayscale(0) sepia(0) saturate(1) hue-rotate(0deg) brightness(1);transition:filter .3s ease}
+.mode-tab2 .cb .orb{filter:grayscale(1) sepia(1) saturate(5) hue-rotate(-22deg) brightness(1.05)}
+.t2lock.mode-tab2 .cb .orb{filter:grayscale(1) sepia(0) saturate(1) hue-rotate(0deg) brightness(.42)}
+.mode-tab3 .cb .orb{filter:grayscale(0) sepia(0) saturate(1.2) hue-rotate(40deg) brightness(1)}
+/* Ставки v8: три крупных блока — ранг (5), тикет 2×2, цифра-барабан со стрелками */
+.t3row.r2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.t3row.r2 .t3x{height:64px}
+.t3row.r2 .t3x b{font-size:20px;line-height:22px}
+.t3drum{display:flex;align-items:center;gap:8px}
+.t3arr{flex:none;width:48px;height:72px;border-radius:16px;background:rgba(255,255,255,.05);color:var(--tc);font-size:34px;line-height:1}
+.t3arr:active{transform:scale(.92)}
+.t3drum .t3x.t3dx{flex:1;height:72px}
+.t3drum .t3x.t3dx b{font-size:40px;line-height:1}
+.t3oth{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.t3oth i{font-style:normal;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,#5ee3ff 22%,transparent);color:#fff;font-size:12.5px;line-height:18px;font-variant-numeric:tabular-nums}
+.t3grid{top:calc(214px - var(--lift, 0px) * .3)}
+.t3x{height:62px}
+.t3grid{top:calc(204px - var(--lift, 0px) * .3)}
+.t3x{height:58px}
+.t3row.r2 .t3x{height:56px}
+.t3arr,.t3drum .t3x.t3dx{height:62px}
+.t3all{gap:5px}
+.t3oth{margin-top:2px}
+/* табло уже и карточки ниже; стрелки цифры — как у комнат арены: без фона, белые шевроны */
+.t3grid{width:310px}
+.t3x{height:50px;border-radius:14px}
+.t3row.r2 .t3x{height:48px}
+.t3row.r2 .t3x b{font-size:18px}
+.t3drum .t3x.t3dx{height:54px}
+.t3drum .t3x.t3dx b{font-size:34px}
+.t3arr{width:36px;height:54px;background:none;color:#fff;display:grid;place-items:center}
+.t3arr svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.t3grid{left:50%;transform:translateX(-50%);width:326px}
+.t3row.r5 .t3x b{font-size:14px}
+.t3row.r5{gap:5px}
+/* Ставки v9: три колоды-карты таро. Ряд сверху — Ранг · Тикет · Цифра; по центру — крупная карта с исходами, по бокам — соседние маленькие */
+.mode-tab3 #tiers,.mode-tab3 #tind{visibility:visible}
+.t3grid{left:0;width:100%;transform:none;top:calc(150px - var(--lift, 0px) * .3);height:420px}
+.t3deck3{position:relative;width:100%;height:100%}
+.tc3{position:absolute;left:50%;top:0;width:250px;height:400px;margin-left:-125px;padding:14px 14px 16px;border-radius:22px;display:flex;flex-direction:column;gap:12px;
+  background:linear-gradient(170deg,#2a1a4f,#140c28 70%);box-shadow:inset 0 0 0 1.5px rgba(240,199,106,.55),inset 0 0 0 6px rgba(20,12,40,.9),inset 0 0 0 7.5px rgba(240,199,106,.3),0 14px 40px rgba(0,0,0,.6);
+  transition:transform .35s cubic-bezier(.2,.8,.3,1.1),opacity .35s,filter .35s;transform-origin:50% 60%}
+.tc3.l{transform:translateX(-190px) scale(.66) rotate(-6deg);opacity:.55;filter:brightness(.7);cursor:pointer}
+.tc3.r{transform:translateX(190px) scale(.66) rotate(6deg);opacity:.55;filter:brightness(.7);cursor:pointer}
+.tc3.far{opacity:0;pointer-events:none}
+.tc3.cur{z-index:2}
+.tc3:not(.cur) .tc3-b{pointer-events:none}
+.tc3-h{display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.tc3-h i{width:40px;height:40px;display:grid;place-items:center;color:#f0c76a}
+.tc3-h i svg{width:30px;height:30px;fill:currentColor}
+.tc3-h b{font-size:20px;line-height:24px;text-transform:uppercase;color:#f0c76a;letter-spacing:.06em}
+.tc3-h small{font-size:12.5px;line-height:15px;color:rgba(255,255,255,.72)}
+.tc3-h em{position:absolute;top:0;right:0;min-width:22px;padding:0 6px;border-radius:999px;background:#f0c76a;color:#1d1338;font-style:normal;font-size:12.5px;line-height:20px;font-weight:700}
+.tc3-b{flex:1;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.tc3-b .t3x{height:auto;flex:1;max-height:56px;border-radius:14px;flex-direction:row;justify-content:space-between;padding:0 14px}
+.tc3-b .t3x b{font-size:18px;line-height:22px}
+.tc3-b .t3x small{font-size:14px}
+.tc3-b .t3x .t3in{position:static;margin-left:8px}
+.tc3-b .t3x{gap:6px}
+.tc3-b .t3x small{margin-left:auto}
+.tc3-b.g-dg{display:grid;grid-template-columns:repeat(2,1fr);grid-auto-rows:1fr}
+.tc3-b.g-dg .t3x{max-height:none;justify-content:center;padding:0}
+.tc3-b.g-dg .t3x b{font-size:24px}
+.tc3-b.g-dg .t3x .t3in{position:absolute;top:4px;right:4px;margin:0}
+.lite .tc3{transition:none}
+.t3grid{top:calc(206px - var(--lift, 0px) * .3);height:350px}
+.tc3{height:350px;width:240px;margin-left:-120px;gap:8px;padding:12px 12px 14px}
+.tc3.l{transform:translateX(-168px) scale(.62) rotate(-6deg)}
+.tc3.r{transform:translateX(168px) scale(.62) rotate(6deg)}
+.tc3-h i{width:30px;height:30px}
+.tc3-h i svg{width:24px;height:24px}
+.tc3-h b{font-size:18px;line-height:22px}
+.tc3-b .t3x{max-height:50px}
+/* карта — под рядом «Ранг · Тикет · Цифра» (как тикет на Арене), до кнопки; соседние карты выглядывают из-за неё */
+.t3grid{top:calc(282px - var(--lift, 0px) * .3);height:270px}
+.tc3{width:210px;height:270px;margin-left:-105px;padding:10px 10px 12px;gap:6px}
+.tc3.l{transform:translateX(-118px) scale(.8) rotate(-7deg);opacity:.6;z-index:1}
+.tc3.r{transform:translateX(118px) scale(.8) rotate(7deg);opacity:.6;z-index:1}
+.tc3-h{flex-direction:row;justify-content:center;gap:6px}
+.tc3-h i{width:22px;height:22px}
+.tc3-h i svg{width:20px;height:20px}
+.tc3-h b{font-size:16px;line-height:20px}
+.tc3-h em{top:-2px}
+.tc3-b{gap:5px}
+.tc3-b .t3x{max-height:40px;border-radius:12px;padding:0 10px}
+.tc3-b .t3x b{font-size:15px;line-height:18px}
+.tc3-b .t3x small{font-size:12.5px}
+.tc3-b.g-dg{gap:5px}
+.tc3-b.g-dg .t3x b{font-size:20px}
+.tc3.far{opacity:0!important;pointer-events:none}
+/* карта таро v2: шапка по центру (знак над названием), исходы — строки через тонкие золотые линии (без плашек);
+   низ карты уходит под кнопку, контент заканчивается выше неё */
+.t3grid{height:330px}
+.tc3{height:330px;width:230px;margin-left:-115px;padding:14px 16px 52px;gap:8px}
+.tc3-h{flex-direction:column;gap:2px;padding-bottom:8px;border-bottom:1px solid rgba(240,199,106,.35)}
+.tc3-h i{width:26px;height:26px}
+.tc3-h i svg{width:24px;height:24px}
+.tc3-h b{font-size:16px;line-height:18px;letter-spacing:.12em}
+.tc3-b{gap:0;justify-content:space-between}
+.tc3-b .t3x{flex:1;max-height:none;height:auto;border-radius:10px;background:none!important;padding:0 8px;margin:0 -8px}
+.tc3-b .t3x+.t3x{box-shadow:inset 0 1px 0 rgba(240,199,106,.14)}
+.tc3-b .t3x b{font-size:16px}
+.tc3-b .t3x small{font-size:13px}
+.tc3-b .t3x.on{background:color-mix(in srgb,var(--tc) 20%,transparent)!important;box-shadow:none}
+.tc3-b .t3x.on+.t3x{box-shadow:none}
+.tc3-b .t3x .t3in{background:var(--tc);color:#0b0b0e}
+.tc3-b.g-dg{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:1fr 1fr;gap:6px;align-content:center}
+.tc3-b.g-dg .t3x{margin:0;border-radius:12px;background:rgba(255,255,255,.05)!important;box-shadow:none!important;flex-direction:column;justify-content:center;gap:2px;padding:0}
+.tc3-b.g-dg .t3x.on{background:color-mix(in srgb,var(--tc) 24%,transparent)!important}
+.tc3-b.g-dg .t3x b{font-size:22px}
+.tc3-b.g-dg .t3x .t3in{position:static;margin:0;font-size:11px;line-height:14px;padding:0 4px}
+.tc3.l{transform:translateX(-122px) scale(.82) rotate(-7deg)}
+.tc3.r{transform:translateX(122px) scale(.82) rotate(7deg)}
+.tc3-b.g-dg{grid-template-rows:none;grid-auto-rows:56px;align-content:center}
+/* ===== карта таро v3: без шапки (колода названа сверху), исходы крупно на всю карту ===== */
+.tc3{width:300px;margin-left:-150px;height:330px;padding:12px 12px 52px;border-radius:24px;
+  background:radial-gradient(120% 80% at 50% 0%,#3a2470,#170d2e 70%);
+  box-shadow:inset 0 0 0 1.5px rgba(240,199,106,.7),inset 0 0 0 7px rgba(23,13,46,.95),inset 0 0 0 8px rgba(240,199,106,.28),0 16px 40px rgba(0,0,0,.6)}
+.tc3.cur .tc3-h{display:none}
+.tc3.l{transform:translateX(-150px) scale(.78) rotate(-8deg)}
+.tc3.r{transform:translateX(150px) scale(.78) rotate(8deg)}
+.tc3-b.v3{gap:6px;justify-content:stretch}
+.tc3-b.v3 .t3x{margin:0;flex:1;max-height:none;border-radius:14px;background:rgba(255,255,255,.06)!important;box-shadow:none!important;padding:0 16px}
+.tc3-b.v3 .t3x.on{background:color-mix(in srgb,var(--tc) 26%,rgba(255,255,255,.04))!important}
+.tc3-b.v3 .t3x b{font-size:22px;line-height:26px}
+.tc3-b.v3 .t3x small{font-size:15px;line-height:18px;color:rgba(255,255,255,.72)}
+.tc3-b.v3 .t3x .t3in{font-size:13px;line-height:18px;padding:0 7px}
+/* тикет — 2×2 крупные плитки с знаком */
+.tc3-b.v3.g-mid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+.tc3-b.v3.g-mid .t3x{flex-direction:column;justify-content:center;gap:4px;padding:0}
+.tc3-b.v3.g-mid .t3x small{margin:0}
+.tc3-b.v3.g-mid .t3ic{width:34px;height:34px;color:var(--tc)}
+.tc3-b.v3.g-mid .t3ic svg{width:100%;height:100%}
+.tc3-b.v3.g-mid .t3x .t3in{position:absolute;top:8px;right:8px;margin:0}
+/* цифры — 5×2 крупно */
+.tc3-b.v3.g-dg{grid-auto-rows:1fr;grid-template-rows:1fr 1fr;align-content:stretch;gap:6px}
+.tc3-b.v3.g-dg .t3x{padding:0;flex-direction:column;gap:4px}
+.tc3-b.v3.g-dg .t3x b{font-size:34px;line-height:1}
+.tc3-b.v3.g-dg .t3x .t3in{position:static;font-size:12px;line-height:16px}
+/* ===== карта v4: без обводки — узор как у колизея, исходы — медальоны как места на Арене ===== */
+.tc3{box-shadow:0 18px 44px rgba(0,0,0,.65);background:radial-gradient(circle at 50% 45%,#2c1a55,#120a24 72%);padding:16px 10px 52px;overflow:hidden}
+.tc3-bg{position:absolute;left:0;right:0;top:-6px;width:100%;height:300px;pointer-events:none}
+.tc3-b.v3{position:relative;display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:10px 4px}
+.tc3-b.v3 .t3x.t3m{flex:0 0 31%;max-height:none;height:auto;background:none!important;box-shadow:none!important;padding:0;flex-direction:column;align-items:center;gap:3px}
+.t3md{position:relative;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;color:var(--tc);
+  background:radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--tc) 22%,#3a2a5a),#120a24 78%);
+  box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--tc) 45%,transparent),inset 0 0 0 5px rgba(0,0,0,.35),inset 0 -8px 12px rgba(0,0,0,.55),0 6px 12px rgba(0,0,0,.5)}
+.t3md svg{width:30px;height:30px}
+.t3m>b{font-size:16px;line-height:19px;color:var(--tc);text-transform:uppercase}
+.t3m>small{font-size:13px;line-height:15px;color:rgba(255,255,255,.72)}
+.t3m.on .t3md{background:radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--tc) 100%,#fff 20%),var(--tc) 70%);color:#0b0b0e;
+  box-shadow:0 0 0 3px #120a24,0 0 0 5px var(--tc),0 0 20px color-mix(in srgb,var(--tc) 70%,transparent)}
+.t3md .t3in{position:absolute;bottom:-6px;left:50%;translate:-50% 0;margin:0;background:#fff!important;color:#0b0b0e!important;font-size:12px;line-height:16px;padding:0 6px;border-radius:999px;font-weight:700}
+.tc3-b.v3.g-mid{display:flex}
+.tc3-b.v3.g-mid .t3x.t3m{flex:0 0 46%}
+.tc3-b.v3.g-mid .t3md{width:72px;height:72px}
+.tc3-b.v3.g-mid .t3md svg{width:34px;height:34px}
+.tc3-b.v3.g-dg{display:flex;gap:12px 6px}
+.tc3-b.v3.g-dg .t3x.t3m{flex:0 0 17%}
+.tc3-b.v3.g-dg .t3md{width:48px;height:48px}
+.t3dn{font-size:24px;line-height:1;color:inherit}
+.tc3-b.v3,.tc3-b.v3.g-mid,.tc3-b.v3.g-dg{flex-direction:row;grid-template-columns:none;grid-template-rows:none}
+.tc3-b.v3 .t3x.t3m{height:auto!important;flex-grow:0;border-radius:0;margin:0}
+.tc3-b.v3 .t3x.t3m .t3in{position:absolute;top:auto;right:auto;bottom:-6px;left:50%;translate:-50% 0}
+/* медальоны: без курсива (значок лежит в <i>), множитель и сумма — ровно по центру медальона */
+.t3md,.t3md *{font-style:normal}
+.tc3-b.v3 .t3x.t3m small{margin:0;text-align:center}
+.tc3-b.v3 .t3x.t3m b{text-align:center}
+.tc3-b.v3 .t3x.t3m .t3in{margin:0!important;left:50%;right:auto;translate:-50% 0;transform:none;white-space:nowrap}
+.t3m.on .t3md .t3dn{color:#0b0b0e}
+/* плашка над колодой — сколько ставок в ней; линия и плашка двигаются плавно */
+.mode-tab3 #chance{visibility:visible}
+.mode-tab3 #chance{transition:left .35s cubic-bezier(.3,1.3,.5,1)}
+/* фон карты — конический перелив под узором + мягкий свет из центра */
+.tc3{background:radial-gradient(circle at 50% 45%,rgba(180,140,255,.22),transparent 60%),conic-gradient(from 210deg at 50% 45%,#2a1650,#3b1d6e,#1b2a5e,#2a1650,#4a1d5e,#2a1650),#120a24}
+/* медальоны тикета — как у рангов */
+.tc3-b.v3.g-mid .t3md{width:62px;height:62px}
+.tc3-b.v3.g-mid .t3md svg{width:30px;height:30px}
+/* цифры — 3×3 и 0 по центру внизу, медальоны крупнее */
+.tc3-b.v3.g-dg{gap:6px 14px;padding:0 24px}
+.tc3-b.v3.g-dg .t3x.t3m{flex:0 0 26%}
+.tc3-b.v3.g-dg .t3md{width:54px;height:54px}
+.tc3-b.v3.g-dg .t3dn{font-size:26px}
+/* узор карты медленно вращается вокруг центра; медальоны стоят */
+.tc3-rot{transform-origin:150px 150px;transform-box:view-box;animation:zrot 120s linear infinite}
+.lite .tc3-rot{animation:none}
+/* 6 исходов: 3 + 3 */
+.tc3-b.v3.g-mid .t3x.t3m{flex:0 0 31%}
+/* цифры: 5 на карту — 3 + 2, как у рангов */
+.tc3-b.v3.g-dg{gap:10px 4px;padding:0}
+.tc3-b.v3.g-dg .t3x.t3m{flex:0 0 31%}
+.tc3-b.v3.g-dg .t3md{width:62px;height:62px}
+.tc3-b.v3.g-dg .t3dn{font-size:30px}
+/* узор на 25% крупнее (выходит за края карты), вращается; под ним — конический перелив, крутится в другую сторону и медленнее */
+.tc3-rot{scale:1.25}
+.tc3::before{content:'';position:absolute;left:50%;top:45%;width:600px;height:600px;margin:-300px 0 0 -300px;pointer-events:none;
+  background:conic-gradient(from 0deg,#2a1650,#4a1f7a,#1b2a6e,#3a1658,#5a1f6a,#22306e,#2a1650);opacity:.9;animation:zrot 200s linear infinite reverse}
+.tc3::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 45%,rgba(200,160,255,.18),rgba(18,10,36,.55) 75%)}
+.tc3>.tc3-bg,.tc3>.tc3-h,.tc3>.tc3-b{position:relative;z-index:1}
+.tc3>.tc3-bg{position:absolute}
+.lite .tc3::before{animation:none}
+/* пары цифр: «0·1» в медальоне */
+.t3dn{font-size:24px;letter-spacing:-.02em}
+.t3dn i{font-style:normal;opacity:.5;margin:0 1px}
+.tc3-t{position:relative;z-index:1;text-align:center;font-size:15px;line-height:18px;text-transform:uppercase;color:#5ee3ff;letter-spacing:.06em}
+.tc3-b.v3.g-dg .t3x.t3m b.t3dn{font-size:24px}
+.tc3-b.v3.g-dg .t3md{width:66px;height:66px}
+/* цифры — как остальные исходы: медальон со знаком «?», под ним «0–1» и множитель */
+.tc3-b.v3.g-dg .t3md{width:62px;height:62px}
+.tc3-b.v3.g-dg .t3x.t3m b.t3dn{font-size:30px}
+.tc3-b.v3.g-dg .t3x.t3m>b{font-size:16px;line-height:19px;color:var(--tc)}
+.tc3-b.v3.g-dg .t3x.t3m>b{font-size:inherit;line-height:inherit}
+/* окружность не обрезается снизу; выбранная карта чуть ниже и объёмная: свет сверху, тень снизу, мягкая тень под картой */
+.tc3-bg{overflow:visible}
+.tc3.cur{transform:translateY(7px);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.22),inset 0 -14px 28px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.06),0 22px 40px rgba(0,0,0,.65),0 6px 14px rgba(0,0,0,.4)}
+.tc3.cur::after{background:radial-gradient(circle at 50% 45%,rgba(200,160,255,.18),rgba(18,10,36,.55) 75%),linear-gradient(rgba(255,255,255,.08),transparent 30%)}
+.tc3-b.v3.g-dp .t3x.t3m b.t3dn{font-size:30px;line-height:1}
+/* ряд сверху: лишние подписи схлопываются плавно */
+.tier{transition:opacity .25s,transform .25s,max-width .3s cubic-bezier(.3,1,.5,1),margin .3s,color .3s;max-width:160px;white-space:nowrap}
+.tier.gone{max-width:0;min-width:0;opacity:0;margin-left:-16px;overflow:hidden;pointer-events:none}
+/* активная карта — ярче и с толщиной: снизу «торец» карты, сверху блик */
+.tc3.cur{box-shadow:inset 0 2px 0 rgba(255,255,255,.35),inset 0 0 0 1.5px rgba(200,170,255,.35),0 7px 0 #3a1f73,0 8px 0 #2a1557,0 20px 36px rgba(0,0,0,.6)}
+.tc3.cur::before{opacity:1;filter:brightness(1.35) saturate(1.2)}
+.tc3.cur::after{background:radial-gradient(circle at 50% 40%,rgba(220,190,255,.28),rgba(18,10,36,.25) 80%),linear-gradient(rgba(255,255,255,.12),transparent 35%)}
+/* торец активной карты — темнее и переливается (фиолетовый → синий → малиновый) */
+.tc3.cur{animation:tc3edge 6s ease-in-out infinite}
+@keyframes tc3edge{
+  0%,100%{box-shadow:inset 0 2px 0 rgba(255,255,255,.35),inset 0 0 0 1.5px rgba(200,170,255,.35),0 7px 0 #24104a,0 8px 0 #160a30,0 20px 36px rgba(0,0,0,.6)}
+  33%{box-shadow:inset 0 2px 0 rgba(255,255,255,.35),inset 0 0 0 1.5px rgba(170,190,255,.35),0 7px 0 #14205a,0 8px 0 #0c1438,0 20px 36px rgba(0,0,0,.6)}
+  66%{box-shadow:inset 0 2px 0 rgba(255,255,255,.35),inset 0 0 0 1.5px rgba(255,170,220,.35),0 7px 0 #3a1040,0 8px 0 #22082a,0 20px 36px rgba(0,0,0,.6)}}
+.lite .tc3.cur{animation:none}
+/* туманность — крупнее и ниже: тянется под кнопку */
+.t3neb{inset:60px -120px -340px;opacity:.6;-webkit-mask-image:radial-gradient(closest-side,#000 55%,transparent);mask-image:radial-gradient(closest-side,#000 55%,transparent)}
+.t3neb{opacity:.9}
+.t3neb{inset:10px -120px -290px}
+/* ряд сверху: раскладка меняется сразу (плашка и линия сразу едут в нужное место, без захода вбок), перетекает только цвет */
+.tier{transition:opacity .25s,transform .25s,color .35s}
+#chance{transition:left .35s cubic-bezier(.3,1,.5,1),background .35s}
+/* туманность Ставок — копии клуба дыма, перекрашенные в фиолетовый */
+.t3neb{inset:10px -60px -200px;opacity:1;-webkit-mask-image:radial-gradient(closest-side,#000 50%,transparent);mask-image:radial-gradient(closest-side,#000 50%,transparent)}
+.npuff{position:absolute;aspect-ratio:1;height:auto;pointer-events:none;filter:hue-rotate(230deg) saturate(2.2) brightness(.9);will-change:transform,opacity}
+.t3neb.pause .npuff{animation-play-state:paused}
+.lite .npuff{opacity:.5}
+/* Ставки: новые шар и палочка; палочка крепится концом ручки в ту же точку, что молот, — тот же замах и удар */
+.mode-tab3 .cb{--tier:#ff6ad5}
+.mode-tab3 .cb .anvil{width:32px;height:39.6px;left:27px;top:25px}
+.mode-tab3 .cb .hammer img{width:36px;height:30.4px;left:.7px;top:-25.3px;transform-origin:95% 92%;rotate:0deg}
+.mode-tab3 .fx-intro .fi-a{width:96px;height:119px;left:81px;top:74px}
+.mode-tab3 .fx-intro .fi-h img{width:108px;height:91px;left:2.2px;top:-75.7px;transform-origin:95% 92%;rotate:0deg}
+.mode-tab3 .fx-intro{--ic:#ff6ad5}
+.mode-tab3 .cb .hammer img{width:30px;height:25.3px;left:6.4px;top:-20.6px;rotate:-25deg}
+.mode-tab3 .fx-intro .fi-h img{width:90px;height:76px;left:19.3px;top:-61.9px;rotate:-25deg}
+/* обводка карты: тонкая линия, по ней бежит розово-золотой блик */
+@property --rim{syntax:'<angle>';inherits:false;initial-value:0deg}
+.tc3-rim{position:absolute;inset:0;border-radius:inherit;padding:1.5px;pointer-events:none;z-index:2;
+  background:conic-gradient(from var(--rim),rgba(200,170,255,.18),rgba(255,110,210,.9) 8%,rgba(240,199,106,.8) 14%,rgba(200,170,255,.18) 24%,rgba(200,170,255,.18) 74%,rgba(110,200,255,.7) 84%,rgba(200,170,255,.18) 94%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);animation:rim 7s linear infinite}
+@keyframes rim{to{--rim:360deg}}
+.tc3:not(.cur) .tc3-rim{opacity:.4;animation:none}
+.lite .tc3-rim{animation:none}
+/* звёздные круги из точек за картой — вращаются медленно, часть мерцает */
+.t3stars{position:absolute;left:50%;top:44%;width:500px;height:500px;margin:-250px 0 0 -250px;pointer-events:none}
+.t3stars svg{width:100%;height:100%}
+.st-r{transform-origin:250px 250px;animation:zrot 260s linear infinite}
+.st-tw circle{animation:sttw 3.2s ease-in-out infinite}
+@keyframes sttw{50%{opacity:.15}}
+.lite .st-r,.lite .st-tw circle{animation:none}
+/* перетаскивание колоды — без задержки за пальцем */
+.t3grid.drag .tc3{transition:none}
+.t3deck3{transition:transform .3s cubic-bezier(.2,.8,.3,1.1)}
+.t3grid.drag .t3deck3{transition:none}
+/* обводка заметнее: базовая линия светлее и толще, блик ярче */
+.tc3-rim{padding:2px;background:conic-gradient(from var(--rim),rgba(210,180,255,.45),#ff6ed2 8%,#f0c76a 14%,rgba(210,180,255,.45) 24%,rgba(210,180,255,.45) 74%,#6ec8ff 84%,rgba(210,180,255,.45) 94%)}
+/* ===== оптимизация Ставок: крутятся только слои целиком (видеокарта), без перерисовки; у боковых карт — ничего не анимируется ===== */
+.tc3-rot{animation:none}                                              /* узор вращается целым слоем, а не группой внутри svg */
+.tc3.cur .tc3-bg{animation:zrot 120s linear infinite;will-change:transform;transform-origin:50% 50%}
+.tc3-bg .tc3-rot{transform:scale(1.25);transform-origin:150px 150px}
+.tc3::before{animation:none}
+.tc3.cur::before{animation:zrot 200s linear infinite reverse;will-change:transform}
+.tc3-rim{animation:none}                                              /* блик по обводке перерисовывал карту каждый кадр — обводка статичная */
+.tc3.cur{animation:none}                                              /* перелив торца — тоже перерисовка каждый кадр */
+.tc3.l,.tc3.r{filter:none;opacity:.5}
+.tc3{transition:transform .35s cubic-bezier(.2,.8,.3,1.1),opacity .35s;will-change:transform}
+.st-r{animation:none}
+.t3stars{animation:zrot 260s linear infinite;will-change:transform}
+.st-tw circle{animation:none}
+.st-tw{opacity:.7}
+.lite .t3stars,.lite .tc3.cur .tc3-bg,.lite .tc3.cur::before{animation:none}
+.mode-tab3 .t3arrw{display:grid!important}
+.mode-tab3 .t3arrw[hidden]{display:none!important}
+/* звёзды — ниже (вокруг карты и кнопки), группы гаснут и загораются; весь слой не крутится */
+.t3stars{top:62%;animation:none}
+.stg{animation:stg 7s ease-in-out infinite;opacity:0}
+.stg circle{stroke:none}
+@keyframes stg{0%,100%{opacity:0}35%,65%{opacity:.85}}
+.lite .stg{animation:none;opacity:.6}
+#t3Prev.t3arrw{top:calc(400px - var(--lift, 0px) * .3);left:calc(50% - 189px)}
+#t3Next.t3arrw{top:calc(400px - var(--lift, 0px) * .3);left:calc(50% + 145px)}
+/* проигрыш ставок — пустой гем серым */
+.pz.t3lose img{filter:grayscale(1) brightness(.75)}
+.tc3-rim{display:none}
+/* стрелки Ставок не показываются на Арене (у них общий класс со стрелками комнат) */
+.mode-tab2 .t3arrw,body:not(.mode-tab3) .t3arrw{display:none!important}
+/* звёзды — ниже, на высоте зрителей вокруг колизея Арены; группы пульсируют */
+.t3stars{top:76%}
+.stg{transform-box:fill-box;transform-origin:center}
+@keyframes stg{0%,100%{opacity:0;transform:scale(.85)}35%{opacity:.9;transform:scale(1.08)}50%{opacity:.6;transform:scale(.97)}65%{opacity:.9;transform:scale(1.05)}}
+/* стрелки колод — по бокам плашки ставки, ровно как стрелки комнат на Арене */
+#t3Prev.t3arrw{top:calc(665px - var(--lift))}
+#t3Next.t3arrw{top:calc(665px - var(--lift))}
+.t3stars{display:none}
+.tc3-bg .tc3-rot{transform:scale(1.1)}
+#t3Prev.t3arrw,#t3Next.t3arrw{transition:left .25s cubic-bezier(.3,1,.5,1)}
+/* активная карта чуть покачивается — пару градусов туда и обратно (отдельным rotate — не мешает сдвигу карты) */
+.tc3.cur{animation:tc3sway 7s ease-in-out infinite}
+@keyframes tc3sway{0%,100%{rotate:-1.6deg}50%{rotate:1.6deg}}
+.lite .tc3.cur{animation:none}
+/* кнопка: высокий бокс сверху (место под замах молота/меча/палочки) — иначе слой кнопки обрезал значок по своей верхней границе */
+.craft{padding-top:44px;margin-top:-44px;height:130px;place-items:end center}
+/* боковые карты — рубашкой: содержимое видно только у выбранной */
+.tc3 .tc3-b,.tc3 .tc3-h{transition:opacity .2s}
+.tc3:not(.cur) .tc3-b,.tc3:not(.cur) .tc3-h{opacity:0}
+/* экран итога закрыт — его подсветка не крутится вхолостую */
+.fx:not(.on) .fx-drop::before{animation:none}

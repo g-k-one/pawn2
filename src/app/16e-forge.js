@@ -1384,7 +1384,7 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
   DEF.anvil = { atlas: 'aura', period: 1.8,
     init: s => Object.assign(s, { sp: [], near: [], fired: false, tint: [1, .75, .35] }),
     update(s, dt, at){
-      if (!s.fired){ s.fired = true; s.shake = 7; const hot = [1, .88, .55], warm = [1, .58, .2];
+      if (!s.fired){ s.fired = true; s.shake = 7; const hot = s.pal?.[0] || [1, .88, .55], warm = s.pal?.[1] || [1, .58, .2];   // pal — своя палитра искр (Ставки — розовая)
         // раскалённые искры — во все стороны (вверх чуть больше), разная скорость, лёгкая гравитация: летят дугами и гаснут
         for (let i = 0; i < 110; i++){ const a = R(0, 6.28), v = R(180, 980) * (Math.sin(a) < 0 ? 1.15 : .85);
           spawn(s.sp, { x: 180 + R(-5, 5), y: 180 + R(-3, 3), vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: R(14, 34), life: R(.4, 1.15), drag: 2, grav: 520, orient: true, speedStretch: .003,

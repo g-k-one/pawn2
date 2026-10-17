@@ -7,7 +7,7 @@ const Tilt = (() => {
   let ph = Math.random() * 10, last = 0, prev = 0;
   // цикл не крутится вхолостую: нет видимых карточек (или экономный режим без пальца) — проверяем раз в 0.4 с, а не 60 раз в секунду
   let raf = 0, idle = 0;
-  const wake = () => { clearTimeout(idle); if (!raf) raf = requestAnimationFrame(frame); };
+  const wake = () => { clearTimeout(idle); if (raf <= 0) raf = requestAnimationFrame(frame); };   // raf = -1 — ждём таймер следующего кадра
   function frame(now){
     raf = 0;
     const dt = prev ? Math.min(.1, (now - prev) / 1000) : 0; prev = now;
@@ -18,8 +18,8 @@ const Tilt = (() => {
     const vis = [...items].filter(it => it.t.isConnected && it.t.offsetParent !== null && !(it.dr && !it.dr.classList.contains('open')));
     items.forEach(it => { if (!it.t.isConnected) items.delete(it); });
     if (document.hidden || !vis.length || (S.lite && !hand)){ idle = setTimeout(wake, 400); return; }
-    raf = requestAnimationFrame(frame);
-    if (!hand && now - last < 32) return;        // 30 к/с хватает для медленного поворота — вдвое меньше работы
+    // пальцем — каждый кадр; сама крутится — 30 к/с, а между кадрами таймер: страница не просыпается 60 раз в секунду
+    if (hand) raf = requestAnimationFrame(frame); else { raf = -1; idle = setTimeout(() => { raf = requestAnimationFrame(frame); }, Math.max(0, 30 - (performance.now() - now))); }
     last = now;
     const t = now / 1000;
     vis.forEach(it => {
