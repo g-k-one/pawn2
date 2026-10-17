@@ -1861,7 +1861,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .fx-arena .ar-time{font-size:7.5cqw;padding:.5cqw 4cqw}
 .fx-arena .ar-seat.empty{border-color:rgba(255,200,140,.55);background:rgba(20,10,5,.6)}
 /* ---------- tab2 (копия главной, делаем из неё новый режим): кнопка крафта и плашка ставки — оранжево-красные ---------- */
-.mode-tab2 .bet{background:linear-gradient(#ff9a4a,#e0501a)}   /* светлее: на iPhone низ плашки уходил почти в коричневый */
+.mode-tab2 .bet{background:linear-gradient(#ffad55,#ff6a1f)}   /* светлее и насыщеннее: на iPhone низ плашки уходил в коричневый */
 .mode-tab2 .bet .plus:before,.mode-tab2 .bet .plus:after{background:#7a1c06}
 .mode-tab2 .bet img{filter:hue-rotate(165deg) saturate(1.4) brightness(1.15)}
 .mode-tab2 .cb .orb{filter:grayscale(1) sepia(1) saturate(5) hue-rotate(-22deg) brightness(1.05)}
