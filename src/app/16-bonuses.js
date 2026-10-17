@@ -1,25 +1,16 @@
 /* =========================================================
    БОНУСЫ — 4 вкладки по смыслу:
-   Сегодня (задания дня, неделя, супер дроп) · Пасс · Кейсы · Профиль (таблетки: друзья | топ | достижения)
+   Сегодня (задания дня, неделя, супер дроп) · Кейсы · Профиль (таблетки: друзья | топ | достижения)
    casesTab — что показано: today · super (страница супер дропа внутри «Сегодня») · pass · cases · ach · refs · top
    ========================================================= */
 let casesTab = 'today', friendsSeg = 'ach';
-const BTAB_OF = { today: 'today', tasks: 'today', super: 'today', pass: 'pass', cases: 'cases', ach: 'friends', refs: 'friends', top: 'friends' };
+const BTAB_OF = { today: 'today', tasks: 'today', super: 'today', cases: 'cases', ach: 'friends', refs: 'friends', top: 'friends' };
 function openCases(tab){ if (tab){ casesTab = tab === 'tasks' ? 'today' : tab; if (tab === 'refs' || tab === 'top' || tab === 'ach') friendsSeg = tab; } swapDrawer('casesDrawer', renderCases); }
 // баннер супер дропа: слева — что делать и тикет крупно, справа — сам приз крупно со свечением и ценой
 const sdBanner = () => `<button class="sdban" data-go="super"><span class="sdb-t"><small>${$t("Супер дроп")}</small><b>${tk(SUPER.target)}</b>` +
   `<em>${$t("Выбей этот тикет первым — NFT твой")}</em></span>${SUPER.nft ? `<img class="sdb-n" src="${SUPER.nft.nft.src}" alt="">` : ''}</button>`;
 const GEM_S = '<img class="gm" src="assets/gem-small.svg" alt="">';
 const backRow = (k, t) => `<button class="bback" data-go="${k}">${svg('<path d="M15 5l-7 7 7 7"/>')}${t}</button>`;
-// пасс: экономику ещё считаем — пока макет двух дорожек, чтобы оценить место в структуре
-function passHTML(){
-  const lv = [[XPI + '50', `${GEM_S}0.1`], [XPI + '100', caseArt(caseById('durov'))], [`${GEM_S}0.3`, `${GEM_S}2`], [XPI + '200', caseArt(caseById('satoshi'))], [caseArt(caseById('beast')), 'NFT']];
-  return `<div class="pass-h"><b>${$t("Баттл пасс")}</b><em class="soon">${$t("скоро")}</em><small>${$t("Заходи каждый день и крафти — уровни открывают награды. Бесплатная дорожка для всех, премиум — с наградами крупнее.")}</small></div>` +
-    `<div class="pass-t"><span></span>${lv.map((_, i) => `<i>${i + 1}</i>`).join('')}</div>` +
-    `<div class="pass-r"><span>${$t("Бесплатно")}</span>${lv.map(x => `<b>${x[0]}</b>`).join('')}</div>` +
-    `<div class="pass-r prem"><span>${$t("Премиум")}</span>${lv.map(x => `<b>${x[1]}</b>`).join('')}</div>` +
-    `<p class="bnote">${$t("Макет: награды и цену премиума посчитаем отдельно.")}</p>`;
-}
 // бесплатные кейсы: txt — короткая подпись на карточке, how — что сделать (в описании кейса), lock — текст на кнопке, пока закрыт
 const caseState = c => {
   if (!c.need) return { ok: true };
@@ -57,8 +48,6 @@ function renderCases(){
     b.innerHTML = seg + `<div class="sect"><div class="sect-h"><span><b>${$t("Достижения")}</b><small>${$t("засчитываются по кнопке «Проверить»")}</small></span><em class="cnt">${ACH.filter(a => S.ach.got[a[0]]).length}/${ACH.length}</em></div>` + ACH.filter(a => !S.ach.got[a[0]]).map(achRow).join('') +
       // выполненные — свёрнуты: сверху то, что ещё можно сделать
       (ACH.some(a => S.ach.got[a[0]]) ? `<details class="achdone"><summary>${$t("Выполненные · {0}", ACH.filter(a => S.ach.got[a[0]]).length)}</summary>${ACH.filter(a => S.ach.got[a[0]]).map(achRow).join('')}</details>` : '') + `</div>` + rulesHTML([$t("Достижения засчитываются один раз — по кнопке «Проверить».")]);
-  } else if (casesTab === 'pass'){
-    b.innerHTML = passHTML();
   } else if (casesTab === 'today'){
     const di = dayIdx(), dd = dailyDone(), td = tasksDone(), beast = caseById('beast'), musk = caseById('musk');
     b.innerHTML = `<div class="sect"><div class="sect-h hero" style="--c:${beast.c}"><span><b>${$t("Задания дня")}</b><small>${$t("Выполни все 3 — откроется кейс Мистера Биста")}</small><em class="cnt">${td} ${$t("из")} ${TASKS.length}</em></span>${caseArt(beast)}</div>` +

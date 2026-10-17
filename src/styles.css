@@ -1611,19 +1611,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .bback svg{width:20px;height:20px}
 .bseg{margin:0 auto 12px;width:max-content}
 .bseg button{min-width:96px;font-size:17px}
-.pass-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:16px;border-radius:22px;background:linear-gradient(135deg,rgba(255,184,53,.16),rgba(124,92,255,.14))}
-.pass-h b{font-size:26px;text-transform:uppercase}
-.pass-h .soon{font-style:normal;padding:2px 10px;border-radius:999px;background:rgba(255,184,53,.2);color:#ffb835;font-size:14px;text-transform:uppercase}
-.pass-h small{width:100%;font:400 13.5px/1.4 var(--serif);text-transform:none;color:rgba(255,255,255,.72)}
-.pass-t,.pass-r{display:grid;grid-template-columns:76px repeat(5,1fr);gap:6px;align-items:center;margin-top:8px}
-.pass-t{margin-top:20px}
-.pass-t i{font-style:normal;text-align:center;font-size:15px;color:rgba(255,255,255,.72)}
-.pass-r>span{font-size:14px;text-transform:uppercase;color:rgba(255,255,255,.72)}
-.pass-r>b{height:64px;display:flex;align-items:center;justify-content:center;gap:2px;border-radius:16px;background:rgba(255,255,255,.06);font-size:14px;white-space:nowrap;overflow:hidden}
-.pass-r>b .gm,.pass-r>b .xpimg{width:16px;height:16px}
-.pass-r>b .cart{zoom:.3}
-.pass-r.prem>span{color:#ffb835}
-.pass-r.prem>b{background:rgba(255,184,53,.1);box-shadow:inset 0 0 0 1.5px rgba(255,184,53,.35)}
 .achdone summary{list-style:none;cursor:pointer;padding:12px 0 4px;font-size:16px;text-transform:uppercase;color:rgba(255,255,255,.72)}
 .achdone summary::-webkit-details-marker{display:none}
 .achdone summary::after{content:" +";color:rgba(255,255,255,.45)}
@@ -2196,7 +2183,8 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .mode-tab3 .bet .t3to b{font-size:24px;line-height:26px;color:#fff;font-variant-numeric:tabular-nums}
 /* проигрыш: сумма итога — нейтральная, не цветом ранга (зелёный — только выигрыш) */
 .fx.lost .fx-win b{background:none;-webkit-text-fill-color:rgba(255,255,255,.72);color:rgba(255,255,255,.72)}
-.mode-tab2 .chance{display:none}   /* в Арене шанс зависит от соперников — шанс ранга ничего не говорит */
 /* скрытое не работает: анимации в закрытых шторках и на закрытом экране крафта — на паузе; холст полноэкранного свечения вне крафта не рисуется */
 .drawer:not(.open) *,.fx:not(.on) *{animation-play-state:paused!important}
 .fx:not(.on) #fxGlow{visibility:hidden}
+.bet .t2ghost{position:absolute;margin:0;pointer-events:none}
+.mode-tab2 .bet{overflow:hidden}   /* число уезжает внутри плашки, не вылезая за её край */   /* старое число взноса при смене комнаты */
