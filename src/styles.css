@@ -1764,7 +1764,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 @media (prefers-reduced-motion:reduce){.sdban .sdb-n{animation:none}}
 .sdban{overflow:hidden!important;isolation:isolate}
 /* режимы — таблетки в самом низу, одно место на всех режимах */
-.modes{left:50%;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:45;display:flex;gap:4px;padding:3px;border-radius:999px;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.modes{left:50%;bottom:calc(8px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:45;display:flex;gap:4px;padding:3px;border-radius:999px;background:rgba(8,8,12,.82)}   /* без размытия фона: под ним анимируется свечение — размытие пересчитывалось каждый кадр */
 .modes button{padding:4px 14px;border-radius:999px;font-size:15px;line-height:20px;text-transform:uppercase;color:rgba(255,255,255,.72)}
 .modes button{position:relative;z-index:1;transition:color .25s}
 .modes button.on{color:#000}
@@ -2197,3 +2197,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 /* проигрыш: сумма итога — нейтральная, не цветом ранга (зелёный — только выигрыш) */
 .fx.lost .fx-win b{background:none;-webkit-text-fill-color:rgba(255,255,255,.72);color:rgba(255,255,255,.72)}
 .mode-tab2 .chance{display:none}   /* в Арене шанс зависит от соперников — шанс ранга ничего не говорит */
+/* скрытое не работает: анимации в закрытых шторках и на закрытом экране крафта — на паузе; холст полноэкранного свечения вне крафта не рисуется */
+.drawer:not(.open) *,.fx:not(.on) *{animation-play-state:paused!important}
+.fx:not(.on) #fxGlow{visibility:hidden}

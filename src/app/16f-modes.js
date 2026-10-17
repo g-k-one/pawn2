@@ -51,4 +51,4 @@ async function switchMode(next, dir = 1){
 modeBar.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b || S.busy && modeNow() === 'craft') return;
   const m = MODES().map(x => x[0]); switchMode(b.dataset.m, m.indexOf(b.dataset.m) > m.indexOf(modeNow()) ? 1 : -1); });
 renderModes();
-setInterval(renderModes, 300);   // режим мог смениться иначе (кнопка «Назад», конец боя) — подсветка догоняет
+setInterval(renderModes, 800);   // режим мог смениться иначе (кнопка «Назад», конец боя) — подсветка догоняет
