@@ -2181,3 +2181,6 @@ html[lang=en] .bcase.free::before{content:"Free"}
 @keyframes t3spk{0%,100%{opacity:0;transform:translateY(6px) scale(calc(var(--s) * .4))}50%{opacity:.9;transform:translateY(-8px) scale(var(--s))}}
 .lite .t3spk{display:none}
 .t3b-sp{position:absolute;width:14px;height:14px;pointer-events:none;z-index:6;filter:drop-shadow(0 0 4px #f3dca0)}
+/* ставки: фрактальная мандала за кругом зодиака — картинка, вращается навстречу кругу */
+.t3frac{position:absolute;left:50%;top:50%;width:360px;height:360px;margin:-180px 0 0 -180px;pointer-events:none;z-index:-2;opacity:.22;animation:zrot 240s linear infinite reverse;will-change:transform}
+.lite .t3frac{animation:none}

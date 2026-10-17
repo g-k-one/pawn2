@@ -4,7 +4,8 @@
    Карты: Ранг (тот, что выбран свайпом сверху), Солнце и Луна (чёт / нечет), Цифра (последняя, внутри — барабан),
    Звезда семи (есть 7), Пентаграмма (все разные), Близнецы (пара), Весы (зеркало).
    Сумма — кнопками «+0.1 … +5», как в крафте: одна на каждую выбранную карту; корзина — сначала сумму, потом карты.
-   В плашке — сумма × число карт. До 12 ставок за раунд. Фон — круг зодиака с глазом, медленно вращается (только поворот слоя).
+   В плашке — сумма × число карт. До 12 ставок за раунд. Фон — фрактальная мандала (картинка, отрисована один раз) и круг зодиака с глазом;
+   слои медленно вращаются навстречу друг другу (только поворот слоя — видеокарта), вокруг колоды мерцают искорки.
    Тап по наковальне — удар и раскрытие тикета (как крафт). Ядро ставок, лимиты, мок и доказательство — 16b-bets.js (домен "bets")
    ========================================================= */
 const isT3 = () => document.body.classList.contains('mode-tab3');
@@ -69,7 +70,7 @@ function t3Burst(el){ if (S.lite || !el) return; const r = el.getBoundingClientR
       { duration: 600 + Math.random() * 300, easing: 'cubic-bezier(.2,.8,.3,1)' }).onfinish = () => sp.remove(); } }
 const t3Board = (() => { const el = document.createElement('div'); el.className = 'abs t3b'; el.id = 't3Board';
   // круг зодиака крутится целиком отдельным слоем (видеокарта), глаз — свой слой поверх и стоит на месте
-  el.innerHTML = `<div class="t3zod" aria-hidden="true">${ZODIAC_SVG()}</div><div class="t3eye" aria-hidden="true">${EYE_SVG}</div><div class="t3spk" aria-hidden="true">${T3_SPARKS}</div><div class="t3deck" id="t3Deck"></div>`; $('bet').parentNode.insertBefore(el, $('prize')); return el; })();
+  el.innerHTML = `<img class="t3frac" src="assets/bets-fractal.webp" alt="" aria-hidden="true"><div class="t3zod" aria-hidden="true">${ZODIAC_SVG()}</div><div class="t3eye" aria-hidden="true">${EYE_SVG}</div><div class="t3spk" aria-hidden="true">${T3_SPARKS}</div><div class="t3deck" id="t3Deck"></div>`; $('bet').parentNode.insertBefore(el, $('prize')); return el; })();
 function ZODIAC_SVG(){
   // круг зодиака: 12 знаков (текстовые символы, не эмодзи), деления, звёзды; в центре — глаз
   const g = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'].map((z, i) => { const a = (i * 30 - 75) * Math.PI / 180;
