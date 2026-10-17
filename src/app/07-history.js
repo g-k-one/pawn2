@@ -61,7 +61,9 @@ function renderHist(detail){
     // комиссия за вывод NFT — отдельной строкой сразу под выводом (списание GRAM — своя операция)
     const L = S.hist.wallet.flatMap(w => w.type === 'nft' ? [w, { type: 'fee', t: w.t, amount: w.fee ?? OUT_FEE, name: w.name, num: w.num, model: w.model }] : [w]);
     const lab = { dep: $t("Пополнение"), nftin: $t("Депозит NFT"), nft: $t("Вывод NFT"), sell: $t("Продажа NFT"), restore: $t("Восстановление дня"), fee: $t("Комиссия за вывод") };
-    b.innerHTML = L.length ? L.map(w => { const dep = w.type === 'dep' || w.type === 'sell' || w.type === 'nftin', c = dep ? '#12D53D' : '#F57A37';
+    b.innerHTML = L.length ? L.map(w => { if (w.type === 'xp') return hline('#F57A37', $t("Опыт за игры"), w.day === xpDay() ? $t("сегодня") : new Date(w.day + 'T12:00:00').toLocaleDateString(LOC, { day: 'numeric', month: 'short' }),
+        hpic('assets/xp.webp'), $t("Оборот {0} GRAM", fmt(w.turn)), $t("0.5 XP за 1 GRAM"), '+' + fmt(w.xp), 'XP', '#F57A37', svg('<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.3l6-.7z"/>'));
+      const dep = w.type === 'dep' || w.type === 'sell' || w.type === 'nftin', c = dep ? '#12D53D' : '#F57A37';
       return hline(c, lab[w.type], tAgo(w.t), w.img ? hpic(w.img, w.bg) : hpic('assets/gem-small.svg'),
         w.name ? w.name + (w.num ? ' #' + w.num : '') : (w.type === 'restore' ? $t("День недели") : $t("На баланс")), [w.model, w.status && retitle(w.status) !== $t("выполнено") ? `<i class="pend">${retitle(w.status)}</i>` : ''].filter(Boolean).join(' · '), w.amount != null ? (dep ? '+' : '−') + fmt(w.amount) : w.value ? '≈' + fmt(w.value) : 'NFT', w.amount != null || w.value ? 'GRAM' : '', dep ? '#12D53D' : '#F57A37', `${svg(w.type === 'restore' ? '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M9.5 15l2 2 3.5-4"/>' : dep ? '<path d="M12 5v14M5 12l7 7 7-7"/>' : '<path d="M12 19V5M5 12l7-7 7 7"/>')}`); }).join('') : `<p class="hempty">${$t("Операций пока нет")}</p>`;
   } else {

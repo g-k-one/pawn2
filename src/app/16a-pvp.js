@@ -470,7 +470,7 @@ function pvpLoseDrop(r){
   $('fx').classList.add('pvpl', 'lost');
   $('fxBtns').innerHTML = `<button class="btn-main" id="pvpAgain">${$t("Вернуться")}</button>` + PF_LINK;
   $('fx').classList.add('done');
-  if (!S.demo){ logCraft(r, 'lose'); addXp(p.fee * .5); }
+  if (!S.demo){ logCraft(r, 'lose'); xpTurn(p.fee); }
   $('pvpAgain').onclick = backToArena;
   if ($('pvpBack')) $('pvpBack').onclick = async () => { if (pvpLoseDrop.on) return; pvpLoseDrop.on = true; haptic(); await closeFx(); CRAFT.classList.remove('busy'); S.busy = false; pvpLoseDrop.on = false; restartAuto(); };
   $('fxPfIn').onclick = () => openPF(r);

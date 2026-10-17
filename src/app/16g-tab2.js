@@ -189,8 +189,8 @@ function t2Seats(quiet){
     el.className = 'ar-seat ' + (x ? 'taken' : 'empty'); el.innerHTML = x ? pvpAva(x) + `<small>${x.who}</small>` : T2_HELM;
     if (x && !S.lite && !t2Hidden() && !quiet){ el.animate([{ scale: .3, opacity: 0 }, { scale: 1.15, opacity: 1, offset: .6 }, { scale: 1 }], { duration: 420, easing: 'cubic-bezier(.3,1.5,.5,1)' }); Sfx.coin(); haptic('light'); } }
 }
-// кнопка подарков в tab2 — «Честность»: щит с галочкой, открывает правила комнаты и хеш её зерна
-$('giftBtn').insertAdjacentHTML('beforeend', `<svg class="t2shield" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 12.5l10 4v7.5c0 5.6-4 9.6-10 12-6-2.4-10-6.4-10-12v-7.5z" stroke="#fff" stroke-width="2.66667" stroke-linejoin="round"/><path d="M19.5 24.5l3 3 6-6" stroke="#fff" stroke-width="2.66667" stroke-linecap="round" stroke-linejoin="round"/></svg>`);
+// кнопка подарков в tab2 и tab3 — «Честность»: значок «i» в круге, открывает правила комнаты и хеш её зерна
+$('giftBtn').insertAdjacentHTML('beforeend', `<svg class="t2shield" viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="24" cy="24" r="12.5" stroke="#fff" stroke-width="2.66667"/><circle cx="24" cy="17.9" r="1.8" fill="#fff"/><path d="M24 22.6v8" stroke="#fff" stroke-width="2.66667" stroke-linecap="round"/></svg>`);
 $('giftBtn').addEventListener('click', e => { if (!isT2()) return; e.stopImmediatePropagation(); if (!t2Room) return;
   const v = pvpView; pvpView = t2Room; try { arenaRules(); } finally { pvpView = v; } }, true);
 // экран проигрыша: «Снова на арену» — просто закрыть итог, арена и есть tab2; «На главную» — закрыть и перейти на крафт

@@ -644,7 +644,7 @@ async function finish(r, how){
   else if (how === 'sell') add += r.nft.value;
   else INV = [{ ...r.nft, id: 'g' + Date.now() }, ...INV];
   haptic('medium'); if (add > 0) Sfx.coin();
-  if (!S.demo){ API.claimCraft(r, how); logCraft(r, how); bumpTasks(r); addXp(r.stake * .5); setTimeout(checkAch, 1200); }
+  if (!S.demo){ API.claimCraft(r, how); logCraft(r, how); bumpTasks(r); xpTurn(r.pvp ? r.pvp.fee : r.stake); setTimeout(checkAch, 1200); }
   renderBet();
   if (r.super){                                               // приз крафта получен — и сверху ещё супер дроп
     if (add > 0) moveBal(add);

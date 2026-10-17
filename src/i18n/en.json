@@ -698,5 +698,9 @@
  "Крафты, арены и ставки": "Crafts, arenas and bets",
  "поставлено {0} GRAM · вернулось {1}%": "staked {0} GRAM · returned {1}%",
  "до {0}": "up to {0}",
- "выигрыш": "win"
+ "выигрыш": "win",
+ "Опыт за игры": "XP from games",
+ "сегодня": "today",
+ "Оборот {0} GRAM": "Turnover {0} GRAM",
+ "0.5 XP за 1 GRAM": "0.5 XP per 1 GRAM"
 }

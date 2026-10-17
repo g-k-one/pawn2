@@ -214,7 +214,7 @@ async function t3Finish(r, how){
   const add = r.nft ? (how === 'sell' ? r.nft.value : 0) + (r.change || 0) : r.win;
   if (r.nft && how !== 'sell') INV = [{ ...r.nft, id: 'g' + Date.now() }, ...INV];
   haptic('medium'); if (add > 0) Sfx.coin();
-  if (!S.demo){ logCraft(r, r.nft ? how : 'bets'); addXp(r.stake * .5); }
+  if (!S.demo){ logCraft(r, r.nft ? how : 'bets'); xpTurn(r.stake); }
   await closeFx(); $('fx').classList.remove('btspin');
   if (add > 0) moveBal(add);
   if (r.nft) notify({ type: 'ok', img: r.nft.nft.src, title: how === 'sell' ? $t("Продано: +{0} GRAM", fmt(add)) : `${r.nft.nft.name} ${$t("в инвентаре")}`, text: r.change > 0 && how !== 'sell' ? $t("На баланс +{0} GRAM", fmt(r.change)) : $t("Выигрыш ставок") });
