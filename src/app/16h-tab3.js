@@ -188,7 +188,7 @@ const _betsAfter3 = betsAfter;
 betsAfter = async r => {
   if (!isT3()) return _betsAfter3(r);
   await betsChipsReveal(r);
-  const won = r.bets.filter(b => b.won), line = fxStats([[$t("Ставка"), fxGv(r.stake), 'g'], [$t("Сбылось"), $t("{0} из {1}", won.length, r.bets.length)], fxChange(r)]);
+  const won = r.bets.filter(b => b.won), line = fxStats([[$t("Ставка"), fxGv(r.stake), 'g'], [$t("Сбылось"), $t("{0} из {1}", won.length, r.bets.length)], fxWinCol(r), fxChange(r)]);
   $('fxPvp').innerHTML = '';
   await showDrop(r);
   $('fx').classList.toggle('lost', !(r.win > 0));   // приз всегда обычного размера: полоски ставок на итоге нет — ужимать нечего

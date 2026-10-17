@@ -134,7 +134,7 @@ function showPrize(dir = 0){
     d.className = instant ? 'drop still' : 'drop';
     d.style.cssText = `--z0:${z0};left:${L.x}px;top:${L.y}px;width:${L.s}px;height:${L.s}px;--dl:${(dir ? .06 : .12 + i * .09).toFixed(2)}s;--sw:${L.sw}s;--sd:${(-i * 1.3).toFixed(1)}s;--r0:${L.r[0]}deg;--r1:${L.r[1]}deg`;
     d.innerHTML = it.skel ? `<div class="sway"><div class="tw dskel"><img src="assets/empty-gem.webp" alt=""></div></div>` : `<div class="sway"><div class="tw"><img src="${it.img}" alt="${it.name || ''}"><span class="gl" style="--m:url('${it.img}')"><i></i></span></div></div>` +
-      (it.price ? `<span class="tag"><img src="assets/gem-small.svg" alt="">${it.price}</span>` : '');
+      (it.price ? `<span class="tag"><i class="gm"></i>${it.price}</span>` : '');
     box.appendChild(d);
     if (!it.skel){ Tilt.add(d.querySelector('.tw'), d.querySelector('.tw img'), d.querySelector('.gl i'), .7); if (it.model) upgradeImg(d.querySelector('.tw img'), it, d.querySelector('.gl')); }
   });

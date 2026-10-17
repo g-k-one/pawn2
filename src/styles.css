@@ -2826,5 +2826,82 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .fx-stats small{font-size:12.5px;line-height:16px;text-transform:uppercase;letter-spacing:.04em;color:rgba(255,255,255,.72)}
 .fx-win .fx-stats b{display:flex;align-items:center;gap:4px;font-size:22px;line-height:26px;background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#fff}
 .fx-stats b img{width:17px;height:auto}
-.fx-stats .g b{color:var(--blue)}
+.fx-stats .g b{color:#fff}   /* ставка и банк в колонках — белым, как остальные значения; зелёным — только выигрыш и сдача */
 .fx-stats .pos b{color:#12D53D}
+.fx-stats:has(>div:nth-child(4)){gap:16px}   /* четыре колонки (с NFT) — плотнее, чтобы влезли в ширину */
+.fx-stats{margin-top:10px}
+.fx-stats small{font-size:14px;line-height:18px}
+.fx-win .fx-stats b{font-size:25px;line-height:30px}
+.fx-stats b img{width:19px}
+/* гем в подписи под призом — того же цвета, что и сумма (синий гем у синей, зелёный у зелёной) */
+.fx-stats .gm{display:inline-block;width:20px;height:17px;flex:none;background:currentColor;-webkit-mask:url(assets/gem-small.svg) center/contain no-repeat;mask:url(assets/gem-small.svg) center/contain no-repeat}
+/* маленький гем рядом с числом — того же цвета, что и число (рисунок цветом текста). Крупные цветные иконки-плитки (история, плашка ставки) — без изменений */
+i.gm{display:inline-block;flex:none;width:.9em;height:.76em;margin-right:.14em;vertical-align:-.04em;font-style:normal;background:currentColor;-webkit-mask:url(assets/gem-small.svg) center/contain no-repeat;mask:url(assets/gem-small.svg) center/contain no-repeat}
+i.gm.gb{color:var(--blue)}
+i.gm.gp{color:#12D53D}
+.hchip i.gm{width:22px;height:19px;margin:0}
+.fx-stats i.gm{margin-right:0}
+/* зрители Арены мерцают заметнее: гаснут полностью и чаще */
+@keyframes t2fan{0%,100%{opacity:1}35%,65%{opacity:0}}
+.t2fan{animation-duration:4.6s}
+.t2fan.f1{animation-duration:5.4s;animation-delay:-2s}
+.t2fan.f2{animation-duration:6.2s;animation-delay:-3.7s}
+/* список игроков Арены: шапка колонками, «ушло» — оранжевым с гемом, «пришло» — зелёным */
+.tb2.neg{color:#F57A37;font-weight:700}
+.pvls .fx-stats{margin:2px 0 8px;gap:22px}
+.pvls .fx-stats small{font-size:12.5px;line-height:16px}
+.pvls .fx-stats b{display:flex;align-items:center;gap:4px;font-size:19px;line-height:24px;color:#fff}
+.pvls .fx-stats .g b{color:#fff}   /* ставка и банк в колонках — белым, как остальные значения; зелёным — только выигрыш и сдача */
+.pvl-nft{display:flex;align-items:center;gap:8px}
+.pvl-nft>.tb2{flex-direction:row;align-items:center}
+/* список игроков Арены: без мест и заголовка; проиграл — серым; NFT победителя — две строки (NFT · сдача) */
+.tb2.lost{color:rgba(255,255,255,.5);font-weight:700}
+.pvl-v{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.pvl-v b{display:flex;align-items:center;gap:4px;font-size:17px;line-height:20px;color:#12D53D}
+.pvl-v b.ch{font-size:14px;line-height:17px;color:rgba(18,213,61,.85)}
+.pvl-v small{font-size:12.5px;color:rgba(255,255,255,.72);text-transform:uppercase;margin-right:2px}
+.pvls .fx-stats{margin-top:4px}
+.pvls .fx-stats{padding-bottom:12px;margin-bottom:2px;border-bottom:1px solid rgba(255,255,255,.08)}   /* разделитель под шапкой */
+.pvls .trow:last-child{border-bottom:0!important}   /* под последним игроком линии нет */
+/* где число белое — гем рядом тоже белый и плоский (без градиента): плашка ставки во всех режимах, «Общий банк» / «Ставки» на раскрытии */
+.bet>img[src$="ton.svg"],.pvp-bank b img,.ar-bank b img,.ar-fee img{content:url(assets/gem-white.svg);filter:none!important}
+/* победитель Арены с NFT: картинка подарка с ценником (цена NFT), рядом — общий выигрыш */
+.pvl-pic{position:relative;flex:none}
+.pvl-pic em{position:absolute;left:50%;bottom:-6px;translate:-50% 0;padding:0 6px;border-radius:99px;background:rgba(0,0,0,.72);font-style:normal;font-size:12.5px;line-height:16px;font-weight:700;color:#fff;white-space:nowrap}
+/* под крупной суммой — разделитель и воздух перед колонками */
+.fx-win b+.fx-stats{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);width:min(320px,100%);margin-left:auto;margin-right:auto}
+/* Арена: победитель — отдельный блок над списком */
+.pvl-winb{margin:6px 0 4px;padding:8px 12px 2px;border-radius:18px;background:rgba(18,213,61,.08);box-shadow:inset 0 0 0 1px rgba(18,213,61,.3)}
+.pvl-winb>small{display:block;font-size:12.5px;line-height:16px;text-transform:uppercase;letter-spacing:.04em;color:#12D53D}
+.pvl-winb .trow{border-bottom:0!important}
+.pvl-winb .trow+.trow{border-top:1px solid rgba(255,255,255,.06)!important}
+/* Арена: блок победителя сверху; вторая строка — NFT и колонки «NFT · Сдача» */
+.pvl-winb{margin:2px 0 10px}
+.pvl-prize{display:flex;align-items:center;gap:12px;padding:8px 0 10px;border-top:1px solid rgba(255,255,255,.06)}
+.pvl-prize>img{width:46px;height:46px;flex:none;border-radius:14px;object-fit:contain}
+.pvl-prize .tn{flex:1;min-width:0}
+.pvl-prize .tn b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pvl-prize .fx-stats{margin:0;padding:0;border:0;gap:16px}
+.pvl-prize .fx-stats b{display:flex;align-items:center;gap:4px;font-size:18px;line-height:22px}
+.pvl-prize .fx-stats .pos b{color:#12D53D}
+.pvl-prize .fx-stats small{font-size:12.5px;line-height:16px}
+/* победитель в списке: третья строчка — из чего выигрыш (NFT · сдача), зелёным */
+.pvls .tn small.pvl-parts{display:flex;align-items:center;gap:3px;color:#12D53D;font-weight:700}
+.pvls .tn small.pvl-parts i.gm{width:12px;height:10px;margin:0 1px 0 2px}
+.pvls .fx-stats{gap:32px}
+.fx-win .fx-stats{gap:32px}
+.fx-win .fx-stats:has(>div:nth-child(4)){gap:24px}
+/* победитель Арены с NFT: справа две строки зелёным — цена NFT и сдача */
+.pvl-v2{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.pvl-v2 b{display:flex;align-items:center;gap:4px;font-size:17px;line-height:20px;font-weight:700;color:#12D53D}
+.pvl-v2 i.gm{margin:0}
+/* Арена в истории: игроки — разделом внутри карточки, строками-плашками, как остальные разделы подробностей */
+.hdet .pvls{margin:0;padding:0;background:none;box-shadow:none;border-radius:0}
+.hdet .pvls .fx-stats{margin:0 0 8px;padding:10px 0;border-radius:16px;border:0;background:rgba(255,255,255,.05)}
+.hdet .pvls .trow{margin:0;padding:8px;border:0!important;border-radius:16px;background:rgba(255,255,255,.05)}
+.hdet .pvls .trow+.trow{margin-top:6px}
+/* колонки «подпись / значение»: равной ширины, подписи — таблетками (не сливаются со значениями) */
+.fx-stats{display:grid!important;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px!important;width:min(340px,100%);margin-left:auto;margin-right:auto}
+.fx-stats>div{gap:6px;min-width:0}
+.fx-stats small{padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.08);letter-spacing:0;white-space:nowrap}
+.pvl-prize .fx-stats{width:auto}

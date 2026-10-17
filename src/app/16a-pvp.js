@@ -443,20 +443,28 @@ function pvlList(p, r){
   let el = $('fxPl'); if (!el){ el = document.createElement('div'); el.className = 'fx-pl'; el.id = 'fxPl'; $('fxWin').after(el); }
   el.innerHTML = pvlHTML(p, r);
 }
-const pvlHTML = (p, r) => `<div class="sect pvls"><div class="sect-h"><span><b>${$t("Игроки")}</b><small>${$t("Крафт на банк {0} GRAM", fmt(p.share ?? p.bank))} · x${fmt(r.mult)}${p.ties > 1 ? ' · ' + $t("ничья") : ''}</small></span></div>` +
-    [...p.players].sort((a, b) => a.dist - b.dist).map((x, i) => `<div class="trow${x.me ? ' me' : ''}"><em class="${i < 3 ? 'm' + i : ''}">${i + 1}</em>${pvpAva(x)}` +
-      `<span class="tn"><b>${x.me ? $t("Ты") : '@' + x.who}</b><small>${$t("тикет")} <i class="tkc" style="color:${tierOfN(x.guess).c}">${tk(x.guess)}</i> · ±${x.dist.toLocaleString(LOC)}</small></span>` +
-      pvlWin(x, p, r) + `</div>`).join('') + `</div>`;
-// итог в строке: проиграл — −взнос; победил — NFT (картинка, цена, под ней сдача) или +GRAM
+// шапка — колонками, как подпись под призом: Банк (при ничьей — доля) · Множитель · Игроков
+// победитель — отдельным блоком над списком (аватар, ник, тикет, приз); остальные — списком ниже
+// игрок строкой: аватар, ник, тикет и расстояние; справа — итог
+const pvlRow = (x, p, r) => { const nft = x.win ? (x.me ? r.nft : p.winNft) : null, ch = x.me ? r.change : p.winChange;
+  return `<div class="trow${x.me ? ' me' : ''}${x.win ? ' win' : ''}">${pvpAva(x)}` +
+    `<span class="tn"><b>${x.me ? $t("Ты") : '@' + x.who}</b><small>${$t("тикет")} <i class="tkc" style="color:${tierOfN(x.guess).c}">${tk(x.guess)}</i> · ±${x.dist.toLocaleString(LOC)}</small>` +
+    `</span>` + pvlWin(x, p, r) + `</div>`; };
+// сверху — статистика боя (Бой · Банк · Множитель · Игроков), ниже все игроки по близости к тикету — победитель первым
+const pvlHTML = (p, r) => `<div class="sect pvls">` +
+    fxStats([p.no ? [$t("Арена"), '#' + p.no.toLocaleString(LOC)] : null, [p.ties > 1 ? $t("Доля банка") : $t("Банк"), fxGv(p.share ?? p.bank)], [$t("Множитель"), 'x' + fmt(r.mult)], [$t("Игроков"), String(p.players.length)]]) +
+    [...p.players].sort((a, b) => a.dist - b.dist).map(x => pvlRow(x, p, r)).join('') + `</div>`;
+// итог в строке: проиграл — взнос серым; победил — общий выигрыш зелёным (с NFT — и картинка подарка)
 function pvlWin(x, p, r){
-  if (!x.win) return `<span class="tb2 x">−${fmt(p.fee)}</span>`;
+  if (!x.win) return `<span class="tb2 lost"><i class="gm"></i>${fmt(p.fee)}</span>`;
   const nft = x.me ? r.nft : p.winNft, ch = x.me ? r.change : p.winChange;
-  if (nft) return `<span class="pvl-nft"><span><b>+${fmt(nft.value)}</b><small>NFT</small></span><img src="${nft.nft.src}" alt="" style="background:linear-gradient(160deg,${nft.a},${nft.b})"></span>`;   // как в истории: сумма, потом картинка
-  return `<span class="tb2 pos"><img src="assets/gem-small.svg" alt="">+${fmt(x.me ? r.win : (p.winPay ?? 0))}</span>`;
+  // NFT — справа две строки зелёным: цена подарка и сдача, рядом картинка
+  if (nft) return `<span class="pvl-nft"><span class="pvl-v2"><b><i class="gm"></i>${fmt(nft.value)}</b>${ch > 0 ? `<b><i class="gm"></i>${fmt(ch)}</b>` : ''}</span><img src="${nft.nft.src}" alt="" style="background:linear-gradient(160deg,${nft.a},${nft.b})"></span>`;
+  return `<span class="tb2 pos"><i class="gm"></i>${fmt(x.me ? r.win : (p.winPay ?? 0))}</span>`;
 }
 // выигрыш: обычный экран дропа (приз крупно — и GRAM, и NFT); под суммой — на что был крафт. Все игроки — в истории
 function pvpWinDrop(r){
-  const p = r.pvp, st = fxStats([[p.ties > 1 ? $t("Доля банка") : $t("Банк"), fxGv(p.share), 'g'], [$t("Множитель"), 'x' + fmt(r.mult)], fxChange(r)]);
+  const p = r.pvp, st = fxStats([[p.ties > 1 ? $t("Доля банка") : $t("Банк"), fxGv(p.share), 'g'], [$t("Множитель"), 'x' + fmt(r.mult)], fxWinCol(r), fxChange(r)]);
   const old = $('fxWin').querySelector('.fx-stats'); if (old) old.outerHTML = st; else $('fxWin').insertAdjacentHTML('beforeend', st);
 
 }

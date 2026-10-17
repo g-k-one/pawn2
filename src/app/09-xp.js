@@ -22,7 +22,7 @@ function rankBar(xp){
   const i = rankOf(xp), nx = RANKS[i + 1], k = nx ? (xp - RANKS[i][1]) / (nx[1] - RANKS[i][1]) : 1;
   return `<div class="rkbar" data-go="top">${XPI}<div><span><b>${RANKS[i][0]}</b>${nx ? `${xpFmt(xp)} / ${xpFmt(nx[1])} XP` : `${xpFmt(xp)} ${$t("XP · максимум")}`}</span><i><b style="width:${(k * 100).toFixed(1)}%"></b></i>${nx ? `<small>${$t("до звания «{0}»", nx[0])}</small>` : ''}</div></div>`;
 }
-const rewHTML = rw => rw.g != null ? `<img src="assets/gem-small.svg" alt="">+${rw.g}` : `${XPI}+${rw.xp}`;
+const rewHTML = rw => rw.g != null ? `+<i class="gm"></i>${rw.g}` : `${XPI}+${rw.xp}`;
 const rewText = rw => rw.g != null ? `+${rw.g} GRAM` : `+${rw.xp} XP`;
 function grant(rw){ if (rw.g != null) setBalance(S.balance + rw.g); if (rw.xp) addXp(rw.xp); }
 

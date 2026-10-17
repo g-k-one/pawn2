@@ -76,7 +76,11 @@ CB.insertAdjacentHTML('beforeend', `<img class="t2lockico" src="assets/lock.svg"
 const _craftClick = $('craft').onclick;
 $('craft').onclick = async () => {
   if (!isT2()) return _craftClick();
-  if (t2Me() || t2Joining || !t2Room){ if (hamAnim) settle(); return; }
+  if (t2Joining || !t2Room){ if (hamAnim) settle(); return; }
+  // уже в комнате: тап по кнопке или плашке — короткое напоминание, как выиграть, и сколько до старта (кнопка отзывается толчком)
+  if (t2Me()){ if (hamAnim) settle(); haptic('light'); CB.animate([{ scale: 1 }, { scale: .92 }, { scale: 1 }], { duration: 220, easing: 'ease-out' });
+    const left = t2End ? Math.max(0, Math.ceil((t2End - Date.now()) / 1000)) : 0;
+    notify({ type: 'info', icon: 'fire', key: 't2wait', title: left ? $t("Ты в бою · старт через 0:{0}", String(left).padStart(2, '0')) : $t("Ты в бою"), text: $t("Чей тикет окажется ближе — тот крафтит на весь банк") }); return; }
   if (t2Locked() || t2Full()){ if (hamAnim) settle(); haptic('rigid'); notify({ type: 'err', icon: 'fire', title: t2Full() ? $t("Арена заполнена") : $t("Комната уже стартует"), text: $t("Следующая откроется сразу после старта") }); return; }
   strike(.6, REST + 8).then(settle);   // удар мечом по щиту — как молотом по наковальне на крафте
   if (t2Fee > S.balance){ haptic('rigid'); notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM"), text: $t("Пополни баланс — тапни по нему сверху") }); return; }
@@ -95,7 +99,9 @@ function t2Change(){ if (!t2Me() || t2Locked()) return; clearTimeout(t2Change.t)
 const T2_GLOW = ['#ff5a1f', '#b8280a', '#ff9a5c', '#ffd2b8'];
 let t2Glow = false;   // FullGlow объявлен позже (18-glow-start) — подменяем при первом входе в tab2
 function t2GlowPatch(){ if (t2Glow) return; t2Glow = true; const set = FullGlow.set;
-  FullGlow.set = (c, now) => set(isT2() && (c === NEUTRAL || now === true) ? T2_GLOW : c, now); }   // только старт крафта; цвета рангов при раскрытии — свои
+  // только старт боя (NEUTRAL или мгновенная установка) — цвета арены; цвета рангов при раскрытии — свои.
+  // Цвета рамки панели (closeFx при возврате с итога) не подменяем — иначе в момент подмены рамка перекрашивалась
+  FullGlow.set = (c, now, tau) => set(isT2() && (c === NEUTRAL || (now === true && c !== Glow.get())) ? T2_GLOW : c, now, tau); }
 
 /* колесо тикета внизу — как в PvP, только проще: цельный круг, ранг — 72°, цвет — градиент плашки шанса этого ранга.
    Дуга проходит под круглыми кнопками, не задевая их. Стрелка — белый треугольник от низа плашки ставки */
@@ -168,7 +174,7 @@ const T2_CROWD = (() => {
       const dot = `<circle cx="${x}" cy="${y}" r="${(3 + R() * 1.2).toFixed(1)}" fill="${cols[Math.floor(R() * cols.length)]}"`;
       // живые зрители и вспышки — в своём слое без маски: их мерцание не заставляет телефон каждый кадр пересобирать замаскированные трибуны.
       // Таять к краям им помогает своя прозрачность — ровно та, что дала бы маска трибун в этой точке (см. .t2art в styles.css)
-      const ma = t2MaskAt(+x, +y), lv = R() < .12, fl = R() < .02;
+      const ma = t2MaskAt(+x, +y), lv = R() < .3, fl = R() < .03;   // мерцает почти треть зрителей — заметно
       if (lv && ma > .05) live[nl++ % 3] += `${dot} opacity="${(op * ma).toFixed(2)}"/>`; else s += dot + '/>';
       if (fl && ma > .05) flash[nf++ % 2] += `<circle cx="${x}" cy="${y}" r="6" fill="#fff" opacity="${ma.toFixed(2)}"/>`; }
     s += `</g>`; }
@@ -208,16 +214,17 @@ $('giftBtn').addEventListener('click', e => { if (!isT2()) return; e.stopImmedia
   const v = pvpView; pvpView = t2Room; try { arenaRules(); } finally { pvpView = v; } }, true);
 // экран проигрыша: «Снова на арену» — просто закрыть итог, арена и есть tab2; «На главную» — закрыть и перейти на крафт
 const _backToArena = backToArena, _pvpLoseDrop = pvpLoseDrop;
-const t2Close = async () => { haptic(); await closeFx(); CRAFT.classList.remove('busy'); S.busy = false; t2Sync(); };
+// новую комнату грузим, пока экран итогов ещё закрывает арену: иначе при возврате на миг видна сыгранная (серая, закрытая) комната
+const t2Close = async () => { haptic(); await Promise.race([Promise.resolve(t2Sync()), wait(450)]); t2Show(); t2ArrowsSync(); await closeFx(); CRAFT.classList.remove('busy'); S.busy = false; t2Sync(); };
 backToArena = () => isT2() ? t2Close() : _backToArena();
 pvpLoseDrop = r => { _pvpLoseDrop(r); };
 // тикет зафиксирован — свайп по рангам на сцене не начинается (иначе полоска под рангами тянулась за пальцем)
 $('scene').addEventListener('pointerdown', e => { if (isT2() && t2Locked() && !e.target.closest('button:not(.tier), .bar, .bet, #t2Wheel')){ e.stopImmediatePropagation(); haptic('rigid'); } }, true);
 
-// стрелки комнат: пока ты в комнате — скрыты (ты всегда в одной комнате, бой не теряется); по краям — тусклые
+// стрелки комнат: ∨ дешевле, ∧ дороже — как барабан взноса (вверх — дороже). Пока ты в комнате — скрыты (ты всегда в одной комнате, бой не теряется); по краям — тусклые
 const t2Arrows = (() => {
-  const mk = (id, d) => { const b = document.createElement('button'); b.className = 'abs t2arr'; b.id = id; b.setAttribute('aria-label', d < 0 ? $t("Назад") : $t("Дальше"));
-    b.innerHTML = svg(d < 0 ? '<path d="M15 5l-7 7 7 7"/>' : '<path d="M9 5l7 7-7 7"/>'); b.onclick = () => t2Room2(d); $('bet').parentNode.appendChild(b); return b; };
+  const mk = (id, d) => { const b = document.createElement('button'); b.className = 'abs t2arr'; b.id = id; b.setAttribute('aria-label', d < 0 ? $t("Дешевле") : $t("Дороже"));
+    b.innerHTML = svg(d < 0 ? '<path d="M5 9l7 7 7-7"/>' : '<path d="M5 15l7-7 7 7"/>'); b.onclick = () => t2Room2(d); $('bet').parentNode.appendChild(b); return b; };
   return [mk('t2Prev', -1), mk('t2Next', 1)];
 })();
 function t2ArrowsSync(){ const i = PVP_FEES.indexOf(t2Fee), hide = t2Me() || t2Locked() || t2Go;

@@ -40,9 +40,9 @@ function cardHTML(g, w, big){
   const num = '#' + g.num.toLocaleString(LOC);
   return `<div class="nc${big ? ' big' : ''}" style="--w:${w}px;--a:${g.a};--b:${g.b};--p:${g.p}"><div class="nc-t"><div class="nc-bg"></div><span class="nc-patw"><span class="nc-pat${sy && SYM_OK.has(sy) ? ' sym' : ''}"${sy ? ` data-sym="${sy}"${SYM_OK.has(sy) ? ` style="--symimg:${symImg(sy).replace(/"/g, '&quot;')}"` : ''}` : ''}></span></span>` +
     (big ? '' : `<span class="nc-num">${num}</span>`) + `<img class="nc-img" src="${g.nft.card || g.nft.src}" alt="${g.nft.name}" decoding="async"><span class="nc-gl"><i></i></span>` +
-    (big ? `<span class="nc-cap"><b>${g.nft.name}</b><small>${g.skin} · ${num}</small></span>` : `<span class="nc-pr"><img src="assets/gem-small.svg" alt="">${fmt(g.value)}</span>`) + '</div></div>';
+    (big ? `<span class="nc-cap"><b>${g.nft.name}</b><small>${g.skin} · ${num}</small></span>` : `<span class="nc-pr"><i class="gm"></i>${fmt(g.value)}</span>`) + '</div></div>';
 }
-const priceHTML = v => `<img src="assets/gem-small.svg" alt="">${fmt(v)}`;
+const priceHTML = v => `<i class="gm"></i>${fmt(v)}`;
 const tiltCard = (root, k) => Tilt.add(root.querySelector('.nc-t'), root.querySelector('.nc-img'), root.querySelector('.nc-gl i'), k, root.querySelector('.nc-pat'));
 
 /* ---------- гифты в крафте: 1-й слева (меньше), 2-й справа. Тап — убрать ---------- */

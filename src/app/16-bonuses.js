@@ -9,7 +9,7 @@ function openCases(tab){ if (tab){ casesTab = tab === 'tasks' ? 'today' : tab; i
 // баннер супер дропа: слева — что делать и тикет крупно, справа — сам приз крупно со свечением и ценой
 const sdBanner = () => `<button class="sdban" data-go="super"><span class="sdb-t"><small>${$t("Супер дроп")}</small><b>${tk(SUPER.target)}</b>` +
   `<em>${$t("Выбей этот тикет первым — NFT твой")}</em></span>${SUPER.nft ? `<img class="sdb-n" src="${SUPER.nft.nft.src}" alt="">` : ''}</button>`;
-const GEM_S = '<img class="gm" src="assets/gem-small.svg" alt="">';
+const GEM_S = '<i class="gm"></i>';
 const backRow = (k, t) => `<button class="bback" data-go="${k}">${svg('<path d="M15 5l-7 7 7 7"/>')}${t}</button>`;
 // бесплатные кейсы: txt — короткая подпись на карточке, how — что сделать (в описании кейса), lock — текст на кнопке, пока закрыт
 const caseState = c => {
@@ -26,7 +26,7 @@ function caseCard(c){
   return `<div class="bcase${free ? ' free' : ''}" style="--c:${c.c}" data-info="${c.id}">${st.n > 1 ? `<em class="stk">×${st.n}</em>` : ''}${caseArt(c)}<b>${c.short}</b>` +
     (free ? `<small>${st.txt}</small><i class="prog"><b style="width:${Math.round(st.k * 100)}%"></b></i>` : `<small>${$t("NFT до {0} GRAM", RARE_TO)}</small>`) +
     // кнопка с ценой ведёт на страницу кейса (там «Открыть за N GRAM»), чтобы GRAM не списывались одним случайным тапом; бесплатный — открывается сразу
-    `<button class="cbuy${free && !st.ok ? ' locked' : ''}" ${free ? 'data-open' : 'data-info'}="${c.id}">${free ? (st.ok ? $t("Открыть") : st.lock) : `<img src="assets/gem-small.svg" alt="">${fmt(c.price)}`}</button></div>`;
+    `<button class="cbuy${free && !st.ok ? ' locked' : ''}" ${free ? 'data-open' : 'data-info'}="${c.id}">${free ? (st.ok ? $t("Открыть") : st.lock) : `<i class="gm"></i>${fmt(c.price)}`}</button></div>`;
 }
 const achRow = ([id, t, rw, ok, act, prog]) => {
   const done = !!S.ach.got[id], pr = !done && prog ? prog() : null;
@@ -70,13 +70,13 @@ function renderCases(){
   } else if (casesTab === 'refs'){
     b.innerHTML = seg + `<div class="refpct"><div><b>10%</b><small>${$t("от первого депозита")}</small></div><div><b>5%</b><small>${$t("от активности")}</small></div></div>` +
       `<a class="banner amb" data-act="amb"><span><b>${$t("Программа для амбассадоров")}</b><small>${$t("больше процент для блогеров и комьюнити")}</small></span><img src="assets/referrals.webp" alt=""></a>` +
-      `<div class="refbox rgap"><div class="refrow"><span>${svg(IC.users)} ${$t("Друзей:")} <b>${REF.friends.length}</b></span><span class="g"><img src="assets/gem-small.svg" alt="">${fmt(REF.total)}</span></div>` +
+      `<div class="refbox rgap"><div class="refrow"><span>${svg(IC.users)} ${$t("Друзей:")} <b>${REF.friends.length}</b></span><span class="g"><i class="gm"></i>${fmt(REF.total)}</span></div>` +
       `<div class="reflink"><code>${REF.link.replace('https://', '')}</code><button class="pill-btn" data-act="copyref">${$t("Копировать")}</button></div></div>` +
       // начисление за друзей: заголовок и «История» в одной строке сверху, сумма крупно, ниже — за что и когда следующее
       `<div class="refauto"><div class="ra-h"><b>${$t("Начислено вчера")}</b><button class="pill-btn" data-act="refhist">${$t("История")}</button></div>` +
-      `<div class="ra-v"><img src="assets/gem-small.svg" alt="">+${fmt(REF.pending)}<small>GRAM</small></div><p>${$t("5% от активности друзей. Начисляется само — каждый день в 00:00 МСК")}</p></div>` +
+      `<div class="ra-v">+<i class="gm"></i>${fmt(REF.pending)}<small>GRAM</small></div><p>${$t("5% от активности друзей. Начисляется само — каждый день в 00:00 МСК")}</p></div>` +
       `<button class="btn-main" data-act="shareref" style="margin-top:8px">${$t("Пригласить друга")}</button>` +
-      `<div class="sect rgap"><div class="sect-h"><span><b>${$t("Твои друзья")}</b></span></div>` + REF.friends.map(([n, cr, g]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${cr ? cr + (" " + $t("крафтов")) : $t("ещё не крафтил")}</small></span><span class="tb2 g"><img src="assets/gem-small.svg" alt="">${fmt(g)}</span></div>`).join('') + `</div>` +
+      `<div class="sect rgap"><div class="sect-h"><span><b>${$t("Твои друзья")}</b></span></div>` + REF.friends.map(([n, cr, g]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${cr ? cr + (" " + $t("крафтов")) : $t("ещё не крафтил")}</small></span><span class="tb2 g"><i class="gm"></i>${fmt(g)}</span></div>`).join('') + `</div>` +
       rulesHTML(REF_RULES);
   } else {
     const me = 34;
@@ -109,7 +109,7 @@ let infoCase = null;
 function caseInfo(c){ infoCase = c; swapDrawer('caseDrawer', renderCaseInfo); }
 function renderCaseInfo(){
   const c = infoCase, st = caseState(c);
-  $('caseBody').innerHTML = `<div class="cinfo-h" style="--c:${c.c}">${caseArt(c, 'lg')}<b>${c.name}</b>${c.price ? `<span class="cprice"><img src="assets/gem-small.svg" alt="">${fmt(c.price)}</span>` : `<button class="cprice go" data-act="totasks">${st.how}<i>›</i></button>`}</div>` +
+  $('caseBody').innerHTML = `<div class="cinfo-h" style="--c:${c.c}">${caseArt(c, 'lg')}<b>${c.name}</b>${c.price ? `<span class="cprice"><i class="gm"></i>${fmt(c.price)}</span>` : `<button class="cprice go" data-act="totasks">${st.how}<i>›</i></button>`}</div>` +
     `<div class="sec-t">${$t("Что внутри")}</div><div class="tgrid">${c.items.map(it => tileHTML(it, String(it.ch).replace('.', ',') + '%')).join('')}</div>` +
     `<div class="wwarn nftw"><i>!</i><span><b>${$t("NFT на плитке — для примера")}</b><small>${$t("Выпасть может другой подарок: редкий — случайный за {0}–{1} GRAM, обычный — по флору, сейчас {2} GRAM. Какой именно — узнаешь при открытии.", RARE_FROM, RARE_TO, NFT_FLOOR)}</small></span></div>` +
     '';

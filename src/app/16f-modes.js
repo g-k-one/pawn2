@@ -56,7 +56,7 @@ async function switchMode(next, dir = 1){
     if (cur === 'tab3'){ document.body.classList.remove('mode-tab3'); t3Leave(); }
     if (next === 'tab2'){ document.body.classList.add('mode-tab2'); t2Enter(); }
     if (next === 'tab3'){ document.body.classList.add('mode-tab3'); t3Enter(); }
-    modeIn(next, cur); betMorph(betW);
+    modeIn(next, cur); betMorph(betW); modeOnb(next);
   } finally { modeBusy = false; renderModes(); }
 }
 modeBar.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b || S.busy && modeNow() === 'craft') return;
@@ -77,6 +77,15 @@ function arrPlace(m = modeNow(), w = $('bet').offsetWidth, snap){ const [a, b] =
   if (snap){ a.offsetWidth; a.style.transition = b.style.transition = ''; } }
 // стрелки нового режима: сразу на своём месте и уже с нужной яркостью (крайняя — тусклая), проявляются, когда плашка доехала
 function arrShow(m, w){ arrPlace(m, w, true); modeArr(m).forEach(el => el.animate([{ opacity: 0 }, {}], { duration: 220, delay: 240, easing: 'ease-out', fill: 'backwards' })); }
+// онбординг режима: при первом входе в Арену или Ставки сами открываются правила («как играть»), дальше — только по кнопке «i»
+// (то же нажатие, что у «i»: на Арене правила показывают хеш зерна комнаты — ждём, пока комната загрузится)
+function modeOnb(m){ if ((m !== 'tab2' && m !== 'tab3') || S.dbg.noOnb) return; const k = 'bm-onb-' + m;
+  try { if (localStorage.getItem(k)) return; } catch(_){ return; }
+  let n = 0; const go = () => { if (modeNow() !== m || S.busy) return;
+    if (m === 'tab2' && typeof t2Room !== 'undefined' && !t2Room){ if (++n < 30) setTimeout(go, 150); return; }
+    try { localStorage.setItem(k, '1'); } catch(_){}
+    $('giftBtn').click(); };
+  setTimeout(go, 480); }
 let betMorphing = false;   // плашка меняет ширину — стрелки ведёт betMorph, остальные не переставляют (иначе брали бы промежуточную ширину)
 function betMorph(w0){ const b = $('bet'), w1 = b.offsetWidth, m = modeNow(); if (S.lite || !w0){ arrPlace(m, w1, true); return; }
   arrShow(m, w1);

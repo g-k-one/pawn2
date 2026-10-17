@@ -593,9 +593,12 @@ function shareWin(text, g){
 }
 /* под призом — 2 строки колонками: подпись сверху, значение снизу (Ставка · Множитель · Сдача; на Арене — Банк, в Ставках — Сбылось).
    GRAM — гем + число синим, «пришло» (сдача) — зелёным */
-const fxGv = v => `<img src="assets/gem-small.svg" alt="">${fmt(v)}`;
+const fxGv = v => `${S.demo ? '<img src="assets/fantik.webp" alt="">' : '<i class="gm"></i>'}${fmt(v)}`;   // гем — цветом суммы (синий / зелёный); в демо — фантик
 const fxStats = cols => `<div class="fx-stats">${cols.filter(Boolean).map(([l, v, c]) => `<div${c ? ` class="${c}"` : ''}><small>${l}</small><b>${v}</b></div>`).join('')}</div>`;
-const fxChange = r => r.change > 0 ? [$t("Сдача"), '+' + fxGv(r.change), 'pos'] : null;
+const fxChange = r => r.nft && r.change > 0 ?   // сдача бывает только вместе с NFT (без NFT весь выигрыш — GRAM, он и так крупно)
+   [$t("Сдача"), fxGv(r.change), 'pos'] : null;
+// выпал NFT — колонка «Выигрыш» перед «Сдачей»: вся сумма (NFT + сдача), складывать в уме цену с кнопки и сдачу не нужно
+const fxWinCol = r => r.nft ? [$t("Выигрыш"), fxGv(r.win), 'pos'] : null;
 function fillDrop(r){
   const drop = $('fxDrop');
   if (false){
@@ -606,13 +609,13 @@ function fillDrop(r){
       $('fxWin').innerHTML = `<span>${$t("в демо призы не выдаются")}</span>`;
       $('fxBtns').innerHTML = `<button class="btn-main" id="fxTake">${$t("Ещё раз")}</button>` + PF_LINK;
     } else {
-      $('fxWin').innerHTML = fxStats([[$t("Ставка"), fxGv(r.stake), 'g'], [$t("Множитель"), 'x' + r.mult], fxChange(r)]);   // цена NFT — на кнопке «Продать за …»
+      $('fxWin').innerHTML = fxStats([[$t("Ставка"), fxGv(r.stake), 'g'], [$t("Множитель"), 'x' + r.mult], fxWinCol(r), fxChange(r)]);   // цена NFT — на кнопке «Продать за …»
       $('fxBtns').innerHTML = `<button class="btn-main" id="fxSell">${$t("Продать за {0} GRAM", fmt(r.nft.value))}</button><button class="btn-ghost" id="fxTake">${$t("Забрать")}</button>` + PF_LINK;
     }
   } else {
     drop.innerHTML = `<div class="pz"><div class="tw" id="pz"><img src="assets/hero-gem.webp" alt=""><span class="gl" style="--m:url('assets/hero-gem.webp')"><i></i></span></div></div>`;
     Tilt.add($('pz'), $('pz').querySelector('img'), $('pz').querySelector('.gl i'), 1.5);
-    $('fxWin').innerHTML = `<b>+${fmt(r.win)}${S.demo ? `<img class="cur" src="assets/fantik.webp" alt=" ${$t("фантиков")}">` : ' GRAM'}</b>${fxStats([[$t("Ставка"), S.demo ? fmt(r.stake) : fxGv(r.stake), S.demo ? '' : 'g'], [$t("Множитель"), 'x' + r.mult]])}`;
+    $('fxWin').innerHTML = `<b>+${fmt(r.win)}${S.demo ? `<img class="cur" src="assets/fantik.webp" alt=" ${$t("фантиков")}">` : ' GRAM'}</b>${fxStats([[$t("Ставка"), fxGv(r.stake), 'g'], [$t("Множитель"), 'x' + r.mult]])}`;
     $('fxBtns').innerHTML = `<button class="btn-main" id="fxTake">${$t("Забрать")}</button>` + PF_LINK;
   }
   if (r.super) $('fxWin').insertAdjacentHTML('beforeend', `<span class="sdnext">${$t("★ А после — супер дроп")}</span>`);

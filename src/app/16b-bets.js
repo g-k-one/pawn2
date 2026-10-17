@@ -54,7 +54,9 @@ async function betsMock(bets){
   const stake = Math.round(bets.reduce((a, b) => a + b.amount, 0) * 100) / 100;
   const win = Number(res.payout) / 1e9, nn = win >= NFT_FROM ? NFTS.filter(x => x.price <= win).slice(-1)[0] : null;   // выигрыш от порога — NFT + сдача, как в крафте
   const nft = nn ? { id: 'w' + Date.now(), num: nn.num, nft: nn, a: nn.bg[0], b: nn.bg[1], p: nn.bg[2], value: nn.price } : null;
-  return S.lastFair = { kind: 'bets', proof, ticket: roll, ti: tierOfTicket(roll), stake, tonStake: stake, gifts: [], win, nft, change: nft ? (Math.round(win * 100) - Math.round(nft.value * 100)) / 100 : 0,
+  // номер раунда ставок — как номер боя у Арены (в бою — сквозной номер с сервера, в моке — счётчик игрока)
+  S.betsSeq = (S.betsSeq ?? S.hist.crafts.filter(c => c.r.bets).length) + 1;
+  return S.lastFair = { kind: 'bets', no: S.betsSeq, proof, ticket: roll, ti: tierOfTicket(roll), stake, tonStake: stake, gifts: [], win, nft, change: nft ? (Math.round(win * 100) - Math.round(nft.value * 100)) / 100 : 0,
     bets: bets.map((b, i) => ({ ...b, won: res.wins[i], pay: res.wins[i] ? Math.floor(b.amount * betMult(b.bet, b.sel) * 100) / 100 : 0 })) };
 }
 

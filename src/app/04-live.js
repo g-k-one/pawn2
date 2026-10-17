@@ -15,14 +15,14 @@ function liveHTML(n, o = {}){
   const label = win >= 100 ? Math.round(win) : win >= 10 ? String(Math.round(win * 10) / 10) : fmt(win);
   // арена: значок «меч» в углу, в данных — банк и сколько игроков
   return `<div class="item${ti >= 3 ? ' hi' : ''}${o.me ? ' me' : ''}${ar ? ' iarena' : ''}${o.bets ? ' ibets' : ''}" style="--c:${t.c}" data-n="${n}" data-w="${win}" data-m="${mult}" data-who="${who}" data-img="${img}" data-nft="${nft ? nft.name : ''}"${ar ? ` data-bank="${ar.bank}" data-pl="${ar.n}"` : ''}>` +
-    `<span class="glow"></span><img src="${img}" alt="">${ar ? '<span class="cbadge abadge"><img src="assets/sword.svg" alt=""></span>' : o.bets ? `<span class="cbadge abadge bbadge">${svg(TARGET)}</span>` : ''}<i><img src="assets/gem-small.svg" alt="">${label}</i>${ti >= 3 ? '<span class="shine"></span>' : ''}</div>`;
+    `<span class="glow"></span><img src="${img}" alt="">${ar ? '<span class="cbadge abadge"><img src="assets/sword.svg" alt=""></span>' : o.bets ? `<span class="cbadge abadge bbadge">${svg(TARGET)}</span>` : ''}<i>${label}</i>${ti >= 3 ? '<span class="shine"></span>' : ''}</div>`;
 }
 // открытие кейса в ленте: приз + маленький значок кейса
 function liveCaseHTML(c, it, o = {}){
   const img = o.img || (it.t === 'nft' ? pick(it.rare ? RARE_POOL() : FLOOR_POOL()).src : itemImg(it));
   const v = it.t === 'gram' ? fmt(it.v) : it.t === 'xp' ? '+' + it.v : fmt(o.value || (it.rare ? pick(RARE_POOL()).price : NFT_FLOOR));
   return `<div class="item icase${it.rare ? ' hi' : ''}${it.t === 'xp' ? ' ixp' : ''}${o.me ? ' me' : ''}" style="--c:${itemColor(it)}" data-case="${c.id}" data-who="${o.me ? $t("твой кейс") : '@' + pick(NICKS)}" data-lbl="${o.label || itemName(it)}" data-img="${img}">` +
-    `<span class="glow"></span><img src="${img}" alt=""><span class="cbadge"><img src="${c.img}" alt=""></span><i><img src="${it.t === 'xp' ? 'assets/xp.webp' : 'assets/gem-small.svg'}" alt="">${v}</i>${it.rare ? '<span class="shine"></span>' : ''}</div>`;
+    `<span class="glow"></span><img src="${img}" alt=""><span class="cbadge"><img src="${c.img}" alt=""></span><i>${it.t === 'xp' ? '<img src="assets/xp.webp" alt="">' : ''}${v}</i>${it.rare ? '<span class="shine"></span>' : ''}</div>`;
 }
 // арена в ленте: банк = взнос комнаты × игроки, победитель крафтит на весь банк
 const liveArena = () => { const pl = 2 + (Math.random() * 5 | 0), bank = Math.round(pick(PVP_FEES) * pl * 100) / 100; return liveHTML(Math.random() * TICKETS | 0, { stake: bank, arena: { bank, n: pl } }); };

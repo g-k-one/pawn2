@@ -7,6 +7,7 @@
 
 - **Ставки** (`16b-bets.js`, экран `16h-tab3.js`) — всегда включены, RTP **90%** (`BETS_RTP = 900000`, пишется в `rules.rtp_ppm` и из него же считается множитель), до **10** ставок за раунд. Исходы на экране: ранги, чёт/нечет, до/от 50000 (`half`), есть 7, пара, пары последней цифры (`dpair`). Выигрыш от порога — NFT и сдача, «Забрать» / «Продать» идут через `API.claimCraft(r, how)`, как у крафта. Подробно — раздел «Ставки» ниже и `docs/MODES.md`.
 - **XP за оборот** — 0.5 XP за 1 GRAM ставки в крафте, на Арене (от **взноса**, не от выигранной доли банка) и в Ставках; в истории (Финансы → Кошелёк) — одна строка за день по Москве «Опыт за игры» с оборотом и XP. См. «Опыт (XP) за оборот».
+- **Номера игр**: бой Арены (`no`) и раунд Ставок (`no`) — сквозные номера с сервера, видны в истории и на экране итога (таблицы `pvp_rooms`, `bets_rounds` в схеме БД).
 - **История Ставок** показывает выданный NFT и сдачу, как у крафта; лента «лайв» для своих выигрышей показывает реально выданный NFT (`liveHTML(…, { nft })`).
 - Только фронт, на сервер не влияет: плавные переходы экранов, отключённый 3D-поворот NFT (`TILT_ON`), дебаг → «Замер» (плашка FPS, ключ `bm-perf`), прогрев шрифта и тихая предзагрузка картинок (`19-perf.js`). Дебаг целиком — только для теста, в проде скрыть.
 
@@ -158,8 +159,15 @@ NFT в интерфейсе ищется в каталоге `relay.json` по `
 | achievements | user_id, ach_id, claimed_at | |
 | referral_accruals | id, user_id, friend_id, kind (first, activity), amount_nano, created_at | |
 | super_drop | id, target, min_stake_nano, nft, winner_id, won_at | |
+| pvp_rooms | id uuid, **no BIGSERIAL** (сквозной «Арена #…», виден игрокам), fee_nano, state (open, locked, played), server_seed (секрет до розыгрыша!), commitment, ends_at, entries_hash, roll, block_counter, bank_nano, share_nano, multiplier_ppm, payout_nano, nft jsonb, change_nano, created_at, played_at | одна открытая комната на взнос; `no` — в истории и на экране итога |
+| pvp_entries | room_id, user_id, seq (порядок входа — от него хеш списка тикетов), guess, request_id UNIQUE, joined_at, changed_at, won, payout_nano, claim (take, sell), claimed_at | UNIQUE (room_id, guess) и (room_id, user_id) |
+| bets_rounds | id, **no BIGSERIAL** (сквозной номер раунда ставок, «#…» в истории), user_id, request_id UNIQUE, epoch_id, nonce, block_counter, roll, stake_nano, payout_nano, nft jsonb, change_nano, rules_hash, claim (take, sell), created_at | доказательство собирается из полей + `bets_items` + правил по `rules_hash` |
+| bets_items | round_id, idx, bet, sel, amount_nano, won, pay_nano | порядок ставок = порядок в `inputs.bets` |
+| xp_daily | user_id, day (дата МСК), turnover_nano, xp | строка «Опыт за игры» в Кошельке; XP = 0.5 × оборот в GRAM |
 
-Индексы: `games(user_id, created_at desc)`, `ledger(user_id)`, уникальные `request_id`.
+Индексы: `games(user_id, created_at desc)`, `ledger(user_id)`, `pvp_entries(user_id, joined_at desc)`, `bets_rounds(user_id, created_at desc)`, уникальные `request_id`.
+
+Номера игр: у боя Арены и раунда Ставок — сквозной номер (`no`), его видно игроку («Арена #10 396», «#2 · База · 39552» в истории). Сейчас в моке у Арены сквозной счётчик комнат, у Ставок — счётчик игрока (`S.betsSeq`); с сервера приходит `no` в ответе `POST /bets` и в состоянии комнаты.
 
 ## 5. Порядок переноса
 

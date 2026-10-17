@@ -65,7 +65,6 @@
  "Хеш зерна комнаты известен до взносов. После старта зерно раскроется — исход можно проверить.": "The room seed hash is known before entries. After the start the seed is revealed — the outcome can be verified.",
  "Взнос": "Entry",
  "Дальше": "Next",
- "Игроки": "Players",
  "Крути колесо и угадай тикет — самый близкий крафтит на весь банк": "Spin the wheel and guess the ticket — the closest crafts the whole pot",
  "ничья": "tie",
  "Арена — только на GRAM": "Arena is GRAM only",
@@ -73,7 +72,6 @@
  "Ты на арене": "You're in the arena",
  "Все слоты заняты": "All slots taken",
  "Арена заполнена": "The arena is full",
- "Крафт на банк {0} GRAM": "Crafted the pot {0} GRAM",
  "Следующая откроется сразу после старта": "The next one opens right after the start",
  "Арена": "Arena",
  "Общий банк": "Total pot",
@@ -720,5 +718,12 @@
  "Множитель": "Multiplier",
  "Банк": "Bank",
  "Доля банка": "Bank share",
- "{0} из {1}": "{0} of {1}"
+ "{0} из {1}": "{0} of {1}",
+ "Игроков": "Players",
+ "Дешевле": "Cheaper",
+ "Дороже": "Pricier",
+ "Ты в бою · старт через 0:{0}": "You're in · starts in 0:{0}",
+ "Ты в бою": "You're in",
+ "Чей тикет окажется ближе — тот крафтит на весь банк": "Whoever's ticket turns out closest crafts the whole bank",
+ "Игроки": "Players"
 }

@@ -21,7 +21,7 @@ let histTab = 'games', gameSeg = 'crafts';   // игры — один таб, в
 function openHistory(tab = histTab){ if (tab === 'crafts' || tab === 'arena' || tab === 'bets'){ gameSeg = tab; tab = 'games'; } histTab = tab; swapDrawer('histDrawer', () => renderHist()); }
 // какая это игра и её порядковый номер среди игр того же вида (у арены — номер комнаты, он общий для всех игроков)
 const gameKind = c => c.r.pvp ? 'arena' : c.r.bets ? 'bets' : 'crafts';
-const gameNo = c => { if (c.r.pvp) return c.r.pvp.no; const k = gameKind(c), L = S.hist.crafts.filter(x => gameKind(x) === k); return L.length - L.indexOf(c); };
+const gameNo = c => { if (c.r.pvp) return c.r.pvp.no; if (c.r.no) return c.r.no; const k = gameKind(c), L = S.hist.crafts.filter(x => gameKind(x) === k); return L.length - L.indexOf(c); };
 const noTag = c => { const n = gameNo(c); return n ? '#' + n.toLocaleString(LOC) + ' · ' : ''; };
 // одна строка истории (награда, кошелёк, рефералка) — в том же виде, что игры: плашка-тип и время сверху, ниже картинка, что это и сумма
 // ровно как карточка крафта: слева иконка и что это, стрелка, справа сумма цветом, под ней единица, рядом картинка
@@ -112,7 +112,7 @@ function craftCard(c, i){
   const r = c.r, t = TIERS[r.ti], { g, ton } = stakeOf(r);
   const sp = g.map(x => hpic(x.nft.src, giftBg(x))).join('') + (ton > 0 || !g.length ? hpic('assets/gem-small.svg') : '');
   const wp = (r.super ? hpic(r.super.nft.src, giftBg(r.super)) : '') + (r.nft ? hpic(r.nft.nft.src, giftBg(r.nft)) : hpic('assets/hero-gem-128.webp'));
-  return `<button class="hcard" data-i="${i}" style="--c:${t.c}"><span class="hk-h"><em>${t.name} · x${r.mult}</em>${r.super ? `<em class="sd">${$t("Супер дроп")}</em>` : ''}<small>${tAgo(c.t)}</small></span>` +
+  return `<button class="hcard" data-i="${i}" style="--c:${t.c}"><span class="hk-h"><em>${noTag(c)}${t.name} · x${r.mult}</em>${r.super ? `<em class="sd">${$t("Супер дроп")}</em>` : ''}<small>${tAgo(c.t)}</small></span>` +
     `<span class="hk-b"><span class="hk-s"><span class="hps">${sp}</span><span class="hk-v"><b>${fmt(r.stake)}</b><small>${g.length ? `${g.length} NFT${ton > 0 ? ' + GRAM' : ''}` : 'GRAM'}</small></span></span>` +
     `<i class="hk-ar">${svg(ARW)}</i>` +
     `<span class="hk-s win"><span class="hps">${wp}</span><span class="hk-v"><b class="pos">+${fmt(r.win)}</b><small>${r.nft ? (c.how === 'sell' ? $t("NFT продан") : $t("NFT забран")) : 'GRAM'}</small></span></span></span></button>`;
@@ -136,21 +136,23 @@ $('histBody').addEventListener('click', e => {
 function stakeChips(r){
   const g = r.gifts || [], ton = r.tonStake != null ? r.tonStake : r.stake;
   return g.map(x => `<span class="hchip nft"><img src="${x.nft.src}" alt=""><span><b>${x.nft.name}</b><small>NFT · ${fmt(x.value)} GRAM</small></span></span>`).join('') +
-    (ton > 0 || !g.length ? `<span class="hchip"><img src="assets/gem-small.svg" alt="" class="gm"><span><b>${fmt(ton)}${GU}</b></span></span>` : '');
+    (ton > 0 || !g.length ? `<span class="hchip"><i class="gm gb"></i><span><b>${fmt(ton)}${GU}</b></span></span>` : '');
 }
 // что получено: NFT (забран или продан) и/или GRAM на баланс
 function winChips(r, how){
-  if (!r.nft) return `<span class="hchip"><img src="assets/gem-small.svg" alt="" class="gm"><span><b class="pos">+${fmt(r.win)}${GU}</b><small>${$t("на баланс")}</small></span></span>`;
+  if (!r.nft) return `<span class="hchip"><i class="gm gp"></i><span><b class="pos">+${fmt(r.win)}${GU}</b><small>${$t("на баланс")}</small></span></span>`;
   return `<span class="hchip nft"><img src="${r.nft.nft.src}" alt=""><span><b>${r.nft.nft.name}</b><small>${how === 'sell' ? `${$t("продан за {0} GRAM", fmt(r.nft.value))}` : `NFT · ${fmt(r.nft.value)} GRAM`}</small></span></span>` +
-    (r.change > 0 ? `<span class="hchip"><img src="assets/gem-small.svg" alt="" class="gm"><span><b class="pos">+${fmt(r.change)}${GU}</b><small>${$t("сдача на баланс")}</small></span></span>` : '');
+    (r.change > 0 ? `<span class="hchip"><i class="gm gp"></i><span><b class="pos">+${fmt(r.change)}${GU}</b><small>${$t("сдача на баланс")}</small></span></span>` : '');
 }
+// раздел подробностей: заголовок и строки под ним. Если строка одна — сумму в заголовке не пишем (она и так в строке, без дубля)
+const hdSec = (label, val, rows = '') => `<div class="hd-sec"><span>${label}</span>${(rows.match(/class="hd-row"/g) || []).length === 1 ? '' : val}</div>${rows}`;
 const hdRow = (src, bg, name, sub, val, pos) => `<div class="hd-row">${hpic(src, bg)}<span><b>${name}</b>${sub ? `<small>${sub}</small>` : ''}</span><em${pos ? ' class="pos"' : ''}>${val}</em></div>`;
 function craftRecHead(c){ if (c.r.pvp) return pvpRecHead(c); if (c.r.bets) return betsRecHead(c); const r = c.r, t = TIERS[r.ti], { g, ton } = stakeOf(r);
   const st = g.map(x => hdRow(x.nft.src, giftBg(x), `${x.nft.name} #${x.num}`, x.nft.model, fmt(x.value) + GU)).join('') + (ton > 0 || !g.length ? hdRow('assets/gem-small.svg', null, 'GRAM', '', fmt(ton) + GU) : '');
   const wn = winRows(c);
   // порядковый номер игры (nonce доказательства) — только внутри
   return `<div class="hdet" style="--c:${t.c}"><div class="hk-h"><em>${noTag(c)}${t.name} · x${r.mult}</em><small>${tAgo(c.t)}</small></div>` +
-    `<div class="hd-sec"><span>${$t("Ставка")}</span><b>${fmt(r.stake)}${GU}</b></div>${st}<div class="hd-sec"><span>${$t("Выигрыш")}</span><b class="pos">+${fmt(r.win)}${GU}</b></div>${wn}</div>`;
+    hdSec($t("Ставка"), `<b>${fmt(r.stake)}${GU}</b>`, st) + hdSec($t("Выигрыш"), `<b class="pos">+${fmt(r.win)}${GU}</b>`, wn) + `</div>`;
 }
 // что получено с крафта: NFT (в инвентаре / продан) и сдача, или GRAM на баланс; супер дроп — сверху
 function winRows(c){ const r = c.r;
@@ -170,14 +172,14 @@ function pvpCard(c, i){
   const r = c.r, p = r.pvp, t = TIERS[r.ti], won = p.won;
   const right = won ? (r.nft ? hpic(r.nft.nft.src, giftBg(r.nft)) : hpic('assets/hero-gem-128.webp')) + `<span class="hk-v"><b class="pos">+${fmt(r.win)}</b><small>${r.nft ? (c.how === 'sell' ? $t("NFT продан") : $t("NFT забран")) : 'GRAM'}</small></span>`
     : `<span class="hp pvp-w">${pvpAva({ who: p.winner })}</span><span class="hk-v"><b>0</b><small>GRAM</small></span>`;
-  return `<button class="hcard" data-i="${i}" style="--c:${won ? t.c : '#8a8a96'}"><span class="hk-h"><em>${t.name} · x${r.mult}</em><small>${tAgo(c.t)}</small></span>` +
+  return `<button class="hcard" data-i="${i}" style="--c:${won ? t.c : '#8a8a96'}"><span class="hk-h"><em>${noTag(c)}${t.name} · x${r.mult}</em><small>${tAgo(c.t)}</small></span>` +
     `<span class="hk-b"><span class="hk-s"><span class="hps">${hpic('assets/gem-small.svg')}</span><span class="hk-v"><b>${fmt(p.fee)}</b><small>GRAM</small></span></span>` +
     `<i class="hk-ar">${svg(ARW)}</i><span class="hk-s win">${right}</span></span></button>`;
 }
 // предикты: слева — сколько поставил и на сколько исходов, справа — выплата; в шапке — выпавший тикет и ранг
 function betsCard(c, i){
   const r = c.r, t = TIERS[r.ti], n = r.bets.length, w = r.bets.filter(b => b.won).length;
-  return `<button class="hcard" data-i="${i}" style="--c:${r.win > 0 ? t.c : '#8a8a96'}"><span class="hk-h"><em>${t.name} · ${tk(r.ticket)}</em><small>${tAgo(c.t)}</small></span>` +
+  return `<button class="hcard" data-i="${i}" style="--c:${r.win > 0 ? t.c : '#8a8a96'}"><span class="hk-h"><em>${noTag(c)}${t.name} · ${tk(r.ticket)}</em><small>${tAgo(c.t)}</small></span>` +
     `<span class="hk-b"><span class="hk-s"><span class="hps">${hpic('assets/gem-small.svg')}</span><span class="hk-v"><b>${fmt(r.stake)}</b><small>${n} ${$n("ставка|ставки|ставок", n)}</small></span></span>` +
     // справа — как у крафта и арены: какой NFT дали (забран / продан) или GRAM
     `<i class="hk-ar">${svg(ARW)}</i><span class="hk-s win">${r.nft ? hpic(r.nft.nft.src, giftBg(r.nft)) : hpic('assets/hero-gem-128.webp')}<span class="hk-v"><b${r.win > 0 ? ' class="pos"' : ''}>${r.win > 0 ? '+' + fmt(r.win) : '0'}</b><small>${r.nft ? (c.how === 'sell' ? $t("NFT продан") : $t("NFT забран")) : $t("сбылось {0} из {1}", w, n)}</small></span></span></span></button>`;
@@ -185,12 +187,14 @@ function betsCard(c, i){
 function betsRecHead(c){ const r = c.r, t = TIERS[r.ti];
   const rows = r.bets.map(b => hdRow('assets/gem-small.svg', null, betLabel(b.bet, b.sel), `${fmt(b.amount)} GRAM · x${fmt(betMult(b.bet, b.sel))}`, b.won ? '+' + fmt(b.pay) + GU : '—', b.won)).join('');
   return `<div class="hdet" style="--c:${r.win > 0 ? t.c : '#8a8a96'}"><div class="hk-h"><em>${noTag(c)}${t.name} · ${tk(r.ticket)}</em><small>${tAgo(c.t)}</small></div>` +
-    `<div class="hd-sec"><span>${$t("Ставка")}</span><b>${fmt(r.stake)}${GU}</b></div>${rows}<div class="hd-sec"><span>${$t("Выплата")}</span><b${r.win > 0 ? ' class="pos"' : ''}>${r.win > 0 ? '+' + fmt(r.win) : '0'}${GU}</b></div>${r.win > 0 ? winRows(c) : ''}</div>`;   // что получено: NFT и сдача или GRAM — как у крафта и арены
+    hdSec($t("Ставка"), `<b>${fmt(r.stake)}${GU}</b>`, rows) + hdSec($t("Выплата"), `<b${r.win > 0 ? ' class="pos"' : ''}>${r.win > 0 ? '+' + fmt(r.win) : '0'}${GU}</b>`, r.win > 0 ? winRows(c) : '') + `</div>`;   // что получено: NFT и сдача или GRAM — как у крафта и арены
 }
 // подробно: взнос, банк, все игроки по близости к тикету, крафт на банк (если выиграл); ниже — проверка честности
 function pvpRecHead(c){ const r = c.r, p = r.pvp, t = TIERS[r.ti];
   return `<div class="hdet" style="--c:${p.won ? t.c : '#8a8a96'}"><div class="hk-h"><em>${p.no ? '#' + p.no.toLocaleString(LOC) + ' · ' : ''}${t.name} · x${r.mult}</em><small>${tAgo(c.t)}</small></div>` +
-    `<div class="hd-sec"><span>${$t("Взнос")}</span><b>${fmt(p.fee)}${GU}</b></div>` +
-    `<div class="hd-sec"><span>${$t("Выигрыш")}</span><b${p.won ? ' class="pos"' : ''}>${p.won ? '+' + fmt(r.win) : '0'}${GU}</b></div>${p.won ? winRows(c) : ''}</div>` + pvlHTML(p, r);
+    // как у крафта и ставок: разделы с плашками внутри одной карточки — взнос, выигрыш, игроки
+    hdSec($t("Взнос"), `<b>${fmt(p.fee)}${GU}</b>`, hdRow('assets/gem-small.svg', null, 'GRAM', '', fmt(p.fee) + GU)) +
+    hdSec($t("Выигрыш"), `<b${p.won ? ' class="pos"' : ''}>${p.won ? '+' + fmt(r.win) : '0'}${GU}</b>`, p.won ? winRows(c) : '') +
+    `<div class="hd-sec"><span>${$t("Игроки")}</span></div>` + pvlHTML(p, r) + `</div>`;
 }
 
