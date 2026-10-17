@@ -397,14 +397,15 @@ async function closeFx(){
   const fast = S.fast || S.lite, fx = $('fx'), g0 = FX.gain;
   FX.cover = false; FX.hot = true;
   $('fxIn').style.opacity = 0;
-  FullGlow.set(Glow.get() || TIERS[S.tier].glow, false, .12);
-  await wait(fast ? 140 : 220);
-  await tween(S.lite ? 0 : fast ? 280 : 440, k => { FX.morph = 1 - k; FX.gain = FX.gainTo = g0 + (1 - g0) * k; });
+  FullGlow.set(Glow.get() || TIERS[S.tier].glow, false, .08);
+  // рамка едет сразу и быстро (содержимое итога в это время гаснет), а главный экран потом проявляется плавно
+  await tween(S.lite ? 0 : fast ? 240 : 300, k => { FX.morph = 1 - k; FX.gain = FX.gainTo = g0 + (1 - g0) * k; });
   FX.morph = 0; FX.gain = FX.gainTo = 1; FullGlow.set(Glow.get() || TIERS[S.tier].glow, true); FullGlow.draw();
   document.body.classList.add('glowx'); document.body.classList.remove('glowoff'); Glow.draw();   // под экраном итога — та же рамка панели
-  fadeUI(false, fast ? 220 : 300); fx.classList.add('closing'); fx.classList.remove('on');   // экран итога растворяется вместе с рамкой (closing — рамку не прятать), интерфейс проявляется — как при открытии, наоборот
+  fx.style.transition = 'opacity .42s ease-out, visibility 0s .42s';
+  fadeUI(false, 420); fx.classList.add('closing'); fx.classList.remove('on');   // экран итога растворяется вместе с рамкой (closing — рамку не прятать), интерфейс проявляется — как при открытии, наоборот
   if (typeof renderModes === 'function') renderModes();
-  await wait(260);
+  await wait(440); fx.style.transition = '';
   document.body.classList.remove('glowx');
   FX.on = false; FX.hot = false; FX.morph = 0; fx.classList.remove('closing', 'done', 'case', 'pvpl', 'pvpw', 'lost', 'btmany', 'btspin'); Tilt.drop($('fxDrop'));
   // итог прошлой игры убираем целиком: следующий экран (крафт, бой, кейс) не должен мелькнуть старым тикетом и призом.

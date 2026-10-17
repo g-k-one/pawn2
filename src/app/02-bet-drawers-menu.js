@@ -258,4 +258,6 @@ $('menuBody').addEventListener('click', e => {
 // прокрутка в шторках: край растворяет контент, а не режет его. Класс ставится, только если за краем что-то есть
 function scrollEdges(el){ el.classList.toggle('fade-t', el.scrollTop > 2); el.classList.toggle('fade-b', el.scrollTop + el.clientHeight < el.scrollHeight - 2); }
 document.addEventListener('scroll', e => { if (e.target.classList?.contains('dr-b')) scrollEdges(e.target); }, true);
-new MutationObserver(() => document.querySelectorAll('.drawer.open .dr-b').forEach(scrollEdges)).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+// следим только за шторками (не за всей страницей: на каждую смену режима, ленту и анимации наблюдатель зря просыпался)
+document.querySelectorAll('.drawer').forEach(d => new MutationObserver(() => { if (d.classList.contains('open')) d.querySelectorAll('.dr-b').forEach(scrollEdges); })
+  .observe(d, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] }));

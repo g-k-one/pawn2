@@ -193,6 +193,36 @@ const t2Arena = (() => {
       return `<span class="ar-seat empty" style="left:${x}px;top:${dy}px;--d:${((ri * 2 + i) * .35).toFixed(2)}s">${T2_HELM}</span>`; })).join('')}</div>`;
   $('bet').parentNode.insertBefore(el, $('prize')); return el;
 })();
+/* «запекание» арены: неподвижная часть (трибуны с неподвижными зрителями и колизей — ~490 векторных элементов с градиентами и маской)
+   один раз рисуется в картинку, пока приложение простаивает после запуска. При входе на арену телефону нужно показать готовую картинку,
+   а не обсчитать и нарисовать сотни фигур — без чёрного экрана и просадки. Огонь в центре — отдельный маленький слой поверх
+   (мерцает весь слой — анимацию считает видеокарта). Не вышло (старый браузер) — остаётся вектор, как раньше */
+async function t2Bake(){
+  const art = t2Arena.querySelector('.t2art:not(.t2live)'); if (!art || art.dataset.baked) return;
+  const svgs = [...art.querySelectorAll(':scope > svg')]; if (!svgs.length) return;
+  try {
+    const N = Math.round(T2A.r * 800 / 198 * Math.min(2, devicePixelRatio || 1)), cv = document.createElement('canvas'); cv.width = cv.height = N;
+    const ctx = cv.getContext('2d'); let fire = '';
+    for (const sv of svgs){
+      const c = sv.cloneNode(true); c.querySelectorAll('.ar-torch').forEach(x => x.remove());   // факелы на арене скрыты
+      const f = c.querySelector('.ar-fire');
+      if (f){ const g = c.querySelector('#arFire'); f.removeAttribute('class');
+        fire = `<svg class="ar-art t2fire" viewBox="${c.getAttribute('viewBox')}" aria-hidden="true"><defs>${g ? g.outerHTML : ''}</defs>${f.outerHTML}</svg>`; f.remove(); }
+      c.setAttribute('width', N); c.setAttribute('height', N);
+      const im = new Image(); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(c));
+      await im.decode(); ctx.drawImage(im, 0, 0, N, N);
+    }
+    const blob = await new Promise(r => cv.toBlob(r, 'image/webp', .92)); if (!blob) return;
+    const img = new Image(); img.className = 'ar-art t2baked'; img.alt = ''; img.decoding = 'async'; img.src = URL.createObjectURL(blob); await img.decode();
+    svgs.forEach(x => x.remove()); art.prepend(img); if (fire) art.insertAdjacentHTML('beforeend', fire); art.dataset.baked = '1';
+  } catch(_){}
+}
+// прогрев: после запекания один раз невидимо раскладываем экраны Арены и Ставок — первый вход в режим без пустого кадра
+// (картинки декодированы, раскладка посчитана; повторные входы и так быстрые)
+async function modesWarm(){ await t2Bake(); if (document.body.classList.contains('mode-tab2') || document.body.classList.contains('mode-tab3')) return;
+  document.body.classList.add('warm'); document.body.offsetWidth;
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); document.body.classList.remove('warm'); }
+setTimeout(() => (window.requestIdleCallback || (f => f()))(modesWarm, { timeout: 3000 }), 1500);
 let t2SeatIds = [];
 // дым у трибун — клубы-картинки, плавают сами (smokePuffs, 16a-pvp.js); в экономном режиме и вне арены — скрыт
 function t2Smoke(on){ const box = $('t2Fx'), show = on && !S.lite; if (!box.childElementCount && !show) return; smokePuffs(box);

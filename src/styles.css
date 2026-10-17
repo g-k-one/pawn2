@@ -2905,3 +2905,8 @@ i.gm.gp{color:#12D53D}
 .fx-stats>div{gap:6px;min-width:0}
 .fx-stats small{padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.08);letter-spacing:0;white-space:nowrap}
 .pvl-prize .fx-stats{width:auto}
+/* арена после «запекания»: огонь в центре — отдельный слой, мерцает целиком */
+.t2fire{animation:arFlick 2.4s ease-in-out infinite;transform-origin:50% 50%}
+.lite .t2fire{animation:none}
+/* прогрев режимов: экраны Арены и Ставок раскладываются невидимо (за экраном, не кликаются) */
+.warm .t2a,.warm #t3Board,.warm #t3Sky{display:block!important;visibility:visible!important;opacity:.001;pointer-events:none}
