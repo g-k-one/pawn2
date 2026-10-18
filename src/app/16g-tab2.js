@@ -40,7 +40,11 @@ function t2Leave(){ if (t2Prev){ S.ton = t2Prev.ton; S.gifts = t2Prev.gifts.filt
 // комната: таймер — до её старта; разыграна — открываем следующую (экран итога для tab2 — следующий шаг)
 function t2Apply(room){ const was = t2Me(); t2Room = room; t2End = room?.endsAt || 0;
   if (was !== t2Me()){ t2Ava(t2Me()); renderBet(true); } else if (t2Me() && $('bet').querySelector('.ton').textContent !== fmt(room.bank)) renderBet(true);
-  t2Seats(t2Quiet); t2Quiet = false; }
+  t2Seats(t2Quiet); t2Quiet = false; t2Snap(); }
+// тикеты зафиксированы — колесо и число встают на тот тикет, что реально записан в бой (на сервере), даже если палец ещё крутил
+function t2Snap(){ if (!t2Locked() || !t2Me()) return; const me = t2Room?.entries.find(x => x.me);
+  if (me?.guess == null || me.guess === t2Ticket) return;
+  t2Ticket = me.guess; t2Wheel.classList.remove('drag', 'spin'); setTier(tierOfTicket(t2Ticket), { keepTicket: true, keepPrize: true }); t2Turn(); t2Show(); }
 let t2Ver = 0, t2Joining = false;   // t2Ver растёт при входе: ответ опроса, ушедшего раньше входа, уже устарел — его не применяем
 async function t2Sync(){ if (t2Busy || t2Go || t2Joining) return; t2Busy = true; const ver = t2Ver;
   try { let room = t2Room ? await API.pvpState(t2Fee) : null;
@@ -92,9 +96,13 @@ $('craft').onclick = async () => {
   CB.animate([{ scale: .85 }, { scale: 1.08 }, { scale: 1 }], { duration: 360, easing: 'cubic-bezier(.3,1.4,.5,1)' });
 };
 // уже в комнате: новый тикет с колеса отправляем, когда палец отпустил (как в PvP); за 5 с до старта тикет зафиксирован
+let t2LiveT = 0;
+function t2Live(){ if (!t2Me() || t2Locked() || performance.now() - t2LiveT < 400) return; t2LiveT = performance.now(); clearTimeout(t2Change.t); t2Change.send(); }
 function t2Change(){ if (!t2Me() || t2Locked()) return; clearTimeout(t2Change.t);
-  t2Change.t = setTimeout(async () => { const r = await API.pvpChange(t2Fee, t2Ticket).catch(() => ({ ok: false })); if (r.ok) return t2Apply(r.room); haptic('rigid');
-    const me = t2Room?.entries.find(x => x.me); if (me){ t2Ticket = me.guess; _setTier(tierOfTicket(me.guess)); t2Show(); } }, 450); }
+  t2Change.t = setTimeout(t2Change.send, 450); }
+t2Change.send = async () => { const g = t2Ticket, r = await API.pvpChange(t2Fee, g).catch(() => ({ ok: false })); if (r.ok){ t2Apply(r.room); return; }
+  if (t2Wheel.classList.contains('drag')) return;   // палец ещё крутит — следующая отправка поправит
+  haptic('rigid'); const me = t2Room?.entries.find(x => x.me); if (me){ t2Ticket = me.guess; _setTier(tierOfTicket(me.guess)); t2Turn(); t2Show(); } };
 // фон при нажатии на наковальню: на главной рамка вспыхивает цветом ранга и уходит в огонь кузни, в tab2 — сразу оранжево-красный, как кнопка
 const T2_GLOW = ['#ff5a1f', '#b8280a', '#ff9a5c', '#ffd2b8'];
 let t2Glow = false;   // FullGlow объявлен позже (18-glow-start) — подменяем при первом входе в tab2
@@ -146,11 +154,11 @@ function t2ShowSoon(){ const now = performance.now(); clearTimeout(t2ShowTm);
   wh.addEventListener('pointerdown', e => { if (S.busy) return; if (t2Locked()){ haptic('rigid'); return; } drag = true; k = 180 / Math.PI / (T2W.R * wh.getBoundingClientRect().width / 390); cancelAnimationFrame(spin); wh.classList.remove('spin'); lx = e.clientX; lt = performance.now(); vel = 0;
     wh.setPointerCapture(e.pointerId); wh.classList.add('drag'); clearInterval(auto); });
   wh.addEventListener('pointermove', e => { if (!drag) return; if (t2Locked() || !isT2()){ vel = 0; drag = false; wh.classList.remove('drag'); return; } const now = performance.now(), dd = -(e.clientX - lx) * pxDeg(); lx = e.clientX;
-    t2Deg += dd; vel = vel * .6 + dd / Math.max(1, now - lt) * 1000 * .4; lt = now; t2Set(degTk(t2Deg)); });
+    t2Deg += dd; vel = vel * .6 + dd / Math.max(1, now - lt) * 1000 * .4; lt = now; t2Set(degTk(t2Deg)); t2Live(); });
   var up = () => { if (!drag) return; drag = false; wh.classList.remove('drag');
     if (Math.abs(vel) <= 20 || t2Locked() || !isT2()){ haptic('light'); t2Change(); return; }
     wh.classList.add('spin'); let last = performance.now();
-    const step = now => { if (t2Locked() || !isT2()){ wh.classList.remove('spin'); return; } const dt = (now - last) / 1000; last = now; vel *= Math.pow(.04, dt); t2Deg += vel * dt; t2Set(degTk(t2Deg));
+    const step = now => { if (t2Locked() || !isT2()){ wh.classList.remove('spin'); return; } const dt = (now - last) / 1000; last = now; vel *= Math.pow(.04, dt); t2Deg += vel * dt; t2Set(degTk(t2Deg)); t2Live();
       if (Math.abs(vel) > 3 && !t2Locked()) spin = requestAnimationFrame(step); else { wh.classList.remove('spin'); haptic('light'); t2Change(); } };
     spin = requestAnimationFrame(step); };
   wh.addEventListener('pointerup', up); wh.addEventListener('pointercancel', up); }
@@ -228,7 +236,7 @@ let t2SeatIds = [];
 function t2Smoke(on){ const box = $('t2Fx'), show = on && !S.lite; if (!box.childElementCount && !show) return; smokePuffs(box);
   if (box.hidden === !show) return; box.hidden = !show; box.getAnimations({ subtree: true }).forEach(a => show ? a.play() : a.pause()); }   // скрыт — анимации клубов на паузе
 // за 5 с до старта закрыто для всех: колесо, ранги и вход (кнопка и ставка приглушены); бой начался — тем, кто не в нём, сразу открывается следующая комната
-function t2Ring(){ t2Wheel.classList.toggle('locked', t2Locked()); document.body.classList.toggle('t2lock', t2Locked() || t2Full()); if (!!$('bet').dataset.full !== t2Full()) renderBet(); const left = t2End ? Math.max(0, (t2End - Date.now()) / 1000) : PVP_TIME, C = 2 * Math.PI * T2A.ring, hot = t2End > 0 && left <= 5;
+function t2Ring(){ if (t2Locked() && !t2Wheel.classList.contains('locked')) t2Snap(); t2Wheel.classList.toggle('locked', t2Locked()); document.body.classList.toggle('t2lock', t2Locked() || t2Full()); if (!!$('bet').dataset.full !== t2Full()) renderBet(); const left = t2End ? Math.max(0, (t2End - Date.now()) / 1000) : PVP_TIME, C = 2 * Math.PI * T2A.ring, hot = t2End > 0 && left <= 5;
   $('t2Ring').style.strokeDashoffset = (C * (1 - Math.min(1, left / PVP_TIME))).toFixed(1); t2Arena.classList.toggle('hot', hot); }
 // места соперников: по порядку входа; новенький — с лёгким «пружинящим» появлением
 let t2Quiet = false;
