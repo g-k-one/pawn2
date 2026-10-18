@@ -213,7 +213,13 @@ function setDemo(on){
 /* ---------- звук (WebAudio, синтез — без файлов). Включается в меню ---------- */
 const Sfx = (() => {
   let ac = null;
-  const ctx = () => { if (!S.sound) return null; if (!ac){ try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(_){ return null; } } if (ac.state === 'suspended') ac.resume(); return ac; };
+  const ctx = () => { if (!S.sound) return null; if (!ac || ac.state === 'closed'){ try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(_){ return null; } } if (ac.state !== 'running') ac.resume().catch(() => {}); return ac; };
+  // свернули приложение — iPhone переводит звук в «interrupted» (не «suspended»), и он молчал до перезапуска.
+  // Свернули — сами ставим на паузу; вернулись — будим; первое касание будит ещё раз, не проснулся от касания — создаём заново
+  const wake = gesture => { if (!ac || ac.state === 'running') return;
+    ac.resume().catch(() => {}).then(() => { if (gesture && ac && ac.state !== 'running'){ try { ac.close(); } catch(_){} ac = null; } }); };
+  document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend().catch(() => {}); else wake(false); });
+  ['pointerdown', 'touchend', 'keydown'].forEach(t => addEventListener(t, () => wake(true), { capture: true, passive: true }));
   const env = (a, t, peak, dur) => { const g = a.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + .004); g.gain.exponentialRampToValueAtTime(.0001, t + dur); g.connect(a.destination); return g; };
   const tone = (f, dur, peak = .08, type = 'sine', f2) => { const a = ctx(); if (!a) return; const t = a.currentTime, o = a.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur); o.connect(env(a, t, peak, dur)); o.start(t); o.stop(t + dur + .02); };
   const noise = (dur, f, q, peak) => { const a = ctx(); if (!a) return; const t = a.currentTime, b = a.createBuffer(1, a.sampleRate * dur, a.sampleRate), d = b.getChannelData(0);
