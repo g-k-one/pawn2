@@ -37,7 +37,7 @@ function shareModel(c){
 function shPattern(x, im, color, cx, cy){
   const t = document.createElement('canvas'); t.width = t.height = 128; const q = t.getContext('2d');
   q.drawImage(im, 0, 0, 128, 128); q.globalCompositeOperation = 'source-in'; q.fillStyle = color; q.fillRect(0, 0, 128, 128);
-  [[330, 8, 92, .3], [470, 12, 76, .23], [610, 16, 62, .16], [750, 20, 52, .11], [890, 24, 44, .07]].forEach(([R, n, s, o], ri) => {
+  [[340, 8, 118, .3], [490, 12, 98, .23], [640, 16, 80, .16], [790, 20, 66, .11], [940, 24, 56, .07]].forEach(([R, n, s, o], ri) => {
     x.globalAlpha = o;
     for (let k = 0; k < n; k++){ const a = (k + (ri % 2) * .5) / n * Math.PI * 2; x.drawImage(t, cx + Math.cos(a) * R - s / 2, cy + Math.sin(a) * R - s / 2, s, s); } });
   x.globalAlpha = 1;
@@ -59,15 +59,15 @@ async function shareDraw(m){
   // узор: символ подарка; у GRAM и XP — гем
   const n = m.nft?.nft, sym = n ? await shLoad(n.sym, true) : await shLoad('assets/gem-white.svg');
   if (sym) shPattern(x, sym, cp || '#ffffff', cx, cy);
-  // скин — максимально крупно
-  const S = 800, im = n ? (await shLoad(hiSrc(n), true) || await shLoad(n.card, true) || await shLoad(FB[n.src] || n.src)) : await shLoad(m.img || 'assets/hero-gem.webp');
-  if (im){ x.save(); x.shadowColor = 'rgba(0,0,0,.3)'; x.shadowBlur = 60; x.shadowOffsetY = 24; x.drawImage(im, cx - S / 2, cy - S / 2, S, S); x.restore(); }
-  // котелок Pawn сверху
-  const logo = await shLoad('assets/logo.svg'); if (logo){ const h = 140, w = logo.width / logo.height * h; x.globalCompositeOperation = 'overlay'; x.drawImage(logo, cx - w / 2, 50, w, h); x.globalCompositeOperation = 'source-over'; }   // котелок — наложением
+  // котелок Pawn сверху, позади скина — наложением
+  const logo = await shLoad('assets/logo.svg'); if (logo){ const h = 140, w = logo.width / logo.height * h; x.globalCompositeOperation = 'overlay'; x.drawImage(logo, cx - w / 2, 50, w, h); x.globalCompositeOperation = 'source-over'; }
   // название и «Скрафтил в Pawn» — снизу, крупно, белым с тенью
-  x.textAlign = 'center'; x.textBaseline = 'alphabetic'; x.fillStyle = '#fff'; x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 24; x.shadowOffsetY = 6;
+  x.save(); x.textAlign = 'center'; x.textBaseline = 'alphabetic'; x.fillStyle = '#fff'; x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 24; x.shadowOffsetY = 6;
   shFit(x, m.title.toUpperCase(), 116, 1150);
-  x.globalAlpha = .85; shFit(x, m.head.toUpperCase(), 84, 1270); x.globalAlpha = 1;
+  x.globalAlpha = .85; shFit(x, m.head.toUpperCase(), 84, 1270); x.restore();
+  // скин — максимально крупно и поверх всего
+  const S = n ? 1060 : 900, my = n ? 620 : cy, im = n ? (await shLoad(hiSrc(n), true) || await shLoad(n.card, true) || await shLoad(FB[n.src] || n.src)) : await shLoad(m.img || 'assets/hero-gem.webp');
+  if (im){ x.save(); x.shadowColor = 'rgba(0,0,0,.3)'; x.shadowBlur = 60; x.shadowOffsetY = 24; x.drawImage(im, cx - S / 2, my - S / 2, S, S); x.restore(); }
   return cv.toDataURL('image/jpeg', .88);
 }
 

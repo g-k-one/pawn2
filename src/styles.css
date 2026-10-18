@@ -2869,7 +2869,7 @@ i.gm.gp{color:#12D53D}
 .pvl-pic{position:relative;flex:none}
 .pvl-pic em{position:absolute;left:50%;bottom:-6px;translate:-50% 0;padding:0 6px;border-radius:99px;background:rgba(0,0,0,.72);font-style:normal;font-size:12.5px;line-height:16px;font-weight:700;color:#fff;white-space:nowrap}
 /* под крупной суммой — разделитель и воздух перед колонками */
-.fx-win b+.fx-stats{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);width:min(320px,100%);margin-left:auto;margin-right:auto}
+.fx-win b+.fx-stats{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1)}
 /* Арена: победитель — отдельный блок над списком */
 .pvl-winb{margin:6px 0 4px;padding:8px 12px 2px;border-radius:18px;background:rgba(18,213,61,.08);box-shadow:inset 0 0 0 1px rgba(18,213,61,.3)}
 .pvl-winb>small{display:block;font-size:12.5px;line-height:16px;text-transform:uppercase;letter-spacing:.04em;color:#12D53D}
@@ -2901,7 +2901,7 @@ i.gm.gp{color:#12D53D}
 .hdet .pvls .trow{margin:0;padding:8px;border:0!important;border-radius:16px;background:rgba(255,255,255,.05)}
 .hdet .pvls .trow+.trow{margin-top:6px}
 /* колонки «подпись / значение»: равной ширины, подписи — таблетками (не сливаются со значениями) */
-.fx-stats{display:grid!important;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px!important;width:min(340px,100%);margin-left:auto;margin-right:auto}
+.fx-stats{display:grid!important;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px!important;width:100%;margin-left:auto;margin-right:auto}   /* итоги везде одинаково: на всю ширину контента, столбцы равные */
 .fx-stats>div{gap:6px;min-width:0}
 .fx-stats small{padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.08);letter-spacing:0;white-space:nowrap}
 .pvl-prize .fx-stats{width:auto}
@@ -2947,7 +2947,7 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 .fx.done .digits{margin:0 0 -6px}
 .fx.done .fx-need.miss{margin-top:4px}
 .wwarn.tgs>i img{width:16px;height:15px;margin-top:-2px;filter:brightness(0)}   /* звезда чёрная, чуть меньше и на 1 px выше центра */   /* белая звезда Telegram на золотом круге — как иконка релеера */
-.fx-win .fx-stats{width:min(320px,100%)}   /* ровно по ширине кнопок под ним */
+.fx-win{width:100%;max-width:320px}   /* итоги — ровно по ширине кнопок под ними */
 /* ===== ожидание сервера ===== */
 /* кнопка ждёт ответ: спиннер внутри, текст скрыт (ширина та же), нажатия не проходят */
 .ld{position:relative;color:transparent!important;pointer-events:none}
