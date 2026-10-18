@@ -6,8 +6,9 @@ S.wallet = null;
 const WALLETS = [['Tonkeeper', '#45aef5', 'T'], ['Telegram Wallet', '#2aabee', 'W'], ['MyTonWallet', '#0098ea', 'M'], ['Tonhub', '#6c63ff', 'H']];
 const OUT_FEE = .3, RELAYER = '@pawngift';
 let walletTab = 'dep', depAmount = 10, outSel = new Set();
-const PARTNER = '';                                         // баннер партнёра (Stars) пока скрыт
-const PARTNER_HTML = `<a class="partner" data-act="partner"><span class="pst">★</span><span><b>${$t("Купить и продать Stars")}</b><small>${$t("бот партнёра @StarsMarketBot")}</small></span><em>›</em></a>`;
+// баннер партнёра — Telegram Stars, тем же видом, что карточка «Передай подарок релееру» (только во вкладке «Пополнить»)
+const PARTNER = `<div class="wwarn tgs"><i><img src="assets/tg-star.svg" alt=""></i><span><b>${$t("Выгодно купить и продать Stars")}</b>` +
+  `<button class="pill-btn" data-act="partner">${$t("Открыть бота")}</button></span></div>`;
 const WICO = '<path fill="currentColor" stroke="none" fill-rule="evenodd" d="M6 4h10.5A1.5 1.5 0 0118 5.5V7H6a1 1 0 000 2h13a2 2 0 012 2v7a2 2 0 01-2 2H6a3 3 0 01-3-3V7a3 3 0 013-3zm11 9a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"/>';
 // как завести NFT: передать подарок релееру
 // пополнение NFT-подарком — в том же заметном стиле, что и «Сначала напиши релееру» при выводе
@@ -38,8 +39,8 @@ function renderWallet(){
   } else {
     b.innerHTML = `<div class="wwarn"><i>!</i><span><b>${$t("Сначала напиши")} ${RELAYER}</b><small>${$t("Перед выводом обязательно отправь любое сообщение релееру")} <span class="acc">${RELAYER}</span> ${$t("в Telegram — и только потом выводи.")}</small>` +
       `<button class="pill-btn" data-act="relayerMsg">${$t("Написать")} ${RELAYER}</button></span></div>` + (INV.length ? `<div style="height:12px"></div>` +
-      `<div class="onft" id="onft">${INV.map(g => `<button class="cell${outSel.has(g.id) ? ' sel' : ''}" data-id="${g.id}"><span class="chk">${svg(NICON.ok)}</span>${cardHTML(g, 104)}</button>`).join('')}</div>` + PARTNER
-      : giftInHTML() + PARTNER);
+      `<div class="onft" id="onft">${INV.map(g => `<button class="cell${outSel.has(g.id) ? ' sel' : ''}" data-id="${g.id}"><span class="chk">${svg(NICON.ok)}</span>${cardHTML(g, 104)}</button>`).join('')}</div>`
+      : giftInHTML());
     b.querySelectorAll('.cell').forEach(c => tiltCard(c, .5));
   }
   walletBtn(); fitAmt(); fitCards($('onft'), 104, 10);
@@ -57,7 +58,8 @@ function relayerFlow(){
     S.ach.nftDep = true; notify({ type: 'ok', img: n.src, title: `${n.name} ${$t("получен")}`, text: $t("Подарок уже в инвентаре") });
     if (openDrawer === $('giftsDrawer')) renderInv(); if (openDrawer === $('walletDrawer')) renderWallet(); checkAch(); }, 3500);
 }
-function partnerFlow(){ haptic(); if (!tgOpen('https://t.me/StarsMarketBot')){ notify({ type: 'info', title: '@StarsMarketBot', text: $t("В Telegram откроется бот партнёра") }); } }
+const PARTNER_URL = 'https://t.me/ludkadurova_bot?start=refXdaHSWzm';   // бот партнёра (реф-ссылка)
+function partnerFlow(){ haptic(); if (!tgOpen(PARTNER_URL)){ try { window.open(PARTNER_URL, '_blank'); } catch(_){} } }
 document.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a) return;
   if (a.dataset.act === 'relayerMsg'){ haptic(); tgOpen('https://t.me/' + RELAYER.slice(1)); }
   else if (a.dataset.act === 'relayer') relayerFlow(); else if (a.dataset.act === 'partner') partnerFlow();

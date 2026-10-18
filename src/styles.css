@@ -2935,3 +2935,16 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 .fx.over.on~.drawer.open:not(.kept){z-index:51}
 .fx.over.on~#backdrop.top{z-index:50}
 .ct.isxp.win{box-shadow:inset 0 0 0 2px #ffb070,0 0 26px color-mix(in srgb,var(--c) 70%,transparent)}   /* выпал XP — обводка карточки оранжевая, а не белая */
+/* баннер Telegram Stars — та же карточка, что у релеера, в голубом цвете Telegram */
+.wwarn.tgs{margin-top:8px;background:rgba(42,171,238,.12);box-shadow:inset 0 0 0 1.5px rgba(42,171,238,.6),inset 0 0 22px rgba(42,171,238,.25)}
+.wwarn.tgs>i{background:#FFB835}   /* круг — тот же жёлтый, что у «Передай подарок» */
+.wwarn.tgs b{color:#5cc3ff}
+.wwarn.tgs .pill-btn{background:#2AABEE;color:#fff}
+/* экран итога: ранг — наверху, в строке кнопок Telegram (там же, где баланс на главной); под тикетом сразу «не хватило до…».
+   Освобождается место под приз, колонки и кнопки (на Арене список игроков с кнопками теперь влезает) */
+.fx.done .fx-in,.fx.case.done .fx-in{padding-top:var(--balTop,43px)}
+.fx.done .fx-tier{order:-1;height:40px;line-height:40px;margin:0 0 4px;font-size:30px}
+.fx.done .digits{margin:0 0 -6px}
+.fx.done .fx-need.miss{margin-top:4px}
+.wwarn.tgs>i img{width:16px;height:15px;margin-top:-2px;filter:brightness(0)}   /* звезда чёрная, чуть меньше и на 1 px выше центра */   /* белая звезда Telegram на золотом круге — как иконка релеера */
+.fx-win .fx-stats{width:min(320px,100%)}   /* ровно по ширине кнопок под ним */

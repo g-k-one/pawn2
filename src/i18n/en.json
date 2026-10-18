@@ -130,7 +130,6 @@
  "Бонус с первого депозита друга — 10%, максимум 0.5 GRAM за каждого.": "Bonus from a friend's first deposit — 10%, up to 0.5 GRAM per friend.",
  "Бонусы": "Bonuses",
  "Быстрый крафт": "Fast craft",
- "В Telegram откроется бот партнёра": "The partner bot will open in Telegram",
  "В демо баланс бесконечный": "Balance is unlimited in demo",
  "В демо не разыгрывается": "Not played in demo",
  "В крафте": "In craft",
@@ -253,7 +252,6 @@
  "Крафтов пока нет": "No crafts yet",
  "Крафты": "Crafts",
  "Криптобарон": "Crypto Baron",
- "Купить и продать Stars": "Buy and sell Stars",
  "Лудик": "Gambler",
  "Лудоволк": "Gamblewolf",
  "Любой тикет": "Any ticket",
@@ -443,7 +441,6 @@
  "без анимаций — для слабых телефонов": "no animations — for weaker phones",
  "бесплатно": "free",
  "больше процент для блогеров и комьюнити": "higher rates for creators and communities",
- "бот партнёра @StarsMarketBot": "partner bot @StarsMarketBot",
  "в Telegram — и только потом выводи.": "in Telegram — only then withdraw.",
  "в демо призы не выдаются": "no prizes in demo",
  "в инвентаре": "in inventory",
@@ -727,5 +724,7 @@
  "Игроки": "Players",
  "Цена": "Price",
  "Открытие кейса": "Case opening",
- "кейс": "case"
+ "кейс": "case",
+ "Открыть бота": "Open bot",
+ "Выгодно купить и продать Stars": "Buy and sell Stars at a good rate"
 }
