@@ -59,6 +59,7 @@ const API = {
   async dbgLive(ms){ return { ok: true }; },
   async dbgSpam(n){ const ms = await Promise.all(Array.from({ length: n }, async () => { const t = performance.now(); await netLag(); return performance.now() - t; })); return { ok: true, mock: true, ms, err: 0 }; },
   async dbgBots(){ return { ok: false, mock: true }; },
+  async dbgRace(){ return { ok: false, mock: true }; },
   async bets(list){ track('bets', { n: list.length, total: list.reduce((a, b) => a + b.amount, 0) }); return betsMock(list); },
 };
 

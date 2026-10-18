@@ -771,5 +771,13 @@
  "{0} игр за {1} мс": "{0} games in {1} ms",
  "Проблемы с деньгами: {0}": "Money problems: {0}",
  "Деньги сходятся": "Money adds up",
- "крафт": "craft"
+ "крафт": "craft",
+ "Спам крафтов с телефона (по 0.1 GRAM, разом)": "Craft spam from the phone (0.1 GRAM each, all at once)",
+ "Гонки — деньги не должны поехать": "Races — money must not drift",
+ "10 кейсов на 3 GRAM": "10 cases with 3 GRAM",
+ "Один NFT — два вывода": "One NFT, two withdrawals",
+ "Промокод 5 раз разом": "Promo code 5 times at once",
+ "Спам крафтов: каждый крафт — отдельный запрос, «Продать» жмётся дважды разом; сервер должен засчитать один раз. Гонки тратят твои тестовые GRAM.": "Craft spam: each craft is a separate request, «Sell» is tapped twice at once; the server must count it once. Races spend your test GRAM.",
+ "Гонки — только с сервером": "Races need the server",
+ "В моке сервера нет": "There is no server in the mock"
 }

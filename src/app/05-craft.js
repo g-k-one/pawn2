@@ -125,6 +125,7 @@ $('dbgBody').addEventListener('click', e => {
   if (k === 'bonusOff'){ API.dbgBonusOff().then(() => { S.bonus = null; haptic(); renderDbg(); }, () => notify({ type: 'err', icon: 'err', title: $t("Нет связи"), text: $t("Попробуй ещё раз") })); return; }
   if (k === 'liveMs'){ setLiveFlood(+v); haptic(); renderDbg(); return; }
   if (k === 'spam'){ c.classList.add('ld'); loadSpam(+v).finally(() => c.classList.remove('ld')); return; }
+  if (k === 'race'){ c.classList.add('ld'); loadRace(v).finally(() => { c.classList.remove('ld'); renderDbg(); }); return; }
   if (k === 'bots'){ c.classList.add('ld'); loadBots(v).finally(() => { c.classList.remove('ld'); renderDbg(); }); return; }
   if (k === 'resetSave'){ haptic('medium'); Store.reset(); return; }
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
