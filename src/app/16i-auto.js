@@ -70,7 +70,8 @@ async function acStart(){
     let r = null; try { r = bets ? await API.bets(list) : await API.craft(stake, [], stake); } catch(_){ acRun.stop = $t("сервер не ответил"); break; }
     if (bets || !S.demo) setBalance(S.balance - stake); else moveBal(-stake);
     acRun.done++; acRun.staked += stake; Sfx.rank(r.ti); haptic(r.ti >= 3 ? 'heavy' : 'light'); Glow.set(TIERS[r.ti].glow);
-    if (!acRun.best || (r.mult || 0) > (acRun.best.mult || 0)) acRun.best = r;
+    // лучший: в крафте — самый большой множитель; в Ставках множителя нет — самый высокий ранг, при равном — крупнейший выигрыш
+    const score = bets ? r.ti * 1e6 + (r.win || 0) : (r.mult || 0); if (!acRun.best || score > acRun.bestScore){ acRun.best = r; acRun.bestScore = score; }
     if (r.nft && acCfg.nft === 'stop' && !S.demo){ nftR = r; acRun.stop = $t("выпал NFT"); break; }   // выигрыш с подарком — обычный экран, решение за игроком
     // зачисление — как «Забрать» на экране выигрыша; NFT по настройке — продаём сразу
     const how = r.nft ? 'sell' : bets ? 'bets' : 'gram', add = r.nft ? Math.round((r.change + r.nft.value) * 100) / 100 : r.win;
