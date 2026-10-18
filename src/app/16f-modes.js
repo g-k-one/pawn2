@@ -19,13 +19,16 @@ function renderModes(){
   modeBar.hidden = m.length < 2; modeBar.classList.toggle('off', $('fx').classList.contains('on') && !arenaOn && !betsOn); document.body.classList.toggle('has-modes', m.length > 1);
   // кнопки пересобираем, только если сменился набор режимов; белая подложка переезжает под активную
   const key = m.map(x => x[0]).join();
-  if (modeBar.dataset.k !== key){ modeBar.dataset.k = key; modeBar.innerHTML = `<i class="mthumb"></i>` + m.map(([k, n]) => `<button data-m="${k}">${n}</button>`).join(''); }
+  if (modeBar.dataset.k !== key){ modeBar.dataset.k = key; modeBar.innerHTML = `<i class="mthumb"></i>` + m.map(([k, n]) => `<button data-m="${k}">${n}</button>`).join('');
+    modeBar.querySelectorAll('[data-m]').forEach(x => modeRO?.observe(x)); }
   modeThumb(modeBusy ? modeTo : cur);   // во время перехода подложка уже стоит на новом режиме — не прыгает назад
 }
 let modeTo = 'craft';
 // подложку меряем, только когда режим сменился: замер размеров кнопок заставляет браузер пересчитать раскладку всей страницы,
 // а renderModes зовётся каждые 0.8 с — раньше это давало рывок, особенно сразу после экрана итога
 let modeThumbAt = '';
+// ширину меряем один раз на режим; если кнопка потом стала шире (догрузился шрифт) — подложка была уже текста. Следим за размером кнопок
+const modeRO = typeof ResizeObserver === 'function' ? new ResizeObserver(() => { modeThumbAt = ''; modeThumb(modeBusy ? modeTo : modeNow()); }) : null;
 function modeThumb(cur){
   const b = modeBar.querySelector(`[data-m="${cur}"]`), th = modeBar.querySelector('.mthumb'); if (!b || !th) return;
   const key = cur + '|' + modeBar.dataset.k + '|' + LANG; if (modeThumbAt === key && th.style.width) return; modeThumbAt = key;

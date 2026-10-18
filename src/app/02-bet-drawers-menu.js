@@ -224,6 +224,7 @@ function renderMenu(){
     `<button class="mb2 pf" data-go="pfi"><span class="mb2-t"><b>${$t("Честность")}</b><small>${$t("проверь любой результат")}</small></span><span class="mb2-art"><i class="mb2-sh">${svg(IC.shield)}</i><em>00000</em></span></button></div>` +
     `<div class="mgrp-t">${$t("Игра")}</div><div class="mgrp">` +
       sw('fastRow', '#FFB835', NICON.bolt, $t("Быстрый крафт"), $t("сразу число и дроп"), S.fast) +
+      `<button class="mrow" id="autoRow" style="--c:#30A5FF"><i>${svg(AC_ICO)}</i><span class="mt">${$t("Автокрафт")}<small>${$t("серия крафтов или ставок со стопами")}</small></span><em class="mchev">${svg('<path d="M9 6l6 6-6 6"/>')}</em></button>` +
       sw('liteRow', '#12D53D', NICON.leaf, $t("Экономный режим"), $t("без анимаций — для слабых телефонов"), S.lite) +
       sw('demoRow', '#AE3FC4', NICON.candy, $t("Демо-режим"), $t("фантики вместо GRAM"), S.demo) +
       sw('vibroRow', '#30A5FF', NICON.vibro, $t("Вибрация"), '', S.vibro) +
@@ -251,6 +252,7 @@ $('menuBody').addEventListener('click', e => {
   if (r.id === 'soundRow') return toggleSound();
   if (r.id === 'liteRow') return setLite(!S.lite);
   if (r.id === 'dbgRow'){ swapDrawer('dbgDrawer', renderDbg); return; }
+  if (r.id === 'autoRow'){ haptic(); if (acReady()) swapDrawer('acDrawer', acRender); return; }
   if (r.id === 'demoRow'){ if (S.busy) return; return setDemo(!S.demo); }
   haptic();
   notify({ type: 'info', icon: 'info', title: r.childNodes[1].textContent.trim(), text: $t("Скоро будет") });

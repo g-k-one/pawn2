@@ -3008,3 +3008,29 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 .promo .pill-btn{flex:none;background:#30A5FF}
 /* вспышка шара кнопки крафта при ударе — только прозрачность белой накладки */
 .cb .orbfl{position:absolute;inset:4px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.9),rgba(255,255,255,.35) 45%,transparent 70%);opacity:0;pointer-events:none}
+/* автокрафт: полоска серии над наковальней, короткая вспышка результата; запуск — из меню */
+.acbar{top:524px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:8px 8px 8px 16px;border-radius:999px;background:rgba(0,0,0,.72);white-space:nowrap;z-index:6}
+.acbar[hidden]{display:none}
+.acb-n{font-size:15px;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.04em}
+.acbar b{font-size:18px;color:#fff;font-variant-numeric:tabular-nums}
+.acbar b.pos{color:#12D53D}
+.acbar button{padding:7px 14px;border-radius:999px;background:#FF4C35;color:#fff;font-size:16px;font-weight:700;text-transform:uppercase}
+.acon .craft.busy{pointer-events:none}
+.acon .acbar{pointer-events:auto}
+.acpop{top:468px;left:50%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 16px;border-radius:18px;background:rgba(0,0,0,.6);box-shadow:inset 0 0 0 1.5px var(--c);pointer-events:none;z-index:6;white-space:nowrap}
+.acpop b{font-size:30px;line-height:1;color:var(--c);letter-spacing:.04em}
+.acpop span{font-size:14px;color:rgba(255,255,255,.85)}
+.ac-sum{margin:4px 0 20px;text-align:left}   /* карточка-предупреждение (.wwarn), текст по левому краю */
+.ac-warn{color:#FFB835}
+.ac-res{display:flex;flex-direction:column;align-items:center;gap:4px;margin:6px 0 16px}
+.ac-res b{font-size:40px;line-height:1;color:#fff}
+.ac-res b.pos{color:#12D53D}
+.ac-res small{font:400 13.5px/1.35 var(--serif);color:rgba(255,255,255,.72)}
+#acFoot{display:flex;flex-direction:column;gap:8px}
+.acpop em{font-style:normal;color:#fff}
+.acpop em.pos{color:#12D53D}
+/* итог серии — колонки как на экранах итога: число с гемом в строку, гем цветом числа */
+.ac-stats .fx-stats b{display:flex;align-items:center;gap:4px;font-size:25px;line-height:30px;color:#fff}
+.ac-stats .fx-stats .pos b{color:#12D53D}
+.mrow .mchev{display:grid;place-items:center;color:rgba(255,255,255,.45)}
+.mrow .mchev svg{width:18px;height:18px;stroke-width:2.6}
