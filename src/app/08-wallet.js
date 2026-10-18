@@ -15,12 +15,35 @@ const WICO = '<path fill="currentColor" stroke="none" fill-rule="evenodd" d="M6 
 const giftInHTML = (title = $t("Подарков пока нет")) => `<div class="wwarn ginw"><i>${svg(IC.gift)}</i><span><b>${title}</b>` +
   `<small>${$t("В профиле Telegram: подарок → «Передать» →")} <span class="acc">${RELAYER}</span>. ${$t("Он появится здесь после проверки.")}</small>` +
   `<button class="pill-btn" data-act="relayer">${$t("Передать подарок")}</button></span></div>`;
+/* промокоды: GRAM сразу на баланс или бонус +% к ближайшему пополнению (потолок в GRAM и срок). Проверяет и применяет сервер (API.promo) */
+S.bonus = null;                                              // { pct, max, until } — бонус к ближайшему пополнению
+const bonusOn = () => S.bonus && S.bonus.until > Date.now() ? S.bonus : null;
+const bonusOf = a => { const b = bonusOn(); return b ? Math.min(Math.floor(a * b.pct) / 100, b.max) : 0; };
+const leftT = ms => { const s = Math.max(0, Math.ceil(ms / 1000)), h = s / 3600 | 0, m = (s / 60 | 0) % 60, x = String(s % 60).padStart(2, '0'); return h ? `${h}:${String(m).padStart(2, '0')}:${x}` : `${m}:${x}`; };
+const bonusHTML = () => { const b = bonusOn(); return b ? `<div class="wbonus"><i>${svg(NICON.ok)}</i><span><b>${$t("Бонус на пополнение")}</b><small><em id="bonusT">${leftT(b.until - Date.now())}</em> · ${$t("макс бонус {0} GRAM", fmt(b.max))}</small></span><strong>+${b.pct}%</strong></div>` : ''; };
+const promoHTML = () => `<div class="promo"><input id="promoIn" placeholder="${$t("Промокод")}" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="32"><button class="pill-btn" data-act="promo">${$t("Применить")}</button></div>`;
+// dbg — из дебага: код можно вводить повторно (на сервере тоже)
+async function applyPromo(btn, dbgCode){
+  const inp = $('promoIn'), code = dbgCode || inp?.value.trim().toUpperCase(); if (!code){ haptic('rigid'); inp?.focus(); return; }
+  const r = await btnWait(btn, API.promo(code, !!dbgCode)); if (!r) return;
+  if (!r.ok){ haptic('rigid'); return notify({ type: 'err', icon: 'err', title: r.error === 'used' ? $t("Промокод уже активирован") : r.error === 'expired' ? $t("Промокод больше не действует") : $t("Нет такого промокода"), text: code }); }
+  haptic('medium'); if (inp) inp.value = '';
+  if (r.kind === 'gram'){ setBalance(S.balance + r.amount); Sfx.coin(); S.hist.wallet.unshift({ type: 'promo', t: Date.now(), amount: r.amount, name: code, method: $t("промокод") });
+    notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(r.amount)} GRAM`, text: `${$t("Промокод")} ${code}` }); }
+  else { S.bonus = { pct: r.pct, max: r.max, until: Date.now() + r.left }; S.hist.wallet.unshift({ type: 'promo', t: Date.now(), pct: r.pct, name: code, method: $t("бонус к пополнению") });
+    notify({ type: 'ok', icon: 'ok', color: '#12D53D', title: $t("Бонус +{0}% к пополнению", r.pct), text: `${$t("макс бонус {0} GRAM", fmt(r.max))} · ${leftT(r.left)}` }); }
+  if (openDrawer === $('walletDrawer')) renderWallet();
+}
+// таймер бонуса — пока открыто «Пополнить»; срок вышел — карточка исчезает
+setInterval(() => { if (!S.bonus || openDrawer !== $('walletDrawer') || walletTab !== 'dep') return;
+  if (!bonusOn()){ S.bonus = null; renderWallet(); return; } const el = $('bonusT'); if (el) el.textContent = leftT(S.bonus.until - Date.now()); }, 1000);
 function syncBalBtn(){ const b = $('balAdd'); if (b) b.innerHTML = S.wallet ? svg('<path d="M12 6v12M6 12h12"/>') : svg(WICO); }
 function openWallet(tab = 'dep'){ if (S.busy) return; if (S.demo){ notify({ type: 'demo', img: 'assets/fantik.webp', title: $t("В демо баланс бесконечный"), text: $t("Кошелёк работает только на GRAM") }); return; } walletTab = tab; outSel = new Set(); swapDrawer('walletDrawer', renderWallet); }
 function walletBtn(){
   const go = $('walletGo'), n = outSel.size, fee = Math.round(n * OUT_FEE * 100) / 100;
   go.classList.remove('off');
-  if (walletTab === 'dep') go.innerHTML = S.wallet ? `${$t("Пополнить на {0} GRAM", fmt(depAmount))}` : $t("Подключить кошелёк");
+  if (walletTab === 'dep'){ const bn = S.wallet ? bonusOf(depAmount) : 0;
+    go.innerHTML = S.wallet ? `${$t("Пополнить на {0} GRAM", fmt(depAmount))}` + (bn ? `<small>${$t("+{0} GRAM бонусом", fmt(bn))}</small>` : '') : $t("Подключить кошелёк"); }
   // всегда две строки — шторка не прыгает при выборе. Комиссия видна ещё до выбора
   else { go.innerHTML = n ? `${$t("Вывести {0} NFT", n)}<small>${$t("по одному · комиссия {0} GRAM", fmt(fee))}</small>`
     : `${$t("Выбери подарки для вывода")}<small>${$t("комиссия {0} GRAM за каждый", OUT_FEE)}</small>`; go.classList.toggle('off', !n); }
@@ -29,12 +52,12 @@ function renderWallet(){
   $('walletTabs').innerHTML = [['dep', $t("Пополнить")], ['out', $t("Вывести NFT")]].map(([k, t]) => `<button class="tab${k === walletTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
   const b = $('walletBody');
   if (walletTab === 'dep' && !S.wallet){
-    b.innerHTML = `<div class="wcon"><span class="wico">${svg(WICO)}</span><b>${$t("Подключи кошелёк")}</b><p>${$t("Пополнение — только в GRAM, с твоего кошелька. Ключи остаются у тебя: каждую транзакцию ты подтверждаешь сам.")}</p></div>` +
-      `<div class="sec-t">${$t("Или пополни NFT-подарком")}</div>${giftInHTML($t("Передай подарок релееру"))}` + PARTNER;
+    b.innerHTML = bonusHTML() + `<div class="wcon"><span class="wico">${svg(WICO)}</span><b>${$t("Подключи кошелёк")}</b><p>${$t("Пополнение — только в GRAM, с твоего кошелька. Ключи остаются у тебя: каждую транзакцию ты подтверждаешь сам.")}</p></div>` +
+      promoHTML() + `<div class="sec-t">${$t("Или пополни NFT-подарком")}</div>${giftInHTML($t("Передай подарок релееру"))}` + PARTNER;
   } else if (walletTab === 'dep'){
-    b.innerHTML = `<div class="wchip"><i style="--c:${(WALLETS.find(w => w[0] === S.wallet.name) || [, '#0098ea'])[1]}">${S.wallet.name[0]}</i><span><b>${S.wallet.name}</b><small>${S.wallet.addr}</small></span><button data-act="off">${$t("Отключить")}</button></div>` +
+    b.innerHTML = bonusHTML() + `<div class="wchip"><i style="--c:${(WALLETS.find(w => w[0] === S.wallet.name) || [, '#0098ea'])[1]}">${S.wallet.name[0]}</i><span><b>${S.wallet.name}</b><small>${S.wallet.addr}</small></span><button data-act="off">${$t("Отключить")}</button></div>` +
       `<label class="amt"><input id="depIn" type="number" inputmode="decimal" min="1" step="1" value="${depAmount}"><span>GRAM</span></label>` +
-      `<div class="presets">${[5, 10, 25, 50, 100].map(v => `<button class="pill-btn${v === depAmount ? ' on' : ''}" data-v="${v}">${v}</button>`).join('')}</div>` +
+      `<div class="presets">${[5, 10, 25, 50, 100].map(v => `<button class="pill-btn${v === depAmount ? ' on' : ''}" data-v="${v}">${v}</button>`).join('')}</div>` + promoHTML() +
       `<div class="sec-t">${$t("Или пополни NFT-подарком")}</div>${giftInHTML($t("Передай подарок релееру"))}` + PARTNER;
   } else {
     b.innerHTML = `<div class="wwarn"><i>!</i><span><b>${$t("Сначала напиши")} ${RELAYER}</b><small>${$t("Перед выводом обязательно отправь любое сообщение релееру")} <span class="acc">${RELAYER}</span> ${$t("в Telegram — и только потом выводи.")}</small>` +
@@ -66,6 +89,7 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-act]
   else if (a.dataset.act === 'verify'){ haptic(); try { Telegram.WebApp.openLink(VERIFY_URL); e.preventDefault(); } catch(_){} } });
 $('walletBody').addEventListener('click', e => {
   const p = e.target.closest('.presets .pill-btn'), c = e.target.closest('.onft .cell');
+  const pr = e.target.closest('[data-act="promo"]'); if (pr){ applyPromo(pr); return; }
   if (e.target.closest('[data-act="off"]')){ haptic(); tcUI ? tcUI.disconnect().catch(() => {}) : (S.wallet = null, renderWallet()); syncBalBtn(); return; }
   if (p){ depAmount = +p.dataset.v; haptic(); $('walletBody').querySelectorAll('.presets .pill-btn').forEach(x => x.classList.toggle('on', x === p)); $('depIn').value = depAmount; fitAmt(); walletBtn(); }
   // выбор подарка — без перерисовки, чтобы карточки не дёргались
@@ -111,8 +135,10 @@ $('walletGo').onclick = async () => {
     catch(_){ btn.disabled = false; btn.classList.remove('wait'); walletBtn(); notify({ type: 'err', icon: 'err', title: $t("Платёж отменён") }); return; }
     btn.disabled = false; btn.classList.remove('wait'); hideDrawer();   // в бою баланс зачисляет бэкенд после подтверждения в сети
     if (!(await API.confirmDeposit(depAmount, tx?.boc).catch(() => ({ ok: false }))).ok) return notify({ type: 'err', icon: 'err', title: $t("Пополнение не прошло"), text: $t("Если GRAM списались — они придут после подтверждения в сети") });
+    const bn = bonusOf(depAmount), pct = S.bonus?.pct; if (bn) S.bonus = null;   // бонус промокода — к этому пополнению, один раз
     S.hist.wallet.unshift({ type: 'dep', t: Date.now(), amount: depAmount, method: S.wallet.name });
-    setTimeout(() => { setBalance(S.balance + depAmount); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(depAmount)} GRAM`, text: `${$t("Пополнение с")} ${S.wallet.name}` }); checkAch(); }, 250);
+    if (bn) S.hist.wallet.unshift({ type: 'bonus', t: Date.now() + 1, amount: bn, name: `+${pct}%`, method: $t("бонус к пополнению") });
+    setTimeout(() => { setBalance(S.balance + depAmount + bn); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(depAmount + bn)} GRAM`, text: `${$t("Пополнение с")} ${S.wallet.name}` + (bn ? ` · ${$t("бонус +{0}%", pct)}` : '') }); checkAch(); }, 250);
   } else {
     const list = INV.filter(g => outSel.has(g.id)), fee = Math.round(list.length * OUT_FEE * 100) / 100;
     if (!list.length){ haptic('rigid'); btn.animate([{ translate: '-5px 0' }, { translate: '5px 0' }, { translate: '0 0' }], { duration: 200, iterations: 2 }); return; }

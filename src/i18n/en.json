@@ -735,5 +735,20 @@
  "1.5 с": "1.5 s",
  "6 с": "6 s",
  "Не удалось загрузить": "Could not load",
- "Повторить": "Retry"
+ "Повторить": "Retry",
+ "Баланс": "Balance",
+ "Промокод": "Promo code",
+ "Бонус к пополнению": "Deposit bonus",
+ "Бонус на пополнение": "Deposit bonus",
+ "Применить": "Apply",
+ "Промокод уже активирован": "Promo code already used",
+ "Промокод больше не действует": "Promo code has expired",
+ "Нет такого промокода": "No such promo code",
+ "промокод": "promo code",
+ "бонус к пополнению": "deposit bonus",
+ "Бонус +{0}% к пополнению": "+{0}% deposit bonus",
+ "+{0} GRAM бонусом": "+{0} GRAM bonus",
+ "бонус +{0}%": "bonus +{0}%",
+ "макс бонус {0} GRAM": "max bonus {0} GRAM",
+ "Убрать бонус": "Remove bonus"
 }

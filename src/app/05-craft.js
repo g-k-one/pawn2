@@ -91,6 +91,10 @@ function renderDbg(){
       `<p class="dbg-n">${$t("Для ранга подбирается настоящий server seed — проверка честности сходится, но хеш до игры будет другим. Точный тикет подставляется напрямую, проверка для него не сойдётся. Только для тестов прототипа.")}</p>`,
     player: () =>
       `<div class="dbg-l">${$t("Кошелёк")}</div><div class="dbg-g">${[[null, $t("Не подключён")], ['Tonkeeper', 'Tonkeeper'], ['Telegram Wallet', 'Telegram Wallet']].map(([w, l]) => `<button class="dbg-c${(S.wallet?.name || null) === w && (!w || S.wallet?.fake) ? ' on' : ''}" data-k="wallet" data-v="${w || ''}" style="--c:#30A5FF">${l}</button>`).join('')}</div>` +
+      `<div class="dbg-l">${$t("Баланс")} · ${fmt(S.balance)} GRAM</div><div class="dbg-g">${[['0', '0'], ['+1', '+1'], ['+10', '+10'], ['+100', '+100'], ['-10', '−10']].map(([v, l]) => `<button class="dbg-c" data-k="bal" data-v="${v}" style="--c:${v === '0' || v[0] === '-' ? '#FF4C35' : '#12D53D'}">${l}</button>`).join('')}</div>` +
+      `<div class="dbg-l">${$t("Промокод")}${bonusOn() ? ` · ${$t("бонус +{0}%", S.bonus.pct)} · ${leftT(S.bonus.until - Date.now())}` : ''}</div><div class="dbg-g">` +
+        [['PAWN5', '+5 GRAM', '#12D53D'], ['BONUS10', '+10% · ' + $t("макс бонус {0} GRAM", 2), '#12D53D'], ['BONUS50', '+50% · ' + $t("макс бонус {0} GRAM", 5), '#12D53D']].map(([c, l, col]) => `<button class="dbg-c" data-k="promo" data-v="${c}" style="--c:${col}">${l}</button>`).join('') +
+        `<button class="dbg-c" data-k="bonusOff" data-v="1" style="--c:#FF4C35"${bonusOn() ? '' : ' disabled'}>${$t("Убрать бонус")}</button></div>` +
       `<div class="dbg-l">${$t("Запас бесплатных кейсов")}</div><div class="dbg-g">${[['beast', $t("Бист"), '#EB57B0'], ['musk', $t("Маск"), '#FF4C35']].map(([id, n, c]) => [0, 1, 3, 5].map(v => `<button class="dbg-c${S.stock[id] === v ? ' on' : ''}" data-k="stock" data-id="${id}" data-v="${v}" style="--c:${c}">${n} ×${v}</button>`).join('')).join('')}</div>` +
       `<div class="dbg-l">${$t("Кейсы")}</div><div class="dbg-g">${chip('freeCases', false, $t("По условиям"))}${chip('freeCases', true, $t("Без условий"))}</div>` +
       `<div class="dbg-l">${$t("Онбординг")}</div><div class="dbg-g">${chip('noOnb', false, $t("Показывать"))}${chip('noOnb', true, $t("Выключен"))}<button class="dbg-c" data-k="onbNow" data-v="1">${$t("Показать сейчас")}</button></div>` +
@@ -114,6 +118,11 @@ $('dbgBody').addEventListener('click', e => {
   const c = e.target.closest('.dbg-c'); if (!c || c.disabled) return;
   const k = c.dataset.k, v = c.dataset.v;
   if (k === 'wallet'){ S.wallet = v ? { name: v, addr: 'UQBv…k3Qf', fake: true } : null; syncBalBtn(); haptic(); renderDbg(); return; }   // дебаг: имитация подключённого кошелька
+  if (k === 'bal'){ const add = v !== '0', n = add ? +v : 0;   // дебаг: обнулить или накинуть GRAM (на сервере — тоже)
+    API.dbgBalance(n, add).then(r => { if (!r?.ok) return; setBalance(add ? Math.max(0, Math.round((S.balance + n) * 100) / 100) : 0); haptic('medium'); renderDbg(); },
+      () => notify({ type: 'err', icon: 'err', title: $t("Нет связи"), text: $t("Попробуй ещё раз") })); return; }
+  if (k === 'promo'){ applyPromo(c, v).then(() => renderDbg()); return; }   // дебаг: код сразу, можно повторно
+  if (k === 'bonusOff'){ API.dbgBonusOff().then(() => { S.bonus = null; haptic(); renderDbg(); }, () => notify({ type: 'err', icon: 'err', title: $t("Нет связи"), text: $t("Попробуй ещё раз") })); return; }
   if (k === 'resetSave'){ haptic('medium'); Store.reset(); return; }
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
   if (k === 'stock'){ S.stock[c.dataset.id] = +v; haptic(); renderDbg(); return; }

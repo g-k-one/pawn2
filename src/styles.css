@@ -2993,3 +2993,16 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 .sk-err .pill-btn{margin-top:10px}
 .lite .sk{animation:none}
 .skel{width:100%;align-self:stretch}.skel .sk-card,.skel .sk-grid,.skel .sk-row{width:100%}
+/* промокод: бонус к пополнению — зелёная карточка (+%, таймер, потолок); поле кода — таблетка с кнопкой */
+.wbonus{display:flex;align-items:center;gap:12px;margin:6px 0 12px;padding:16px;border-radius:22px;background:linear-gradient(135deg,rgba(18,213,61,.2),rgba(18,213,61,.06));box-shadow:inset 0 0 0 1.5px rgba(18,213,61,.55),inset 0 0 22px rgba(18,213,61,.25)}
+.wbonus>i{flex:none;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#12D53D;color:#062a10}
+.wbonus>i svg{width:60%;height:60%;stroke-width:3.4}
+.wbonus span{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.wbonus b{font-size:19px;line-height:1.1;text-transform:uppercase;color:#12D53D}
+.wbonus small{font:400 13.5px/1.3 var(--serif);color:rgba(255,255,255,.85)}
+.wbonus em{font-style:normal;font-variant-numeric:tabular-nums;color:#fff}
+.wbonus strong{flex:none;font-size:40px;line-height:1;color:#12D53D}
+.promo{display:flex;gap:8px;margin-top:20px}
+.promo input{flex:1;min-width:0;padding:10px 16px;border-radius:999px;border:0;outline:0;background:rgba(255,255,255,.06);color:#fff;font:700 17px var(--font);letter-spacing:.06em;text-transform:uppercase}
+.promo input::placeholder{color:rgba(255,255,255,.45);letter-spacing:.02em}
+.promo .pill-btn{flex:none;background:#30A5FF}

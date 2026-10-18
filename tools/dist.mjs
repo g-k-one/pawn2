@@ -2,12 +2,13 @@
 // Без assets/g (40 МБ запасных картинок подарков): в проде картинки идут с CDN, а запас нужен только там,
 // где CDN закрыт (просмотрщик artifact). Если CDN не ответит — у карточек останутся локальные заглушки assets/nft.
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { cpSync, rmSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
-const root = new URL('../', import.meta.url).pathname, out = root + 'dist/';
+const root = fileURLToPath(new URL('../', import.meta.url)).replace(/\\/g, '/'), out = root + 'dist/';
 execFileSync('node', [root + 'tools/build.mjs'], { stdio: 'inherit' });
 rmSync(out, { recursive: true, force: true }); mkdirSync(out);
 cpSync(root + 'index.html', out + 'index.html');
-cpSync(root + 'assets', out + 'assets', { recursive: true, filter: p => p !== root + 'assets/g' && !p.startsWith(root + 'assets/g/') });
+cpSync(root + 'assets', out + 'assets', { recursive: true, filter: p => (p = p.replace(/\\/g, '/')) !== root + 'assets/g' && !p.startsWith(root + 'assets/g/') });
 if (existsSync(root + 'tonconnect-manifest.json')) cpSync(root + 'tonconnect-manifest.json', out + 'tonconnect-manifest.json');
 // самопроверка: всё, на что ссылается приложение (кроме запасного assets/g), должно лежать в dist
 const refs = new Set(readFileSync(out + 'index.html', 'utf8').match(/assets\/[\w./-]+\.(?:svg|webp|png|woff2|json)/g));

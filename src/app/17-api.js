@@ -46,13 +46,22 @@ const API = {
   async claimRef(){ return { ok: true }; },
   /* POST /tasks/restore-day → {ok} — восстановить пропущенный день недели за 0.5 GRAM */
   async restoreDay(){ return { ok: true }; },
+  /* POST /promo {code} → {ok, kind:'gram', amount} — GRAM на баланс | {ok, kind:'bonus', pct, max, left} — +pct% к ближайшему пополнению,
+     не больше max GRAM, действует left мс | {ok:false, error:'unknown'|'used'|'expired'}. Код — один раз на игрока. Мок: тестовые коды */
+  async promo(code, dbg){ track('promo');
+    const P = { PAWN5: { kind: 'gram', amount: 5 }, BONUS10: { kind: 'bonus', pct: 10, max: 2, left: 600e3 }, BONUS50: { kind: 'bonus', pct: 50, max: 5, left: 1800e3 } }[code];
+    if (!P) return { ok: false, error: 'unknown' }; if ((S.promoUsed ||= []).includes(code) && !dbg) return { ok: false, error: 'used' };
+    S.promoUsed.push(code); return { ok: true, ...P }; },
+  /* дебаг (только тест): баланс = v или + v. В бою этого эндпоинта нет */
+  async dbgBalance(v, add){ return { ok: true }; },
+  async dbgBonusOff(){ return { ok: true }; },   // дебаг: убрать бонус к пополнению
   async bets(list){ track('bets', { n: list.length, total: list.reduce((a, b) => a + b.amount, 0) }); return betsMock(list); },
 };
 
 /* сеть: каждый запрос к «серверу» проходит здесь. Нет интернета — сразу ошибка (интерфейс вернёт ставку и покажет, что делать).
    Дебаг → «Крафт» → «Сервер отвечает»: искусственная задержка или «нет связи» — так на телефоне видны все состояния ожидания */
 const netLag = () => (S.dbg.net === 'off' || navigator.onLine === false) ? Promise.reject(new Error('offline')) : S.dbg.net > 0 ? wait(S.dbg.net) : Promise.resolve();
-for (const k of ['craft', 'claimCraft', 'openCase', 'rotateSeed', 'withdrawNft', 'confirmDeposit', 'sellNfts', 'pvpJoin', 'pvpChange', 'bets', 'checkAch', 'claimRef', 'restoreDay']){
+for (const k of ['craft', 'claimCraft', 'openCase', 'rotateSeed', 'withdrawNft', 'confirmDeposit', 'sellNfts', 'pvpJoin', 'pvpChange', 'bets', 'checkAch', 'claimRef', 'restoreDay', 'promo', 'dbgBalance', 'dbgBonusOff']){
   const f = API[k]; API[k] = async (...a) => { await netLag(); return f.apply(API, a); }; }
 /* списки с сервера (история, топ, друзья, задания, достижения): GET-запрос. Мок: данные уже в браузере — только задержка сети */
 API.list = async key => { await netLag(); return { ok: true }; };
@@ -97,7 +106,7 @@ const Store = (() => {
   const mskDay = () => new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10);   // сутки по Москве: задания обновляются в 00:00 МСК
   const snapshot = () => ({ v: 1, day: mskDay(), balance: S.balance, xp: S.xp, inv: INV, tasks: S.tasks, week: S.week, stock: S.stock, ach: S.ach,
     hist: { crafts: S.hist.crafts.slice(0, CAP), cases: S.hist.cases.slice(0, CAP), wallet: S.hist.wallet.slice(0, CAP), rewards: S.hist.rewards.slice(0, CAP) },
-    nonce: S.nonce, clientSeed: S.clientSeed, ep: S.ep && { id: S.ep.id, seed: S.ep.seed, commitment: S.ep.commitment }, refPending: REF.pending });
+    nonce: S.nonce, clientSeed: S.clientSeed, bonus: S.bonus, promoUsed: S.promoUsed, ep: S.ep && { id: S.ep.id, seed: S.ep.seed, commitment: S.ep.commitment }, refPending: REF.pending });
   const ser = v => JSON.stringify(v, (k, x) => x && typeof x === 'object' && NSET.has(x) ? { $n: NKEY(x) } : x);
   let last = '';
   function save(){
@@ -108,7 +117,7 @@ const Store = (() => {
     if (!SAVE) return;
     const d = JSON.parse(JSON.stringify(SAVE), (k, x) => x && typeof x === 'object' && x.$n ? NBY.get(x.$n) || NFTS.find(n => n.name === x.$n.split('#')[0]) || NFTS[0] : x);
     S.balance = d.balance; S.xp = d.xp; INV = d.inv; S.stock = d.stock; S.ach = d.ach; S.week = d.week; REF.pending = d.refPending || 0;
-    Object.assign(S.hist, d.hist); S.nonce = d.nonce; S.clientSeed = d.clientSeed;
+    Object.assign(S.hist, d.hist); S.nonce = d.nonce; S.clientSeed = d.clientSeed; S.bonus = d.bonus || null; S.promoUsed = d.promoUsed || [];
     // новый день по Москве — задания дня с нуля (в бою это делает сервер)
     S.tasks = d.day === mskDay() ? d.tasks : { early: 0, turnover: 0, crafts: 0, done: {} };
     if (d.ep){ const proofs = [...S.hist.crafts, ...S.hist.cases].map(x => x.r.proof).filter(p => p.epoch_id === d.ep.id && !p.server_seed);
