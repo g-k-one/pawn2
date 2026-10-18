@@ -41,6 +41,8 @@ function renderCases(){
   const b = $('casesBody');
   // «Профиль»: таблетки внутри вкладки
   const seg = `<div class="bseg seg">${[['ach', $t("Достижения")], ['refs', $t("Друзья")], ['top', $t("Топ")]].map(([k, t]) => `<button class="${k === casesTab ? 'on' : ''}" data-go="${k}">${t}</button>`).join('')}</div>`;
+  // задания, достижения, друзья, топ — с сервера: при первом открытии — скелет строк (каталог кейсов — свой, без ожидания)
+  { const fr = BTAB_OF[casesTab] === 'friends'; if (casesTab !== 'cases' && skelGate('bon:' + (fr ? friendsSeg : casesTab), b, renderCases, 'row', fr ? seg : '')) return; }
   if (casesTab === 'cases'){
     b.innerHTML = `<div class="bgrid">${CASES.map(caseCard).join('')}</div>` +
       `<p class="bnote">${$t("Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить и открывать по одному, когда захочешь.")}</p>`;
@@ -131,9 +133,9 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-act]
   if (act === 'amb'){ haptic(); tgOpen(AMBASSADORS); }
   if (act === 'totasks'){ haptic(); openCases('tasks'); }
   if (act === 'refhist'){ haptic(); openHistory('refs'); }
-  if (act === 'claimref' && REF.pending){ const v = REF.pending; REF.pending = 0; haptic('medium'); setBalance(S.balance + v); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(v)} GRAM`, text: $t("Бонус за друзей") }); renderCases(); }
-  if (act === 'restore'){ if (S.demo) return notify({ type: 'demo', icon: 'coin', title: $t("Восстановление — только на GRAM"), text: $t("Выключи демо в меню") });
-    if (S.balance < S.week.restorePrice) return notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM") }); setBalance(S.balance - S.week.restorePrice); S.hist.wallet.unshift({ type: 'restore', t: Date.now(), amount: S.week.restorePrice, name: `${$t("Пропущенный день:")} ${DAYS[S.week.missed[0]]}`, method: $t("неделя заданий") }); S.week.missed.shift(); if (S.tasks.stocked && weekDone()) stockUp('musk');   /* неделя закрылась восстановлением после заданий дня — кейс Маска сразу */ haptic('medium'); notify({ type: 'ok', icon: 'ok', title: $t("День восстановлен"), text: $t("Неделя снова идёт к кейсу Маска") }); renderCases(); }
+  if (act === 'claimref' && REF.pending && !a.classList.contains('ld')) btnWait(a, API.claimRef()).then(ok => { if (!ok) return; const v = REF.pending; REF.pending = 0; haptic('medium'); setBalance(S.balance + v); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(v)} GRAM`, text: $t("Бонус за друзей") }); renderCases(); });
+  if (act === 'restore' && !a.classList.contains('ld')){ if (S.demo) return notify({ type: 'demo', icon: 'coin', title: $t("Восстановление — только на GRAM"), text: $t("Выключи демо в меню") });
+    if (S.balance < S.week.restorePrice) return notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM") }); btnWait(a, API.restoreDay()).then(ok => { if (!ok) return; setBalance(S.balance - S.week.restorePrice); S.hist.wallet.unshift({ type: 'restore', t: Date.now(), amount: S.week.restorePrice, name: `${$t("Пропущенный день:")} ${DAYS[S.week.missed[0]]}`, method: $t("неделя заданий") }); S.week.missed.shift(); if (S.tasks.stocked && weekDone()) stockUp('musk');   /* неделя закрылась восстановлением после заданий дня — кейс Маска сразу */ haptic('medium'); notify({ type: 'ok', icon: 'ok', title: $t("День восстановлен"), text: $t("Неделя снова идёт к кейсу Маска") }); renderCases(); }); }
 });
 
 /* честный ролл кейса: тот же HMAC, тикет → предмет по диапазону */
@@ -168,7 +170,7 @@ async function caseRun(c, again, m = 1){
     if (!S.lite){ fi.getAnimations().forEach(a => a.cancel()); fi.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: 'ease-out' }); } }
   // кейс появляется на месте: лёгкое приближение и проявление, без въезда издалека
   $('fx').style.setProperty('--tc', c.c);
-  let r = null; try { [r] = await Promise.all([API.openCase(c, m), wait(550)]); } catch(_){}
+  let r = null; try { [r] = await Promise.all([netWait(API.openCase(c, m)), wait(550)]); } catch(_){}
   if (!r){
     if (c.price) setBalance(S.balance + c.price);   // не открылся — деньги вернулись, в кошелёк не пишем
     return failScreen('case', { c });

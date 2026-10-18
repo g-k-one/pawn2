@@ -32,7 +32,9 @@ function bindPF(root, r){
     if (!r.proof.server_seed){
       if (S.busy && !$('fx').classList.contains('done')) return;
       btn.classList.add('wait'); btn.textContent = $t("Раскрываем…"); haptic();
-      const ep = await API.rotateSeed(); await wait(S.lite ? 0 : 400);
+      const ep = await API.rotateSeed().catch(() => null);
+      if (!ep){ btn.classList.remove('wait'); btn.textContent = $t("Раскрыть зерно и проверить"); notify({ type: 'err', icon: 'err', title: $t("Нет связи"), text: $t("Попробуй ещё раз") }); return; }
+      await wait(S.lite ? 0 : 400);
       root.querySelector('.pf-pend')?.remove(); const sc = root.querySelector('.pf-seed'); if (sc) sc.textContent = r.proof.server_seed;
       notify({ type: 'ok', icon: 'ok', title: $t("Зерно эпохи раскрыто"), text: `${$t("Игр в эпохе: {0} · новый хеш уже загадан", ep.proofs.length)}` });
     }
@@ -107,7 +109,7 @@ function renderPFInfo(){
   const epFill = () => epochP.then(e => { if (!$('nextHash')) return; $('nextHash').textContent = e.commitment; $('epN').textContent = e.proofs.length; $('cseedV').textContent = S.clientSeed; });
   epFill();
   $('saveReceipt').onclick = async () => { const rc = await API.receipt(); copyJson(rc, $t("Подтверждение")); };
-  $('cseedNew').onclick = async () => { if (S.busy) return; haptic('medium'); const e = await API.rotateSeed(); epFill();
+  $('cseedNew').onclick = async () => { if (S.busy) return; haptic('medium'); const e = await btnWait($('cseedNew'), API.rotateSeed()); if (!e) return; epFill();
     notify({ type: 'ok', icon: 'ok', title: $t("Зерно раскрыто"), text: `${$t("Игр в эпохе: {0} — их можно проверить. Новый хеш уже загадан, сохрани подтверждение", e.proofs.length)}` }); };
   $('pfiLast').onclick = () => swapDrawer('pfDrawer', () => { const r = S.lastFair || S.hist.crafts[0]?.r; if (r){ $('pfBody').innerHTML = pfHTML(r); bindPF($('pfBody'), r); } });
   $('pfiHist').onclick = () => openHistory('crafts');

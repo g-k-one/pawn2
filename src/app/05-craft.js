@@ -62,7 +62,7 @@ async function checkProof(p){
   return { hash: hashOk, ticket: ticketOk, rule: ticketOk && rule };
 }
 /* ---------- дебаг: выбрать исход следующего крафта ---------- */
-S.dbg = { arOut: null, btOut: null, arBots: null, tier: -1, near: false, keep: false, prevDelay: null, freeCases: false, ticket: null, fail: null, noOnb: (() => { try { return localStorage.getItem('bm-onb-off') === '1'; } catch(_){ return false; } })(),
+S.dbg = { net: null, arOut: null, btOut: null, arBots: null, tier: -1, near: false, keep: false, prevDelay: null, freeCases: false, ticket: null, fail: null, noOnb: (() => { try { return localStorage.getItem('bm-onb-off') === '1'; } catch(_){ return false; } })(),
   pvp: (() => { try { return localStorage.getItem('bm-pvp') === '1'; } catch(_){ return false; } })(),   // эксперимент «PvP крафт» — по умолчанию выкл
   bets: (() => { try { return localStorage.getItem('bm-bets') === '1'; } catch(_){ return false; } })() };   // эксперимент «Предикты» — по умолчанию выкл
 function dbgWant(){
@@ -85,6 +85,7 @@ function renderDbg(){
       `<div class="dbg-l">${$t("Где в ранге")}</div><div class="dbg-g">${chip('near', false, $t("Любой тикет"))}${chip('near', true, $t("Почти следующий ранг"), '#ffb835', d.tier === last || d.tier < 0)}</div>` +
       `<div class="dbg-l">${$t("Сколько раз")}</div><div class="dbg-g">${chip('keep', false, $t("Один крафт"))}${chip('keep', true, $t("Каждый крафт"))}</div>` +
       `<div class="dbg-l">${$t("Сбой (один раз)")}</div><div class="dbg-g">${chip('fail', null, $t("Нет"))}${chip('fail', 'craft', $t("Неудачный крафт"), '#FF4C35')}${chip('fail', 'case', $t("Кейс не открылся"), '#FF4C35')}${chip('fail', 'out', $t("Вывод NFT не прошёл"), '#FF4C35')}${chip('fail', 'relayer', $t("Вывод: не написал релееру"), '#FF4C35')}</div>` +
+      `<div class="dbg-l">${$t("Сервер отвечает")}</div><div class="dbg-g">${chip('net', null, $t("Сразу"))}${chip('net', 1500, $t("1.5 с"), '#FFB835')}${chip('net', 6000, $t("6 с"), '#FF8A3C')}${chip('net', 'off', $t("Нет связи"), '#FF4C35')}</div>` +
       `<div class="dbg-l">${$t("Супер дроп")}</div><div class="dbg-g"><button class="dbg-c${d.ticket === SUPER.target ? ' on' : ''}" data-k="super" data-v="1" style="--c:#EB57B0">${$t("Выбить супер дроп · тикет")} ${SUPER.target}</button></div>` +
       `<div class="dbg-l">${$t("NFT на главной при смене ставки")}</div><div class="dbg-g">${chip('prevDelay', null, $t("Сразу"))}${chip('prevDelay', 1500, $t("Ответ 1.5 с"))}${chip('prevDelay', 4000, $t("Ответ 4 с"))}</div>` +
       `<p class="dbg-n">${$t("Для ранга подбирается настоящий server seed — проверка честности сходится, но хеш до игры будет другим. Точный тикет подставляется напрямую, проверка для него не сойдётся. Только для тестов прототипа.")}</p>`,
@@ -117,6 +118,7 @@ $('dbgBody').addEventListener('click', e => {
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
   if (k === 'stock'){ S.stock[c.dataset.id] = +v; haptic(); renderDbg(); return; }
   if (k === 'onbNow'){ hideDrawer(); setTimeout(() => Onb.start(true), 300); return; }
+  if (k === 'net'){ S.dbg.net = v === 'null' ? null : v === 'off' ? 'off' : +v; netBar(); haptic(); renderDbg(); return; }
   if (k === 'arOut' || k === 'btOut' || k === 'arBots'){ S.dbg[k] = v === 'null' ? null : k === 'arBots' ? +v : v; haptic(); renderDbg(); return; }
   if (k === 'pvp'){ S.dbg.pvp = v === 'true'; try { localStorage.setItem('bm-pvp', S.dbg.pvp ? '1' : '0'); } catch(_){} haptic(); renderDbg(); renderModes(); return; }
   if (k === 'noOnb'){ S.dbg.noOnb = v === 'true'; try { localStorage.setItem('bm-onb-off', S.dbg.noOnb ? '1' : '0'); } catch(_){} haptic(); renderDbg(); return; }
@@ -309,7 +311,7 @@ $('craft').onclick = async () => {
   if (S.ton > 0) moveBal(-S.ton);   // в демо — фантики: только всплывашка, настоящий баланс не трогается
   if (fast){ Sfx.lock(); await strike(.8, REST + 10); INV = INV.filter(g => !used.includes(g)); S.gifts = []; await openFx(true); }
   else { INV = INV.filter(g => !used.includes(g)); S.gifts = []; await bigStrike(); }
-  let r = null; try { r = await pf; } catch(_){}
+  let r = null; try { r = await netWait(pf); } catch(_){}
   if (!r){                                                     // сбой: ставка возвращается, показываем экран неудачи
     if (tonStake > 0) moveBal(tonStake);
     INV = [...used, ...INV];
@@ -321,6 +323,8 @@ $('craft').onclick = async () => {
   r.superMiss = !r.super && r.ticket === SUPER.target;
   await reveal(r, fast);
 };
+// ожидание ответа сервера на экране игры (netWait в 17-api.js)
+$('fx').insertAdjacentHTML('beforeend', `<div class="fx-wait" id="fxWait"><span><i></i><i></i><i></i></span><small>${$t("Связь медленная, ждём ответ")}</small></div>`);
 async function openFx(fast, mode, glow){
   if (!FX.keepDrawer) hideDrawer();   // шторка не остаётся открытой под раскрытием и итогом (кроме кейса из бонусов — он поверх них)
   const fx = $('fx');
@@ -682,6 +686,7 @@ function burst(){
 /* ---------- забрать / продать ---------- */
 async function finish(r, how){
   if (finish.on) return; finish.on = true;
+  if (!S.demo && !(await btnWait($(how === 'sell' ? 'fxSell' : 'fxTake'), API.claimCraft(r, how)))){ finish.on = false; return; }   // сервер не подтвердил — остаёмся на итоге
   const t = TIERS[r.ti];
   let add = r.change;
   if (S.demo) add = r.nft ? 0 : r.win;
@@ -689,7 +694,7 @@ async function finish(r, how){
   else if (how === 'sell') add += r.nft.value;
   else INV = [{ ...r.nft, id: 'g' + Date.now() }, ...INV];
   haptic('medium'); if (add > 0) Sfx.coin();
-  if (!S.demo){ API.claimCraft(r, how); logCraft(r, how); bumpTasks(r); xpTurn(r.pvp ? r.pvp.fee : r.stake); setTimeout(checkAch, 1200); }
+  if (!S.demo){ logCraft(r, how); bumpTasks(r); xpTurn(r.pvp ? r.pvp.fee : r.stake); setTimeout(checkAch, 1200); }
   renderBet();
   if (r.super){                                               // приз крафта получен — и сверху ещё супер дроп
     if (add > 0) moveBal(add);

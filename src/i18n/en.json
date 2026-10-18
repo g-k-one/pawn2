@@ -726,5 +726,14 @@
  "Открытие кейса": "Case opening",
  "кейс": "case",
  "Открыть бота": "Open bot",
- "Выгодно купить и продать Stars": "Buy and sell Stars at a good rate"
+ "Выгодно купить и продать Stars": "Buy and sell Stars at a good rate",
+ "Нет связи": "No connection",
+ "Сервер не ответил": "Server did not respond",
+ "Связь медленная, ждём ответ": "Slow connection, waiting",
+ "Нет связи — проверь интернет": "No connection — check your internet",
+ "Сервер отвечает": "Server responds",
+ "1.5 с": "1.5 s",
+ "6 с": "6 s",
+ "Не удалось загрузить": "Could not load",
+ "Повторить": "Retry"
 }

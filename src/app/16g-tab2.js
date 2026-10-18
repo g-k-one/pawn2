@@ -93,7 +93,7 @@ $('craft').onclick = async () => {
 };
 // уже в комнате: новый тикет с колеса отправляем, когда палец отпустил (как в PvP); за 5 с до старта тикет зафиксирован
 function t2Change(){ if (!t2Me() || t2Locked()) return; clearTimeout(t2Change.t);
-  t2Change.t = setTimeout(async () => { const r = await API.pvpChange(t2Fee, t2Ticket); if (r.ok) return t2Apply(r.room); haptic('rigid');
+  t2Change.t = setTimeout(async () => { const r = await API.pvpChange(t2Fee, t2Ticket).catch(() => ({ ok: false })); if (r.ok) return t2Apply(r.room); haptic('rigid');
     const me = t2Room?.entries.find(x => x.me); if (me){ t2Ticket = me.guess; _setTier(tierOfTicket(me.guess)); t2Show(); } }, 450); }
 // фон при нажатии на наковальню: на главной рамка вспыхивает цветом ранга и уходит в огонь кузни, в tab2 — сразу оранжево-красный, как кнопка
 const T2_GLOW = ['#ff5a1f', '#b8280a', '#ff9a5c', '#ffd2b8'];

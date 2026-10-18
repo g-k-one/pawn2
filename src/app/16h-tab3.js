@@ -171,7 +171,7 @@ async function t3Play(){
   S.busy = true; CRAFT.classList.add('busy'); setBalance(S.balance - amt); $('fxTop').style.visibility = 'hidden';
   const bets = betsList(), pr = API.bets(bets); pr.catch(() => {});
   if (fast){ Sfx.lock(); await strike(.8, REST + 10); await openFx(true); } else await bigStrike();
-  let r = null; try { r = await pr; } catch(_){}
+  let r = null; try { r = await netWait(pr); } catch(_){}
   if (!r){ setBalance(S.balance + amt); await closeFx(); CRAFT.classList.remove('busy'); S.busy = false; notify({ type: 'err', icon: 'coin', title: $t("Ставка не прошла"), text: $t("GRAM вернулись на баланс") }); return; }
   betsLast = { ...betsBoard }; t3Last = { ...betsBoard };
   // под барабаном — как на арене: сверху сумма ставок, ниже плитки ставок (карточки игроков арены: 3 в ряд, больше 6 ставок — карточки ниже)
@@ -210,10 +210,11 @@ betsAfter = async r => {
 };
 async function t3Finish(r, how){
   if (t3Finish.on) return; t3Finish.on = true;
+  if (!S.demo && r.win > 0 && !(await btnWait($(how === 'sell' ? 'fxSell' : 'fxTake'), API.claimCraft(r, how)))){ t3Finish.on = false; return; }
   const add = r.nft ? (how === 'sell' ? r.nft.value : 0) + (r.change || 0) : r.win;
   if (r.nft && how !== 'sell') INV = [{ ...r.nft, id: 'g' + Date.now() }, ...INV];
   haptic('medium'); if (add > 0) Sfx.coin();
-  if (!S.demo){ if (r.win > 0) API.claimCraft(r, how); logCraft(r, r.nft ? how : 'bets'); xpTurn(r.stake); }   // «Забрать» / «Продать» — через сервер, как у крафта
+  if (!S.demo){ logCraft(r, r.nft ? how : 'bets'); xpTurn(r.stake); }   // «Забрать» / «Продать» — через сервер, как у крафта
   await closeFx(); $('fx').classList.remove('btspin');
   if (add > 0) moveBal(add);
   if (r.nft) notify({ type: 'ok', img: r.nft.nft.src, title: how === 'sell' ? $t("Продано: +{0} GRAM", fmt(add)) : `${r.nft.nft.name} ${$t("в инвентаре")}`, text: r.change > 0 && how !== 'sell' ? $t("На баланс +{0} GRAM", fmt(r.change)) : $t("Выигрыш ставок") });

@@ -110,7 +110,7 @@ $('walletGo').onclick = async () => {
     else try { tx = await tcUI.sendTransaction({ validUntil: Math.floor(Date.now() / 1000) + 300, messages: [{ address: DEPOSIT_ADDR, amount: String(nano(depAmount)) }] }); }
     catch(_){ btn.disabled = false; btn.classList.remove('wait'); walletBtn(); notify({ type: 'err', icon: 'err', title: $t("Платёж отменён") }); return; }
     btn.disabled = false; btn.classList.remove('wait'); hideDrawer();   // в бою баланс зачисляет бэкенд после подтверждения в сети
-    if (!(await API.confirmDeposit(depAmount, tx?.boc)).ok) return notify({ type: 'err', icon: 'err', title: $t("Пополнение не прошло"), text: $t("Если GRAM списались — они придут после подтверждения в сети") });
+    if (!(await API.confirmDeposit(depAmount, tx?.boc).catch(() => ({ ok: false }))).ok) return notify({ type: 'err', icon: 'err', title: $t("Пополнение не прошло"), text: $t("Если GRAM списались — они придут после подтверждения в сети") });
     S.hist.wallet.unshift({ type: 'dep', t: Date.now(), amount: depAmount, method: S.wallet.name });
     setTimeout(() => { setBalance(S.balance + depAmount); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(depAmount)} GRAM`, text: `${$t("Пополнение с")} ${S.wallet.name}` }); checkAch(); }, 250);
   } else {

@@ -46,6 +46,8 @@ function renderHist(detail){ histMore = null;
     b.innerHTML = `<button class="back" id="hBack">${$t("‹ Назад")}</button>` + (rec.kind === 'case' ? caseRecHead(rec) : craftRecHead(rec)) + pfHTML(rec.r);
     bindPF(b, rec.r); $('hBack').onclick = () => renderHist(); b.scrollTop = 0; return;
   }
+  // список с сервера: при первом открытии — скелет (stats — плитки, остальное — карточки)
+  if (skelGate('hist:' + histTab + (histTab === 'games' ? ':' + gameSeg : ''), b, () => renderHist(), histTab === 'stats' ? 'stat' : 'card', sub)) return;
   if (histTab === 'games'){
     const seg = `<div class="bseg seg hseg">${[['crafts', $t("Крафты")], ['arena', $t("Арены")], ['bets', $t("Ставки")]].map(([k, t]) => `<button class="${k === gameSeg ? 'on' : ''}" data-seg="${k}">${t}</button>`).join('')}</div>`;
     const L = S.hist.crafts.map((c, i) => [c, i]).filter(([c]) => gameKind(c) === gameSeg);

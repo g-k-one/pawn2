@@ -39,8 +39,49 @@ const API = {
   /* --- предикты (эксперимент, 16b-bets.js) --- */
   /* POST /bets {bets: [{bet, sel, amount_nano}], client_seed} → тикет, какие ставки сыграли, выплата и доказательство (domain 'bets').
      Ставку списывает и выплату зачисляет сервер; лимиты — BET_MAX на ставку за раунд и BETS_MAX_WIN на выигрыш за раунд при любом тикете (проверяет и сервер) */
+  /* --- бонусы: проверка и начисление — на сервере --- */
+  /* POST /achievements/:id/check → {ok} — условие проверяется по нажатию «Проверить». Мок: условие считается в браузере */
+  async checkAch(id, okFn){ await wait(500); return { ok: !!okFn() }; },
+  /* POST /referrals/claim → {ok, amount} — забрать начисления за друзей */
+  async claimRef(){ return { ok: true }; },
+  /* POST /tasks/restore-day → {ok} — восстановить пропущенный день недели за 0.5 GRAM */
+  async restoreDay(){ return { ok: true }; },
   async bets(list){ track('bets', { n: list.length, total: list.reduce((a, b) => a + b.amount, 0) }); return betsMock(list); },
 };
+
+/* сеть: каждый запрос к «серверу» проходит здесь. Нет интернета — сразу ошибка (интерфейс вернёт ставку и покажет, что делать).
+   Дебаг → «Крафт» → «Сервер отвечает»: искусственная задержка или «нет связи» — так на телефоне видны все состояния ожидания */
+const netLag = () => (S.dbg.net === 'off' || navigator.onLine === false) ? Promise.reject(new Error('offline')) : S.dbg.net > 0 ? wait(S.dbg.net) : Promise.resolve();
+for (const k of ['craft', 'claimCraft', 'openCase', 'rotateSeed', 'withdrawNft', 'confirmDeposit', 'sellNfts', 'pvpJoin', 'pvpChange', 'bets', 'checkAch', 'claimRef', 'restoreDay']){
+  const f = API[k]; API[k] = async (...a) => { await netLag(); return f.apply(API, a); }; }
+/* списки с сервера (история, топ, друзья, задания, достижения): GET-запрос. Мок: данные уже в браузере — только задержка сети */
+API.list = async key => { await netLag(); return { ok: true }; };
+/* скелеты: первое открытие списка — серые карточки той же формы, пока не придёт ответ; дальше — сразу последние данные и тихое
+   обновление в фоне. Ответ быстрее 120 мс — скелет не показывается вовсе (без мигания). Ошибка — «Не удалось загрузить» и «Повторить» */
+const LOADED = new Set();
+const SKEL = { card: () => '<div class="sk sk-card"></div>'.repeat(4),
+  row: () => '<div class="sk-row"><i class="sk sk-av"></i><span><b class="sk"></b><small class="sk"></small></span><em class="sk"></em></div>'.repeat(6),
+  stat: () => '<div class="sk sk-card big"></div><div class="sk-grid">' + '<div class="sk sk-tile"></div>'.repeat(4) + '</div><div class="sk sk-card"></div>' };
+function skelGate(key, el, rerender, kind = 'card', head = ''){
+  if (LOADED.has(key)){ API.list(key).catch(() => {}); return false; }
+  const t = setTimeout(() => { el.innerHTML = head + `<div class="skel">${SKEL[kind]()}</div>`; }, 120);
+  API.list(key).then(() => { clearTimeout(t); LOADED.add(key); rerender(); }, () => { clearTimeout(t);
+    el.innerHTML = head + `<div class="sk-err"><b>${$t("Не удалось загрузить")}</b><small>${$t("Проверь интернет и попробуй ещё раз")}</small><button class="pill-btn">${$t("Повторить")}</button></div>`;
+    el.querySelector('.sk-err .pill-btn').onclick = () => { haptic(); rerender(); }; });
+  return true;
+}
+/* кнопка-действие ждёт сервер: спиннер внутри (ширина не меняется), повторное нажатие не проходит; ошибка — кнопка возвращается и уведомление */
+async function btnWait(btn, p){ btn?.classList.add('ld');
+  try { return await p; } catch(e){ notify({ type: 'err', icon: 'err', title: e?.message === 'offline' ? $t("Нет связи") : $t("Сервер не ответил"), text: $t("Попробуй ещё раз") }); return null; }
+  finally { btn?.classList.remove('ld'); } }
+/* игра ждёт сервер внутри анимации: если ответа нет дольше 0.4 с — под тикетом три точки, дольше 5 с — «Связь медленная, ждём ответ» */
+function netWait(p){ const el = $('fxWait'), t1 = setTimeout(() => el.classList.add('on'), 400), t2 = setTimeout(() => el.classList.add('slow'), 5000);
+  const done = () => { clearTimeout(t1); clearTimeout(t2); el.classList.remove('on', 'slow'); }; p.then(done, done); return p; }
+/* плашка «Нет связи» сверху — пока нет интернета (или так выбрано в дебаге) */
+function netBar(){ let el = $('netBar'); if (!el){ el = document.createElement('div'); el.id = 'netBar'; el.className = 'abs netbar';
+    el.innerHTML = `${svg('<path d="M3 3l18 18M8.5 16.4a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 4.2-2.5M19 12.9a10 10 0 0 0-2.4-1.7M2 9.3a15 15 0 0 1 4.6-2.8M22 9.3A15 15 0 0 0 11 5.1"/><circle cx="12" cy="20" r="1"/>')}<span>${$t("Нет связи — проверь интернет")}</span>`; $('fx').parentNode.appendChild(el); }
+  const off = S.dbg.net === 'off' || navigator.onLine === false; el.classList.toggle('on', off); document.body.classList.toggle('netoff', off); }   // уведомления — ниже плашки
+addEventListener('online', netBar); addEventListener('offline', netBar);
 
 /* ---------- аналитика: события воронки. Мок копит их в window.__pawnEvents; в бою — отправка на сервер/в счётчик ---------- */
 const EVENTS = window.__pawnEvents = [];

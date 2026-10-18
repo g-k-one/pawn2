@@ -2948,3 +2948,48 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 .fx.done .fx-need.miss{margin-top:4px}
 .wwarn.tgs>i img{width:16px;height:15px;margin-top:-2px;filter:brightness(0)}   /* звезда чёрная, чуть меньше и на 1 px выше центра */   /* белая звезда Telegram на золотом круге — как иконка релеера */
 .fx-win .fx-stats{width:min(320px,100%)}   /* ровно по ширине кнопок под ним */
+/* ===== ожидание сервера ===== */
+/* кнопка ждёт ответ: спиннер внутри, текст скрыт (ширина та же), нажатия не проходят */
+.ld{position:relative;color:transparent!important;pointer-events:none}
+.ld>*{visibility:hidden}
+.ld::after{content:'';position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;animation:ldspin .7s linear infinite}
+.btn-ghost.ld::after,.pill-btn.ld::after{border-color:rgba(255,255,255,.2);border-top-color:rgba(255,255,255,.85)}
+@keyframes ldspin{to{transform:rotate(360deg)}}
+/* игра ждёт ответ внутри анимации: три точки по центру, позже — подпись «Связь медленная» */
+.fx-wait{position:absolute;left:0;right:0;top:56%;z-index:3;display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .25s}
+.fx-wait.on{opacity:1}
+.fx-wait span{display:flex;gap:8px}
+.fx-wait i{width:10px;height:10px;border-radius:50%;background:var(--tc,#fff);animation:fxdot 1s ease-in-out infinite}
+.fx-wait i:nth-child(2){animation-delay:.15s}.fx-wait i:nth-child(3){animation-delay:.3s}
+@keyframes fxdot{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:none}}
+.fx-wait small{font-size:14px;text-transform:uppercase;color:rgba(255,255,255,.72);opacity:0;transition:opacity .3s}
+.fx-wait.slow small{opacity:1}
+.fx:not(.on) .fx-wait{display:none}
+/* нет связи — плашка сверху, под строкой Telegram */
+.netbar{left:50%;top:calc(var(--balTop,43px) + 48px);z-index:80;display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:99px;background:#FF4C35;color:#fff;font-size:14px;font-weight:700;text-transform:uppercase;white-space:nowrap;
+  transform:translate(-50%,-12px);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.netbar.on{opacity:1;transform:translate(-50%,0)}
+.netbar svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.netbar{top:var(--noteTop,110px)}
+.netoff .notes{transform:translateY(46px)}
+.notes{transition:transform .25s}
+/* ===== скелеты списков: серые формы будущих карточек, мягко «дышат» (только прозрачность — без перерисовки) ===== */
+.sk{display:block;background:rgba(255,255,255,.08);border-radius:12px;animation:skp 1.2s ease-in-out infinite}
+@keyframes skp{50%{opacity:.45}}
+.sk-card{height:118px;margin-bottom:10px;border-radius:22px}
+.sk-card.big{height:150px}
+.sk-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.sk-tile{height:84px;border-radius:18px}
+.sk-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.sk-row .sk-av{flex:none;width:40px;height:40px;border-radius:50%}
+.sk-row span{flex:1;display:flex;flex-direction:column;gap:6px}
+.sk-row b.sk{width:55%;height:16px}
+.sk-row small.sk{width:35%;height:12px}
+.sk-row em.sk{flex:none;width:52px;height:20px}
+.skel>:nth-child(2){animation-delay:.1s}.skel>:nth-child(3){animation-delay:.2s}.skel>:nth-child(4){animation-delay:.3s}
+.sk-err{display:flex;flex-direction:column;align-items:center;gap:6px;padding:40px 16px;text-align:center}
+.sk-err b{font-size:21px;text-transform:uppercase}
+.sk-err small{font-size:13.5px;color:rgba(255,255,255,.72)}
+.sk-err .pill-btn{margin-top:10px}
+.lite .sk{animation:none}
+.skel{width:100%;align-self:stretch}.skel .sk-card,.skel .sk-grid,.skel .sk-row{width:100%}

@@ -186,7 +186,7 @@ $('giftsF').addEventListener('click', e => {
   if (id === 'sellGo'){
     if (!sellSel.size){ haptic('rigid'); return; }
     const list = INV.filter(g => sellSel.has(g.id));
-    API.sellNfts(list).then(({ ok, amount: sum }) => { if (!ok) return notify({ type: 'err', icon: 'err', title: $t("Продажа не прошла"), text: $t("Подарки остались в инвентаре") });
+    API.sellNfts(list).catch(() => ({ ok: false })).then(({ ok, amount: sum }) => { if (!ok) return notify({ type: 'err', icon: 'err', title: $t("Продажа не прошла"), text: $t("Подарки остались в инвентаре") });
     INV = INV.filter(g => !list.includes(g)); S.gifts = S.gifts.filter(g => INV.includes(g));
     setBalance(S.balance + sum); haptic('medium'); Sfx.coin();
     S.hist.wallet.unshift({ type: 'sell', t: Date.now(), amount: sum, name: list.length > 1 ? `${list.length} NFT` : list[0].nft.name, num: list.length > 1 ? null : list[0].num ?? list[0].nft.num, model: list.length > 1 ? null : list[0].nft.model, img: list[0].nft.src, bg: [list[0].a, list[0].b], method: $t("продажа") });

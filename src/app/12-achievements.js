@@ -35,13 +35,15 @@ function claimAch(id, btn){
   const a = ACH.find(x => x[0] === id); if (!a || S.ach.got[id]) return;
   const [, t, rw, ok, act, prog] = a;
   btn.classList.add('wait'); btn.textContent = $t("Проверяем…");
-  setTimeout(() => {
-    if (ok()){ S.ach.got[id] = 1; grant(rw); logReward('ach', id, rw); haptic('medium'); Sfx.coin(); notify({ type: 'ok', icon: 'ok', color: '#12D53D', title: $t("Достижение получено"), text: `${t} · ${rewText(rw)}` }); }
+  // проверка — на сервере по нажатию (API.checkAch); нет связи — кнопка возвращается
+  API.checkAch(id, ok).catch(() => null).then(res => {
+    if (!res){ btn.classList.remove('wait'); btn.textContent = $t("Проверить"); notify({ type: 'err', icon: 'err', title: $t("Нет связи"), text: $t("Попробуй ещё раз") }); return; }
+    if (res.ok){ S.ach.got[id] = 1; grant(rw); logReward('ach', id, rw); haptic('medium'); Sfx.coin(); notify({ type: 'ok', icon: 'ok', color: '#12D53D', title: $t("Достижение получено"), text: `${t} · ${rewText(rw)}` }); }
     else { haptic('rigid'); const pr = prog ? prog() : null; notify({ type: 'warn', icon: 'info', title: $t("Ещё не выполнено"), text: pr ? `${t}${$t(": {0} из", xpFmt(pr[0]))} ${xpFmt(pr[1])}` : t });
       if (act === 'sub'){ tgOpen('https://t.me/pawnd'); setTimeout(() => { S.ach.subscribed = true; }, 1500); }
       if (act === 'relayer') relayerFlow(); }
     renderCases();
-  }, 700);
+  });
 }
 const RULES = [$t("Задания и награды обновляются в 00:00 МСК для каждого игрока."), $t("Задания делятся на три уровня: лёгкое, среднее и тяжёлое."), $t("Кейс Мистера Биста открывается, когда выполнены все 3 задания дня."),
   $t("Кейс Илона Маска открывается, когда задания дня выполнены каждый день недели — с понедельника по воскресенье."), $t("Пропущенный день можно восстановить за GRAM."), $t("Все награды из кейсов — GRAM, XP и NFT — зачисляются сразу.")];
