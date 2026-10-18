@@ -779,5 +779,13 @@
  "Промокод 5 раз разом": "Promo code 5 times at once",
  "Спам крафтов: каждый крафт — отдельный запрос, «Продать» жмётся дважды разом; сервер должен засчитать один раз. Гонки тратят твои тестовые GRAM.": "Craft spam: each craft is a separate request, «Sell» is tapped twice at once; the server must count it once. Races spend your test GRAM.",
  "Гонки — только с сервером": "Races need the server",
- "В моке сервера нет": "There is no server in the mock"
+ "В моке сервера нет": "There is no server in the mock",
+ "Всё сразу": "Everything at once",
+ "Максимальная нагрузка": "Maximum load",
+ "Максимальная нагрузка: 300 ботов в 10 группах разом крафтят, ставят, открывают кейсы, вводят промокоды и пополняют, плюс спам крафтов и твои запросы. Арена пока не на сервере — в нагрузку не входит.": "Maximum load: 300 bots in 10 groups craft, bet, open cases, enter promo codes and deposit at once, plus craft spam and your own requests. The Arena is not on the server yet, so it is not included.",
+ "Максимальная нагрузка пошла": "Maximum load started",
+ "300 ботов и твои запросы — около 15 секунд": "300 bots and your requests, about 15 seconds",
+ "{0} игроков · {1} игр за {2} с": "{0} players · {1} games in {2} s",
+ "крафт ботов": "bot crafts",
+ "твои запросы": "your requests"
 }

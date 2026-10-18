@@ -55,11 +55,13 @@ function setLiveFlood(ms){ clearInterval(liveFlood); S.dbg.liveMs = ms; liveFloo
 const loadDbg = () => `<div class="dbg-l">${$t("Лента «лайв»")}</div><div class="dbg-g">` +
   [[0, $t("Обычно")], [600, $t("Поток · 0.6 с")], [250, $t("Шквал · 0.25 с")], [80, $t("Буря · 0.08 с")]].map(([ms, l]) => `<button class="dbg-c${(S.dbg.liveMs || 0) === ms ? ' on' : ''}" data-k="liveMs" data-v="${ms}" style="--c:${ms ? '#FF8A3C' : '#fff'}">${l}</button>`).join('') + `</div>` +
   `<div class="dbg-l">${$t("Спам запросов с телефона (разом)")}</div><div class="dbg-g">` + [20, 50, 100].map(n => `<button class="dbg-c" data-k="spam" data-v="${n}" style="--c:#30A5FF">${n}</button>`).join('') + `</div>` +
+  `<div class="dbg-l">${$t("Всё сразу")}</div><div class="dbg-g"><button class="dbg-c" data-k="max" data-v="1" style="--c:#FF4C35">${$t("Максимальная нагрузка")}</button></div>` +
   `<div class="dbg-l">${$t("Спам крафтов с телефона (по 0.1 GRAM, разом)")}</div><div class="dbg-g">` + [10, 30, 50].map(n => `<button class="dbg-c" data-k="race" data-v="crafts:${n}" style="--c:#30A5FF">${n}</button>`).join('') + `</div>` +
   `<div class="dbg-l">${$t("Гонки — деньги не должны поехать")}</div><div class="dbg-g">` + [['cases', $t("10 кейсов на 3 GRAM")], ['withdraw', $t("Один NFT — два вывода")], ['promo', $t("Промокод 5 раз разом")]].map(([v, l]) => `<button class="dbg-c" data-k="race" data-v="${v}" style="--c:#EB57B0">${l}</button>`).join('') + `</div>` +
   `<div class="dbg-l">${$t("Игроки-боты на сервере")}</div><div class="dbg-g">` + [['20', $t("20 играют")], ['100', $t("100 играют + спам крафтов")], ['wipe', $t("Убрать ботов")]].map(([v, l]) => `<button class="dbg-c" data-k="bots" data-v="${v}" style="--c:${v === 'wipe' ? '#FF4C35' : '#12D53D'}">${l}</button>`).join('') + `</div>` +
   `<p class="dbg-n">${$t("Спам — запросы уходят на сервер одновременно, в уведомлении — сколько ждали ответа. Боты играют настоящие игры: их видно в ленте и топе.")} ` +
-  `${$t("Спам крафтов: каждый крафт — отдельный запрос, «Продать» жмётся дважды разом; сервер должен засчитать один раз. Гонки тратят твои тестовые GRAM.")}</p>`;
+  `${$t("Спам крафтов: каждый крафт — отдельный запрос, «Продать» жмётся дважды разом; сервер должен засчитать один раз. Гонки тратят твои тестовые GRAM.")} ` +
+  `${$t("Максимальная нагрузка: 300 ботов в 10 группах разом крафтят, ставят, открывают кейсы, вводят промокоды и пополняют, плюс спам крафтов и твои запросы. Арена пока не на сервере — в нагрузку не входит.")}</p>`;
 const msStat = a => { a = a.slice().sort((x, y) => x - y); const q = p => Math.round(a[Math.min(a.length - 1, Math.floor(p * a.length))] || 0); return $t("обычно {0} мс · 9 из 10 до {1} мс · худший {2} мс", q(.5), q(.9), q(1)); };
 async function loadSpam(n){
   haptic('medium'); const t0 = performance.now(), r = await API.dbgSpam(n).catch(() => null);
@@ -73,6 +75,17 @@ async function loadRace(v){
   if (r.fail || !r.ok) return notify({ type: 'err', icon: 'err', title: r.why || $t("Сервер не ответил"), text: r.fail || $t("Попробуй ещё раз") });
   if (r.balance != null) setBalance(r.balance);
   notify({ type: r.pass ? 'ok' : 'err', icon: r.pass ? 'ok' : 'err', ms: 12000, title: (r.pass ? '✓ ' : '✗ ') + r.title, text: r.text + (r.ms ? ` · ${msStat(r.ms)}` : '') });
+}
+async function loadMax(){
+  haptic('heavy'); notify({ type: 'warn', icon: 'warn', title: $t("Максимальная нагрузка пошла"), text: $t("300 ботов и твои запросы — около 15 секунд") });
+  const r = await API.dbgMax().catch(e => ({ fail: e?.message }));
+  if (r.mock) return notify({ type: 'info', icon: 'info', title: $t("Боты — только с сервером"), text: $t("В моке играет только лента") });
+  if (r.fail || !r.ok) return notify({ type: 'err', icon: 'err', title: $t("Сервер не ответил"), text: r.fail || $t("Попробуй ещё раз") });
+  if (r.balance != null) setBalance(r.balance);
+  const pass = !r.bad && !r.errors;
+  notify({ type: pass ? 'ok' : 'err', icon: pass ? 'ok' : 'err', ms: 15000, title: `${pass ? '✓' : '✗'} ${$t("{0} игроков · {1} игр за {2} с", r.players, r.games, (r.wall / 1000).toFixed(1))}`,
+    text: (r.bad ? $t("Проблемы с деньгами: {0}", r.bad) : $t("Деньги сходятся")) + (r.errors ? ` · ${$t("ошибок")}: ${r.errors}` : '') +
+      ` · ${$t("крафт ботов")}: ${msStat(r.craft)} · ${$t("твои запросы")}: ${msStat(r.mine)}` + (r.own ? ` · ${r.own}` : '') });
 }
 async function loadBots(v){
   haptic('medium'); const r = await API.dbgBots(v === 'wipe' ? { wipe: true } : { players: +v, rounds: 3, spam: v === '100' ? 50 : 0 }).catch(e => ({ fail: e?.message }));
