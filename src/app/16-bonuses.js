@@ -170,9 +170,11 @@ async function caseRun(c, again, m = 1){
   $('fx').style.setProperty('--tc', c.c);
   let r = null; try { [r] = await Promise.all([API.openCase(c, m), wait(550)]); } catch(_){}
   if (!r){
-    if (c.price) setBalance(S.balance + c.price);
+    if (c.price) setBalance(S.balance + c.price);   // не открылся — деньги вернулись, в кошелёк не пишем
     return failScreen('case', { c });
   }
+  // платное открытие — строкой в «Финансы → Кошелёк», чтобы все траты GRAM были в одном месте
+  if (c.price && !S.demo) S.hist.wallet.unshift({ type: 'case', t: Date.now(), amount: c.price, name: c.name, img: c.img, method: $t("кейс") });
   if (c.need) S.stock[c.id] = Math.max(0, S.stock[c.id] - m);   // из запаса уходит столько, сколько открыто
   const it0 = c.items[r.idx], it = m > 1 ? { ...it0, v: it0.v == null ? it0.v : Math.round(it0.v * m * 100) / 100, mult: m } : it0, el = $('fxStrip');
   const g = it.t === 'nft' ? caseNft(it) : null;                // какой именно NFT выпал — известно сразу
