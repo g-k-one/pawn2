@@ -199,7 +199,6 @@
  "Ещё не выполнено": "Not done yet",
  "Ещё один · осталось": "One more · left",
  "Ещё раз": "Again",
- "Ждём честный результат…": "Waiting for a fair result…",
  "Забрать": "Take",
  "Загаданный тикет": "Target ticket",
  "Задание выполнено": "Task completed",
@@ -725,5 +724,6 @@
  "Ты в бою · старт через 0:{0}": "You're in · starts in 0:{0}",
  "Ты в бою": "You're in",
  "Чей тикет окажется ближе — тот крафтит на весь банк": "Whoever's ticket turns out closest crafts the whole bank",
- "Игроки": "Players"
+ "Игроки": "Players",
+ "Цена": "Price"
 }

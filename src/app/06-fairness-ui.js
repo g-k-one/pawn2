@@ -67,7 +67,8 @@ function swapDrawer(id, prep, back){
   if (old === nw) return prep?.();
   if (!back) drawerStack.push(old.id);
   prep?.(); haptic(); setBack(nw);
-  nw.classList.add('drag', 'open'); nw.style.transform = ''; nw.style.zIndex = 48; openDrawer = nw;
+  $('backdrop').classList.toggle('top', !!(FX.keepDrawer && FX.on && FX.keepDrawer !== nw));   // шторка поверх итога кейса
+  nw.classList.add('drag', 'open'); nw.style.transform = ''; nw.style.zIndex = FX.keepDrawer && FX.on ? 52 : 48; openDrawer = nw;
   nw.animate([{ opacity: 0, transform: 'translateY(10px) scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.25,.9,.3,1)' })
     .onfinish = () => { nw.classList.remove('drag'); nw.style.zIndex = ''; };
   old.classList.add('drag');

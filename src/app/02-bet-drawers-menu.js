@@ -72,11 +72,12 @@ function drawerTop(el){
   par.style.setProperty('--drTop', Math.max(0, (lv.getBoundingClientRect().top - pr.top) / k) + 'px');
 }
 function showDrawer(id){
+  $('backdrop').classList.toggle('top', !!(typeof FX !== 'undefined' && FX.keepDrawer && FX.on && FX.keepDrawer.id !== id));   // шторка поверх итога кейса
   openDrawer = $(id); drawerTop(openDrawer); openDrawer.classList.add('open'); $('backdrop').classList.add('on'); haptic();
 }
 function hideDrawer(){
   if (!openDrawer) return;
-  openDrawer.classList.remove('open'); openDrawer.style.transform = ''; $('backdrop').classList.remove('on'); openDrawer = null;
+  openDrawer.classList.remove('open'); openDrawer.style.transform = ''; $('backdrop').classList.remove('on', 'top'); openDrawer = null;
   drawerStack = []; document.querySelectorAll('.dr-back').forEach(b => b.remove());
 }
 const DRAWER_NAMES = { menuDrawer: $t("Меню"), casesDrawer: $t("Бонусы"), histDrawer: $t("История"), pfiDrawer: $t("Честность"), walletDrawer: $t("Кошелёк"), pfDrawer: $t("Проверка"), dbgDrawer: $t("Дебаг"), giftsDrawer: $t("Подарки"), caseDrawer: $t("Кейс") };

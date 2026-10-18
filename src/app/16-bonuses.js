@@ -17,7 +17,7 @@ const caseState = c => {
   if (c.need === 'daily'){ const d = tasksDone(), n = TASKS.length, left = n - d;
     return { ok: S.stock.beast > 0, n: S.stock.beast, k: d / n, txt: $t("3 задания сегодня · {0}/{1}", d, n), how: $t("Выполни все 3 задания сегодня · {0}/{1}", d, n),
       lock: left ? $t("Ещё {0} {1}", left, $n("задание|задания|заданий", left)) : $t("Новый — завтра") }; }
-  const d = dayIdx() - S.week.missed.filter(x => x < dayIdx()).length, left = 7 - d;
+  const d = dayIdx() - S.week.missed.filter(x => x < dayIdx()).length + (dailyDone() ? 1 : 0), left = 7 - d;   // сегодняшний день тоже считается, если задания выполнены
   return { ok: S.stock.musk > 0, n: S.stock.musk, k: d / 7, txt: $t("7 дней подряд · {0}/7", d), how: $t("Выполняй задания дня 7 дней подряд · {0}/7", d),
     lock: $t("Ещё {0} {1}", left, $n("день|дня|дней", left)) };
 };
@@ -55,7 +55,7 @@ function renderCases(){
         return `<div class="arow${ok ? ' ok' : ''}"><i>${ok ? svg(NICON.ok) : ''}</i><span>${n > 1 && !ok ? `<small>${fmt(v)} / ${n}</small>` : ''}<b>${t}</b></span><em class="${rw.g != null ? 'g' : 'x'}">${rewHTML(rw)}</em></div>`; }).join('') +
       `<button class="btn-main${S.stock.beast ? '' : ' off'}" data-open="beast">${S.stock.beast ? `${$t("Открыть кейс Биста")}${S.stock.beast > 1 ? ' ×' + S.stock.beast : ''}` : dd ? $t("Кейс за сегодня уже открыт") : `${$t("Ещё {0} {1} до кейса", TASKS.length - td, $n("задание|задания|заданий", TASKS.length - td))}`}</button></div>` +
       sdBanner() +
-      `<div class="sect"><div class="sect-h hero" style="--c:${musk.c}"><span><b>${$t("Неделя")}</b><small>${$t("Задания каждый день — откроется кейс Илона Маска")}</small><em class="cnt">${di - S.week.missed.filter(d => d < di).length} ${$t("из 7 дней")}</em></span>${caseArt(musk)}</div>` +
+      `<div class="sect"><div class="sect-h hero" style="--c:${musk.c}"><span><b>${$t("Неделя")}</b><small>${$t("Задания каждый день — откроется кейс Илона Маска")}</small><em class="cnt">${di - S.week.missed.filter(d => d < di).length + (dd ? 1 : 0)} ${$t("из 7 дней")}</em></span>${caseArt(musk)}</div>` +
       `<div class="days">${DAYS.map((d, i) => { const miss = S.week.missed.includes(i) && i < di, ok = (i < di && !miss) || (i === di && dd);
         return `<span class="${miss ? 'miss' : ok ? 'ok' : i === di ? 'now' : ''}">${miss ? svg('<path d="M7 7l10 10M17 7L7 17"/>') : ok ? svg(NICON.ok) : d}</span>`; }).join('')}</div>` +
       (S.week.missed.length ? `<button class="btn-main" data-act="restore">${$t("Восстановить 1 день · {0} GRAM", S.week.restorePrice)}</button>` : `<button class="btn-main${S.stock.musk ? '' : ' off'}" data-open="musk">${$t("Открыть кейс Маска")}${S.stock.musk > 1 ? ' ×' + S.stock.musk : ''}</button>`) + `</div>` + rulesHTML(RULES);
@@ -133,7 +133,7 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-act]
   if (act === 'refhist'){ haptic(); openHistory('refs'); }
   if (act === 'claimref' && REF.pending){ const v = REF.pending; REF.pending = 0; haptic('medium'); setBalance(S.balance + v); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(v)} GRAM`, text: $t("Бонус за друзей") }); renderCases(); }
   if (act === 'restore'){ if (S.demo) return notify({ type: 'demo', icon: 'coin', title: $t("Восстановление — только на GRAM"), text: $t("Выключи демо в меню") });
-    if (S.balance < S.week.restorePrice) return notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM") }); setBalance(S.balance - S.week.restorePrice); S.hist.wallet.unshift({ type: 'restore', t: Date.now(), amount: S.week.restorePrice, name: `${$t("Пропущенный день:")} ${DAYS[S.week.missed[0]]}`, method: $t("неделя заданий") }); S.week.missed.shift(); haptic('medium'); notify({ type: 'ok', icon: 'ok', title: $t("День восстановлен"), text: $t("Неделя снова идёт к кейсу Маска") }); renderCases(); }
+    if (S.balance < S.week.restorePrice) return notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM") }); setBalance(S.balance - S.week.restorePrice); S.hist.wallet.unshift({ type: 'restore', t: Date.now(), amount: S.week.restorePrice, name: `${$t("Пропущенный день:")} ${DAYS[S.week.missed[0]]}`, method: $t("неделя заданий") }); S.week.missed.shift(); if (S.tasks.stocked && weekDone()) stockUp('musk');   /* неделя закрылась восстановлением после заданий дня — кейс Маска сразу */ haptic('medium'); notify({ type: 'ok', icon: 'ok', title: $t("День восстановлен"), text: $t("Неделя снова идёт к кейсу Маска") }); renderCases(); }
 });
 
 /* честный ролл кейса: тот же HMAC, тикет → предмет по диапазону */
@@ -154,15 +154,19 @@ const tileFoot = it => it.t === 'nft' ? (it.rare ? `${RARE_FROM}–${RARE_TO} GR
 async function caseRun(c, again, m = 1){
   if (S.demo){ notify({ type: 'demo', icon: 'gift', title: $t("Кейсы — только на GRAM"), text: $t("Выключи демо в меню") }); return; }
   if (c.price > S.balance){ notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM"), text: $t("Пополни баланс — тапни по нему сверху") }); return; }
-  if (!again){ if (S.busy) return; S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto); if (openDrawer){ hideDrawer(); await wait(260); } }
+  // бонусы не закрываем: экран кейса сразу затемняет всё поверх шторки и крутит ленту; после «Забрать» шторка уже на месте
+  if (!again){ if (S.busy) return; S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto); FX.keepDrawer = openDrawer; openDrawer?.classList.add('kept'); $('fx').classList.toggle('over', !!openDrawer); }
   if (c.price) setBalance(S.balance - c.price);
   const N = 44, WIN = 38, strip = Array.from({ length: N }, () => weighted(c));
   $('fxCaseArt').innerHTML = caseArt(c, 'md'); $('fxCaseT').textContent = c.name + (m > 1 ? ` ×${m}` : ''); $('fxCaseT').style.setProperty('--c', c.c);
   $('fxStrip').innerHTML = strip.map(it => tileHTML(it, tileFoot(it))).join(''); $('fxStrip').style.transform = 'translateX(0)';
-  $('fxCaseS').textContent = $t("Ждём честный результат…");
+  $('fxCaseS').textContent = '';
   $('fxDrop').innerHTML = ''; $('fxWin').innerHTML = ''; $('fxBtns').innerHTML = '';
   if (!again) await openFx(true, 'case', glowOf(c.c));
-  else { $('fx').classList.remove('done', 'fail'); FullGlow.set(glowOf(c.c)); FX.hot = true; $('fxCase').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 }); }
+  else { const fi = $('fxIn'); if (!S.lite) await fi.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease-in', fill: 'forwards' }).finished;
+    $('fx').classList.remove('done', 'fail'); FullGlow.set(glowOf(c.c)); FX.hot = true;
+    if (!S.lite){ fi.getAnimations().forEach(a => a.cancel()); fi.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: 'ease-out' }); } }
+  // кейс появляется на месте: лёгкое приближение и проявление, без въезда издалека
   $('fx').style.setProperty('--tc', c.c);
   let r = null; try { [r] = await Promise.all([API.openCase(c, m), wait(550)]); } catch(_){}
   if (!r){
@@ -182,8 +186,13 @@ async function caseRun(c, again, m = 1){
   const tw = el.children[1].offsetLeft - el.children[0].offsetLeft, box = el.parentElement.offsetWidth;
   const target = WIN * tw + (tw - 8) / 2 - box / 2 + (Math.random() - .5) * (tw - 8) * .7;
   let lastI = -1; const line = el.parentElement.querySelector('.mline');
-  await tween(6000, k => {
-    const x = target * k; el.style.transform = `translateX(${(-x).toFixed(1)}px)`;
+  // лента едет сама (анимацию ведёт видеокарта — не двигаем её из кода каждый кадр); код только читает, где она сейчас,
+  // чтобы подсветить плитку под линией, щёлкнуть и перекрасить рамку
+  const run = el.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${(-target).toFixed(1)}px)` }], { duration: 6000, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'forwards' });
+  await new Promise(done => { const f = () => { const k = run.effect.getComputedTiming().progress ?? 1; step(k); if (run.playState === 'finished' || k >= 1) done(); else requestAnimationFrame(f); }; requestAnimationFrame(f); });
+  el.style.transform = `translateX(${(-target).toFixed(1)}px)`; run.cancel();
+  function step(k){
+    const x = target * k;
     const i = Math.floor((x + box / 2) / tw);
     if (i !== lastI){                                            // только при смене плитки: класс, щелчок, цвет рамки
       el.children[lastI]?.classList.remove('cur'); el.children[i]?.classList.add('cur'); lastI = i;
@@ -191,7 +200,7 @@ async function caseRun(c, again, m = 1){
       if (k > .5){ FullGlow.set(glowOf(cols[i] || c.c)); if (!S.lite) line.animate([{ transform: 'scaleY(1.08)', opacity: 1 }, { transform: 'none', opacity: .85 }], { duration: 180 }); }
     }
     FX.gainTo = .6 + .4 * k;
-  }, k => 1 - (1 - k) ** 5);
+  }
   el.children[lastI]?.classList.remove('cur');
   el.children[WIN].classList.add('win'); haptic('heavy'); Sfx.lock();
   if (!S.lite) $('fxCase').animate([{ transform: 'scale(1.03)' }, { transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.3,1.4,.5,1)' });
@@ -205,33 +214,37 @@ async function caseRun(c, again, m = 1){
 }
 function caseDrop(c, it, r, g){
   const drop = $('fxDrop'); $('fx').style.setProperty('--tc', itemColor(it));
+  // под призом — те же колонки, что у крафта, арены и ставок: Кейс · Цена (и Выигрыш, если выпал NFT)
+  const st = fxStats([[$t("Кейс"), c.short], [$t("Цена"), c.price ? fxGv(c.price) : $t("Бесплатно")], g ? [$t("Выигрыш"), fxGv(g.value), 'pos'] : null]);
   if (g){ drop.innerHTML = `<div class="pz" id="pz">${cardHTML(g, 266, true)}</div>`; dropCard(g);
-    $('fxWin').innerHTML = ''; }                                // цена уже на кнопке «Продать за …»
+    $('fxWin').innerHTML = st; }
   else { const src = itemImg(it);
     drop.innerHTML = `<div class="pz"><div class="tw${it.t === 'xp' ? ' xpw' : ''}" id="pz"><img src="${src}" alt=""><span class="gl" style="--m:url('${src}')"><i></i></span></div></div>`;
     Tilt.add($('pz'), $('pz').querySelector('img'), $('pz').querySelector('.gl i'), 1.4);
-    $('fxWin').innerHTML = `<b>${it.t === 'gram' ? '+' + fmt(it.v) + ' GRAM' : '+' + it.v + ' XP'}</b><span>${c.name}</span>`; }
+    $('fxWin').innerHTML = `<b>${it.t === 'gram' ? '+' + fmt(it.v) + ' GRAM' : '+' + it.v + ' XP'}</b>${st}`; }
   $('fxBtns').innerHTML = (g ? `<button class="btn-main" id="cSell">${$t("Продать за {0} GRAM", fmt(g.value))}</button><button class="btn-ghost" id="cTake">${$t("Забрать")}</button>` : `<button class="btn-main" id="cTake">${$t("Забрать")}</button>`) +
     (c.price ? `<button class="btn-ghost" id="cAgain">${$t("Ещё раз · {0} GRAM", fmt(c.price))}</button>` : S.stock[c.id] > 0 ? `<button class="btn-ghost" id="cAgain">${$t("Ещё один · осталось")} ${S.stock[c.id]}</button>` : '') + PF_LINK;
   $('fxPfIn').onclick = () => openPF(r);
   $('fxShare').onclick = () => shareWin(`${$t("Открыл {0} и выбил {1} в Pawn", c.name, g ? g.nft.name : itemName(it))}`, g);
+  // уведомление о полученном — и при «Забрать», и при «Ещё раз»
+  const gotNote = how => notify({ type: 'ok', color: itemColor(it), img: g ? g.nft.src : itemImg(it), title: g ? (how === 'sell' ? `${$t("Продано: +{0} GRAM", fmt(g.value))}` : `${g.nft.name} ${$t("в инвентаре")}`) : (it.t === 'gram' ? `+${fmt(it.v)} GRAM` : `+${it.v} XP`), text: c.name });
   const take = async how => {
     if (caseDrop.on) return; caseDrop.on = true;
     if (g){ if (how === 'sell') setTimeout(() => setBalance(S.balance + g.value), 900); else INV = [g, ...INV]; }
     else if (it.t === 'gram') setTimeout(() => setBalance(S.balance + it.v), 900);
     else addXp(it.v);
-    haptic('medium'); Sfx.coin(); await closeFx(); $('fx').classList.remove('case');
+    haptic('medium'); Sfx.coin();
+    await closeFx(); $('fx').classList.remove('case');
     setTimeout(() => pushLive(liveCaseHTML(c, it, { me: true, img: g ? g.nft.src : null, value: g ? g.value : null, label: g ? g.nft.name : null })), 300);
-    notify({ type: 'ok', color: itemColor(it), img: g ? g.nft.src : itemImg(it), title: g ? (how === 'sell' ? `${$t("Продано: +{0} GRAM", fmt(g.value))}` : `${g.nft.name} ${$t("в инвентаре")}`) : (it.t === 'gram' ? `+${fmt(it.v)} GRAM` : `+${it.v} XP`), text: c.name });
+    gotNote(how);
     CRAFT.classList.remove('busy'); S.busy = false; caseDrop.on = false; restartAuto(); checkAch();
-    openCases();
   };
   $('cTake').onclick = () => take('take');
   $('cSell') && ($('cSell').onclick = () => take('sell'));
   $('cAgain') && ($('cAgain').onclick = () => {
     if (c.price > S.balance){ notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM") }); return; }
     if (g) INV = [g, ...INV]; else if (it.t === 'gram') setBalance(S.balance + it.v); else addXp(it.v);
-    caseRun(c, true);
+    gotNote('take'); caseRun(c, true);
   });
   $('fx').classList.add('done');
   if (!S.lite) setTimeout(burst, 200);

@@ -28,7 +28,13 @@ const noTag = c => { const n = gameNo(c); return n ? '#' + n.toLocaleString(LOC)
 const hline = (c, tag, time, pic, title, sub, val, unit, vc, left) => `<div class="hcard hl" style="--c:${c}"><span class="hk-h"><em>${tag}</em><small>${time}</small></span>` +
   `<span class="hk-b"><span class="hk-s">${left ? `<span class="hk-ic">${left}</span>` : ''}<span class="hk-v hl-t"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</span></span>` +
   `<i class="hk-ar">${svg(ARW)}</i><span class="hk-s win">${pic}<span class="hk-v"><b style="color:${vc || c}">${val}</b><small>${unit}</small></span></span></span></div>`;
-function renderHist(detail){
+// длинные списки истории — порциями: сначала 30 карточек, следующие дорисовываются при прокрутке к низу (до 200 записей не строим разом)
+const H_PAGE = 30; let histMore = null;
+function hPage(L, fn){ histMore = L.length > H_PAGE ? { L, fn, n: H_PAGE } : null; return L.slice(0, H_PAGE).map((x, i) => fn(x, i)).join(''); }
+$('histBody').addEventListener('scroll', e => { const b = e.currentTarget; if (!histMore || b.scrollTop + b.clientHeight < b.scrollHeight - 400) return;
+  const { L, fn, n } = histMore; b.insertAdjacentHTML('beforeend', L.slice(n, n + H_PAGE).map((x, i) => fn(x, n + i)).join(''));
+  histMore.n += H_PAGE; if (histMore.n >= L.length) histMore = null; }, { passive: true });
+function renderHist(detail){ histMore = null;
   // 4 таба: Игры (Крафты · Арена · Ставки), Бонусы (Кейсы · Награды), Финансы (Кошелёк · Рефералка), Статистика
   const grp = HGROUP[histTab] || histTab, tabs = [['games', $t("Игры")], ['bonus', $t("Бонусы")], ['fin', $t("Финансы")], ['stats', $t("Статистика")]];
   requestAnimationFrame(() => $('histTabs').querySelector('.on')?.scrollIntoView({ inline: 'center', block: 'nearest' }));
@@ -44,28 +50,28 @@ function renderHist(detail){
     const seg = `<div class="bseg seg hseg">${[['crafts', $t("Крафты")], ['arena', $t("Арены")], ['bets', $t("Ставки")]].map(([k, t]) => `<button class="${k === gameSeg ? 'on' : ''}" data-seg="${k}">${t}</button>`).join('')}</div>`;
     const L = S.hist.crafts.map((c, i) => [c, i]).filter(([c]) => gameKind(c) === gameSeg);
     const empty = { crafts: $t("Крафтов пока нет"), arena: $t("Боёв на арене пока нет"), bets: $t("Ставок пока нет") }[gameSeg];
-    b.innerHTML = seg + (L.length ? L.map(([c, i]) => craftCard(c, i)).join('') : `<p class="hempty">${empty}</p>`);
+    b.innerHTML = seg + (L.length ? hPage(L, ([c, i]) => craftCard(c, i)) : `<p class="hempty">${empty}</p>`);
   } else if (histTab === 'cases'){
     const L = S.hist.cases;
-    b.innerHTML = L.length ? L.map((c, i) => caseCard2(c, i)).join('') : `<p class="hempty">${$t("Кейсы ещё не открывались")}</p>`;
+    b.innerHTML = L.length ? hPage(L, (c, i) => caseCard2(c, i)) : `<p class="hempty">${$t("Кейсы ещё не открывались")}</p>`;
   } else if (histTab === 'refs'){
     const L = S.hist.refs, sum = L.reduce((a, x) => a + x.amount, 0);
-    b.innerHTML = L.map(x => { const act = x.type === 'act', c = act ? '#30A5FF' : '#12D53D';
+    b.innerHTML = hPage(L, x => { const act = x.type === 'act', c = act ? '#30A5FF' : '#12D53D';
         return hline(c, act ? $t("Активность друзей") : $t("Депозит друга"), new Date(x.t).toLocaleDateString(LOC, { day: 'numeric', month: 'short' }) + (act ? ', 00:00' : ''),
-          hpic('assets/gem-small.svg'), act ? $t("5% от активности") : '@' + x.name, act ? `${x.n} ${$n("друг|друга|друзей", x.n)}` : $t("первый депозит"), '+' + fmt(x.amount), 'GRAM', '#12D53D', act ? svg(IC.users) : `<span class="tav" style="--tc:${avc(x.name)}">${x.name[0].toUpperCase()}</span>`); }).join('');
+          hpic('assets/gem-small.svg'), act ? $t("5% от активности") : '@' + x.name, act ? `${x.n} ${$n("друг|друга|друзей", x.n)}` : $t("первый депозит"), '+' + fmt(x.amount), 'GRAM', '#12D53D', act ? svg(IC.users) : `<span class="tav" style="--tc:${avc(x.name)}">${x.name[0].toUpperCase()}</span>`); });
   } else if (histTab === 'rewards'){
     const L = S.hist.rewards;
-    b.innerHTML = L.length ? L.map(x => { const g = x.rw.g != null, c = g ? '#30A5FF' : '#F57A37';
-      return hline(c, x.kind === 'task' ? $t("Задание дня") : $t("Достижение"), tAgo(x.t), hpic(g ? 'assets/gem-small.svg' : 'assets/xp.webp'), rewardTitle(x), '', '+' + (g ? fmt(x.rw.g) : x.rw.xp), g ? 'GRAM' : 'XP', g ? '#12D53D' : '#F57A37', svg(x.kind === 'task' ? IC.check : '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>')); }).join('') : `<p class="hempty">${$t("Наград пока нет")}</p>`;
+    b.innerHTML = L.length ? hPage(L, x => { const g = x.rw.g != null, c = g ? '#30A5FF' : '#F57A37';
+      return hline(c, x.kind === 'task' ? $t("Задание дня") : $t("Достижение"), tAgo(x.t), hpic(g ? 'assets/gem-small.svg' : 'assets/xp.webp'), rewardTitle(x), '', '+' + (g ? fmt(x.rw.g) : x.rw.xp), g ? 'GRAM' : 'XP', g ? '#12D53D' : '#F57A37', svg(x.kind === 'task' ? IC.check : '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>')); }) : `<p class="hempty">${$t("Наград пока нет")}</p>`;
   } else if (histTab === 'wallet'){
     // комиссия за вывод NFT — отдельной строкой сразу под выводом (списание GRAM — своя операция)
     const L = S.hist.wallet.flatMap(w => w.type === 'nft' ? [w, { type: 'fee', t: w.t, amount: w.fee ?? OUT_FEE, name: w.name, num: w.num, model: w.model }] : [w]);
     const lab = { dep: $t("Пополнение"), nftin: $t("Депозит NFT"), nft: $t("Вывод NFT"), sell: $t("Продажа NFT"), restore: $t("Восстановление дня"), fee: $t("Комиссия за вывод") };
-    b.innerHTML = L.length ? L.map(w => { if (w.type === 'xp') return hline('#F57A37', $t("Опыт за игры"), w.day === xpDay() ? $t("сегодня") : new Date(w.day + 'T12:00:00').toLocaleDateString(LOC, { day: 'numeric', month: 'short' }),
+    b.innerHTML = L.length ? hPage(L, w => { if (w.type === 'xp') return hline('#F57A37', $t("Опыт за игры"), w.day === xpDay() ? $t("сегодня") : new Date(w.day + 'T12:00:00').toLocaleDateString(LOC, { day: 'numeric', month: 'short' }),
         hpic('assets/xp.webp'), $t("Оборот {0} GRAM", fmt(w.turn)), $t("0.5 XP за 1 GRAM"), '+' + fmt(w.xp), 'XP', '#F57A37', svg('<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.3l6-.7z"/>'));
       const dep = w.type === 'dep' || w.type === 'sell' || w.type === 'nftin', c = dep ? '#12D53D' : '#F57A37';
       return hline(c, lab[w.type], tAgo(w.t), w.img ? hpic(w.img, w.bg) : hpic('assets/gem-small.svg'),
-        w.name ? w.name + (w.num ? ' #' + w.num : '') : (w.type === 'restore' ? $t("День недели") : $t("На баланс")), [w.model, w.status && retitle(w.status) !== $t("выполнено") ? `<i class="pend">${retitle(w.status)}</i>` : ''].filter(Boolean).join(' · '), w.amount != null ? (dep ? '+' : '−') + fmt(w.amount) : w.value ? '≈' + fmt(w.value) : 'NFT', w.amount != null || w.value ? 'GRAM' : '', dep ? '#12D53D' : '#F57A37', `${svg(w.type === 'restore' ? '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M9.5 15l2 2 3.5-4"/>' : dep ? '<path d="M12 5v14M5 12l7 7 7-7"/>' : '<path d="M12 19V5M5 12l7-7 7 7"/>')}`); }).join('') : `<p class="hempty">${$t("Операций пока нет")}</p>`;
+        w.name ? w.name + (w.num ? ' #' + w.num : '') : (w.type === 'restore' ? $t("День недели") : $t("На баланс")), [w.model, w.status && retitle(w.status) !== $t("выполнено") ? `<i class="pend">${retitle(w.status)}</i>` : ''].filter(Boolean).join(' · '), w.amount != null ? (dep ? '+' : '−') + fmt(w.amount) : w.value ? '≈' + fmt(w.value) : 'NFT', w.amount != null || w.value ? 'GRAM' : '', dep ? '#12D53D' : '#F57A37', `${svg(w.type === 'restore' ? '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M9.5 15l2 2 3.5-4"/>' : dep ? '<path d="M12 5v14M5 12l7 7 7-7"/>' : '<path d="M12 19V5M5 12l7-7 7 7"/>')}`); }) : `<p class="hempty">${$t("Операций пока нет")}</p>`;
   } else {
     // PvP: «поставлено» — свой взнос, а не банк; проигрыш в PvP в ранги не идёт
     // крафты — отдельно; арена и ставки — своими блоками ниже. Сверху — итог по всем играм

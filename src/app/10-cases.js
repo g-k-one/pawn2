@@ -26,7 +26,7 @@ function caseNft(it){
   // из запаса кейсов (×N) — NFT подороже: до цены обычного выигрыша × N
   const m = it.mult || 1, pool = m > 1 ? NFTS.filter(n => n.price <= (it.rare ? RARE_TO : NFT_FLOOR) * m).slice(-8) : it.rare ? RARE_POOL() : FLOOR_POOL(), n = pick(pool), bg = n.bg;
   return { id: 'c' + Date.now(), num: n.num, nft: n, a: bg[0], b: bg[1], p: bg[2], value: it.rare || m > 1 ? n.price : NFT_FLOOR }; }
-const glowOf = c => [c, hexMix(c, '#000000', .15), hexMix(c, '#ffffff', .1), c];   // насыщенно: без белых провалов в палитре рамки
+const glowOf = c => [c, hexMix(c, '#000000', .15), hexMix(c, '#ffffff', .1), c];   // насыщенно: без белых провалов в палитре рамки   // насыщенно: без белых провалов в палитре рамки
 const GIFT_Q = '';
 function tileHTML(it, foot, g){
   const pool = it.rare ? RARE_POOL() : FLOOR_POOL();

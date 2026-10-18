@@ -212,9 +212,9 @@ async function t2Bake(){
       const im = new Image(); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(c));
       await im.decode(); ctx.drawImage(im, 0, 0, N, N);
     }
-    const blob = await new Promise(r => cv.toBlob(r, 'image/webp', .92)); if (!blob) return;
-    const img = new Image(); img.className = 'ar-art t2baked'; img.alt = ''; img.decoding = 'async'; img.src = URL.createObjectURL(blob); await img.decode();
-    svgs.forEach(x => x.remove()); art.prepend(img); if (fire) art.insertAdjacentHTML('beforeend', fire); art.dataset.baked = '1';
+    // готовый холст и есть картинка — без перекодирования в webp (кодирование занимало сотни мс главного потока)
+    cv.className = 'ar-art t2baked'; cv.setAttribute('aria-hidden', 'true');
+    svgs.forEach(x => x.remove()); art.prepend(cv); if (fire) art.insertAdjacentHTML('beforeend', fire); art.dataset.baked = '1';
   } catch(_){}
 }
 // прогрев: после запекания один раз невидимо раскладываем экраны Арены и Ставок — первый вход в режим без пустого кадра

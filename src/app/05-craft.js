@@ -322,8 +322,17 @@ $('craft').onclick = async () => {
   await reveal(r, fast);
 };
 async function openFx(fast, mode, glow){
+  if (!FX.keepDrawer) hideDrawer();   // шторка не остаётся открытой под раскрытием и итогом (кроме кейса из бонусов — он поверх них)
   const fx = $('fx');
-  fx.className = 'fx' + (mode ? ' ' + mode : ''); $('fxIn').style.opacity = 0; fx.style.setProperty('--tc', TIERS[S.tier].c);
+  fx.className = 'fx' + (mode ? ' ' + mode : '') + (FX.keepDrawer ? ' over' : ''); $('fxIn').style.opacity = 0; fx.style.setProperty('--tc', TIERS[S.tier].c);
+  // кейс поверх открытой шторки: экран сразу на весь размер и плавно проявляется (так же, как потом растворится), без вытягивания рамки
+  if (FX.keepDrawer && !S.lite){
+    // яркость сразу та, с которой стартует лента (без мерцания)
+    FullGlow.set(glow || NEUTRAL, true); FX.gain = FX.gainTo = .6; FX.morph = 1; FX.on = true; FX.hot = false; FullGlow.resize(); FullGlow.draw();
+    $('fxIn').style.opacity = 1; fx.style.transition = 'opacity .5s cubic-bezier(.4,0,.2,1), visibility 0s';
+    fx.classList.add('on'); if (typeof renderModes === 'function') renderModes(); Sfx.whoosh(); haptic('medium');
+    await wait(500); fx.style.transition = ''; FX.cover = true; return;
+  }
   FullGlow.set(TIERS[S.tier].glow, true); FX.gain = 1; FX.gainTo = 1; FX.morph = 0; FX.on = true; FX.hot = true; FullGlow.resize(); FullGlow.draw();
   fadeUI(true, fast ? 220 : 300);
   fx.classList.add('on'); if (typeof renderModes === 'function') renderModes();   // переключатель уезжает сразу, не по таймеру
@@ -340,7 +349,7 @@ async function openFx(fast, mode, glow){
    рамка тем временем раскрывается на весь экран — удар, искры, и запускается прокрут */
 async function bigStrike(){
   const fx = $('fx'), box = $('fxIntro'), ham = box.querySelector('.fi-h'), anv = box.querySelector('.fi-a'), keep = { fill: 'forwards' };
-  CRAFT.classList.add('live'); haptic('medium');
+  hideDrawer(); CRAFT.classList.add('live'); haptic('medium');
   await hamTo([{ rotate: getRot() + 'deg' }, { rotate: '50deg' }], { duration: 260, easing: 'cubic-bezier(.2,.8,.3,1)' });
   /* силуэты стартуют ровно поверх кнопки (масштаб 1/3 — та же геометрия) */
   box.getAnimations({ subtree: true }).forEach(a => a.cancel()); box.querySelectorAll('.fi-sp').forEach(x => x.remove());   // хвосты прошлого удара
@@ -390,11 +399,21 @@ async function anvilHit(box, ham, anv, from){
   // искры не обрываем: отменённая анимация не удаляет искру, и она застывала на наковальне до следующего крафта
   box.getAnimations({ subtree: true }).forEach(a => { if (!a.effect?.target?.classList?.contains('fi-sp')) a.cancel(); }); box.style.opacity = ''; box.style.visibility = ''; ham.style.rotate = '';
 }
-async function closeFx(){
+async function closeFx(onReady){
+  // «Проверить честность» с итога — закрываем вместе с ним; кейс из бонусов — возвращаемся к открытой шторке кейсов
+  const keep = FX.keepDrawer; if (keep){ if (openDrawer !== keep){ hideDrawer(); onReady = () => showDrawer(keep.id); } } else hideDrawer();
   /* возврат с экрана итога — открытие (openFx) в обратную сторону:
      1) содержимое итога гаснет — остаётся чёрный экран с рамкой;
      2) рамка сжимается до рамки панели и перетекает в её цвета и яркость (на Ставках — фиолетовые, на Арене — свои);
      3) рамка совпала с рамкой панели — под ней включается рамка панели, экран итога растворяется, интерфейс проявляется */
+  // кейс поверх открытой шторки: рамку не сжимаем (под итогом шторка, а не главный экран) — итог плавно растворяется, открывая её
+  if (keep && !S.lite){ const fx = $('fx'); FX.hot = false; fx.style.transition = 'opacity .5s cubic-bezier(.4,0,.2,1), visibility 0s .5s';
+    if (onReady) onReady(); faded.forEach(a => a.cancel()); faded = []; document.body.classList.remove('glowoff');
+    fx.classList.add('closing'); fx.classList.remove('on'); if (typeof renderModes === 'function') renderModes();
+    await wait(520); fx.style.transition = 'none';
+    FX.on = false; FX.morph = 0; fx.classList.remove('closing', 'done', 'case', 'pvpl', 'pvpw', 'lost', 'btmany', 'btspin'); Tilt.drop($('fxDrop'));
+    $('fxTop').style.visibility = 'hidden'; ['fxDrop', 'fxPvp', 'fxWin', 'fxBtns', 'fxPl'].forEach(id => $(id)?.replaceChildren());
+    keep.classList.remove('kept'); FX.keepDrawer = false; fx.classList.remove('over'); fx.offsetWidth; fx.style.transition = ''; return; }
   const fast = S.fast || S.lite, fx = $('fx'), g0 = FX.gain;
   FX.cover = false; FX.hot = true;
   $('fxIn').style.opacity = 0;
@@ -403,15 +422,19 @@ async function closeFx(){
   await tween(S.lite ? 0 : fast ? 240 : 300, k => { FX.morph = 1 - k; FX.gain = FX.gainTo = g0 + (1 - g0) * k; });
   FX.morph = 0; FX.gain = FX.gainTo = 1; FullGlow.set(Glow.get() || TIERS[S.tier].glow, true); FullGlow.draw();
   document.body.classList.add('glowx'); document.body.classList.remove('glowoff'); Glow.draw();   // под экраном итога — та же рамка панели
-  fx.style.transition = 'opacity .42s ease-out, visibility 0s .42s';
-  fadeUI(false, 420); fx.classList.add('closing'); fx.classList.remove('on');   // экран итога растворяется вместе с рамкой (closing — рамку не прятать), интерфейс проявляется — как при открытии, наоборот
+  // экран итога (чёрный фон + та же рамка, что у панели) убираем сразу, а интерфейс проявляется на тёмном фоне панели —
+  // без одновременного затухания двух слоёв (на середине оба полупрозрачные — был провал в черноту)
+  fx.style.transition = 'none';
+  if (onReady){ onReady(); fx.style.transition = 'opacity .26s ease-out, visibility 0s .26s'; }   // своя шторка поверх (бонусы после кейса) — итог под ней растворяется
+  fadeUI(false, 260); fx.classList.add('closing'); fx.classList.remove('on');   // экран итога растворяется вместе с рамкой (closing — рамку не прятать), интерфейс проявляется — как при открытии, наоборот
   if (typeof renderModes === 'function') renderModes();
-  await wait(440); fx.style.transition = '';
+  await wait(280); fx.style.transition = '';
   document.body.classList.remove('glowx');
   FX.on = false; FX.hot = false; FX.morph = 0; fx.classList.remove('closing', 'done', 'case', 'pvpl', 'pvpw', 'lost', 'btmany', 'btspin'); Tilt.drop($('fxDrop'));
   // итог прошлой игры убираем целиком: следующий экран (крафт, бой, кейс) не должен мелькнуть старым тикетом и призом.
   // Экран уже скрыт — содержимое чистим сразу (иначе следующий экран мелькнёт старым), но дорогую перерисовку не ждём в этом кадре
   $('fxTop').style.visibility = 'hidden'; ['fxDrop', 'fxPvp', 'fxWin', 'fxBtns', 'fxPl'].forEach(id => $(id)?.replaceChildren());
+  FX.keepDrawer?.classList?.remove('kept'); FX.keepDrawer = false; $('fx').classList.remove('over');
   if (typeof renderModes === 'function') renderModes();   // переключатель режимов — сразу, а не по таймеру через 0.8 с
 }
 
