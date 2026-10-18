@@ -129,6 +129,8 @@ function t3Add(add){
   const k = t3Key(), next = Math.round(((betsBoard[k] || 0) + add) * 100) / 100;
   if (!betsBoard[k] && betsList().length >= BETS_MAX_N){ haptic('rigid'); notify({ type: 'warn', icon: 'coin', title: $t("Максимум {0} ставок за раунд", BETS_MAX_N), text: $t("Убери ставку с другой ячейки — корзиной") }); return; }
   if (betsTotal() + add > BET_MAX + 1e-9){ haptic('rigid'); notify({ type: 'warn', icon: 'coin', title: $t("Максимальная ставка {0} GRAM", BET_MAX), text: $t("За раунд, на все ячейки вместе") }); return; }
+  // фишка — только на то, что есть на балансе (как ставка крафта): не узнавать о нехватке уже при запуске
+  if (!S.demo && betsTotal() + add > S.balance + 1e-9){ haptic('rigid'); notify({ type: 'err', icon: 'coin', key: 'nofunds', title: $t("Недостаточно GRAM"), text: `${$t("На балансе {0} GRAM", fmt(S.balance))}` }); return; }
   if (betsMaxWin({ ...betsBoard, [k]: next }) > BETS_MAX_WIN){ haptic('rigid'); notify({ type: 'warn', icon: 'coin', title: $t("Выигрыш за раунд — до {0} GRAM", BETS_MAX_WIN), text: $t("Уменьши ставку на редкий исход") }); return; }
   betsBoard[k] = next; Sfx.coin(); haptic('light'); t3Render(); renderBet(true); $('chance').animate([{ scale: 1.2 }, { scale: 1 }], { duration: 260, easing: 'cubic-bezier(.3,1.5,.5,1)' });
      // у звёздного взрыва нет конца — гасим сами, вспышка короткая

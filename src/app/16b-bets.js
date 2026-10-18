@@ -141,6 +141,7 @@ function betsAdd(k){
   const next = Math.round(((betsBoard[k] || 0) + betsChip) * 100) / 100;
   if (betsMaxWin({ ...betsBoard, [k]: next }) > BETS_MAX_WIN){ haptic('rigid'); notify({ type: 'warn', icon: 'coin', title: $t("Выигрыш за раунд — до {0} GRAM", BETS_MAX_WIN), text: $t("Как в крафте. Возьми фишку меньше или выбери исход почаще") }); return; }
   if (betsTotal() + betsChip > BET_MAX + 1e-9){ haptic('rigid'); notify({ type: 'warn', icon: 'coin', title: $t("Максимальная ставка {0} GRAM", BET_MAX), text: $t("За один раунд, на все исходы вместе") }); return; }
+  if (!S.demo && betsTotal() + betsChip > S.balance + 1e-9){ haptic('rigid'); notify({ type: 'err', icon: 'coin', key: 'nofunds', title: $t("Недостаточно GRAM"), text: `${$t("На балансе {0} GRAM", fmt(S.balance))}` }); return; }
   betsBoard[k] = next; Sfx.coin(); haptic('light'); renderBets();
   const el = $('btBoard').querySelector(`[data-k="${k}"]`); el?.animate([{ scale: .9 }, { scale: 1.06, offset: .6 }, { scale: 1 }], { duration: 260, easing: 'cubic-bezier(.3,1.5,.5,1)' });
   if (!S.lite) $('btOrb').animate([{ filter: 'brightness(1.8)', scale: 1.06 }, { filter: 'brightness(1)', scale: 1 }], { duration: 420, easing: 'cubic-bezier(.3,1.4,.5,1)' });   // шар вспыхивает на каждую фишку

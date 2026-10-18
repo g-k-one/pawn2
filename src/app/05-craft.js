@@ -130,7 +130,7 @@ $('dbgBody').addEventListener('click', e => {
   if (k === 'bots'){ c.classList.add('ld'); loadBots(v).finally(() => { c.classList.remove('ld'); renderDbg(); }); return; }
   if (k === 'resetSave'){ haptic('medium'); Store.reset(); return; }
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
-  if (k === 'stock'){ S.stock[c.dataset.id] = +v; haptic(); renderDbg(); return; }
+  if (k === 'stock'){ API.dbgStock(c.dataset.id, +v).then(() => { S.stock[c.dataset.id] = +v; haptic(); renderDbg(); }, () => notify({ type: 'err', icon: 'err', title: $t("Нет связи"), text: $t("Попробуй ещё раз") })); return; }
   if (k === 'onbNow'){ hideDrawer(); setTimeout(() => Onb.start(true), 300); return; }
   if (k === 'net'){ S.dbg.net = v === 'null' ? null : v === 'off' ? 'off' : +v; netBar(); haptic(); renderDbg(); return; }
   if (k === 'arOut' || k === 'btOut' || k === 'arBots'){ S.dbg[k] = v === 'null' ? null : k === 'arBots' ? +v : v; haptic(); renderDbg(); return; }
