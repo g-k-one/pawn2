@@ -239,7 +239,7 @@ const Onb = (() => {
         setTimeout(() => { if (el && STEPS[i] === s) step(); }, 1100); }, 150); }
   }
   const step = () => { i++; i < STEPS.length ? show() : end(); };
-  function end(){ clearInterval(poll); S.onb = false; el?.remove(); el = null; hole = null; LSset('bm-onb-done', true); restartAuto(); }
+  function end(){ track('onb_end', { step: Math.min(i + 1, STEPS.length), of: STEPS.length }); clearInterval(poll); S.onb = false; el?.remove(); el = null; hole = null; LSset('bm-onb-done', true); restartAuto(); }
   ['pointerdown', 'click', 'touchstart'].forEach(t => stage.addEventListener(t, guard, { capture: true, passive: false }));
   return { start(force){ if (el || (!force && (S.dbg.noOnb || LS('bm-onb-done', false)))) return; S.onb = true; clearInterval(auto); i = 0;
     el = document.createElement('div'); el.className = 'onb'; stage.appendChild(el); show(); } };

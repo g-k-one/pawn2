@@ -55,7 +55,7 @@ async function switchMode(next, dir = 1){
   const cur = modeNow(); if (next === cur || modeBusy) return;
   if ((next === 'tab2' || next === 'tab3') && S.demo){ haptic('rigid'); notify({ type: 'demo', img: 'assets/fantik.webp', title: next === 'tab2' ? $t("Арена — только на GRAM") : $t("Ставки — только на GRAM"), text: $t("Выключи демо в меню") }); return; }
   if (cur === 'tab2' && t2Me()){ haptic('rigid'); notify({ type: 'info', icon: 'fire', title: $t("Ты на арене"), text: $t("Дождись боя — после него можно в другой режим") }); return; }
-  modeBusy = true; modeTo = next; haptic('medium'); Sfx.swipe(); const betW = $('bet').offsetWidth;
+  modeBusy = true; modeTo = next; track('mode', { to: next === 'tab2' ? 'arena' : next === 'tab3' ? 'bets' : next }); haptic('medium'); Sfx.swipe(); const betW = $('bet').offsetWidth;
   try {
     // все три режима — один экран: старое уходит вглубь, класс режима меняется, новое выплывает
     if (cur === 'pvp') await leaveArena(); else if (cur === 'bets') await leaveBets();

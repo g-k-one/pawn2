@@ -3041,3 +3041,9 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 .share-prev{display:block;width:min(100%,300px);aspect-ratio:1080/1350;margin:0 auto;border-radius:22px;object-fit:cover}
 .share-prev.sk{background:rgba(255,255,255,.06)}
 #shareFoot{display:flex;flex-direction:column;gap:8px}
+/* Дебаг → «События»: лента аналитики */
+.dbg-ev{display:flex;flex-direction:column;gap:8px;margin:8px 0 16px;text-transform:none}
+.dbg-ev>div{display:grid;grid-template-columns:auto 1fr;column-gap:8px;font-size:13.5px;line-height:1.35}
+.dbg-ev time{color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
+.dbg-ev b{color:#fff}
+.dbg-ev span{grid-column:2;font:400 12.5px/1.4 var(--serif);color:rgba(255,255,255,.72);word-break:break-word}

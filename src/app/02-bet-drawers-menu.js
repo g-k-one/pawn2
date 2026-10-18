@@ -72,6 +72,7 @@ function drawerTop(el){
   par.style.setProperty('--drTop', Math.max(0, (lv.getBoundingClientRect().top - pr.top) / k) + 'px');
 }
 function showDrawer(id){
+  track('screen', { id: id.replace(/Drawer$/, '') });   // какой экран открыли (шторки)
   $('backdrop').classList.toggle('top', !!(typeof FX !== 'undefined' && FX.keepDrawer && FX.on && FX.keepDrawer.id !== id));   // шторка поверх итога кейса
   openDrawer = $(id); drawerTop(openDrawer); openDrawer.classList.add('open'); $('backdrop').classList.add('on'); haptic();
 }

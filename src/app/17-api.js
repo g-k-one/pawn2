@@ -41,11 +41,11 @@ const API = {
      Ставку списывает и выплату зачисляет сервер; лимиты — BET_MAX на ставку за раунд и BETS_MAX_WIN на выигрыш за раунд при любом тикете (проверяет и сервер) */
   /* --- бонусы: проверка и начисление — на сервере --- */
   /* POST /achievements/:id/check → {ok} — условие проверяется по нажатию «Проверить». Мок: условие считается в браузере */
-  async checkAch(id, okFn){ await wait(500); return { ok: !!okFn() }; },
+  async checkAch(id, okFn){ await wait(500); const ok = !!okFn(); track('ach_check', { id, ok }); return { ok }; },
   /* POST /referrals/claim → {ok, amount} — забрать начисления за друзей */
-  async claimRef(){ return { ok: true }; },
+  async claimRef(){ track('ref_claim', { amount: REF.pending }); return { ok: true }; },
   /* POST /tasks/restore-day → {ok} — восстановить пропущенный день недели за 0.5 GRAM */
-  async restoreDay(){ return { ok: true }; },
+  async restoreDay(){ track('week_restore'); return { ok: true }; },
   /* POST /promo {code} → {ok, kind:'gram', amount} — GRAM на баланс | {ok, kind:'bonus', pct, max, left} — +pct% к ближайшему пополнению,
      не больше max GRAM, действует left мс | {ok:false, error:'unknown'|'used'|'expired'}. Код — один раз на игрока. Мок: тестовые коды */
   async promo(code, dbg){ track('promo');
@@ -101,9 +101,23 @@ function netBar(){ let el = $('netBar'); if (!el){ el = document.createElement('
   const off = S.dbg.net === 'off' || navigator.onLine === false; el.classList.toggle('on', off); document.body.classList.toggle('netoff', off); }   // уведомления — ниже плашки
 addEventListener('online', netBar); addEventListener('offline', netBar);
 
-/* ---------- аналитика: события воронки. Мок копит их в window.__pawnEvents; в бою — отправка на сервер/в счётчик ---------- */
-const EVENTS = window.__pawnEvents = [];
-function track(name, props = {}){ EVENTS.push({ name, t: Date.now(), ...props }); if (EVENTS.length > 200) EVENTS.shift(); }
+/* ---------- аналитика: события воронки (список и что считать — docs/BACKEND.md, раздел «Аналитика») ----------
+   Все события идут через track(). Последние 200 видно в Дебаге → «События».
+   Отправка: заполнить ANALYTICS_URL — события уходят пачкой POST {initData, events} (по 20 штук и когда приложение сворачивают).
+   Сервер проверяет initData (как у остальных запросов) и пишет события с id игрока. Пусто — никуда не отправляются */
+const ANALYTICS_URL = '';                                    // TODO разработчику: адрес приёма событий, например https://api.pawn…/events
+const EVENTS = window.__pawnEvents = [], EV_Q = [], EV_SID = Math.random().toString(36).slice(2, 10);   // sid — номер сессии (одно открытие приложения)
+function track(name, props = {}){
+  const e = { name, t: Date.now(), sid: EV_SID, ...props }; EVENTS.push(e); if (EVENTS.length > 200) EVENTS.shift();
+  if (ANALYTICS_URL){ EV_Q.push(e); if (EV_Q.length >= 20) evFlush(); }
+  if (typeof dbgTab !== 'undefined' && dbgTab === 'events' && openDrawer?.id === 'dbgDrawer') renderDbg();   // открыт Дебаг → «События» — видно сразу
+}
+function evFlush(){
+  if (!ANALYTICS_URL || !EV_Q.length) return; const body = JSON.stringify({ initData: window.Telegram?.WebApp?.initData || '', events: EV_Q.splice(0) });
+  try { if (navigator.sendBeacon?.(ANALYTICS_URL, new Blob([body], { type: 'application/json' }))) return; } catch(_){}
+  fetch(ANALYTICS_URL, { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+}
+addEventListener('visibilitychange', () => { if (document.hidden) evFlush(); });   // свернули — отправляем, что накопилось
 
 /* ---------- сохранение прогресса (мок базы данных) ----------
    Что хранит бэкенд в бою — то здесь пишется в localStorage: баланс, XP, инвентарь, история, задания, запас кейсов,

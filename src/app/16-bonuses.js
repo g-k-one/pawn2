@@ -89,10 +89,10 @@ function renderCases(){
       rulesHTML(TOP_RULES);
   }
 }
-$('casesTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; casesTab = t.dataset.k === 'friends' ? friendsSeg : t.dataset.k; haptic(); renderCases(); $('casesBody').scrollTop = 0; });
+$('casesTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (!t) return; casesTab = t.dataset.k === 'friends' ? friendsSeg : t.dataset.k; track('screen', { id: 'bonus_' + casesTab }); haptic(); renderCases(); $('casesBody').scrollTop = 0; });
 $('casesBody').addEventListener('click', e => {
   const go = e.target.closest('[data-go]');
-  if (go){ casesTab = go.dataset.go; if (casesTab === 'refs' || casesTab === 'top' || casesTab === 'ach') friendsSeg = casesTab; haptic(); renderCases(); $('casesBody').scrollTop = 0; return; }
+  if (go){ casesTab = go.dataset.go; if (casesTab === 'refs' || casesTab === 'top' || casesTab === 'ach') friendsSeg = casesTab; track('screen', { id: 'bonus_' + casesTab }); haptic(); renderCases(); $('casesBody').scrollTop = 0; return; }
   const o = e.target.closest('[data-open]'), q = e.target.closest('[data-info]'), cl = e.target.closest('[data-claim]');
   if (cl){ claimAch(cl.dataset.claim, cl); return; }
   if (o){ e.stopPropagation(); if (o.classList.contains('off')){ haptic('rigid'); return; } tryOpenCase(caseById(o.dataset.open)); return; }
@@ -128,8 +128,8 @@ function tryOpenCase(c, m = 1){
   caseRun(c, false, m);
 }
 document.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a) return; const act = a.dataset.act;
-  if (act === 'copyref'){ try { navigator.clipboard.writeText(REF.link); } catch(_){} haptic(); notify({ type: 'ok', icon: 'ok', title: $t("Ссылка скопирована"), text: $t("Отправь её друзьям") }); }
-  if (act === 'shareref'){ haptic(); if (!tgOpen('https://t.me/share/url?url=' + encodeURIComponent(REF.link) + '&text=' + encodeURIComponent($t("Крафти NFT вместе со мной в pawn")))) notify({ type: 'info', title: $t("Пригласить друга"), text: $t("Откроется окно «Поделиться» в Telegram") }); }
+  if (act === 'copyref'){ track('ref_copy'); try { navigator.clipboard.writeText(REF.link); } catch(_){} haptic(); notify({ type: 'ok', icon: 'ok', title: $t("Ссылка скопирована"), text: $t("Отправь её друзьям") }); }
+  if (act === 'shareref'){ track('ref_share'); haptic(); if (!tgOpen('https://t.me/share/url?url=' + encodeURIComponent(REF.link) + '&text=' + encodeURIComponent($t("Крафти NFT вместе со мной в pawn")))) notify({ type: 'info', title: $t("Пригласить друга"), text: $t("Откроется окно «Поделиться» в Telegram") }); }
   if (act === 'amb'){ haptic(); tgOpen(AMBASSADORS); }
   if (act === 'totasks'){ haptic(); openCases('tasks'); }
   if (act === 'refhist'){ haptic(); openHistory('refs'); }

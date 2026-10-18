@@ -67,6 +67,7 @@ function swapDrawer(id, prep, back){
   const old = openDrawer, nw = $(id);
   if (!old){ prep?.(); return showDrawer(id); }
   if (old === nw) return prep?.();
+  track('screen', { id: id.replace(/Drawer$/, '') });   // переход из одной шторки в другую — тоже экран
   if (!back) drawerStack.push(old.id);
   prep?.(); haptic(); setBack(nw);
   $('backdrop').classList.toggle('top', !!(FX.keepDrawer && FX.on && FX.keepDrawer !== nw));   // шторка поверх итога кейса

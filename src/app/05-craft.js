@@ -77,7 +77,7 @@ function renderDbg(){
   const d = S.dbg, last = TIERS.length - 1;
   const chip = (k, v, label, c, dis) => `<button class="dbg-c${d[k] === v ? ' on' : ''}" data-k="${k}" data-v="${v}" style="--c:${c || '#fff'}"${dis ? ' disabled' : ''}>${label}</button>`;
   // вкладки: всё по смыслу, чтобы не листать длинный список
-  const tabs = [['craft', $t("Крафт")], ['player', $t("Игрок")], ['exp', $t("Арена и ставки")], ['perf', $t("Замер")]];
+  const tabs = [['craft', $t("Крафт")], ['player', $t("Игрок")], ['exp', $t("Арена и ставки")], ['perf', $t("Замер")], ['events', $t("События")]];
   const sec = {
     craft: () =>
       `<div class="dbg-l">${$t("Точный тикет")}</div><div class="dbg-t"><input id="dbgTicket" type="number" inputmode="numeric" min="0" max="99999" placeholder="0 – 99 999" value="${d.ticket ?? ''}"><button class="dbg-c" data-k="ticketClear" data-v="1">${$t("Сброс")}</button></div>` +
@@ -100,6 +100,10 @@ function renderDbg(){
       `<div class="dbg-l">${$t("Онбординг")}</div><div class="dbg-g">${chip('noOnb', false, $t("Показывать"))}${chip('noOnb', true, $t("Выключен"))}<button class="dbg-c" data-k="onbNow" data-v="1">${$t("Показать сейчас")}</button></div>` +
       `<div class="dbg-l">${$t("Сохранённый прогресс")}</div><div class="dbg-g"><button class="dbg-c" data-k="resetSave" data-v="1" style="--c:#FF4C35">${$t("Сбросить и начать заново")}</button></div>`,
     perf: () => pfDbg() + loadDbg(),
+    // аналитика: что и когда записалось (новые сверху); в бою то же уходит на ANALYTICS_URL
+    events: () => `<div class="dbg-l">${$t("События аналитики")} · ${EVENTS.length}${ANALYTICS_URL ? ' · ' + $t("отправляются") : ' · ' + $t("пока никуда не отправляются")}</div>` +
+      `<div class="dbg-ev">${EVENTS.slice().reverse().map(e => { const { name, t, sid, ...p } = e, k = Object.keys(p);
+        return `<div><time>${new Date(t).toLocaleTimeString(LOC)}</time><b>${name}</b>${k.length ? `<span>${k.map(x => `${x}: ${String(p[x]).replace(/</g, '&lt;')}`).join(' · ')}</span>` : ''}</div>`; }).join('') || `<p class="dbg-n">${$t("Пока пусто")}</p>`}</div>`,
     exp: () =>
       `<div class="dbg-l">${$t("Арена: исход боя")}</div><div class="dbg-g">${chip('arOut', null, $t("Как выпадет"))}${chip('arOut', 'win', $t("Победа"), '#12D53D')}${chip('arOut', 'lose', $t("Проигрыш"), '#FF4C35')}</div>` +
       `<div class="dbg-l">${$t("Арена: соперников в новой комнате")}</div><div class="dbg-g">${chip('arBots', null, $t("Случайно"))}${[0, 1, 3, 5].map(n => chip('arBots', n, String(n), '#ff8a3c')).join('')}</div>` +
@@ -193,13 +197,13 @@ function toggleVibro(){ S.vibro = !S.vibro; swOn('vibroRow', S.vibro); LSset('bm
 function toggleSound(){ S.sound = !S.sound; swOn('soundRow', S.sound); haptic(); LSset('bm-sound', S.sound); if (S.sound) Sfx.tick(.8); }
 function applyLite(){ document.body.classList.toggle('lite', S.lite); document.body.classList.toggle('nogl', S.lite || !!S.noGL); }
 function setLite(on){
-  S.lite = on; swOn('liteRow', on); LSset('bm-lite', on); applyLite(); haptic(); Forge.quality = on ? 0 : 2;
+  S.lite = on; track('lite', { on }); swOn('liteRow', on); LSset('bm-lite', on); applyLite(); haptic(); Forge.quality = on ? 0 : 2;
   if (!on){ Glow.resize(); FullGlow.resize(); }
   notify(on ? { type: 'ok', icon: 'leaf', title: $t("Экономный режим"), text: $t("Без свечения и анимаций, крафт сразу показывает итог") } : { type: 'info', icon: 'leaf', title: $t("Экономный режим выключен") });
 }
 function setDemo(on){
   if (S.busy) return;
-  S.demo = on; swOn('demoRow', on); document.body.classList.toggle('demo', on); haptic('medium');
+  S.demo = on; track('demo', { on }); swOn('demoRow', on); document.body.classList.toggle('demo', on); haptic('medium');
   if (on && typeof modeNow === 'function' && modeNow() !== 'craft') switchMode('craft');   // на арене демо нет
   S.ton = 0; S.gifts = [];
   $('balIco').src = on ? 'assets/fantik.webp' : 'assets/gem-balance.svg';
@@ -266,6 +270,7 @@ function notesFlip(fn){
 }
 function notify(o){
   if (typeof o === 'string') o = { title: o };
+  if (o.type === 'err') track('error', { title: o.title });   // все ошибки, что видит игрок
   const type = o.type || 'info', c = o.color || NCOL[type] || NCOL.info, ms = o.ms || 3400, key = o.key || o.title + '|' + (o.text || '');   // одинаковые уведомления склеиваются; key — чтобы не склеивать
   const dup = [...notesEl.children].find(n => n.dataset.key === key && !n.classList.contains('bye'));
   if (dup){ dup.restart(); dup.animate([{ scale: 1.03 }, { scale: 1 }], { duration: 240 }); return; }
