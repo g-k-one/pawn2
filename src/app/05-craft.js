@@ -641,7 +641,7 @@ const PF_LINK = `<div class="fx-links"><button class="btn-link pf" id="fxPfIn">$
 // Без NFT ссылка одна — реф-ссылка; Telegram всегда ставит её первой строкой, поэтому приглашение ссылается на неё
 function shareWin(text, g){
   haptic(); const url = g ? nftLink(g.nft) : REF.link;
-  text += '\n' + (g ? `${$t("Забирай бонус 10% на первый деп:")} ${REF.link}` : $t("Забирай бонус 10% на первый деп по ссылке"));
+  text += '\n\n' + (g ? `${$t("Забирай бонус 10% на первый деп:")} ${REF.link}` : $t("Забирай бонус 10% на первый деп по ссылке"));
   if (tgOpen('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text))) return;
   if (navigator.share) return void navigator.share({ text: url + '\n' + text }).catch(() => {});
   try { navigator.clipboard.writeText(url + '\n' + text).catch(() => {}); } catch(_){}

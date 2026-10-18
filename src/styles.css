@@ -3047,3 +3047,5 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 .dbg-ev time{color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
 .dbg-ev b{color:#fff}
 .dbg-ev span{grid-column:2;font:400 12.5px/1.4 var(--serif);color:rgba(255,255,255,.72);word-break:break-word}
+.sh-xp{color:#F57A37;margin-left:6px}   /* награда за сторис — XP всегда оранжевым */
+#shareDrawer .dr-h h3{justify-content:center}   /* «Поделиться» — по центру, как картинка под ним */

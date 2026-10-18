@@ -64,7 +64,7 @@ function renderHist(detail){ histMore = null;
   } else if (histTab === 'rewards'){
     const L = S.hist.rewards;
     b.innerHTML = L.length ? hPage(L, x => { const g = x.rw.g != null, c = g ? '#30A5FF' : '#F57A37';
-      return hline(c, x.kind === 'task' ? $t("Задание дня") : $t("Достижение"), tAgo(x.t), hpic(g ? 'assets/gem-small.svg' : 'assets/xp.webp'), rewardTitle(x), '', '+' + (g ? fmt(x.rw.g) : x.rw.xp), g ? 'GRAM' : 'XP', g ? '#12D53D' : '#F57A37', svg(x.kind === 'task' ? IC.check : '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>')); }) : `<p class="hempty">${$t("Наград пока нет")}</p>`;
+      return hline(c, x.kind === 'task' ? $t("Задание дня") : x.kind === 'story' ? $t("Сторис") : $t("Достижение"), tAgo(x.t), hpic(g ? 'assets/gem-small.svg' : 'assets/xp.webp'), rewardTitle(x), '', '+' + (g ? fmt(x.rw.g) : x.rw.xp), g ? 'GRAM' : 'XP', g ? '#12D53D' : '#F57A37', svg(x.kind === 'task' ? IC.check : '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>')); }) : `<p class="hempty">${$t("Наград пока нет")}</p>`;
   } else if (histTab === 'wallet'){
     // комиссия за вывод NFT — отдельной строкой сразу под выводом (списание GRAM — своя операция)
     const L = S.hist.wallet.flatMap(w => w.type === 'nft' ? [w, { type: 'fee', t: w.t, amount: w.fee ?? OUT_FEE, name: w.name, num: w.num, model: w.model }] : [w]);
