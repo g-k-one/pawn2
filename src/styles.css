@@ -27,7 +27,7 @@ img{display:block;-webkit-user-drag:none}
 
 /* ---------- баланс ---------- */
 .balance{top:var(--balTop,43px);z-index:5;display:flex;align-items:center}
-.balance .ava{width:40px;height:40px;margin-right:-4px;position:relative;z-index:1}
+.balance .ava{width:40px;height:40px;margin-right:-4px;position:relative;z-index:1;border-radius:50%;object-fit:cover}
 .pill{display:flex;align-items:center;justify-content:center;gap:4px;min-width:38px;padding:2px 8px;border-radius:999px;background:var(--chip);
   -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
 .pill b{font-weight:700;font-size:25.565px;line-height:34px}
@@ -476,7 +476,7 @@ img{display:block;-webkit-user-drag:none}
 .trow em{flex:none;width:28px;font-style:normal;font-size:18px;color:rgba(255,255,255,.5);text-align:center}
 .trow em.m0{color:#FFB835}.trow em.m1{color:#00D9FF}.trow em.m2{color:#F57A37}
 .tav{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;overflow:hidden;font-weight:700;font-size:19px;background:hsl(var(--h) 55% 45%)}
-.tav img{width:100%;height:100%}
+.tav img{width:100%;height:100%;border-radius:50%;object-fit:cover}
 .tn{flex:1;min-width:0;display:flex;flex-direction:column}
 .tn b{font-size:18px}
 .tn small{font-size:14px;color:rgba(255,255,255,.45)}
@@ -737,7 +737,7 @@ img{display:block;-webkit-user-drag:none}
 .demo .bal-add{display:none}
 /* меню: группы */
 .mprof{display:flex;align-items:center;gap:12px;width:100%;padding:4px 0 12px;text-align:left}
-.mprof img{width:56px;height:56px;border-radius:50%}
+.mprof img{width:56px;height:56px;border-radius:50%;object-fit:cover}
 .mprof>span{flex:1;display:flex;flex-direction:column}
 .mprof b{font-size:26px;line-height:1.1}
 .mprof small{font-size:18px;color:var(--blue)}
@@ -924,7 +924,7 @@ img{display:block;-webkit-user-drag:none}
 .refrow .g{color:#30A5FF;font-weight:700}.refrow .g img{width:18px}
 /* топ */
 .tophero{position:relative;display:flex;align-items:center;gap:12px;padding:14px;border-radius:24px;overflow:hidden;background:linear-gradient(120deg,#6b4508,#2a1a08);box-shadow:inset 0 0 22px rgba(255,184,53,.45)}
-.tophero .ava{flex:none;width:58px;height:58px;border-radius:50%;box-shadow:0 0 0 3px #FFB835}
+.tophero .ava{flex:none;width:58px;height:58px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px #FFB835}
 .tophero>div{flex:1;min-width:0;display:flex;flex-direction:column}
 .tophero>div b{font-size:24px;line-height:1.1}
 .tophero>div small{font-size:15px;color:#FFB835;text-transform:uppercase}
