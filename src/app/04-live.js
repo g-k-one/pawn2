@@ -48,5 +48,27 @@ liveEl.addEventListener('click', e => {
   notify({ img: it.dataset.img, color: t.c, title: `${t.name} · x${it.dataset.m}`, text: `${it.dataset.who} ${$t("— {0} · тикет", it.dataset.nft || '+' + fmt(+it.dataset.w) + ' GRAM')} ${tk(n)}` });
 });
 let liveN = 0;
+/* ---------- дебаг → «Замер» → «Нагрузка»: лента «лайв» потоком и спам запросов ----------
+   Поток — дроп в ленту каждые N мс (как будто играет толпа); на сервере ещё и боты играют по-настоящему (API.dbgLive) */
+let liveFlood = null;
+function setLiveFlood(ms){ clearInterval(liveFlood); S.dbg.liveMs = ms; liveFlood = ms ? setInterval(() => { if (!document.hidden) pushLive(); }, ms) : null; API.dbgLive(ms).catch(() => {}); }
+const loadDbg = () => `<div class="dbg-l">${$t("Лента «лайв»")}</div><div class="dbg-g">` +
+  [[0, $t("Обычно")], [600, $t("Поток · 0.6 с")], [250, $t("Шквал · 0.25 с")], [80, $t("Буря · 0.08 с")]].map(([ms, l]) => `<button class="dbg-c${(S.dbg.liveMs || 0) === ms ? ' on' : ''}" data-k="liveMs" data-v="${ms}" style="--c:${ms ? '#FF8A3C' : '#fff'}">${l}</button>`).join('') + `</div>` +
+  `<div class="dbg-l">${$t("Спам запросов с телефона (разом)")}</div><div class="dbg-g">` + [20, 50, 100].map(n => `<button class="dbg-c" data-k="spam" data-v="${n}" style="--c:#30A5FF">${n}</button>`).join('') + `</div>` +
+  `<div class="dbg-l">${$t("Игроки-боты на сервере")}</div><div class="dbg-g">` + [['20', $t("20 играют")], ['100', $t("100 играют + спам крафтов")], ['wipe', $t("Убрать ботов")]].map(([v, l]) => `<button class="dbg-c" data-k="bots" data-v="${v}" style="--c:${v === 'wipe' ? '#FF4C35' : '#12D53D'}">${l}</button>`).join('') + `</div>` +
+  `<p class="dbg-n">${$t("Спам — запросы уходят на сервер одновременно, в уведомлении — сколько ждали ответа. Боты играют настоящие игры: их видно в ленте и топе.")}</p>`;
+const msStat = a => { a = a.slice().sort((x, y) => x - y); const q = p => Math.round(a[Math.min(a.length - 1, Math.floor(p * a.length))] || 0); return $t("обычно {0} мс · 9 из 10 до {1} мс · худший {2} мс", q(.5), q(.9), q(1)); };
+async function loadSpam(n){
+  haptic('medium'); const t0 = performance.now(), r = await API.dbgSpam(n).catch(() => null);
+  if (!r) return notify({ type: 'err', icon: 'err', title: $t("Нет связи"), text: $t("Попробуй ещё раз") });
+  notify({ type: r.err ? 'warn' : 'ok', icon: r.err ? 'warn' : 'ok', ms: 9000, title: `${$t("{0} запросов за {1} мс", n, Math.round(performance.now() - t0))}${r.err ? ` · ${$t("ошибок")}: ${r.err}` : ''}`, text: (r.mock ? $t("Мок: сервера нет — только задержка сети") + ' · ' : '') + msStat(r.ms) });
+}
+async function loadBots(v){
+  haptic('medium'); const r = await API.dbgBots(v === 'wipe' ? { wipe: true } : { players: +v, rounds: 3, spam: v === '100' ? 50 : 0 }).catch(e => ({ fail: e?.message }));
+  if (r.mock) return notify({ type: 'info', icon: 'info', title: $t("Боты — только с сервером"), text: $t("В моке играет только лента") });
+  if (r.fail || !r.ok) return notify({ type: 'err', icon: 'err', title: $t("Сервер не ответил"), text: r.fail || $t("Попробуй ещё раз") });
+  if (r.wiped != null) return notify({ type: 'ok', icon: 'ok', title: $t("Ботов убрали: {0}", r.wiped) });
+  notify({ type: r.bad ? 'err' : 'ok', icon: r.bad ? 'err' : 'ok', ms: 10000, title: $t("{0} игр за {1} мс", r.games, r.ms), text: (r.bad ? $t("Проблемы с деньгами: {0}", r.bad) : $t("Деньги сходятся")) + (r.errors ? ` · ${$t("ошибок")}: ${r.errors}` : '') + ` · ${$t("крафт")}: ${msStat(r.craft)}` });
+}
 setInterval(() => { if (document.hidden || S.pfOff.live || (S.lite && ++liveN % 2)) return; pushLive(); }, 3200);   // в экономном режиме — вдвое реже
 

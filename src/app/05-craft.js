@@ -99,7 +99,7 @@ function renderDbg(){
       `<div class="dbg-l">${$t("Кейсы")}</div><div class="dbg-g">${chip('freeCases', false, $t("По условиям"))}${chip('freeCases', true, $t("Без условий"))}</div>` +
       `<div class="dbg-l">${$t("Онбординг")}</div><div class="dbg-g">${chip('noOnb', false, $t("Показывать"))}${chip('noOnb', true, $t("Выключен"))}<button class="dbg-c" data-k="onbNow" data-v="1">${$t("Показать сейчас")}</button></div>` +
       `<div class="dbg-l">${$t("Сохранённый прогресс")}</div><div class="dbg-g"><button class="dbg-c" data-k="resetSave" data-v="1" style="--c:#FF4C35">${$t("Сбросить и начать заново")}</button></div>`,
-    perf: () => pfDbg(),
+    perf: () => pfDbg() + loadDbg(),
     exp: () =>
       `<div class="dbg-l">${$t("Арена: исход боя")}</div><div class="dbg-g">${chip('arOut', null, $t("Как выпадет"))}${chip('arOut', 'win', $t("Победа"), '#12D53D')}${chip('arOut', 'lose', $t("Проигрыш"), '#FF4C35')}</div>` +
       `<div class="dbg-l">${$t("Арена: соперников в новой комнате")}</div><div class="dbg-g">${chip('arBots', null, $t("Случайно"))}${[0, 1, 3, 5].map(n => chip('arBots', n, String(n), '#ff8a3c')).join('')}</div>` +
@@ -123,6 +123,9 @@ $('dbgBody').addEventListener('click', e => {
       () => notify({ type: 'err', icon: 'err', title: $t("Нет связи"), text: $t("Попробуй ещё раз") })); return; }
   if (k === 'promo'){ applyPromo(c, v).then(() => renderDbg()); return; }   // дебаг: код сразу, можно повторно
   if (k === 'bonusOff'){ API.dbgBonusOff().then(() => { S.bonus = null; haptic(); renderDbg(); }, () => notify({ type: 'err', icon: 'err', title: $t("Нет связи"), text: $t("Попробуй ещё раз") })); return; }
+  if (k === 'liveMs'){ setLiveFlood(+v); haptic(); renderDbg(); return; }
+  if (k === 'spam'){ c.classList.add('ld'); loadSpam(+v).finally(() => c.classList.remove('ld')); return; }
+  if (k === 'bots'){ c.classList.add('ld'); loadBots(v).finally(() => { c.classList.remove('ld'); renderDbg(); }); return; }
   if (k === 'resetSave'){ haptic('medium'); Store.reset(); return; }
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
   if (k === 'stock'){ S.stock[c.dataset.id] = +v; haptic(); renderDbg(); return; }

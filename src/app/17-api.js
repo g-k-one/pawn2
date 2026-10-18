@@ -55,6 +55,10 @@ const API = {
   /* дебаг (только тест): баланс = v или + v. В бою этого эндпоинта нет */
   async dbgBalance(v, add){ return { ok: true }; },
   async dbgBonusOff(){ return { ok: true }; },   // дебаг: убрать бонус к пополнению
+  /* дебаг «Нагрузка»: лента потоком (на сервере — боты играют, пока поток включён), спам запросов, боты. Мок — только лента и задержка */
+  async dbgLive(ms){ return { ok: true }; },
+  async dbgSpam(n){ const ms = await Promise.all(Array.from({ length: n }, async () => { const t = performance.now(); await netLag(); return performance.now() - t; })); return { ok: true, mock: true, ms, err: 0 }; },
+  async dbgBots(){ return { ok: false, mock: true }; },
   async bets(list){ track('bets', { n: list.length, total: list.reduce((a, b) => a + b.amount, 0) }); return betsMock(list); },
 };
 
