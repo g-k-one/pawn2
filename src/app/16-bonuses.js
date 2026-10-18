@@ -229,7 +229,7 @@ function caseDrop(c, it, r, g){
   $('fxBtns').innerHTML = (g ? `<button class="btn-main" id="cSell">${$t("Продать за {0} GRAM", fmt(g.value))}</button><button class="btn-ghost" id="cTake">${$t("Забрать")}</button>` : `<button class="btn-main" id="cTake">${$t("Забрать")}</button>`) +
     (c.price ? `<button class="btn-ghost" id="cAgain">${$t("Ещё раз · {0} GRAM", fmt(c.price))}</button>` : S.stock[c.id] > 0 ? `<button class="btn-ghost" id="cAgain">${$t("Ещё один · осталось")} ${S.stock[c.id]}</button>` : '') + PF_LINK;
   $('fxPfIn').onclick = () => openPF(r);
-  $('fxShare').onclick = () => shareWin(`${$t("Открыл {0} и выбил {1} в Pawn", c.name, g ? g.nft.name : itemName(it))}`, g);
+  $('fxShare').onclick = () => shareOpen({ kind: 'case', c, it, g, r });
   // уведомление о полученном — и при «Забрать», и при «Ещё раз»
   const gotNote = how => notify({ type: 'ok', color: itemColor(it), img: g ? g.nft.src : itemImg(it), title: g ? (how === 'sell' ? `${$t("Продано: +{0} GRAM", fmt(g.value))}` : `${g.nft.name} ${$t("в инвентаре")}`) : (it.t === 'gram' ? `+${fmt(it.v)} GRAM` : `+${it.v} XP`), text: c.name });
   const take = async how => {

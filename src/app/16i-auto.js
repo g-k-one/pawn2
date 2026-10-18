@@ -29,7 +29,7 @@ function acRender(){
   const st = acStake(), mode = acBets() ? $t("раундов Ставок") : $t("крафтов");
   const chip = (k, v, label, c) => `<button class="dbg-c${acCfg[k] === v ? ' on' : ''}" data-ac="${k}" data-v="${v}" style="--c:${c || '#fff'}">${label}</button>`;
   const g = n => n ? fmt(n) + ' GRAM' : $t("нет");
-  $('acTitle').textContent = acBets() ? $t("Автоставки") : $t("Автокрафт");
+  $('acDrawer').classList.remove('ac-done'); $('acTitle').textContent = acBets() ? $t("Автоставки") : $t("Автокрафт");
   $('acBody').innerHTML =
     // заметная карточка, как предупреждения кошелька: что и сколько ставится + «играй ответственно»
     `<div class="wwarn ac-sum"><i>!</i><span><b>${$t("Ставка {0} GRAM за раз", fmt(st))}</b><small>${acBets() ? $t("та же раскладка фишек каждый раунд") : $t("каждый крафт — со своим доказательством честности")}. ${$t("Играй ответственно — задай стоп по проигрышу.")}</small></span></div>` +
@@ -99,7 +99,7 @@ async function acStart(){
 function acSummary(r, quiet){
   const net = Math.round((r.won - r.staked) * 100) / 100, best = r.best, bt = best && TIERS[best.ti];
   if (quiet) return notify({ type: 'info', icon: 'info', ms: 6000, title: `${$t("Серия: {0}", r.done)} · ${net >= 0 ? '+' : '−'}${fmt(Math.abs(net))} GRAM`, text: $t("Остановлено: {0}", r.stop) });
-  $('acTitle').textContent = $t("Итог серии");
+  $('acDrawer').classList.add('ac-done');   // без заголовка: главное — сумма
   $('acBody').innerHTML = `<div class="ac-res"><b class="${net > 0 ? 'pos' : ''}">${net > 0 ? '+' : net < 0 ? '−' : ''}${fmt(Math.abs(net))} GRAM</b><small>${$t("Остановлено: {0}", r.stop)}</small></div>` +
     `<div class="ac-stats">` + fxStats([[r.bets ? $t("Раундов") : $t("Крафтов"), String(r.done)], [$t("Поставлено"), fxGv(Math.round(r.staked * 100) / 100)], [$t("Получено"), fxGv(Math.round(r.won * 100) / 100), r.won > 0 ? 'pos' : ''],
       bt ? [$t("Лучший"), `<span style="color:${bt.c}">${best.mult ? '×' + best.mult : bt.name}</span>`] : null]) + `</div>`;   // множитель цветом ранга — в одну строку

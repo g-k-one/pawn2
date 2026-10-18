@@ -200,7 +200,7 @@ betsAfter = async r => {
   el.innerHTML = '';   // на итоге — только строка «ставка · сбылось N из M», без списка исходов
   if (r.win > 0){
     $('fxTake').onclick = () => t3Finish(r, 'take'); if ($('fxSell')) $('fxSell').onclick = () => t3Finish(r, 'sell');
-    $('fxShare').onclick = () => shareWin(r.nft ? $t("Выиграл {0} #{1} на ставках в Pawn", r.nft.nft.name, r.nft.num) : $t("Выиграл +{0} GRAM на ставках в Pawn", fmt(r.win)), r.nft);
+    $('fxShare').onclick = () => shareOpen({ kind: 'bets', r });
   } else {
     $('pz')?.classList.add('t3lose'); $('pz')?.querySelectorAll('img').forEach(im => { im.src = 'assets/empty-gem.webp'; });
     const gl = $('pz')?.querySelector('.gl'); if (gl) gl.style.setProperty('--m', "url('assets/empty-gem.webp')");

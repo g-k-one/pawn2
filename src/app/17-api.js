@@ -61,7 +61,9 @@ const API = {
   async dbgBots(){ return { ok: false, mock: true }; },
   async dbgRace(){ return { ok: false, mock: true }; },
   async dbgMax(){ return { ok: false, mock: true }; },
-  async dbgStock(id, n){ return { ok: true }; },   // дебаг: запас бесплатных кейсов
+  async dbgStock(id, n){ return { ok: true }; },
+  /* POST /share {img: JPEG base64, caption, link} → {id} — готовое сообщение (savePreparedInlineMessage) для WebApp.shareMessage. Мок: сервера нет — ссылкой */
+  async shareCard(){ return { ok: false, mock: true }; },   // дебаг: запас бесплатных кейсов
   async bets(list){ track('bets', { n: list.length, total: list.reduce((a, b) => a + b.amount, 0) }); return betsMock(list); },
 };
 

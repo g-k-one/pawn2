@@ -3023,7 +3023,10 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 .ac-sum{margin:4px 0 20px;text-align:left}   /* карточка-предупреждение (.wwarn), текст по левому краю */
 .ac-warn{color:#FFB835}
 .ac-res{display:flex;flex-direction:column;align-items:center;gap:4px;margin:6px 0 16px}
-.ac-res b{font-size:40px;line-height:1;color:#fff}
+.ac-res b{font-size:64px;line-height:1;color:#fff}
+#acDrawer.ac-done .dr-h{padding-bottom:4px}
+#acDrawer.ac-done .dr-h h3{display:none}
+#acDrawer.ac-done .ac-res{margin-top:8px;gap:8px}
 .ac-res b.pos{color:#12D53D}
 .ac-res small{font:400 13.5px/1.35 var(--serif);color:rgba(255,255,255,.72)}
 #acFoot{display:flex;flex-direction:column;gap:8px}
@@ -3034,3 +3037,7 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 .ac-stats .fx-stats .pos b{color:#12D53D}
 .mrow .mchev{display:grid;place-items:center;color:rgba(255,255,255,.45)}
 .mrow .mchev svg{width:18px;height:18px;stroke-width:2.6}
+/* шеринг: превью картинки и текст сообщения */
+.share-prev{display:block;width:min(100%,300px);aspect-ratio:1080/1350;margin:0 auto;border-radius:22px;object-fit:cover}
+.share-prev.sk{background:rgba(255,255,255,.06)}
+#shareFoot{display:flex;flex-direction:column;gap:8px}

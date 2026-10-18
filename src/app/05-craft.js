@@ -673,7 +673,7 @@ function fillDrop(r){
   $('fxTop').querySelector('.sdtip')?.remove();
   if (r.superMiss) $('fxTop').insertAdjacentHTML('beforeend', `<div class="sdtip"><b>${$t("Тикет супер дропа!")}</b> ${S.demo ? $t("В демо не разыгрывается") : `${$t("Нужна ставка от {0} GRAM", SUPER.min)}`}</div>`);
   $('fxPfIn').onclick = () => openPF(r);
-  $('fxShare').onclick = () => shareWin(r.nft ? `${$t("Скрафтил {0} #{1} в Pawn", r.nft.nft.name, r.nft.num)}` : `${$t("Скрафтил +{0} GRAM (x{1}) в Pawn", fmt(r.win), r.mult)}`, r.nft);
+  $('fxShare').onclick = () => r.nft || r.win > r.stake ? shareOpen({ kind: r.pvp ? 'pvp' : 'craft', r }) : shareWin($t("Крафчу в Pawn"));   // выигрыш — картинкой, остальное — ссылкой
   $('fxTake').onclick = () => finish(r, 'take');
   if ($('fxSell')) $('fxSell').onclick = () => finish(r, 'sell');
 }
