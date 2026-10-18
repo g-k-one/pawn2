@@ -309,9 +309,11 @@ function fadeUI(out, dur){
 }
 
 /* ---------- крафт ---------- */
+// «нет ставки» — плашка трясётся; частые тапы не копят тряски друг на друга
+let betShake = null; const shakeBet = () => { betShake?.cancel(); betShake = $('bet').animate([{ translate: '-6px 0' }, { translate: '6px 0' }, { translate: '0 0' }], { duration: 220, iterations: 2 }); };
 $('craft').onclick = async () => {
   if (S.busy) return; $('fxTop').style.visibility = 'hidden';   // ячейки тикета — только с раскрытием
-  if (total() <= 0){ strike(.25, REST + 6).then(settle); notify({ type: 'err', icon: 'coin', title: $t("Сначала сделай ставку"), text: S.demo ? $t("Добавь фантики кнопками внизу") : $t("Добавь GRAM или подарки кнопками внизу") }); haptic('rigid'); $('bet').animate([{ translate: '-6px 0' }, { translate: '6px 0' }, { translate: '0 0' }], { duration: 220, iterations: 2 }); return; }
+  if (total() <= 0){ strike(.25, REST + 6).then(settle); notify({ type: 'err', icon: 'coin', title: $t("Сначала сделай ставку"), text: S.demo ? $t("Добавь фантики кнопками внизу") : $t("Добавь GRAM или подарки кнопками внизу") }); haptic('rigid'); shakeBet(); return; }
   if (total() < BET_MIN || total() > BET_MAX){ haptic('rigid'); return notify({ type: 'err', icon: 'coin', title: total() < BET_MIN ? `${$t("Минимальная ставка {0} GRAM", BET_MIN)}` : `${$t("Максимальная ставка {0} GRAM", BET_MAX)}`, text: $t("С учётом подарков в крафте") }); }
   if (!S.demo && S.ton > S.balance){ notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM"), text: `${$t("На балансе {0} GRAM", fmt(S.balance))}` }); haptic('rigid'); return; }
   S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto);

@@ -3006,3 +3006,5 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 .promo input{flex:1;min-width:0;padding:10px 16px;border-radius:999px;border:0;outline:0;background:rgba(255,255,255,.06);color:#fff;font:700 17px var(--font);letter-spacing:.06em;text-transform:uppercase}
 .promo input::placeholder{color:rgba(255,255,255,.45);letter-spacing:.02em}
 .promo .pill-btn{flex:none;background:#30A5FF}
+/* вспышка шара кнопки крафта при ударе — только прозрачность белой накладки */
+.cb .orbfl{position:absolute;inset:4px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.9),rgba(255,255,255,.35) 45%,transparent 70%);opacity:0;pointer-events:none}

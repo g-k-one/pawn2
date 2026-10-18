@@ -305,7 +305,9 @@ function balFx(d){
 /* ---------- кнопка крафта: замах, удар, искры, ударная волна ---------- */
 const CB = $('cb'), HAM = $('hammer'), ANV = $('anvil'), CRAFT = $('craft');
 const REST = 14, WIND = 42, HIT = -16;                 // углы молота: покой, замах, касание наковальни
-let hamAnim = null;
+let hamAnim = null, lastStrike = 0, strikeAn = [];
+// вспышка шара при ударе — белая накладка поверх, анимируется только прозрачность (фильтр на шаре телефон перерисовывал каждый кадр)
+const ORB_FL = document.createElement('i'); ORB_FL.className = 'orbfl'; CB.querySelector('.orb')?.after(ORB_FL);
 function hamTo(frames, opts){ hamAnim?.cancel(); hamAnim = HAM.animate(frames, { fill: 'forwards', ...opts }); return hamAnim.finished.catch(() => {}); }
 function windUp(){ CRAFT.classList.add('live'); return hamTo([{ rotate: getRot() + 'deg' }, { rotate: WIND + 'deg' }], { duration: 220, easing: 'cubic-bezier(.2,.9,.3,1.2)' }); }
 function getRot(){ return parseFloat(getComputedStyle(HAM).rotate) || REST; }
@@ -313,13 +315,16 @@ function getRot(){ return parseFloat(getComputedStyle(HAM).rotate) || REST; }
 async function strike(power = .5, back = WIND){
   CRAFT.classList.add('live');
   await hamTo([{ rotate: getRot() + 'deg' }, { rotate: HIT + 'deg' }], { duration: 90 + 40 * (1 - power), easing: 'cubic-bezier(.7,0,1,.6)' });
-  ANV.animate([{ transform: 'none' }, { transform: `translateY(${1 + 2 * power}px) scale(${1 + .08 * power},${1 - .14 * power})` }, { transform: 'none' }], { duration: 260, easing: 'ease-out' });
-  CB.animate([{ scale: 1 }, { scale: 1 - .07 * power }, { scale: 1 + .05 * power }, { scale: 1 }], { duration: 380, easing: 'ease-out' });
+  strikeAn.forEach(x => x.cancel());                         // новый удар сменяет прошлый, а не наслаивается
+  strikeAn = [ANV.animate([{ transform: 'none' }, { transform: `translateY(${1 + 2 * power}px) scale(${1 + .08 * power},${1 - .14 * power})` }, { transform: 'none' }], { duration: 260, easing: 'ease-out' }),
+    CB.animate([{ scale: 1 }, { scale: 1 - .07 * power }, { scale: 1 + .05 * power }, { scale: 1 }], { duration: 380, easing: 'ease-out' })];
+  // частые тапы (чаще 0.35 с): удар облегчённый — без волны, пара искр; искр на экране одновременно — не больше 12
+  const spam = performance.now() - lastStrike < 350; lastStrike = performance.now();
   if (!S.lite){
-    const orb = CB.querySelector('.orb'), f0 = (s => s === 'none' ? '' : s + ' ')(getComputedStyle(orb).filter);
-    orb.animate([{ filter: f0 + 'brightness(1)' }, { filter: f0 + `brightness(${1.3 + .9 * power}) saturate(1.2)` }, { filter: f0 + 'brightness(1)' }], { duration: 420 });
-    sparks(Math.round(5 + 18 * power), power);
-    shock(power);
+    ORB_FL.getAnimations().forEach(a => a.cancel());
+    ORB_FL.animate([{ opacity: 0 }, { opacity: .25 + .45 * power }, { opacity: 0 }], { duration: 420 });
+    sparks(Math.min(spam ? 2 : Math.round(5 + 18 * power), 12 - CB.querySelectorAll('.spark').length), power);
+    if (!spam) shock(power);
   }
   haptic(power > .7 ? 'heavy' : 'medium');
   return hamTo([{ rotate: HIT + 'deg' }, { rotate: (HIT + 10) + 'deg', offset: .25 }, { rotate: back + 'deg' }], { duration: 260, easing: 'cubic-bezier(.3,1.4,.5,1)' });
