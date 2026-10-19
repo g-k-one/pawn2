@@ -38,7 +38,13 @@ function t2Html(el, h){ if (el.innerHTML !== h) el.innerHTML = h; }
 function t2Enter(){ t2GlowPatch(); clearInterval(auto); t2Prev = { ton: S.ton, gifts: S.gifts }; S.ton = t2Fee; S.gifts = []; renderSlots(); $('giftCnt').hidden = true; t2Main = S.tier; _setTier(t2Tier); if (tierOfTicket(t2Ticket) !== t2Tier) t2Ticket = TIERS[t2Tier].from; t2Smoke(true); t2Ava(t2Me()); renderBet(); t2Show(); t2Sync(); }   // вернулся на арену, а ты в комнате — снова аватарка и банк
 function t2Leave(){ if (t2Prev){ S.ton = t2Prev.ton; S.gifts = t2Prev.gifts.filter(g => INV.includes(g)); t2Prev = null; } t2Ava(false); t2Smoke(false); t2Tier = S.tier; renderBet(); setTier(t2Main ?? S.tier, { keepPrize: false }); restartAuto(); }
 // комната: таймер — до её старта; разыграна — открываем следующую (экран итога для tab2 — следующий шаг)
-function t2Apply(room){ const was = t2Me(), same = t2Room && room && t2Room.id === room.id, ne = room?.endsAt || 0; t2Room = room;
+function t2Apply(room){ const was = t2Me(), same = t2Room && room && t2Room.id === room.id, ne = room?.endsAt || 0;
+  // у серверов часы расходятся на 1–2 с: один уже видит вошедшего соперника, другой ещё нет — места мигали. В той же комнате
+  // занятое место не освобождается и банк не уменьшается (до боя из комнаты не выходят)
+  if (same && room.state === 'open' && t2Room.entries){ const nw = new Map(room.entries.map(x => [x.who, x])), old = new Set(t2Room.entries.map(x => x.who));
+    const entries = [...t2Room.entries.map(x => nw.get(x.who) || x), ...room.entries.filter(x => !old.has(x.who))];
+    room = { ...room, entries, bank: Math.max(room.bank || 0, t2Room.bank || 0) }; }
+  t2Room = room;
   t2End = same && ne && t2End && Math.abs(ne - t2End) < 1500 ? Math.min(ne, t2End) : ne;   // конец с сервера приходит с задержкой сети, каждый опрос чуть разный — берём самый ранний: кольцо не дёргается
   if (was !== t2Me()){ t2Ava(t2Me()); renderBet(true); } else if (t2Me() && $('bet').querySelector('.ton').textContent !== fmt(room.bank)) renderBet(true);
   t2Seats(t2Quiet); t2Quiet = false; t2Snap(); }

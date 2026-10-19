@@ -92,8 +92,10 @@ function seasonTasksCheck(){
   if (!SEASON_ON || S.demo) return; S.tasks.done ||= {};
   seasonTaskList().forEach(({ x: [k, t, n, f], xp, prem }) => { const key = 's:' + k + (prem ? ':p' : '');
     if (S.tasks.done[key] || stv(S.tasks, f) < n || (prem && !S.season.prem)) return;
-    S.tasks.done[key] = 1; track('task_done', { id: k, prem: !!prem }); API.seasonTask(key, xp).catch(() => {});
-    setTimeout(() => { addXp(xp); logReward('task', k, { xp }); notify({ type: 'ok', icon: 'ok', title: $t("Задание выполнено"), text: `${t} · +${xp} XP` }); }, 1200); });
+    // XP и «Задание выполнено» — когда сервер подтвердил (он сам проверяет условие); отказал — задание остаётся невыполненным
+    S.tasks.done[key] = 1; const t0 = Date.now();
+    API.seasonTask(key, xp).then(() => { track('task_done', { id: k, prem: !!prem }); setTimeout(() => { addXp(xp); logReward('task', k, { xp }); notify({ type: 'ok', icon: 'ok', title: $t("Задание выполнено"), text: `${t} · +${xp} XP` }); }, Math.max(0, 1200 - (Date.now() - t0))); },
+      () => { delete S.tasks.done[key]; }); });
 }
 // счётчики заданий: крафт, Арена, ставки, ранг — из итога игры; кейсы и шеринг — отдельно
 function seasonCount(r){
@@ -154,7 +156,7 @@ $('cosDrawer').addEventListener('click', e => { const b = e.target.closest('[dat
 function entryFx(el, id){
   if (!el || id !== 'hw-entry' || S.lite || !el.isConnected || typeof Forge === 'undefined') return;
   const r = el.getBoundingClientRect(); if (!r.width) return;
-  Forge.play('potion', { x: r.left + r.width / 2, y: r.top + r.height / 2, size: Math.max(r.width, 48) * 3.2 }); Sfx.coin?.(); haptic('medium');
+  Forge.play('potion', { x: r.left + r.width / 2, y: r.top + r.height / 2, size: Math.max(r.width, 48) * 2.6 }); Sfx.coin?.(); haptic('medium');
 }
 // эффект входа игрока на Арене: свой — из надетого; соперник — с сервера (eq.entry), в моке — у части ботов
 const ENTRY_ROOM = 2;   // комната 2 GRAM — витрина: «Зелье» при входе у всех
@@ -354,6 +356,7 @@ const seasonClick = e => {
       const cs = ks.find(k => { const r = SEASON_RW[+k.slice(1) - 1]; return (k[0] === 'f' ? r.free : r.prem).c; }); if (cs) await seasonClaim(cs, a); } finally { seasonClaimAll.on = false; } })(); }
 };
 $('casesBody').addEventListener('click', seasonClick, true);
+$('casesFoot').addEventListener('click', seasonClick, true);
 $('passDrawer').addEventListener('click', seasonClick, true);
 // баннер кейсов — как у супер дропа: тап открывает кейсы внутри «Пасса»
 const casesBanner = () => `<button class="sdban cban" data-go="cases"><span class="sdb-t"><small>${$t("Кейсы")}</small><b>${$t("до {0} GRAM", RARE_TO)}</b>` +

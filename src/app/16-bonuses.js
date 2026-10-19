@@ -51,7 +51,10 @@ function renderCases(){
   const seg = SEASON_ON ? '' : `<div class="bseg seg">${[['ach', $t("Достижения")], ['refs', $t("Друзья")], ['top', $t("Топ")]].map(([k, t]) => `<button class="${k === casesTab ? 'on' : ''}" data-go="${k}">${t}</button>`).join('')}</div>`;   // в сезоне топ — внутри «Сезона», в «Друзьях» таблеток нет
   // задания, достижения, друзья, топ — с сервера: при первом открытии — скелет строк (каталог кейсов — свой, без ожидания)
   { const fr = BTAB_OF[casesTab] === 'friends'; if (casesTab !== 'cases' && skelGate('bon:' + (fr ? friendsSeg : casesTab), b, renderCases, 'row', fr ? seg : '')) return; }
-  if (casesTab === 'season') renderSeason(b);
+  $('casesFoot').hidden = true; $('casesFoot').replaceChildren();
+  if (casesTab === 'season'){ renderSeason(b);
+    // «Забрать всё» — в подвал шторки, как кнопки в других шторках: всегда над краем экрана Telegram, не уезжает с прокруткой
+    const all = b.querySelector('.st-all'); if (all){ $('casesFoot').append(all); $('casesFoot').hidden = false; } }
   else if (casesTab === 'cases'){
     b.innerHTML = (SEASON_ON ? backRow('season', $t("Сезонный пасс")) : '') + `<div class="bgrid">${CASES.map(caseCard).join('')}</div>` +
       `<p class="bnote">${SEASON_ON ? $t("Кейсы открываются за GRAM. Бесплатные кейсы Мистера Биста и Илона Маска — награды уровней сезона.") : $t("Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить и открывать по одному, когда захочешь.")}</p>`;

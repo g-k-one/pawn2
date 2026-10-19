@@ -3580,3 +3580,5 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 @media (prefers-reduced-motion:reduce){.hx-art,.mp-art,.hx-prem .hx-lc img{animation:none}}
 /* оформление: плитка эффекта входа — картинка всплеска целиком */
 .cos-img img[src*="fx-potion-icon"]{width:84%;height:84%;object-fit:contain}
+/* «Забрать всё» — в подвале шторки Пасса (не прилипает внутри прокрутки) */
+#casesFoot .st-all{position:static;margin:0;box-shadow:none}

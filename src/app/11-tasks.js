@@ -15,7 +15,8 @@ function stockUp(id){ S.stock[id]++; const c = caseById(id);
   setTimeout(() => notify({ type: 'ok', img: c.img, color: c.c, title: `${c.name} ${$t("в запасе ×")}${S.stock[id]}`, text: $t("Открой сейчас или копи на потом") }), 2600); }
 function bumpTasks(r){
   if (S.demo) return;
-  S.tasks.crafts++; S.tasks.turnover = Math.round((S.tasks.turnover + r.stake) * 1000) / 1000;
+  // как считает сервер: крафты — только обычные крафты; оборот — крафты, ставки и взносы Арены
+  if (!r.pvp && !r.bets) S.tasks.crafts++; S.tasks.turnover = Math.round((S.tasks.turnover + (r.pvp ? r.pvp.fee : r.stake)) * 1000) / 1000;
   if (SEASON_ON) return seasonCount(r);   // в сезоне — свои задания дня (16k-season.js)
   if (dailyDone() && !S.tasks.stocked && !SEASON_ON){ S.tasks.stocked = 1; stockUp('beast'); if (weekDone()) stockUp('musk'); }   // в сезоне кейсы — награды уровней
   TASKS.forEach(([k, t, n, rw0]) => { const rw = seasonTaskRw(rw0); if (S.tasks[k] >= n && !S.tasks.done[k]){ S.tasks.done[k] = 1; track('task_done', { id: k }); setTimeout(() => { grant(rw); logReward('task', k, rw); notify({ type: 'ok', icon: 'ok', title: $t("Задание выполнено"), text: `${t} · ${rewText(rw)}` }); }, 1600); } });

@@ -483,7 +483,7 @@ function pvpLoseDrop(r){
   $('fx').classList.add('pvpl', 'lost');
   $('fxBtns').innerHTML = `<button class="btn-main" id="pvpAgain">${$t("Вернуться")}</button>` + PF_LINK;
   $('fx').classList.add('done');
-  if (!S.demo){ logCraft(r, 'lose'); xpTurn(p.fee); seasonBump('arena'); }   // проигранный бой тоже засчитывается в задание «Сыграй бой на Арене»
+  if (!S.demo){ logCraft(r, 'lose'); xpTurn(p.fee); S.tasks.turnover = Math.round(((S.tasks.turnover || 0) + p.fee) * 1000) / 1000; seasonBump('arena'); }   // проигранный бой тоже засчитывается в задание «Сыграй бой на Арене»
   $('pvpAgain').onclick = backToArena;
   if ($('pvpBack')) $('pvpBack').onclick = async () => { if (pvpLoseDrop.on) return; pvpLoseDrop.on = true; haptic(); await closeFx(); CRAFT.classList.remove('busy'); S.busy = false; pvpLoseDrop.on = false; restartAuto(); };
   $('fxPfIn').onclick = () => openPF(r);
