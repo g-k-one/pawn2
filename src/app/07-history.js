@@ -181,7 +181,7 @@ function logCraft(r, how){ S.hist.crafts.unshift({ kind: 'craft', t: Date.now(),
 function pvpCard(c, i){
   const r = c.r, p = r.pvp, t = TIERS[r.ti], won = p.won;
   const right = won ? (r.nft ? hpic(r.nft.nft.src, giftBg(r.nft)) : hpic('assets/hero-gem-128.webp')) + `<span class="hk-v"><b class="pos">+${fmt(r.win)}</b><small>${r.nft ? (c.how === 'sell' ? $t("NFT продан") : $t("NFT забран")) : 'GRAM'}</small></span>`
-    : `<span class="hp pvp-w" style="--tc:${avc(p.winner)}">${pvpAva({ who: p.winner })}</span><span class="hk-v"><b>0</b><small>GRAM</small></span>`;
+    : `<span class="hp pvp-w" style="--tc:${avc(p.winner)}"><span class="tav" style="--tc:${avc(p.winner)}">${p.winner[0].toUpperCase()}</span></span><span class="hk-v"><b>0</b><small>GRAM</small></span>`;
   return `<button class="hcard" data-i="${i}" style="--c:${won ? t.c : '#8a8a96'}"><span class="hk-h"><em>${noTag(c)}${t.name} · x${r.mult}</em><small>${tAgo(c.t)}</small></span>` +
     `<span class="hk-b"><span class="hk-s"><span class="hps">${hpic('assets/gem-small.svg')}</span><span class="hk-v"><b>${fmt(p.fee)}</b><small>GRAM</small></span></span>` +
     `<i class="hk-ar">${svg(ARW)}</i><span class="hk-s win">${right}</span></span></button>`;

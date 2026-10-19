@@ -112,8 +112,8 @@ const nftPick = side => { const P = nftPool(side); return P.length ? P[Math.rand
 const COS = { badge: [$t("Значок «Тыква»"), $t("у твоего имени в меню")], frame: [$t("Рамка «Золото»"), $t("вокруг аватарки — видят все, и на Арене")] };
 /* оформление: что есть у игрока (S.cos) и что надето (S.equip). Рамки — картинки поверх аватарки (k — во сколько раз больше аватарки) */
 const COS_ITEMS = {
-  'gold-frame': { slot: 'frame', name: $t("Хэллоуин"), img: 'assets/frame-hw.webp', k: 1.64, how: $t("за премиум-пропуск") },   // за покупку — тыквенная
-  'hw-frame': { slot: 'frame', name: $t("Золото"), img: 'assets/frame-gold.webp', k: 1.8, how: $t("премиум · уровень {0}", 10) },   // золотая — заслужить на 10-м уровне
+  'gold-frame': { slot: 'frame', name: $t("Хэллоуин"), img: 'assets/frame-hw.webp', k: 1.55, how: $t("за премиум-пропуск") },   // за покупку — тыквенная
+  'hw-frame': { slot: 'frame', name: $t("Золото"), img: 'assets/frame-gold.webp', k: 1.72, how: $t("премиум · уровень {0}", 10) },   // золотая — заслужить на 10-м уровне
   'hw-badge': { slot: 'badge', name: $t("Тыква"), img: 'assets/season-halloween.webp', icon: 'pumpkin', how: $t("уровень {0}", 15) },
  };
 const COS_SLOTS = [['frame', $t("Рамка")], ['badge', $t("Значок у имени")]];

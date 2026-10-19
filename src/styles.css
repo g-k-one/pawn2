@@ -3571,3 +3571,10 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 .drawer[data-theme="hw"] .sect{isolation:isolate}
 .drawer[data-theme="hw"] .arow{border-bottom-color:rgba(255,154,46,.12);background-clip:padding-box}
 .wwarn.rg>i{color:#000!important}
+/* лёгкое движение: тыква покачивается, пропуск «дышит» — медленно, только transform; в экономном режиме стоят */
+@keyframes pmpSway{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(3deg) translateY(-4px)}}
+@keyframes passFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-5px) rotate(2deg)}}
+.hx-art,.mp-art{animation:pmpSway 4.2s ease-in-out infinite;transform-origin:50% 85%}
+.hx-prem .hx-lc img{animation:passFloat 3.6s ease-in-out infinite}
+.lite .hx-art,.lite .mp-art,.lite .hx-prem .hx-lc img{animation:none}
+@media (prefers-reduced-motion:reduce){.hx-art,.mp-art,.hx-prem .hx-lc img{animation:none}}
