@@ -35,7 +35,7 @@ function t2Show(){ if (!isT2()) return; t2Ring();
 // разметка меняется, только если текст другой: опрос идёт 4 раза в секунду, пересборка без нужды — лишняя работа телефону
 function t2Html(el, h){ if (el.innerHTML !== h) el.innerHTML = h; }
 // вход в tab2 и выход: автолистание стоп/старт, ставка, надписи
-function t2Enter(){ t2GlowPatch(); clearInterval(auto); t2Prev = { ton: S.ton, gifts: S.gifts }; S.ton = t2Fee; S.gifts = []; renderSlots(); $('giftCnt').hidden = true; t2Main = S.tier; _setTier(t2Tier); if (tierOfTicket(t2Ticket) !== t2Tier) t2Ticket = TIERS[t2Tier].from; t2Smoke(true); t2Ava(t2Me()); renderBet(); t2Show(); t2Sync(); }   // вернулся на арену, а ты в комнате — снова аватарка и банк
+function t2Enter(){ t2GlowPatch(); entryPreload(); clearInterval(auto); t2Prev = { ton: S.ton, gifts: S.gifts }; S.ton = t2Fee; S.gifts = []; renderSlots(); $('giftCnt').hidden = true; t2Main = S.tier; _setTier(t2Tier); if (tierOfTicket(t2Ticket) !== t2Tier) t2Ticket = TIERS[t2Tier].from; t2Smoke(true); t2Ava(t2Me()); renderBet(); t2Show(); t2Sync(); }   // вернулся на арену, а ты в комнате — снова аватарка и банк
 function t2Leave(){ if (t2Prev){ S.ton = t2Prev.ton; S.gifts = t2Prev.gifts.filter(g => INV.includes(g)); t2Prev = null; } t2Ava(false); t2Smoke(false); t2Tier = S.tier; renderBet(); setTier(t2Main ?? S.tier, { keepPrize: false }); restartAuto(); }
 // комната: таймер — до её старта; разыграна — открываем следующую (экран итога для tab2 — следующий шаг)
 function t2Apply(room){ const was = t2Me(), same = t2Room && room && t2Room.id === room.id, ne = room?.endsAt || 0;

@@ -121,11 +121,15 @@ const COS_ITEMS = {
   'gold-frame': { slot: 'frame', name: $t("Хэллоуин"), img: 'assets/frame-hw.webp', k: 1.55, how: $t("за премиум в Пассе"), why: $t("Дают сразу за покупку премиума в Пассе") },   // за покупку — тыквенная
   'hw-frame': { slot: 'frame', name: $t("Золото"), img: 'assets/frame-gold.webp', k: 1.72, lv: 10, prem: true },   // золотая — заслужить на 10-м уровне
   'hw-badge': { slot: 'badge', name: $t("Тыква"), img: 'assets/season-halloween.webp', icon: 'pumpkin', lv: 15 },
-  'hw-entry': { slot: 'entry', name: $t("Зелье"), img: 'assets/fx-potion-icon.webp', lv: 26, prem: true },   // эффект входа на Арену (Горн, potion)
+  'hw-entry': { slot: 'entry', name: $t("Зелье"), img: 'assets/fx-potion-icon.webp', lv: 26, prem: true, fx: 'potion' },
+  // эффекты входа для админов (пока только у них; выдаёт сервер по списку админов, в прототипе — Дебаг → Сезон)
+  'adm-storm': { slot: 'entry', name: $t("Гроза"), img: 'assets/fx-storm-icon.webp', admin: true, fx: 'storm' },
+  'adm-rift': { slot: 'entry', name: $t("Метеор"), img: 'assets/fx-meteor-icon.webp', admin: true, fx: 'meteor' },
+  'adm-royal': { slot: 'entry', name: $t("Казна"), img: 'assets/fx-royal-icon.webp', admin: true, fx: 'royal' },   // эффект входа на Арену (Горн, potion)
  };
 // откуда берётся: коротко на плитке и подробно по тапу
-const cosHow = c => c.how || (c.prem ? $t("{0} ур. премиум-Пасса", c.lv) : $t("{0} ур. Пасса", c.lv));
-const cosWhy = c => c.why || $t("Награда Пасса на {0} уровне{1}. Уровни растут от XP за игры", c.lv, c.prem ? $t(" — с премиумом") : '');
+const cosHow = c => c.admin ? $t("для админов") : c.how || (c.prem ? $t("{0} ур. премиум-Пасса", c.lv) : $t("{0} ур. Пасса", c.lv));
+const cosWhy = c => c.admin ? $t("Эффект для админов") : c.why || $t("Награда Пасса на {0} уровне{1}. Уровни растут от XP за игры", c.lv, c.prem ? $t(" — с премиумом") : '');
 const COS_SLOTS = [['frame', $t("Рамка")], ['badge', $t("Значок у имени")], ['entry', $t("Вход на Арену")]];
 S.cos = {}; S.equip = {};
 const cosOn = slot => SEASON_ON && S.equip[slot] && S.cos[S.equip[slot]] ? COS_ITEMS[S.equip[slot]] : null;
@@ -140,11 +144,16 @@ function cosGive(id){ S.cos[id] = 1; const sl = COS_ITEMS[id]?.slot; if (sl && !
 const BADGE_SVG = { pumpkin: '<svg class="cos-badge" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M12.6 2.2c1.6-.4 2.6.3 2.8 1.2-1 .1-1.8.6-2.3 1.6 2.8-.6 5.4.4 6.9 2.4 2.1 2.6 2.1 7.9-.4 10.9-1.9 2.3-4.4 3.2-7.6 3.2s-5.7-.9-7.6-3.2c-2.5-3-2.5-8.3-.4-10.9 1.4-1.9 3.8-2.9 6.4-2.5.3-1.2 1-2.2 2.2-2.5zM6.2 9.8l4.4 2.5-4.4 1.5zm11.6 0l-4.4 2.5 4.4 1.5zM6.4 15c3.7 2.8 7.5 2.8 11.2 0l-1.2 3-1.9-1.2-1.4 1.6-1.1-1.4-1.1 1.4-1.4-1.6-1.9 1.2z"/></svg>' };
 const cosBadge = () => { const b = cosOn('badge'); return b ? BADGE_SVG[b.icon] || '' : ''; };
 // шторка «Оформление»: превью, слоты, «пусто» и всё, что можно получить
+// атласы эффектов входа — заранее (на Арене и в «Оформлении»): иначе первый показ теряет начало, пока грузится картинка
+const ENTRY_ATLAS = { potion: 'potion', storm: 'aura', meteor: 'toon', royal: 'coins' };
+function entryPreload(){ if (entryPreload.done || S.lite || typeof Forge === 'undefined') return; entryPreload.done = true; try { Object.values(ENTRY_ATLAS).forEach(a => Forge.preload(a)); } catch(_){} }
 function renderCos(){
+  entryPreload();
   const pv = `<div class="cos-pv"><span class="ava-w big"><img src="assets/avatar.webp" alt="">${frameHTML()}</span><b>${cosBadge()}GK</b></div>`;
   $('cosBody').innerHTML = pv + COS_SLOTS.map(([sl, t]) => `<div class="sec-t">${t}</div><div class="cos-g">` +
     `<button class="cos-i${S.equip[sl] ? '' : ' on'}" data-cos="${sl}:"><span class="cos-img"><span class="cos-none"></span></span><b>${$t("Пусто")}</b><small>${({ frame: $t("без рамки"), badge: $t("без значка"), entry: $t("без эффекта") })[sl]}</small></button>` +
-    Object.entries(COS_ITEMS).filter(([, c]) => c.slot === sl).map(([id, c]) => { const has = !!S.cos[id], on = S.equip[sl] === id;
+    // админские — только тем, у кого они есть
+    Object.entries(COS_ITEMS).filter(([id, c]) => c.slot === sl && (!c.admin || S.cos[id])).map(([id, c]) => { const has = !!S.cos[id], on = S.equip[sl] === id;
       return `<button class="cos-i${on ? ' on' : ''}${has ? '' : ' lock'}" data-cos="${sl}:${id}"><span class="cos-img${sl === 'frame' ? ' fr' : ''}">${sl === 'frame' ? `<img class="cos-av" src="assets/avatar.webp" alt=""><img class="cos-fr" src="${c.img}" style="--k:${c.k}" alt="">` : `<img src="${c.img}" alt="">`}</span><b>${c.name}</b><small>${has ? (on ? $t("надето") : $t("есть · надеть")) : cosHow(c)}</small></button>`; }).join('') + `</div>`).join('');
 }
 function openCos(){ track('screen', { id: 'cos' }); swapDrawer('cosDrawer', renderCos); }
@@ -152,15 +161,16 @@ $('cosDrawer').addEventListener('click', e => { const b = e.target.closest('[dat
   if (id && !S.cos[id]){ haptic('rigid'); return notify({ type: 'info', img: COS_ITEMS[id].img, title: COS_ITEMS[id].name, text: cosWhy(COS_ITEMS[id]) }); }
   S.equip[sl] = id || null; API.cosEquip(sl, id || null).catch(() => {}); haptic(); track('cos_equip', { slot: sl, id: id || null }); cosApply(); { const sc = $('cosBody').scrollTop; renderCos(); $('cosBody').scrollTop = sc; }   // выбор не прокручивает список наверх
   if (sl === 'entry' && id) entryFx($('cosBody').querySelector(`[data-cos="entry:${id}"] .cos-img`), id); });   // надел эффект — сразу показываем на его плитке
-/* эффект входа на Арену «Зелье» — Горн (potion): разовый, холст сам убирается после. В экономном режиме — без эффекта */
+/* эффект входа на Арену — Горн (у предмета своё fx: potion, storm, rift, royal): разовый, холст сам убирается после. В экономном режиме — без эффекта */
 function entryFx(el, id){
-  if (!el || id !== 'hw-entry' || S.lite || !el.isConnected || typeof Forge === 'undefined') return;
+  const fx = COS_ITEMS[id]?.fx; if (!el || !fx || S.lite || !el.isConnected || typeof Forge === 'undefined') return;
   const r = el.getBoundingClientRect(); if (!r.width) return;
-  Forge.play('potion', { x: r.left + r.width / 2, y: r.top + r.height / 2, size: Math.max(r.width, 48) * 2.6 }); Sfx.coin?.(); haptic('medium');
+  Forge.play(fx, { x: r.left + r.width / 2, y: r.top + r.height / 2, size: Math.max(r.width, 48) * (fx === 'potion' ? 2.6 : 2.8) }); Sfx.coin?.(); haptic('medium');
 }
 // эффект входа игрока на Арене: свой — из надетого; соперник — с сервера (eq.entry), в моке — у части ботов
-const ENTRY_ROOM = 2;   // комната 2 GRAM — витрина: «Зелье» при входе у всех
-const entryOf = (x, fee) => fee === ENTRY_ROOM && SEASON_ON ? 'hw-entry' : x.me ? (cosOn('entry') ? S.equip.entry : null) : x.eq ? x.eq.entry || null : SEASON_ON && [...x.who].reduce((a, c) => a + c.charCodeAt(0) * 3, 0) % 4 === 0 ? 'hw-entry' : null;
+const ENTRY_ROOM = 2;   // комната 2 GRAM — витрина: «Зелье» при входе у всех, у кого не надет свой эффект
+const entryOf = (x, fee) => { const own = x.me ? (cosOn('entry') ? S.equip.entry : null) : x.eq ? x.eq.entry || null : SEASON_ON && [...x.who].reduce((a, c) => a + c.charCodeAt(0) * 3, 0) % 4 === 0 ? 'hw-entry' : null;
+  return own || (fee === ENTRY_ROOM && SEASON_ON ? 'hw-entry' : null); };   // надетое — всегда своё; «Зелье» в комнате 2 GRAM — только тем, у кого ничего не надето
 function srwHTML(rw){
   if (rw.cos) return `<img class="scos" src="${COS_IMG[rw.cos] || seasonTheme().art}" alt=""><b>${COS[rw.cos][0]}</b>`;
   if (rw.dep) return `<img src="assets/hw-caul.webp" alt=""><b>+${rw.dep[0]}% ${$t("к пополнению")}</b>`;

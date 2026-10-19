@@ -104,7 +104,7 @@ async function shareStory(m){
   if (!W.shareToStory || !W.isVersionAtLeast?.('7.8')) return notify({ type: 'info', icon: 'info', title: $t("Сторис — в новой версии Telegram"), text: $t("Обнови Telegram и попробуй ещё раз") });
   btn.classList.add('ld');
   const img = await shareDraw(m, 1920), r = await btnWait(btn, API.storyImage(img.split(',')[1])); if (!r) return;
-  const url = r.url || new URL('assets/story.jpg', location.href).href;   // без хранилища (мок, тестовый бот) — общая картинка Pawn
+  const url = r.url || new URL('assets/story.jpg', location.href).href;   // без хранилища (мок) — общая картинка Pawn
   try { W.shareToStory(url, { text: `${shBrag(m)}\n${REF.link}`.slice(0, 200), ...(W.initDataUnsafe?.user?.is_premium ? { widget_link: { url: REF.link, name: $t("Играть в Pawn") } } : {}) }); }
   catch (e){ return notify({ type: 'err', icon: 'err', title: $t("Сторис не открылась"), text: $t("Попробуй ещё раз") }); }
   track('share', { kind: shCtx.kind, how: 'story' });

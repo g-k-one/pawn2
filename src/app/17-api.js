@@ -70,7 +70,7 @@ const API = {
   /* --- сезон (16k-season.js): всё проверяет сервер --- */
   /* POST /season/claim {season, key: 'f12'|'p12'} → {ok, reward} — награда уровня, раз; премиум-дорожка — только с купленным премиумом. Кейс из награды открывается на сервере (domain case:<id>) */
   async seasonClaim(id, k){ return { ok: true }; },
-  /* только тестовый бот: Дебаг → Сезон меняет уровень, премиум и забранное и на сервере (иначе сервер не отдаёт награды) */
+  /* только для отладки: Дебаг → Сезон меняет уровень, премиум и забранное и на сервере (в бою не нужен) */
   async dbgSeason(o){ return { ok: true }; },
   /* POST /season/buy {season} → {ok, balance} — премиум за SEASON.price GRAM, раз за сезон */
   async seasonBuy(id){ return { ok: true }; },

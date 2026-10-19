@@ -160,17 +160,35 @@ function makeForge(host){
   const FS = '#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nuniform sampler2D tx;uniform sampler2D nz;uniform sampler2D rp;uniform sampler2D sp;uniform float tm;uniform float lq;uniform vec4 gp;uniform vec3 mb[24];uniform float mbn;' +
     'varying vec2 vu;varying vec2 va;varying vec3 vt;varying vec2 vq;varying vec4 vf;varying vec4 vc;varying float vr;' +
     'void main(){float RW=vr<0.?gp.w:vr;' +
+    // 21 — кольцо энергии: закрученные спиральные рукава с течением шума, край рвётся языками, центр прозрачный (сквозь кольцо видно аватарку).
+    // vf.y — раскрытие (радиус кольца в долях квадрата), vf.z — яркость, vf.w — зерно; цвет — градиент частицы
+    'if(vf.x>20.9&&vf.x<21.5){float t=tm*gp.z;vec2 c=(vq-.5)*2.;float R=max(vf.y,.001);float r=length(c)/R;if(r>1.4){gl_FragColor=vec4(0.);return;}' +
+    'float an=atan(c.y,c.x);float sw=an+t*1.6+1.8/(r+.2);vec2 q=vec2(cos(sw),sin(sw))*r;' +
+    'float n=texture2D(nz,q*.55+vec2(t*.05,t*.03)+vf.w).r;float n2=texture2D(nz,vec2(an*.32+vf.w,r*.6-t*.25)).g;' +
+    'float arms=.5+.5*sin(sw*3.+n*5.);float rim=exp(-pow((r-1.+(n2-.5)*.26)*9.,2.))*(.55+.45*n2);' +
+    'float body=smoothstep(1.08,.3,r)*smoothstep(.12,.42,r)*(.25+.75*arms*n);float hole=smoothstep(.36,.12,r);' +
+    'float x=clamp((body*.75+rim*1.05)*vf.z,0.,1.);vec3 col=texture2D(rp,vec2(x,RW)).rgb*vt+vec3(rim*rim*.1);' +
+    'float a=clamp(body*.95+rim*1.1,0.,1.)*smoothstep(1.4,1.05,r);a=max(a*(1.-hole),hole*.12*vf.z);' +
+    'gl_FragColor=vec4(col*a*va.x,a*va.x*(1.-va.y*.6));return;}' +
     // 19 — жижа (метаболы): поле Σ r²/d² от шариков; поверхность — порог поля, шарики сливаются и тянутся нитями.
     // Объём: нормаль из градиента поля → рассеянный свет, блик, тёмная кромка; внутри течёт шум; вокруг — мягкое свечение
-    'if(vf.x>18.9&&vf.x<19.5){float t=tm*gp.z;vec2 p=vq;float f=0.;vec2 g=vec2(0.);' +
+    // материалы: 19 — жижа (блик, кромка), 19.2 — огонь (светится сам, клубится вверх, рваный край, жар vf.z остывает), 19.4 — жидкий металл
+    // (сильный блик и отражение неба), 19.6 — туча (мягкий матовый объём, vf.z — вспышка изнутри)
+    'if(vf.x>18.9&&vf.x<19.9){float t=tm*gp.z;vec2 p=vq;float f=0.;vec2 g=vec2(0.);' +
     'for(int i=0;i<24;i++){if(float(i)>=mbn)break;vec3 b=mb[i];vec2 d=p-b.xy;float r2=dot(d,d)+1e-5;float k=b.z*b.z/r2;f+=k;g-=2.*k/r2*d;}' +
     'if(f<.35){gl_FragColor=vec4(0.);return;}' +
-    'float a=smoothstep(.93,1.07,f);float gw=smoothstep(.35,1.,f)*(1.-a)*.5;' +
-    'vec3 n=normalize(vec3(-g*.013,1.));vec3 L=normalize(vec3(-.45,-.65,.7));float dif=clamp(dot(n,L),0.,1.);float sp=pow(clamp(dot(reflect(-L,n),vec3(0.,0.,1.)),0.,1.),26.);' +
-    'float th=smoothstep(1.,4.,f);float w=texture2D(nz,p*1.1+vec2(t*.05,-t*.08)).g;float w2=texture2D(nz,p*2.2+vec2(w*.5,t*.06)).b;' +
-    'float x=clamp(.16+dif*.52+th*.2+(w2-.5)*.34,0.,1.);float ol=1.-smoothstep(1.,1.25,f);' +
-    'vec3 col=texture2D(rp,vec2(x,RW)).rgb*(1.-ol*.5)+vec3(sp*.9);vec3 gc=texture2D(rp,vec2(.62,RW)).rgb;' +
-    'gl_FragColor=vec4((col*a+gc*gw)*va.x,(a+gw*.15)*va.x);return;}' +
+    'float md=floor(fract(vf.x+.001)*10.+.5);float hz=vf.z<.01?1.:vf.z;' +
+    'vec3 n=normalize(vec3(-g*.013,1.));vec3 L=normalize(vec3(-.45,-.65,.7));float dif=clamp(dot(n,L),0.,1.);vec3 Rf=reflect(-L,n);float sp=pow(clamp(Rf.z,0.,1.),26.);' +
+    'float th=smoothstep(1.,4.,f);float w=texture2D(nz,p*1.1+vec2(t*.05,-t*.08)).g;float w2=texture2D(nz,p*2.2+vec2(w*.5,t*.06)).b;float a;float gw;vec3 col;' +
+    'if(md>1.5&&md<2.5){float w3=texture2D(nz,p*3.+vec2(w2*.6,-t*.35)).r;a=smoothstep(.78,1.18,f+(w3-.5)*.85);gw=smoothstep(.3,1.,f)*(1.-a)*.7;' +
+      'float x=clamp((.12+th*.5+(w3-.5)*.7+(w2-.5)*.3+dif*.2)*hz,0.,1.);col=texture2D(rp,vec2(x,RW)).rgb;}' +
+    'else if(md>3.5&&md<4.5){a=smoothstep(.93,1.07,f);gw=smoothstep(.35,1.,f)*(1.-a)*.35;float x=clamp(.42+dif*.5+(1.-n.z)*.12-n.y*.1+(w2-.5)*.1,0.,1.);float ol=1.-smoothstep(1.,1.2,f);' +
+      'col=texture2D(rp,vec2(x,RW)).rgb*(1.-ol*.35)+vec3(1.,.97,.86)*(sp*1.3+pow(clamp(Rf.z,0.,1.),6.)*.22);}' +
+    'else if(md>5.5){float w3=texture2D(nz,p*2.6+vec2(t*.04,t*.02)+w*.4).r;a=smoothstep(.72,1.2,f+(w3-.5)*.5)*.97;gw=0.;' +
+      'float x=clamp(.1+dif*.5+th*.12+(w3-.5)*.35,0.,1.);col=texture2D(rp,vec2(x,RW)).rgb+vec3(.35,.55,1.)*(hz-1.)*(.25+th*.75)*.55;}' +
+    'else{a=smoothstep(.93,1.07,f);gw=smoothstep(.35,1.,f)*(1.-a)*.5;float x=clamp(.16+dif*.52+th*.2+(w2-.5)*.34,0.,1.);float ol=1.-smoothstep(1.,1.25,f);' +
+      'col=texture2D(rp,vec2(x,RW)).rgb*(1.-ol*.5)+vec3(sp*.9);}' +
+    'vec3 gc=texture2D(rp,vec2(.62,RW)).rgb;gl_FragColor=vec4((col*a+gc*gw)*va.x,(a+gw*.15)*va.x);return;}' +
     // 20 — призрак из жижи: картинка с волной (хвост извивается сильнее), проявляется снизу вверх по линии vf.y,
     // на линии — светящаяся кромка зелья; vf.z — сила волны, vf.w — фаза
     'if(vf.x>19.9&&vf.x<20.5){float t=tm*gp.z;vec2 q=vq;float tl=pow(q.y,1.6);' +
@@ -324,6 +342,8 @@ function makeForge(host){
     teal: [[0, '04362f'], [.35, '0d7f72'], [.65, '2fd6c4'], [.88, 'a6fff2'], [1, 'ffffff']],
     violet: [[0, '0a0320'], [.3, '2e1270'], [.6, '6a3cf0'], [.85, 'b49cff'], [1, 'f2ecff']],
     fire: [[0, 'c42a22'], [.25, 'e0401e'], [.42, 'f4661e'], [.6, 'ff9228'], [.76, 'ffc444'], [.9, 'ffe58a'], [1, 'fff2cc']],
+    storm: [[0, '07123a'], [.3, '1a3fb8'], [.58, '3f8cff'], [.8, '9fd8ff'], [.94, 'e6f6ff'], [1, 'ffffff']],
+    cloud: [[0, '07080f'], [.35, '161a2b'], [.65, '2c3450'], [.85, '55628c'], [1, '9aa8d4']],
     // зелье: тёмно-изумрудный край → ядовито-зелёный → салатовый блик (яд — зелёный + жёлтый)
     potion: [[0, '0f5a22'], [.25, '1c9a2c'], [.5, '3fd43a'], [.7, '8ef04a'], [.88, 'd6ff7a'], [1, 'f6ffd6']],
   };
@@ -1430,6 +1450,9 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
   // Ожидание: капли кружат воронкой и стягиваются в центр → удар: лужа-желе с перелётом, 7 струй по 3 бусины разлетаются,
   // тянутся нитями, рвутся на капли, падают и тают; лужа колышется и стягивается. Из жижи вырастают призраки (режим 20)
   const GOO = 600;   // сторона квадрата жижи в единицах эффекта
+  // объёмные эффекты (материалы шейдера 19): шарики {x, y, r} → униформы эффекта; рисуется одним квадратом
+  const gooSet = (s, B) => { if (!s.mb) s.mb = new Float32Array(72); let n = 0; for (const b of B){ if (n >= 24 || !(b.r > .5)) continue; s.mb[n * 3] = (b.x - 180) / GOO + .5; s.mb[n * 3 + 1] = (b.y - 180) / GOO + .5; s.mb[n * 3 + 2] = b.r / GOO; n++; } s.mbn = n; };
+  const gooDraw = (c, mat, heat, ramp) => { if (c.s.mbn) sprite(c, 180, 180, GOO, 0, 1, 0, c.at.map['glow:W0'] ?? c.at.map['sglow:G0'] ?? 0, 1, null, 0, [mat, 0, heat || 0, 0, RAMP_ROW[ramp]]); };
   DEF.potion = { atlas: 'potion', period: 2.5, rate: 1.5, gfx: { speed: 1.5, ramp: 'potion' },
     init: s => Object.assign(s, { b: [], gh: [], tw: [], mb: new Float32Array(72), mbn: 0, hit: false, ghosts: false, sw: Array.from({ length: 7 }, (_, i) => ({ a: i / 7 * 6.28, r: R(11, 16) })) }),
     update(s, dt, at){
@@ -1469,6 +1492,114 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
         sprite(c, 180, 182, 80 + 420 * easeOut(k), 0, (1 - k) * .6, 1, at.map['sglow:W0'], .55, [.55, 1, .4]); }
       if (s.mbn) sprite(c, 180, 180, GOO, 0, 1, 0, at.map['glow:W0'], 1, null, 0, [19, 0, 0, 0, RAMP_ROW.potion]);   // жижа — один квадрат на весь эффект
       draw(c, s.tw); draw(c, s.gh); } };
+
+  /* ── эффекты входа на Арену для админов: центр — аватарка (180, 180), разовые ~1.5 с ── */
+
+  // Гроза: три ветвистые молнии бьют сверху в аватарку одна за другой (каждая слабее), по кругу аватарки бегут дуги,
+  // на ударе — голубые искры веером и ударное кольцо. Молнии перерисовываются 20 раз в секунду, дуги — 15
+  DEF.storm = { atlas: 'aura', period: 1.6, gfx: { speed: 1 },
+    init: s => Object.assign(s, { trees: [], sp: [], n: 0, hits: [.16, .5], hx: [-40, 35], fl: 0,
+      cl: Array.from({ length: 12 }, (_, i) => ({ bx: 180 + (i - 5.5) * 24 + R(-8, 8), by: 40 + R(-16, 16) + Math.abs(i - 5.5) * 3, r0: R(26, 40) * (1 - Math.abs(i - 5.5) * .05), ph: R(0, 6.28), d: i * .012 })) }),
+    update(s, dt, at){
+      const c = s.cycle;
+      // туча: клубы-шарики сливаются в один объём, клубятся (дышат), медленно плывут; в конце тают
+      const out = 1 - Math.min(1, Math.max(0, (c - 1.1) / .45));
+      gooSet(s, s.cl.map(q => ({ x: q.bx + Math.sin(c * 1.3 + q.ph) * 6, y: q.by + Math.cos(c * 1.7 + q.ph) * 4, r: q.r0 * easeOut(Math.min(1, Math.max(0, (c - q.d) / .2))) * (1 + .07 * Math.sin(c * 3 + q.ph)) * out })));
+      s.fl *= Math.pow(.004, dt);   // вспышка в туче гаснет
+      if (s.n < 2 && c >= s.hits[s.n]){ const i = s.n, w = 1 - i * .2; s.n++; s.fl = 1; s.shake = 5;
+        s.trees.push({ at: s.hits[i], w, tree: branch(180 + s.hx[i], 58, 180 + R(-6, 6), 128, .42, 5, 2, 7.5 - i, []) });
+        for (let k = 0; k < 22 * w; k++){ const a = -PI / 2 + R(-1.6, 1.6), v = R(200, 520) * w;
+          spawn(s.sp, { x: 180 + R(-6, 6), y: 128, vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: R(12, 20), life: R(.3, .65), drag: 1.6, grav: 800, cells: [at.map['shard:W0']], add: 1, orient: true, speedStretch: .0025, tint: k % 2 ? [.75, .92, 1] : [.5, .7, 1], fadeIn: .02, fadeOut: .5, pul: 0 }); }
+        for (let k = 0; k < 8; k++){ const a = R(0, 6.28), v = R(40, 140);
+          spawn(s.sp, { x: 180, y: 180, vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: R(14, 24), life: R(.4, .8), drag: 2, cells: [at.map['twinkle:W0']], add: 1, tint: [.7, .9, 1], fadeIn: .05, fadeOut: .5, pul: .3, pf: 18 }); } }
+      s.trees = s.trees.filter(q => c - q.at < .4);
+      step(s.sp, dt);
+    },
+    render(s, c){ const at = c.at, t = s.cycle, h0 = t - s.hits[0], env = h0 < 0 ? 0 : Math.min(1, h0 / .1) * Math.max(0, 1 - Math.max(0, t - 1.05) / .45);
+      sprite(c, 180, 40, 360, 0, .3 + .45 * s.fl, 1, at.map['sglow:W0'], .5, [.25, .35, .9]);   // отсвет вокруг тучи
+      gooDraw(c, 19.6, 1 + s.fl * 1.8, 'cloud');   // туча — объём, вспыхивает изнутри при ударе
+      // электрическое кольцо вокруг аватарки: раскрывается с первым ударом, трещит, гаснет
+      if (env > .01) sprite(c, 180, 180, 240, 0, env, .6, at.map['glow:W0'], 1, null, 0, [21, .62 * (.85 + .15 * easeOut(Math.min(1, h0 / .2))), .75 + .45 * s.fl, 4.1, RAMP_ROW.storm]);
+      for (let i = 0; i < 2; i++){ const p = t - s.hits[i]; if (p < 0 || p > .5) continue; const k = p / .5, w = 1 - i * .2;
+        sprite(c, 180, 150, 320 * w, 0, (1 - k) * .9 * w, 1, at.map['sglow:W0'], 1, [.5, .7, 1]);
+        sprite(c, 180, 180, 90 + 320 * easeOut(k) * w, 0, (1 - k) * .7, 1, at.map['ring:W0'], 1, [.6, .82, 1]);
+        if (p < .06) sprite(c, 180, 128, 170 * w, k * 3, 1 - p / .06, 1, at.map['star:W0'], 1, [.9, .96, 1]); }
+      // молния: прорастает за 0.05 с и гаснет; три слоя — широкий ореол, середина, белое ядро
+      for (const q of s.trees){ const p = t - q.at, grow = Math.min(1, p / .05), fade = p < .05 ? 1 : Math.max(0, 1 - (p - .05) / .3);
+        for (const [pts, w, b] of q.tree){ const a = b > .9 ? fade : fade * fade * b, n = Math.ceil((pts.length - 1) * grow);
+          for (let i = 1; i <= n; i++){ const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+            seg(c, x0, y0, x1, y1, w * 18, .16 * a, 1, at.map['sglow:W0'], [.35, .5, 1]);
+            seg(c, x0, y0, x1, y1, w * 6, .5 * a, 1, at.map['sglow:W0'], [.55, .75, 1]);
+            seg(c, x0, y0, x1, y1, w * 1 + 1.6, a, 1, at.map['solid:W0'], [.95, .98, 1]); } } }
+      draw(c, s.sp); } };
+
+  // Метеор: сгусток раскалённой лавы (объём, шейдер 19.2) с хвостом из капель летит сверху и врезается в аватарку →
+  // объёмный огненный взрыв: ядро с перелётом и клубы веером, клубятся изнутри, поднимаются и остывают (белый → оранжевый → тёмно-красный), искры по дугам
+  DEF.meteor = { atlas: 'toon', period: 1.6, gfx: { speed: 1, ramp: 'flame' },
+    init: s => Object.assign(s, { hist: [], B: [], emb: [], fired: false, mx: 340, my: -150, heat: 1.15 }),
+    update(s, dt, at){
+      const m = TM(at), c = s.cycle, T = .3, GX = 180, GY = 168;
+      if (c < T){ const k = (c / T) ** 2; s.mx = 340 + (GX - 340) * k; s.my = -150 + (GY + 140) * k;
+        s.hist.unshift([s.mx, s.my]); if (s.hist.length > 14) s.hist.pop();
+        s.B = s.hist.filter((_, i) => i % 2 === 0).slice(0, 7).map(([x, y], i) => ({ x, y, r: 30 * (1 - i * .13) }));   // голова и хвост из капель
+        emit(s.acc, 'e', 60, dt, () => spawn(s.emb, { x: s.mx + R(-10, 10), y: s.my + R(-10, 10), vx: R(-40, 40), vy: R(-80, -10), size: R(10, 18), life: R(.25, .45), grav: 150,
+          cells: [m('fember')], mode: 1, add: .85, heat: [[0, 1.6], [1, 1]], orient: true, fadeIn: .02, fadeOut: .4 })); }
+      else if (!s.fired){ s.fired = true; s.shake = 9; s.B = [{ core: 1, x: GX, y: GY, r: 0 }];
+        for (let i = 0; i < 16; i++){ const a = i / 16 * 6.28 + R(-.3, .3), v = R(180, 440);
+          s.B.push({ x: GX + Math.cos(a) * 12, y: GY + Math.sin(a) * 10, vx: Math.cos(a) * v, vy: Math.sin(a) * v * .8 - 60, r0: R(22, 40), age: 0, life: R(.7, 1.05) }); }
+        for (let i = 0; i < 30; i++){ const a = R(0, 6.28), sp = R(260, 640);
+          spawn(s.emb, { x: GX, y: GY, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 100, size: R(12, 22), life: R(.45, .9), drag: 1.8, grav: 700, cells: [m('fember')], mode: 1, add: .9,
+            heat: [[0, 1.6], [1, .8]], orient: true, speedStretch: .002, fadeIn: .01, fadeOut: .4 }); } }
+      if (s.fired){ const k = c - T; s.heat = .55 + .8 * Math.exp(-k * 2.6);   // остывает: белый → оранжевый → тёмно-красный
+        for (const b of s.B){
+          if (b.core){ b.r = 66 * Math.min(1, k / .06) * (1 + .16 * Math.sin(k * 15) * Math.exp(-k * 3)) * Math.max(0, 1 - Math.max(0, k - .4) / .35); b.y = GY - k * 30; continue; }
+          b.age += dt; const d = Math.max(0, 1 - 3.2 * dt); b.vx *= d; b.vy = b.vy * d - 140 * dt; b.x += b.vx * dt; b.y += b.vy * dt;   // тормозят и всплывают
+          const q = b.age / b.life; b.r = b.r0 * Math.min(1, b.age / .05) * (1 + q * .4) * (q < .55 ? 1 : Math.max(0, 1 - (q - .55) / .45)); } }
+      gooSet(s, s.B); step(s.emb, dt);
+    },
+    render(s, c){ const at = c.at, t = s.cycle, T = .3, p = t - T, GX = 180, GY = 168;
+      if (t < T) sprite(c, s.mx, s.my, 170, 0, .7, 1, at.map['sglow:W0'], 1, [1, .55, .18]);   // свечение вокруг метеора
+      if (p >= 0 && p < .7){ const k = p / .7; sprite(c, GX, GY, 340 + 140 * k, 0, (1 - k) * .75, 1, at.map['sglow:W0'], 1, [1, .45, .12]);
+        if (p < .1) sprite(c, GX, GY, 220, 0, 1 - p / .1, 1, at.map['glow:W0'], 1, [1, .95, .8]); }   // кадр удара — светлое ядро
+      gooDraw(c, 19.2, s.heat, 'flame');
+      draw(c, s.emb); } };
+
+  // Золото: золотые лучи веером, вспышка, из аватарки фонтаном вылетают вращающиеся монеты и камни (летят дугами и гаснут),
+  // по ним пробегают блики-звёздочки
+  DEF.royal = { atlas: 'coins', period: 1.7, gfx: { speed: 1.2 },
+    init: s => Object.assign(s, { items: [], tw: [], B: [], fired: false }),
+    update(s, dt, at){ const HIT = .14;
+      if (!s.fired && s.cycle > HIT){ s.fired = true; s.shake = 4;
+        // всплеск жидкого золота: ядро с перелётом и 6 струй по 2 капли (как у зелья — сливаются и рвутся)
+        s.B = [{ core: 1, x: 180, y: 180, r: 0 }];
+        for (let j = 0; j < 6; j++){ const a = -PI / 2 + (j - 2.5) * .5 + R(-.15, .15), v = R(380, 520), r0 = R(15, 20);
+          for (let k = 0; k < 2; k++) s.B.push({ x: 180, y: 176, vx: Math.cos(a) * v * (1 - k * .25), vy: Math.sin(a) * v * (1 - k * .25), r0: r0 * (1 - k * .25), age: 0, life: R(.6, .85) }); }
+        for (let i = 0; i < 22; i++){ const a = -PI / 2 + R(-1.3, 1.3), v = R(340, 600);
+          s.items.push({ x: 180 + R(-8, 8), y: 176, vx: Math.cos(a) * v, vy: Math.sin(a) * v, spin: R(0, 6.28), vs: R(10, 18), rot: R(-.3, .3), size: R(30, 44), age: 0, life: R(1, 1.4),
+            gem: i % 5 === 0 ? 1 + (i / 5 % 3) : 0 }); } }
+      if (s.fired){ const k = s.cycle - HIT;
+        for (const b of s.B){ if (b.core){ b.r = 46 * Math.min(1, k / .06) * (1 + .2 * Math.sin(k * 16) * Math.exp(-k * 4)) * Math.max(0, 1 - Math.max(0, k - .35) / .3); continue; }
+          b.age += dt; b.vy += 1100 * dt; b.vx *= 1 - dt; b.x += b.vx * dt; b.y += b.vy * dt; const q = b.age / b.life; b.r = b.r0 * Math.min(1, b.age / .05) * (q < .6 ? 1 : Math.max(0, 1 - (q - .6) / .4)); } }
+      gooSet(s, s.B);
+      for (const c of s.items){ c.age += dt; c.vy += 1250 * dt; c.vx *= 1 - .6 * dt; c.x += c.vx * dt; c.y += c.vy * dt; c.spin += c.vs * dt;
+        if (Math.hypot(c.vx, c.vy) > 300 && Math.random() < dt * 22) spawn(s.tw, { x: c.x, y: c.y, vx: c.vx * .1, vy: c.vy * .1, size: R(10, 18), life: R(.25, .4), cells: [at.map['sglow:G0']], add: 1, fadeIn: .05, fadeOut: .6, pul: 0 }); }   // искристый хвост
+      s.items = s.items.filter(c => c.age < c.life);
+      if (s.items.length && Math.random() < dt * 18){ const c = s.items[Math.random() * s.items.length | 0];
+        spawn(s.tw, { x: c.x + R(-8, 8), y: c.y + R(-8, 4), size: R(24, 38), life: .4, rot: R(0, 1), vr: 2, cells: seq(at, 'twinkle', 'W0', 'G0'), add: 1, fadeIn: .3, fadeOut: .5 }); }
+      step(s.tw, dt);
+    },
+    render(s, c){ const at = c.at, t = s.cycle - .14;
+      if (t < 0){ const k = 1 + t / .14; sprite(c, 180, 180, 220 * (1 - k * .6), k * 2, k, 1, at.map['sglow:G0'], 1, [1, .85, .4]); sprite(c, 180, 180, 60, k * 4, k, 1, at.map['twinkle:G0']); }   // свет собирается в точку
+      if (t >= 0 && t < .8){ const k = t / .8;
+        sprite(c, 180, 180, 300, 0, (1 - k) ** 1.5, .5, at.map['sglow:G1'], 1, null, 0, [21, .35 + .45 * easeOut(k), 1.1 - .4 * k, 1.3, RAMP_ROW.gold]);   // золотое кольцо энергии
+        sprite(c, 180, 180, 240, 0, (1 - k) * .8, 1, at.map['sglow:G0']); }
+      gooDraw(c, 19.4, 0, 'gold');   // жидкое золото — объём с металлическим бликом
+      draw(c, s.tw);
+      for (const it of s.items){ const fa = Math.min(1, (it.life - it.age) / .25);
+        let cell, sx = 1;
+        if (it.gem) cell = at.map[['gem', 'gem2', 'gemP'][it.gem - 1]];
+        else { const cs = Math.cos(it.spin), a = Math.abs(cs); cell = at.map[a > .7 ? 'coinF' : a > .25 ? 'coinT' : 'coinE']; sx = cs < 0 ? -1 : 1; }
+        sprite(c, it.x, it.y, it.size * sx * 1.6, it.rot, fa, 0, cell, sx); } } };
 
   /* ── запуск и цикл ── */
   const live = new Set();

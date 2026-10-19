@@ -105,6 +105,7 @@ function renderDbg(){
       `<div class="dbg-l">${$t("Бонусы")}</div><div class="dbg-g"><button class="dbg-c${SEASON_ON ? ' on' : ''}" data-k="season" data-v="1" style="--c:#F57A37">${$t("Сезон")}</button><button class="dbg-c${SEASON_ON ? '' : ' on'}" data-k="season" data-v="0" style="--c:#fff">${$t("Как было")}</button></div>` +
       (SEASON_ON ? `<div class="dbg-l">${$t("Сезон {0} · уровень {1} · {2} XP", S.season.id, seasonLv(), xpFmt(S.season.xp))}</div><div class="dbg-g">${[0, 1, 3, 5, 10, 15, 20, 29, 30].map(v => `<button class="dbg-c${seasonLv() === v ? ' on' : ''}" data-k="sSet" data-v="${v}" style="--c:#F57A37">${v}</button>`).join('')}` +
         `<button class="dbg-c" data-k="sLv" data-v="1" style="--c:#F57A37">${$t("+1 уровень")}</button><button class="dbg-c" data-k="sNear" data-v="1" style="--c:#FFB835">${$t("Почти следующий")}</button></div>` +
+        `<div class="dbg-l">${$t("Эффекты входа для админов")}</div><div class="dbg-g"><button class="dbg-c${S.cos['adm-storm'] ? ' on' : ''}" data-k="sAdm" data-v="1" style="--c:#5AA8FF">${$t("Выдать")}</button><button class="dbg-c" data-k="sAdm" data-v="0" style="--c:#fff">${$t("Забрать")}</button></div>` +
         `<div class="dbg-l">${$t("Премиум")}</div><div class="dbg-g"><button class="dbg-c${S.season.prem ? '' : ' on'}" data-k="sPrem" data-v="0" style="--c:#fff">${$t("Выкл")}</button><button class="dbg-c${S.season.prem ? ' on' : ''}" data-k="sPrem" data-v="1" style="--c:#FFC24D">${$t("Вкл")}</button></div>` +
         `<div class="dbg-l">${$t("Награды")}</div><div class="dbg-g"><button class="dbg-c" data-k="sGot" data-v="0" style="--c:#fff">${$t("Не забраны")}</button><button class="dbg-c" data-k="sGot" data-v="1" style="--c:#fff">${$t("Все забраны")}</button>` +
         `<button class="dbg-c" data-k="sEnd" data-v="1" style="--c:#FFB835">${$t("Закончить сезон")}</button><button class="dbg-c" data-k="sReset" data-v="1" style="--c:#FF4C35">${$t("Сбросить сезон")}</button></div>` +
@@ -145,7 +146,7 @@ $('dbgBody').addEventListener('click', e => {
   if (k === 'resetSave'){ haptic('medium'); Store.reset(); return; }
   // сезон: включить/выключить (перезагрузка — как смена языка), прокрутить уровни, премиум, сброс
   if (k === 'season'){ if ((v === '1') !== SEASON_ON){ LSset('bm-season', v === '1'); Store.save?.(); location.reload(); } return; }
-  const sSrv = () => API.dbgSeason({ xp: S.season.xp, prem: !!S.season.prem, got: Object.keys(S.season.got) }).catch(() => {});   // в тестовом боте — то же на сервере
+  const sSrv = () => API.dbgSeason({ xp: S.season.xp, prem: !!S.season.prem, got: Object.keys(S.season.got) }).catch(() => {});   // при подключённом сервере (отладка) — то же на сервере
   if (k === 'sLv'){ seasonFresh(); const add = Math.min(+v * SEASON.per, SEASON.lv * SEASON.per - S.season.xp); if (add > 0) seasonXp(add); sSrv(); haptic(); renderDbg(); return; }
   if (k === 'sPrem'){ S.season.prem = v === '1'; if (S.season.prem) cosGive('gold-frame'); sSrv(); document.body.classList.toggle('sprem', SEASON_ON && S.season.prem); haptic(); renderDbg(); return; }
   if (k === 'sSet'){ seasonFresh(); S.season.xp = +v * SEASON.per; sSrv(); haptic(); renderDbg(); return; }
@@ -153,6 +154,7 @@ $('dbgBody').addEventListener('click', e => {
   if (k === 'sGot'){ S.season.got = {}; if (v === '1') SEASON_RW.filter(r => r.l <= seasonLv()).forEach(r => { S.season.got['f' + r.l] = 1; if (S.season.prem) S.season.got['p' + r.l] = 1; }); sSrv(); haptic(); renderDbg(); return; }
   if (k === 'sTop'){ if (v === '0'){ S.legacyTop = null; S.legacyRank = undefined; } else { S.legacyTop = null; legacyTopGrant(+v); } haptic(); renderDbg(); return; }
   if (k === 'sEnd'){ const old = S.season; S.season = seasonNew(); seasonSettle(old); haptic('medium'); renderDbg(); return; }   // как будто сезон закончился: незабранное выдаётся само, прогресс — с нуля
+  if (k === 'sAdm'){ ['adm-storm', 'adm-rift', 'adm-royal'].forEach(id => { if (v === '1') S.cos[id] = 1; else { delete S.cos[id]; if (S.equip.entry === id) S.equip.entry = null; } }); haptic(); renderDbg(); return; }   // прототип: админские эффекты входа (в боте — по списку админов на сервере)
   if (k === 'sReset'){ S.season = { id: seasonNo(), xp: 0, prem: false, got: {} }; sSrv(); haptic('medium'); renderDbg(); return; }
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
   if (k === 'stock'){ API.dbgStock(c.dataset.id, +v).then(() => { S.stock[c.dataset.id] = +v; haptic(); renderDbg(); }, () => notify({ type: 'err', icon: 'err', title: $t("Нет связи"), text: $t("Попробуй ещё раз") })); return; }
