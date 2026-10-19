@@ -13,6 +13,7 @@ const SHEETS = {
   fire2: { file: 'src/fire2.png', cols: 4, rows: 4, rowsY: [[20, 545], [570, 1010], [1030, 1365], [1370, 1960]], names: ['ft1', 'ft2', 'ft3', 'ft4', 'ff1', 'ff2', 'ff3', 'ff4', 'fdrop', 'fcurl', 'fember', 'fpool', 'fcol', 'fnoise', 'fswirl', 'fburst'] },
   toon: { file: 'src/toon.png', cols: 4, rows: 4, names: ['tb1', 'tb2', 'tb3', 'tb4', 'tp1', 'tp2', 'tp3', 'tp4', 'td1', 'td2', 'td3', 'td4', 'tstar', 'tring', 'tcres', 'tspikes'] },
   items: { file: 'src/items.png', cols: 4, rows: 2, names: ['coinF', 'coinT', 'coinE', 'gem', 'gem2', 'gemP', 'goldStar', 'glint'], color: true },
+  ghost: { file: 'src/ghost.png', cols: 1, rows: 1, names: ['ghost'], color: true },
 };
 const STAGES = { // [светлый, тёмный] — мягкие, насыщенные, без чисто чёрных теней (мобильный стиль)
   F0: ['FFFBEA', 'FFD25A'], F1: ['FFE48A', 'FF9A2E'], F2: ['FFB45A', 'F05A22'], F3: ['FF8A4A', 'B8322A'], F4: ['8A7A86', '4A3E52'],
@@ -44,6 +45,8 @@ const FX = {
   toon: { cell: 160, need: [...['ft1', 'ft2', 'ft3', 'ft4', 'ff1', 'ff2', 'ff3', 'ff4', 'fdrop', 'fcurl', 'fember', 'fpool', 'fcol', 'fnoise', 'fswirl', 'fburst',
     'tb1', 'tb2', 'tb3', 'tb4', 'tp1', 'tp2', 'tp3', 'tp4', 'td1', 'td2', 'td3', 'td4', 'tstar', 'tring', 'tcres', 'tspikes'].map(n => [n, 'L']),
     ['sglow', 'W0'], ['glow', 'W0'], ['shard', 'W0'], ['twinkle', 'W0'], ['solid', 'W0'], ['ring', 'W0'], ['star', 'W0'], ['star5', 'W0'], ['sring', 'W0'], ['item:gemP']] },
+  // зелье (эффект входа на Арену): жижу рисует шейдер (метаболы), в атласе — призрак и свечения
+  potion: { cell: 160, need: [['item:ghost'], ['sglow', 'W0'], ['twinkle', 'W0'], ['glow', 'W0']] },
   comets: { cell: 96, need: [['spark', 'E0', 'E1', 'M2'], ['sglow', 'E1', 'M2'], ['twinkle', 'W0'], ['dust', 'E2']] },
 };
 const b = await chromium.launch(), pg = await b.newPage();
@@ -77,7 +80,8 @@ for (const [fx, spec] of Object.entries(FX)){
           const [y0, y1] = s.rowsY[Math.floor(i / s.cols)], bh = y1 - y0, sc = W / (Math.max(cw, bh) * 1.06);
           x.fillStyle = '#000'; x.fillRect(0, 0, W, W);
           x.drawImage(im, (i % s.cols) * cw, y0, cw, bh, (W - cw * sc) / 2, (W - bh * sc) / 2, cw * sc, bh * sc);
-        } else x.drawImage(im, (i % s.cols) * cw + (cw - side) / 2, Math.floor(i / s.cols) * ch + (ch - side) / 2, side, side, 0, 0, W, W);
+        } else { if (s.blur) x.filter = `blur(${Math.round(W * s.blur)}px)`;   // мягкая маска: порог растворения плавно «растекается»
+          x.drawImage(im, (i % s.cols) * cw + (cw - side) / 2, Math.floor(i / s.cols) * ch + (ch - side) / 2, side, side, 0, 0, W, W); x.filter = 'none'; }
 
       }
       const d = x.getImageData(0, 0, W, W), a = d.data;

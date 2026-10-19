@@ -157,9 +157,28 @@ function makeForge(host){
     'varying vec2 vu;varying vec2 va;varying vec3 vt;varying vec2 vq;varying vec4 vf;varying vec4 vc;varying float vr;' +
     'void main(){gl_Position=vec4(p.x/res.x*2.-1.,1.-p.y/res.y*2.,0.,1.);vu=uv;va=aa;vt=tn;vq=q;vf=fx;vc=cr;vr=rw;}';
   // доля сложения света (add): 0 — обычное смешивание, 1 — чистое сложение (как additiveness в Rive)
-  const FS = '#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nuniform sampler2D tx;uniform sampler2D nz;uniform sampler2D rp;uniform sampler2D sp;uniform float tm;uniform float lq;uniform vec4 gp;' +
+  const FS = '#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nuniform sampler2D tx;uniform sampler2D nz;uniform sampler2D rp;uniform sampler2D sp;uniform float tm;uniform float lq;uniform vec4 gp;uniform vec3 mb[24];uniform float mbn;' +
     'varying vec2 vu;varying vec2 va;varying vec3 vt;varying vec2 vq;varying vec4 vf;varying vec4 vc;varying float vr;' +
     'void main(){float RW=vr<0.?gp.w:vr;' +
+    // 19 — жижа (метаболы): поле Σ r²/d² от шариков; поверхность — порог поля, шарики сливаются и тянутся нитями.
+    // Объём: нормаль из градиента поля → рассеянный свет, блик, тёмная кромка; внутри течёт шум; вокруг — мягкое свечение
+    'if(vf.x>18.9&&vf.x<19.5){float t=tm*gp.z;vec2 p=vq;float f=0.;vec2 g=vec2(0.);' +
+    'for(int i=0;i<24;i++){if(float(i)>=mbn)break;vec3 b=mb[i];vec2 d=p-b.xy;float r2=dot(d,d)+1e-5;float k=b.z*b.z/r2;f+=k;g-=2.*k/r2*d;}' +
+    'if(f<.35){gl_FragColor=vec4(0.);return;}' +
+    'float a=smoothstep(.93,1.07,f);float gw=smoothstep(.35,1.,f)*(1.-a)*.5;' +
+    'vec3 n=normalize(vec3(-g*.013,1.));vec3 L=normalize(vec3(-.45,-.65,.7));float dif=clamp(dot(n,L),0.,1.);float sp=pow(clamp(dot(reflect(-L,n),vec3(0.,0.,1.)),0.,1.),26.);' +
+    'float th=smoothstep(1.,4.,f);float w=texture2D(nz,p*1.1+vec2(t*.05,-t*.08)).g;float w2=texture2D(nz,p*2.2+vec2(w*.5,t*.06)).b;' +
+    'float x=clamp(.16+dif*.52+th*.2+(w2-.5)*.34,0.,1.);float ol=1.-smoothstep(1.,1.25,f);' +
+    'vec3 col=texture2D(rp,vec2(x,RW)).rgb*(1.-ol*.5)+vec3(sp*.9);vec3 gc=texture2D(rp,vec2(.62,RW)).rgb;' +
+    'gl_FragColor=vec4((col*a+gc*gw)*va.x,(a+gw*.15)*va.x);return;}' +
+    // 20 — призрак из жижи: картинка с волной (хвост извивается сильнее), проявляется снизу вверх по линии vf.y,
+    // на линии — светящаяся кромка зелья; vf.z — сила волны, vf.w — фаза
+    'if(vf.x>19.9&&vf.x<20.5){float t=tm*gp.z;vec2 q=vq;float tl=pow(q.y,1.6);' +
+    'q.x+=sin(q.y*9.-t*7.+vf.w)*.05*tl*vf.z+sin(t*2.7+vf.w)*.012;q.y+=sin(q.x*7.+t*4.+vf.w)*.012*vf.z;' +
+    'vec4 c=texture2D(tx,vc.xy+clamp(q,.01,.99)*vc.zw);float n=texture2D(nz,vq*1.5+vec2(vf.w,t*.3)).r;' +
+    'float rv=vf.y;float sh=smoothstep(rv+.05,rv-.05,q.y+(n-.5)*.12);float ed=exp(-abs(q.y+(n-.5)*.12-rv)*28.)*step(.02,c.a);' +
+    'vec3 col=mix(c.rgb*vt,texture2D(rp,vec2(.8,RW)).rgb,clamp(ed*1.2,0.,1.));float fl=.88+.12*sin(t*9.+vf.w*3.);' +
+    'float A=c.a*sh*fl*va.x;gl_FragColor=vec4(col*A+texture2D(rp,vec2(.7,RW)).rgb*ed*.5*va.x,A);return;}' +
     // 16 — фрактал Жюлиа: z → z² + c, c медленно ходит по кругу (узор дышит и закручивается); цвет — по «скорости убегания»
     // и ловушке орбиты (как близко точка подходила к кругу) — даёт светящиеся нити. На экономном качестве — вдвое меньше шагов
     'if(vf.x>15.9&&vf.x<16.5){float t=tm*gp.z;vec2 p=(vq-.5)*2.;float rr=length(p);if(rr>1.){gl_FragColor=vec4(0.);return;}' +
@@ -305,8 +324,10 @@ function makeForge(host){
     teal: [[0, '04362f'], [.35, '0d7f72'], [.65, '2fd6c4'], [.88, 'a6fff2'], [1, 'ffffff']],
     violet: [[0, '0a0320'], [.3, '2e1270'], [.6, '6a3cf0'], [.85, 'b49cff'], [1, 'f2ecff']],
     fire: [[0, 'c42a22'], [.25, 'e0401e'], [.42, 'f4661e'], [.6, 'ff9228'], [.76, 'ffc444'], [.9, 'ffe58a'], [1, 'fff2cc']],
+    // зелье: тёмно-изумрудный край → ядовито-зелёный → салатовый блик (яд — зелёный + жёлтый)
+    potion: [[0, '0f5a22'], [.25, '1c9a2c'], [.5, '3fd43a'], [.7, '8ef04a'], [.88, 'd6ff7a'], [1, 'f6ffd6']],
   };
-  const RAMP_ROW = {}, RAMP_N = 16;
+  const RAMP_ROW = {}, RAMP_N = 32;   // строк с запасом: градиентов уже больше 16
   function rampTex(){
     const d = new Uint8Array(256 * RAMP_N * 4);
     Object.entries(RAMPS).forEach(([name, st], row) => { RAMP_ROW[name] = (row + .5) / RAMP_N;
@@ -328,7 +349,7 @@ function makeForge(host){
     prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)){ console.error('fx shader', gl.getProgramInfoLog(prog), gl.getShaderInfoLog(gl.getAttachedShaders(prog)[1])); return false; }
     gl.useProgram(prog);
-    loc = { res: gl.getUniformLocation(prog, 'res'), lq: gl.getUniformLocation(prog, 'lq'), tm: gl.getUniformLocation(prog, 'tm'), gp: gl.getUniformLocation(prog, 'gp') };
+    loc = { mb: gl.getUniformLocation(prog, 'mb'), mbn: gl.getUniformLocation(prog, 'mbn'), res: gl.getUniformLocation(prog, 'res'), lq: gl.getUniformLocation(prog, 'lq'), tm: gl.getUniformLocation(prog, 'tm'), gp: gl.getUniformLocation(prog, 'gp') };
     gl.uniform1i(gl.getUniformLocation(prog, 'tx'), 0); gl.uniform1i(gl.getUniformLocation(prog, 'nz'), 1); gl.uniform1i(gl.getUniformLocation(prog, 'rp'), 2); gl.uniform1i(gl.getUniformLocation(prog, 'sp'), 3);
     vbo = gl.createBuffer(); ibo = gl.createBuffer();
     const idx = new Uint16Array(6 * 16000); for (let i = 0, v = 0; i < idx.length; i += 6, v += 4) idx.set([v, v + 1, v + 2, v, v + 2, v + 3], i);
@@ -1405,6 +1426,50 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
         sprite(c, 180, 180, 80 + 520 * easeOut(k), 0, (1 - k) * .8, 1, at.map['ring:W0'], .7, [1, .8, .5]); sprite(c, 180, 180, 40 + 760 * easeOut(Math.min(1, k * 1.4)), 0, (1 - k) * .45, 1, at.map['ring:W0'], .6, [1, .6, .25]); }
       draw(c, s.sp); draw(c, s.near); } };
 
+  // Зелье — эффект входа на Арену. Жижа — метаболы (режим 19): шарики сливаются в одну поверхность с объёмом и бликом.
+  // Ожидание: капли кружат воронкой и стягиваются в центр → удар: лужа-желе с перелётом, 7 струй по 3 бусины разлетаются,
+  // тянутся нитями, рвутся на капли, падают и тают; лужа колышется и стягивается. Из жижи вырастают призраки (режим 20)
+  const GOO = 600;   // сторона квадрата жижи в единицах эффекта
+  DEF.potion = { atlas: 'potion', period: 2.5, gfx: { speed: 1, ramp: 'potion' },
+    init: s => Object.assign(s, { b: [], gh: [], tw: [], mb: new Float32Array(72), mbn: 0, hit: false, ghosts: false, sw: Array.from({ length: 7 }, (_, i) => ({ a: i / 7 * 6.28, r: R(11, 16) })) }),
+    update(s, dt, at){
+      const HIT = .32, t = s.cycle, B = s.b;
+      if (t < HIT){ const k = t / HIT; B.length = 0;   // воронка: капли по спирали к центру, растут и сливаются
+        for (const w of s.sw){ w.a += dt * (3 + k * 12); const d = 118 * (1 - k) ** 1.4 + 6; B.push({ x: 180 + Math.cos(w.a) * d, y: 182 + Math.sin(w.a) * d * .75, r: w.r * (.6 + k * .9) }); } }
+      else if (!s.hit){ s.hit = true; s.shake = 0; B.length = 0;
+        for (let i = 0; i < 3; i++) B.push({ core: true, ph: i * 2.1, x: 180, y: 182, r: 0 });
+        for (let j = 0; j < 7; j++){ const a = j / 7 * 6.28 + R(-.2, .2), v = R(420, 600) * (Math.sin(a) < 0 ? 1.1 : .62), r0 = R(17, 23);
+          for (let k = 0; k < 3; k++) B.push({ x: 180 + Math.cos(a) * 14, y: 182 + Math.sin(a) * 14, vx: Math.cos(a) * v * (1 - k * .24), vy: Math.sin(a) * v * (1 - k * .24) - 60,
+            r0: r0 * (1 - k * .22), age: 0, life: R(.75, 1.05) - k * .08 }); }
+        for (let i = 0; i < 10; i++){ const a = R(0, 6.28), v = R(80, 240);
+          spawn(s.tw, { x: 180, y: 176, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, size: R(14, 26), life: R(.5, 1.1), drag: 2, grav: -30, cells: [at.map['twinkle:W0']], add: 1, tint: [.75, 1, .45], fadeIn: .05, fadeOut: .5, pul: .3, pf: 16 }); }
+      }
+      if (s.hit){ const k = t - HIT;
+        for (const b of B){
+          if (b.core){ const end = 1 - Math.min(1, Math.max(0, (k - 1.05) / .5)) ** 2;   // лужа: перелёт и затухающие колебания, в конце стягивается
+            b.r = 50 * Math.min(1, k / .07) * (1 + .22 * Math.sin(k * 15 + b.ph) * Math.exp(-k * 4)) * end * (b.ph ? .7 : 1);
+            b.x = 180 + Math.cos(b.ph + k * 3) * 16 * Math.exp(-k * 1.5); b.y = 184 + Math.sin(b.ph + k * 2.4) * 9; continue; }
+          b.age += dt; const d = Math.max(0, 1 - 1.1 * dt); b.vx *= d; b.vy = b.vy * d + 1000 * dt; b.x += b.vx * dt; b.y += b.vy * dt;
+          const q = b.age / b.life; b.r = b.r0 * Math.min(1, b.age / .05) * (q < .6 ? 1 : Math.max(0, 1 - (q - .6) / .4)); }
+      }
+      // в шейдер: до 24 шариков, координаты и радиус — в долях квадрата жижи (шире эффекта: капли не обрезаются)
+      let n = 0; for (const b of B){ if (n >= 24 || !(b.r > .5)) continue; s.mb[n * 3] = (b.x - 180) / GOO + .5; s.mb[n * 3 + 1] = (b.y - 180) / GOO + .5; s.mb[n * 3 + 2] = b.r / GOO; n++; } s.mbn = n;
+      // призраки вырастают из жижи: проявляются снизу вверх (кромка зелья по линии выхода), хвост извивается, уплывают вверх
+      if (!s.ghosts && t > HIT + .12){ s.ghosts = true;
+        for (let i = 0; i < 4; i++){ const a = -PI / 2 + (i - 1.5) * .75 + R(-.1, .1), v = R(170, 230) * (i === 1 || i === 2 ? 1.15 : .85);
+          spawn(s.gh, { x: 180 + Math.cos(a) * 34, y: 178 + R(-6, 6), vx: Math.cos(a) * v, vy: Math.sin(a) * v, drag: 1.4, grav: -70, sway: R(16, 28), size: [96, 58, 80, 66][i] * R(.92, 1.08), rot: Math.cos(a) * .3, vr: 0,   // разного размера: крупный, мелкий, средние
+            scW: [[0, .7], [.2, 1.05], [.4, 1]], scH: [[0, 1.3], [.2, .95], [.4, 1]], life: [1.95, 1.15, 1.6, 1.35][i] * R(.92, 1.08), cells: [at.map['ghost']], mode: 20,   // и гаснут в разное время ramp: 'potion',
+            ero: [[0, -.05], [.32, 1.1], [1, 1.1]], heat: [[0, 1.8], [.4, 1], [1, .7]], add: .15, fadeIn: .02, fadeOut: [.35, .55, .45, .5][i], pul: 0 }); }
+      }
+      for (const p of s.gh) p.rot += (Math.sin(p.age * 4 + p.ph) * .25 - p.rot) * Math.min(1, dt * 3);   // покачивается, а не крутится
+      step(s.gh, dt); step(s.tw, dt);
+    },
+    render(s, c){ const at = c.at, t = s.cycle - .32;
+      if (t >= 0 && t < .5){ const k = t / .5; sprite(c, 180, 182, 240 + 260 * easeOut(k), 0, (1 - k) * .5, 1, at.map['sglow:W0'], 1, [.3, .9, .25]);   // отсвет и ударная волна
+        sprite(c, 180, 182, 80 + 420 * easeOut(k), 0, (1 - k) * .6, 1, at.map['sglow:W0'], .55, [.55, 1, .4]); }
+      if (s.mbn) sprite(c, 180, 180, GOO, 0, 1, 0, at.map['glow:W0'], 1, null, 0, [19, 0, 0, 0, RAMP_ROW.potion]);   // жижа — один квадрат на весь эффект
+      draw(c, s.tw); draw(c, s.gh); } };
+
   /* ── запуск и цикл ── */
   const live = new Set();
   let raf = 0, last = 0, ok = null, idle30 = true;
@@ -1448,6 +1513,7 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
       else gl.disable(gl.SCISSOR_TEST);
       const g = e.def.gfx || {};   // параметры шейдера эффекта: мультяшные ступени, сила искажения, скорость шума, градиент
       gl.uniform4f(loc.gp, g.bands || 0, g.dist || 0, g.speed || .8, RAMP_ROW[g.ramp] || .5 / RAMP_N);
+      gl.uniform1f(loc.mbn, e.s.mbn || 0); if (e.s.mbn) gl.uniform3fv(loc.mb, e.s.mb);   // шарики жижи эффекта (метаболы)
       gl.bindTexture(gl.TEXTURE_2D, e.tex.t);
       gl.bufferData(gl.ARRAY_BUFFER, buf.subarray(0, nq * VF * 4), gl.STREAM_DRAW);
       gl.drawElements(gl.TRIANGLES, nq * 6, gl.UNSIGNED_SHORT, 0); q += nq;

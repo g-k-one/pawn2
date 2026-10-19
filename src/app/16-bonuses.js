@@ -19,7 +19,7 @@ const caseState = c => {
   if (SEASON_ON && S.stock[c.id] > 0) return { ok: true, n: S.stock[c.id], k: 1, txt: $t("В запасе ×{0}", S.stock[c.id]), how: $t("Из прошлого сезона · в запасе ×{0}", S.stock[c.id]), lock: '' };   // остались с прошлого сезона
   if (SEASON_ON){ const at = SEASON_RW.filter(r => r.free.c === c.id).map(r => r.l), nx = at.find(l => l > seasonLv());
     return { ok: false, n: 0, k: nx ? Math.min(1, S.season.xp / (nx * SEASON.per)) : 1, txt: $t("Награда сезона"),
-      how: $t("Награда сезона · уровни {0}", at.join(', ')), lock: nx ? $t("На {0} уровне", nx) : $t("Награда сезона") }; }
+      how: $t("Награда сезона · уровни {0}", at.join(', ')), lock: nx ? $t("Уровень {0}", nx) : $t("Всё забрано") }; }   // на кнопке — коротко и не повторяя подпись
   if (c.need === 'daily'){ const d = tasksDone(), n = TASKS.length, left = n - d;
     return { ok: S.stock.beast > 0, n: S.stock.beast, k: d / n, txt: $t("3 задания сегодня · {0}/{1}", d, n), how: $t("Выполни все 3 задания сегодня · {0}/{1}", d, n),
       lock: left ? $t("Ещё {0} {1}", left, $n("задание|задания|заданий", left)) : $t("Новый — завтра") }; }
@@ -168,7 +168,9 @@ async function caseRun(c, again, m = 1){
   if (S.demo){ notify({ type: 'demo', icon: 'gift', title: $t("Кейсы — только на GRAM"), text: $t("Выключи демо в меню") }); return; }
   if (c.price > S.balance){ notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM"), text: $t("Пополни баланс — тапни по нему сверху") }); return; }
   // бонусы не закрываем: экран кейса сразу затемняет всё поверх шторки и крутит ленту; после «Забрать» шторка уже на месте
-  if (!again){ if (S.busy) return; S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto); FX.keepDrawer = openDrawer; openDrawer?.classList.add('kept'); $('fx').classList.toggle('over', !!openDrawer); }
+  // «занято»: идёт другая игра — говорим об этом, а не молчим; экран игры закрыт, а флаг остался — залип (например, после боя), снимаем
+  if (!again && S.busy){ if ($('fx').classList.contains('on')){ haptic('rigid'); return notify({ type: 'info', icon: 'gift', title: $t("Дождись конца игры"), text: $t("Кейс откроется после неё") }); } S.busy = false; track('error', { title: 'busy_stuck', where: 'case' }); }
+  if (!again){ S.busy = true; CRAFT.classList.add('busy'); clearInterval(auto); FX.keepDrawer = openDrawer; openDrawer?.classList.add('kept'); $('fx').classList.toggle('over', !!openDrawer); }
   if (c.price) setBalance(S.balance - c.price);
   const N = 44, WIN = 38, strip = Array.from({ length: N }, () => weighted(c));
   $('fxCaseArt').innerHTML = caseArt(c, 'md'); $('fxCaseT').textContent = c.name + (m > 1 ? ` ×${m}` : ''); $('fxCaseT').style.setProperty('--c', c.c);

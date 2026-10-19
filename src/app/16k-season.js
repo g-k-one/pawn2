@@ -26,7 +26,7 @@ const B = 'beast', M = 'musk', D = 'durov', ST = 'satoshi';
 const RW_FREE = [{ g: .1 }, { g: .15 }, { c: B }, { out: 1 }, { dep: [10, 1] }, { c: B }, { g: .15 }, { g: .2 }, { c: B }, { c: M }, { g: .2 }, { c: B }, { out: 1 }, { g: .2 }, { cos: 'badge' },
   { g: .25 }, { dep: [15, 2] }, { c: B }, { g: .25 }, { c: M }, { c: B }, { g: .3 }, { out: 1 }, { c: B }, { c: D }, { g: .3 }, { c: B }, { dep: [20, 3] }, { g: .3 }, { nft: 'free' }];
 const RW_PREM = [{ g: .2 }, { c: D }, { g: .3 }, { dep: [20, 3] }, { c: D }, { out: 2 }, { g: .3 }, { c: M }, { g: .4 }, { cos: 'frame' }, { g: .4 }, { dep: [30, 5] }, { c: M }, { g: .5 }, { c: D },
-  { out: 2 }, { g: .5 }, { c: M }, { g: .5 }, { c: ST }, { c: D }, { g: .6 }, { dep: [50, 10] }, { c: M }, { c: ST }, { g: .6 }, { out: 3 }, { c: D }, { g: .6 }, { nft: 'prem' }];
+  { out: 2 }, { g: .5 }, { c: M }, { g: .5 }, { c: ST }, { c: D }, { g: .6 }, { dep: [50, 10] }, { c: M }, { c: ST }, { cos: 'entry' }, { out: 3 }, { c: D }, { g: .6 }, { nft: 'prem' }];
 const SEASON_RW = RW_FREE.map((free, i) => ({ l: i + 1, free, prem: RW_PREM[i] }));
 const seasonNew = () => ({ id: seasonNo(), xp: 0, prem: false, got: {}, chests: 0 });
 S.season = seasonNew();
@@ -102,27 +102,35 @@ function seasonCount(r){
   if (!r.bets && r.ti >= 1) T.luck = (T.luck || 0) + 1; if (!r.bets && r.ti >= 2) T.mega = (T.mega || 0) + 1;
   seasonTasksCheck();
 }
-const seasonBump = k => { if (!SEASON_ON || S.demo) return; S.tasks[k] = (S.tasks[k] || 0) + 1; seasonTasksCheck(); };
+const seasonBump = k => { if (!SEASON_ON || S.demo) return; S.tasks[k] = (S.tasks[k] || 0) + 1;
+  if (k === 'shares') try { localStorage.setItem('tg-shares', JSON.stringify({ day: sDay(), n: S.tasks.shares })); } catch(_){}   // шеринг сервер не видит — счётчик дня храним на телефоне
+  seasonTasksCheck(); };
 
 // награда на плитке: крупная картинка и подпись; на премиум-дорожке — по тёмному золоту
 const FLOOR_NFT = () => NFTS.slice().sort((a, b) => a.price - b.price)[0];
 // пример на плитке — подарок темы в этой цене; при получении — любой из стока в этой цене (в бою выбирает сервер)
 const themeNft = (side, id) => { const P = nftPool(side).sort((a, b) => a.price - b.price), cols = seasonTheme(id).cols; return P.find(n => cols.includes(n.name)) || P[0] || FLOOR_NFT(); };
 const nftPick = side => { const P = nftPool(side); return P.length ? P[Math.random() * P.length | 0] : FLOOR_NFT(); };
-const COS = { badge: [$t("Значок «Тыква»"), $t("у твоего имени в меню")], frame: [$t("Рамка «Золото»"), $t("вокруг аватарки — видят все, и на Арене")] };
+const COS = { badge: [$t("Значок «Тыква»"), $t("у твоего имени в меню")], frame: [$t("Рамка «Золото»"), $t("вокруг аватарки — видят все, и на Арене")],
+  entry: [$t("Вход «Зелье»"), $t("всплеск зелья и призраки, когда входишь на Арену — видят все в комнате")] };
+const COS_IMG = { frame: 'assets/frame-gold.webp', entry: 'assets/fx-potion-icon.webp' };   // картинка награды на дорожке; значок — арт темы
 /* оформление: что есть у игрока (S.cos) и что надето (S.equip). Рамки — картинки поверх аватарки (k — во сколько раз больше аватарки) */
 const COS_ITEMS = {
-  'gold-frame': { slot: 'frame', name: $t("Хэллоуин"), img: 'assets/frame-hw.webp', k: 1.55, how: $t("за премиум-пропуск") },   // за покупку — тыквенная
-  'hw-frame': { slot: 'frame', name: $t("Золото"), img: 'assets/frame-gold.webp', k: 1.72, how: $t("премиум · уровень {0}", 10) },   // золотая — заслужить на 10-м уровне
-  'hw-badge': { slot: 'badge', name: $t("Тыква"), img: 'assets/season-halloween.webp', icon: 'pumpkin', how: $t("уровень {0}", 15) },
+  'gold-frame': { slot: 'frame', name: $t("Хэллоуин"), img: 'assets/frame-hw.webp', k: 1.55, how: $t("за премиум в Пассе"), why: $t("Дают сразу за покупку премиума в Пассе") },   // за покупку — тыквенная
+  'hw-frame': { slot: 'frame', name: $t("Золото"), img: 'assets/frame-gold.webp', k: 1.72, lv: 10, prem: true },   // золотая — заслужить на 10-м уровне
+  'hw-badge': { slot: 'badge', name: $t("Тыква"), img: 'assets/season-halloween.webp', icon: 'pumpkin', lv: 15 },
+  'hw-entry': { slot: 'entry', name: $t("Зелье"), img: 'assets/fx-potion-icon.webp', lv: 26, prem: true },   // эффект входа на Арену (Горн, potion)
  };
-const COS_SLOTS = [['frame', $t("Рамка")], ['badge', $t("Значок у имени")]];
+// откуда берётся: коротко на плитке и подробно по тапу
+const cosHow = c => c.how || (c.prem ? $t("{0} ур. премиум-Пасса", c.lv) : $t("{0} ур. Пасса", c.lv));
+const cosWhy = c => c.why || $t("Награда Пасса на {0} уровне{1}. Уровни растут от XP за игры", c.lv, c.prem ? $t(" — с премиумом") : '');
+const COS_SLOTS = [['frame', $t("Рамка")], ['badge', $t("Значок у имени")], ['entry', $t("Вход на Арену")]];
 S.cos = {}; S.equip = {};
 const cosOn = slot => SEASON_ON && S.equip[slot] && S.cos[S.equip[slot]] ? COS_ITEMS[S.equip[slot]] : null;
 const frameHTML = () => { const f = cosOn('frame'); return f ? `<img class="ava-fr" src="${f.img}" style="--k:${f.k}" alt="">` : ''; };
 function cosApply(){
   document.body.classList.remove('cos-skin-hw');   // скин кнопки крафта убран: в режимах у кнопки свой цвет и иконка
-  const w = document.querySelector('.balance .ava-w'); if (w){ w.querySelector('.ava-fr')?.remove(); w.insertAdjacentHTML('beforeend', frameHTML()); }
+  document.querySelectorAll('.balance .ava-w, .cb .t2ava').forEach(w => { w.querySelector('.ava-fr')?.remove(); w.insertAdjacentHTML('beforeend', frameHTML()); });   // шапка и аватарка в кнопке Арены
 }
 // получил предмет — сразу надеваем, если слот пустой
 function cosGive(id){ S.cos[id] = 1; const sl = COS_ITEMS[id]?.slot; if (sl && !S.equip[sl]) S.equip[sl] = id; cosApply(); }
@@ -133,16 +141,26 @@ const cosBadge = () => { const b = cosOn('badge'); return b ? BADGE_SVG[b.icon] 
 function renderCos(){
   const pv = `<div class="cos-pv"><span class="ava-w big"><img src="assets/avatar.webp" alt="">${frameHTML()}</span><b>${cosBadge()}GK</b></div>`;
   $('cosBody').innerHTML = pv + COS_SLOTS.map(([sl, t]) => `<div class="sec-t">${t}</div><div class="cos-g">` +
-    `<button class="cos-i${S.equip[sl] ? '' : ' on'}" data-cos="${sl}:"><span class="cos-img"><span class="cos-none"></span></span><b>${$t("Пусто")}</b><small>${({ frame: $t("без рамки"), badge: $t("без значка") })[sl]}</small></button>` +
+    `<button class="cos-i${S.equip[sl] ? '' : ' on'}" data-cos="${sl}:"><span class="cos-img"><span class="cos-none"></span></span><b>${$t("Пусто")}</b><small>${({ frame: $t("без рамки"), badge: $t("без значка"), entry: $t("без эффекта") })[sl]}</small></button>` +
     Object.entries(COS_ITEMS).filter(([, c]) => c.slot === sl).map(([id, c]) => { const has = !!S.cos[id], on = S.equip[sl] === id;
-      return `<button class="cos-i${on ? ' on' : ''}${has ? '' : ' lock'}" data-cos="${sl}:${id}"><span class="cos-img${sl === 'frame' ? ' fr' : ''}">${sl === 'frame' ? `<img class="cos-av" src="assets/avatar.webp" alt=""><img class="cos-fr" src="${c.img}" style="--k:${c.k}" alt="">` : `<img src="${c.img}" alt="">`}</span><b>${c.name}</b><small>${has ? (on ? $t("надето") : $t("есть · надеть")) : c.how}</small></button>`; }).join('') + `</div>`).join('');
+      return `<button class="cos-i${on ? ' on' : ''}${has ? '' : ' lock'}" data-cos="${sl}:${id}"><span class="cos-img${sl === 'frame' ? ' fr' : ''}">${sl === 'frame' ? `<img class="cos-av" src="assets/avatar.webp" alt=""><img class="cos-fr" src="${c.img}" style="--k:${c.k}" alt="">` : `<img src="${c.img}" alt="">`}</span><b>${c.name}</b><small>${has ? (on ? $t("надето") : $t("есть · надеть")) : cosHow(c)}</small></button>`; }).join('') + `</div>`).join('');
 }
 function openCos(){ track('screen', { id: 'cos' }); swapDrawer('cosDrawer', renderCos); }
 $('cosDrawer').addEventListener('click', e => { const b = e.target.closest('[data-cos]'); if (!b) return; const [sl, id] = b.dataset.cos.split(':');
-  if (id && !S.cos[id]){ haptic('rigid'); return notify({ type: 'info', img: COS_ITEMS[id].img, title: COS_ITEMS[id].name, text: COS_ITEMS[id].how }); }
-  S.equip[sl] = id || null; API.cosEquip(sl, id || null).catch(() => {}); haptic(); track('cos_equip', { slot: sl, id: id || null }); cosApply(); renderCos(); });
+  if (id && !S.cos[id]){ haptic('rigid'); return notify({ type: 'info', img: COS_ITEMS[id].img, title: COS_ITEMS[id].name, text: cosWhy(COS_ITEMS[id]) }); }
+  S.equip[sl] = id || null; API.cosEquip(sl, id || null).catch(() => {}); haptic(); track('cos_equip', { slot: sl, id: id || null }); cosApply(); { const sc = $('cosBody').scrollTop; renderCos(); $('cosBody').scrollTop = sc; }   // выбор не прокручивает список наверх
+  if (sl === 'entry' && id) entryFx($('cosBody').querySelector(`[data-cos="entry:${id}"] .cos-img`), id); });   // надел эффект — сразу показываем на его плитке
+/* эффект входа на Арену «Зелье» — Горн (potion): разовый, холст сам убирается после. В экономном режиме — без эффекта */
+function entryFx(el, id){
+  if (!el || id !== 'hw-entry' || S.lite || !el.isConnected || typeof Forge === 'undefined') return;
+  const r = el.getBoundingClientRect(); if (!r.width) return;
+  Forge.play('potion', { x: r.left + r.width / 2, y: r.top + r.height / 2, size: Math.max(r.width, 48) * 3.2 }); Sfx.coin?.(); haptic('medium');
+}
+// эффект входа игрока на Арене: свой — из надетого; соперник — с сервера (eq.entry), в моке — у части ботов
+const ENTRY_ROOM = 2;   // комната 2 GRAM — витрина: «Зелье» при входе у всех
+const entryOf = (x, fee) => fee === ENTRY_ROOM && SEASON_ON ? 'hw-entry' : x.me ? (cosOn('entry') ? S.equip.entry : null) : x.eq ? x.eq.entry || null : SEASON_ON && [...x.who].reduce((a, c) => a + c.charCodeAt(0) * 3, 0) % 4 === 0 ? 'hw-entry' : null;
 function srwHTML(rw){
-  if (rw.cos) return `<img class="scos" src="${rw.cos === 'frame' ? 'assets/frame-gold.webp' : seasonTheme().art}" alt=""><b>${COS[rw.cos][0]}</b>`;
+  if (rw.cos) return `<img class="scos" src="${COS_IMG[rw.cos] || seasonTheme().art}" alt=""><b>${COS[rw.cos][0]}</b>`;
   if (rw.dep) return `<img src="assets/hw-caul.webp" alt=""><b>+${rw.dep[0]}% ${$t("к пополнению")}</b>`;
   if (rw.out) return `<img src="assets/hw-ghost.webp" alt=""><b>${$t("Вывод без комиссии")}${rw.out > 1 ? ' ×' + rw.out : ''}</b>`;
   if (rw.c){ const c = caseById(rw.c); return `<img src="${c.img}" alt=""><b>${c.short}</b>`; }
@@ -231,9 +249,10 @@ function renderSeason(b){
     (ready ? `<button class="btn-main claim st-all" data-sact="all">${$t("Забрать всё · {0}", ready)}</button>` : '');
 }
 // забрать награду: GRAM — на баланс, кейс — открывается сразу, NFT — подарок темы в инвентарь
+const seasonClaimAll = { on: false };
 async function seasonClaim(k, btn){
   const r = SEASON_RW[+k.slice(1) - 1], rw = k[0] === 'f' ? r.free : r.prem;
-  const res = await btnWait(btn, API.seasonClaim(S.season.id, k)); if (!res?.ok) return;
+  const res = await btnWait(btn, API.seasonClaim(S.season.id, k)); if (!res?.ok) return false;
   S.season.got[k] = 1; track('season_claim', { k }); haptic('medium');
   if (openDrawer?.id === 'passDrawer') swapDrawer('casesDrawer', renderCases, true);   // забрали из шторки награды — назад в «Пасс»
   if (rw.g){ setBalance(Math.round((S.balance + rw.g) * 100) / 100); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${rw.g} GRAM`, text: $t("Награда {0} уровня", r.l) }); }
@@ -245,6 +264,7 @@ async function seasonClaim(k, btn){
   S.hist.rewards.unshift({ kind: 'season', title: $t("Сезон: уровень {0}", r.l), rw: rw.g ? { g: rw.g } : { xp: 0 }, t: Date.now() });
   renderCases();
   if (rw.c) caseRun({ ...caseById(rw.c), price: 0, season: true });   // кейс из награды — бесплатно (сервер открывает «ожидающий»)
+  return true;
 }
 // шторка награды: что это, сколько стоит, когда откроется
 function seasonInfo(k){
@@ -253,7 +273,7 @@ function seasonInfo(k){
   if (rw.c){ const c = caseById(rw.c); img = c.img; title = c.name; about = $t("Кейс откроется сразу — со своим доказательством честности. Средняя ценность ≈{0} GRAM.", fmt(Math.round(caseEV(c) * 100) / 100)); }
   else if (rw.dep){ img = 'assets/hw-caul.webp'; title = `+${rw.dep[0]}% ${$t("к пополнению")}`; about = $t("Бонус к ближайшему пополнению: +{0}%, но не больше {1} GRAM. Действует 7 дней.", rw.dep[0], rw.dep[1]); }
   else if (rw.out){ img = 'assets/hw-ghost.webp'; title = $t("Вывод без комиссии") + (rw.out > 1 ? ' ×' + rw.out : ''); about = $t("Столько выводов NFT без комиссии {0} GRAM. Не сгорают в конце сезона.", OUT_FEE); }
-  else if (rw.cos){ img = rw.cos === 'frame' ? 'assets/frame-gold.webp' : seasonTheme().art; title = COS[rw.cos][0]; about = $t("Косметика темы: {0}. Остаётся у тебя навсегда — после сезона её уже не получить.", COS[rw.cos][1]); }
+  else if (rw.cos){ img = COS_IMG[rw.cos] || seasonTheme().art; title = COS[rw.cos][0]; about = $t("Косметика темы: {0}. Остаётся у тебя навсегда — после сезона её уже не получить.", COS[rw.cos][1]); }
   else if (rw.nft){ const n = themeNft(rw.nft); img = n.src; title = nftLabel(rw.nft); about = $t("Подарок из стока релеера в этой цене — какой именно, узнаешь при получении. На картинке — для примера: {0}.", n.name); }
   else { img = 'assets/hero-gem.webp'; title = `${rw.g} GRAM`; about = $t("GRAM сразу на баланс."); }
   const st = got ? $t("Получено") : lock ? $t("Нужен премиум-пропуск") : open ? $t("Готово — забирай") : $t("Ещё {0} XP до {1} уровня", xpFmt(r.l * SEASON.per - S.season.xp), r.l), stc = got ? 'got' : lock ? 'lock' : open ? 'ok' : 'soon';
@@ -329,8 +349,9 @@ const seasonClick = e => {
   if (act === 'caseinfo') caseInfo(caseById(a.dataset.c));
   if (act === 'all'){ const ks = SEASON_RW.filter(r => r.l <= seasonLv()).flatMap(r => ['f' + r.l, ...(S.season.prem ? ['p' + r.l] : [])]).filter(k => !S.season.got[k]);
     // сначала всё, кроме кейсов (без экранов), кейсы — по одному: они открываются своим экраном
-    (async () => { for (const k of ks){ const r = SEASON_RW[+k.slice(1) - 1], rw = k[0] === 'f' ? r.free : r.prem; if (!rw.c) await seasonClaim(k, a); }
-      const cs = ks.find(k => { const r = SEASON_RW[+k.slice(1) - 1]; return (k[0] === 'f' ? r.free : r.prem).c; }); if (cs) seasonClaim(cs, a); })(); }
+    (async () => { if (seasonClaimAll.on) return; seasonClaimAll.on = true; try {   // уже забирается — второй тап (кнопка перерисовалась) не запускает вторую очередь
+      for (const k of ks){ const r = SEASON_RW[+k.slice(1) - 1], rw = k[0] === 'f' ? r.free : r.prem; if (!rw.c && !(await seasonClaim(k, a))) return; }   // отказ — стоп, одна ошибка вместо 60
+      const cs = ks.find(k => { const r = SEASON_RW[+k.slice(1) - 1]; return (k[0] === 'f' ? r.free : r.prem).c; }); if (cs) await seasonClaim(cs, a); } finally { seasonClaimAll.on = false; } })(); }
 };
 $('casesBody').addEventListener('click', seasonClick, true);
 $('passDrawer').addEventListener('click', seasonClick, true);
@@ -355,11 +376,13 @@ function legacyTopGrant(place){
   if (!SEASON_ON || S.legacyTop || !(place >= 1 && place <= 20)) return; S.legacyTop = { place, t: Date.now() }; track('legacy_top', { place });
   const log = (txt, rw) => S.hist.rewards.unshift({ kind: 'legacy', title: $t("Прежний топ: {0} место", place) + ' · ' + txt, rw, t: Date.now() });
   let img, prize, go = null;
-  if (place === 1){ const n = NFTS.filter(n => n.price >= RARE_FROM && n.price <= RARE_TO).sort((a, b) => a.price - b.price)[0] || FLOOR_NFT(); INV = [giftOf(n), ...INV]; img = n.src; prize = `${n.name} #${n.num}`; log(prize, { xp: 0 }); }
-  else if (place <= 5){ const n = FLOOR_NFT(); INV = [giftOf(n), ...INV]; img = n.src; prize = `${n.name} #${n.num}`; log(prize, { xp: 0 }); }
+  // каждому призёру — свой подарок: случайный из пула (в бою сервер берёт свободный экземпляр из стока релеера, не один на всех)
+  const pick = P => P.length ? P[Math.random() * P.length | 0] : FLOOR_NFT();
+  if (place === 1){ const n = pick(NFTS.filter(n => n.price >= RARE_FROM && n.price <= RARE_TO)); INV = [giftOf(n), ...INV]; img = n.src; prize = `${n.name} #${n.num}`; log(prize, { xp: 0 }); }
+  else if (place <= 5){ const n = pick(NFTS.filter(n => n.price <= FLOOR_NFT().price * 1.2)); INV = [giftOf(n), ...INV]; img = n.src; prize = `${n.name} #${n.num}`; log(prize, { xp: 0 }); }
   else { const g = place <= 10 ? 2 : 1; setBalance(Math.round((S.balance + g) * 100) / 100); img = 'assets/hero-gem.webp'; prize = `+${g} GRAM`; log(prize, { g }); }
   $('passBody').innerHTML = `<div class="pass-h glow"><img src="${img}" alt=""><b>${$t("{0} место в топе", place)}</b><small>${$t("Спасибо, что с нами с первых дней! Топ по XP теперь сменил сезонный пасс — держи подарок за прежнее место.")}</small></div>` +
     `<div class="pass-v1"><span class="hx-val"><small>${$t("Твой приз")}</small><span>${prize}</span></span></div>`;
   $('passFoot').innerHTML = go ? `<button class="btn-main gold" data-sact="legcase">${$t("Открыть кейс")}</button>` : `<button class="btn-main gold" data-sact="buyno">${$t("Забрать")}</button>`;
-  setTimeout(() => { haptic('medium'); Sfx.coin?.(); showDrawer('passDrawer'); }, 600);
+  setTimeout(() => { haptic('medium'); Sfx.coin?.(); openDrawer ? swapDrawer('passDrawer') : showDrawer('passDrawer'); }, 600);   // поверх открытой шторки — сменой, а не второй шторкой (иначе первая не закрывается)
 }

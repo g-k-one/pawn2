@@ -145,14 +145,15 @@ $('dbgBody').addEventListener('click', e => {
   if (k === 'resetSave'){ haptic('medium'); Store.reset(); return; }
   // сезон: включить/выключить (перезагрузка — как смена языка), прокрутить уровни, премиум, сброс
   if (k === 'season'){ if ((v === '1') !== SEASON_ON){ LSset('bm-season', v === '1'); Store.save?.(); location.reload(); } return; }
-  if (k === 'sLv'){ seasonFresh(); const add = Math.min(+v * SEASON.per, SEASON.lv * SEASON.per - S.season.xp); if (add > 0) seasonXp(add); haptic(); renderDbg(); return; }
-  if (k === 'sPrem'){ S.season.prem = v === '1'; if (S.season.prem) cosGive('gold-frame'); document.body.classList.toggle('sprem', SEASON_ON && S.season.prem); haptic(); renderDbg(); return; }
-  if (k === 'sSet'){ seasonFresh(); S.season.xp = +v * SEASON.per; haptic(); renderDbg(); return; }
-  if (k === 'sNear'){ seasonFresh(); const lv = Math.min(SEASON.lv - 1, seasonLv()); S.season.xp = (lv + 1) * SEASON.per - 10; haptic(); renderDbg(); return; }
-  if (k === 'sGot'){ S.season.got = {}; if (v === '1') SEASON_RW.filter(r => r.l <= seasonLv()).forEach(r => { S.season.got['f' + r.l] = 1; if (S.season.prem) S.season.got['p' + r.l] = 1; }); haptic(); renderDbg(); return; }
+  const sSrv = () => API.dbgSeason({ xp: S.season.xp, prem: !!S.season.prem, got: Object.keys(S.season.got) }).catch(() => {});   // в тестовом боте — то же на сервере
+  if (k === 'sLv'){ seasonFresh(); const add = Math.min(+v * SEASON.per, SEASON.lv * SEASON.per - S.season.xp); if (add > 0) seasonXp(add); sSrv(); haptic(); renderDbg(); return; }
+  if (k === 'sPrem'){ S.season.prem = v === '1'; if (S.season.prem) cosGive('gold-frame'); sSrv(); document.body.classList.toggle('sprem', SEASON_ON && S.season.prem); haptic(); renderDbg(); return; }
+  if (k === 'sSet'){ seasonFresh(); S.season.xp = +v * SEASON.per; sSrv(); haptic(); renderDbg(); return; }
+  if (k === 'sNear'){ seasonFresh(); const lv = Math.min(SEASON.lv - 1, seasonLv()); S.season.xp = (lv + 1) * SEASON.per - 10; sSrv(); haptic(); renderDbg(); return; }
+  if (k === 'sGot'){ S.season.got = {}; if (v === '1') SEASON_RW.filter(r => r.l <= seasonLv()).forEach(r => { S.season.got['f' + r.l] = 1; if (S.season.prem) S.season.got['p' + r.l] = 1; }); sSrv(); haptic(); renderDbg(); return; }
   if (k === 'sTop'){ if (v === '0'){ S.legacyTop = null; S.legacyRank = undefined; } else { S.legacyTop = null; legacyTopGrant(+v); } haptic(); renderDbg(); return; }
   if (k === 'sEnd'){ const old = S.season; S.season = seasonNew(); seasonSettle(old); haptic('medium'); renderDbg(); return; }   // как будто сезон закончился: незабранное выдаётся само, прогресс — с нуля
-  if (k === 'sReset'){ S.season = { id: seasonNo(), xp: 0, prem: false, got: {} }; haptic('medium'); renderDbg(); return; }
+  if (k === 'sReset'){ S.season = { id: seasonNo(), xp: 0, prem: false, got: {} }; sSrv(); haptic('medium'); renderDbg(); return; }
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
   if (k === 'stock'){ API.dbgStock(c.dataset.id, +v).then(() => { S.stock[c.dataset.id] = +v; haptic(); renderDbg(); }, () => notify({ type: 'err', icon: 'err', title: $t("Нет связи"), text: $t("Попробуй ещё раз") })); return; }
   if (k === 'onbNow'){ hideDrawer(); setTimeout(() => Onb.start(true), 300); return; }

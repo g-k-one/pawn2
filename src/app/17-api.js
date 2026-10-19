@@ -70,6 +70,8 @@ const API = {
   /* --- сезон (16k-season.js): всё проверяет сервер --- */
   /* POST /season/claim {season, key: 'f12'|'p12'} → {ok, reward} — награда уровня, раз; премиум-дорожка — только с купленным премиумом. Кейс из награды открывается на сервере (domain case:<id>) */
   async seasonClaim(id, k){ return { ok: true }; },
+  /* только тестовый бот: Дебаг → Сезон меняет уровень, премиум и забранное и на сервере (иначе сервер не отдаёт награды) */
+  async dbgSeason(o){ return { ok: true }; },
   /* POST /season/buy {season} → {ok, balance} — премиум за SEASON.price GRAM, раз за сезон */
   async seasonBuy(id){ return { ok: true }; },
   /* POST /season/task {id, xp} → {ok, got} — XP за задание дня сезона, раз в день по МСК */
@@ -104,7 +106,8 @@ function skelGate(key, el, rerender, kind = 'card', head = ''){
 }
 /* кнопка-действие ждёт сервер: спиннер внутри (ширина не меняется), повторное нажатие не проходит; ошибка — кнопка возвращается и уведомление */
 async function btnWait(btn, p){ btn?.classList.add('ld');
-  try { return await p; } catch(e){ notify({ type: 'err', icon: 'err', title: e?.message === 'offline' ? $t("Нет связи") : $t("Сервер не ответил"), text: $t("Попробуй ещё раз") }); return null; }
+  try { return await p; } catch(e){ const said = e?.type === 'ENDPOINT_ERROR' && e.message;   // сервер ответил отказом — пишем его причину
+    notify({ type: 'err', icon: 'err', title: said ? $t("Не получилось") : e?.message === 'offline' ? $t("Нет связи") : $t("Сервер не ответил"), text: said || $t("Попробуй ещё раз") }); return null; }
   finally { btn?.classList.remove('ld'); } }
 /* игра ждёт сервер внутри анимации: если ответа нет дольше 0.4 с — под тикетом три точки, дольше 5 с — «Связь медленная, ждём ответ» */
 function netWait(p){ const el = $('fxWait'), t1 = setTimeout(() => el.classList.add('on'), 400), t2 = setTimeout(() => el.classList.add('slow'), 5000);
@@ -155,7 +158,8 @@ const Store = (() => {
     if (!SAVE) return;
     const d = JSON.parse(JSON.stringify(SAVE), (k, x) => x && typeof x === 'object' && x.$n ? NBY.get(x.$n) || NFTS.find(n => n.name === x.$n.split('#')[0]) || NFTS[0] : x);
     S.balance = d.balance; S.xp = d.xp; INV = d.inv; S.stock = d.stock; S.ach = d.ach; S.week = d.week; REF.pending = d.refPending || 0;
-    Object.assign(S.hist, d.hist); S.hist.wallet.forEach(w => { if (w.type === 'restore' && /сезон|season/i.test(w.method || '')) w.type = 'pass'; });   // премиум сезона из ранних сборок был записан как «восстановление дня» S.nonce = d.nonce; S.clientSeed = d.clientSeed; S.bonus = d.bonus || null; S.promoUsed = d.promoUsed || []; S.storyDay = d.storyDay || null; if (d.season) S.season = d.season; if ('legacyRank' in d) S.legacyRank = d.legacyRank; S.legacyTop = d.legacyTop || null; S.cos = d.cos || {}; S.equip = d.equip || {}; if (S.cos['hw-badge'] && !d.equip) Object.keys(S.cos).forEach(id => { const sl = COS_ITEMS[id]?.slot; if (sl && !S.equip[sl]) S.equip[sl] = id; }); S.freeOut = d.freeOut || 0; if (typeof cosApply === 'function') cosApply();
+    Object.assign(S.hist, d.hist); S.hist.wallet.forEach(w => { if (w.type === 'restore' && /сезон|season/i.test(w.method || '')) w.type = 'pass'; });   // премиум сезона из ранних сборок был записан как «восстановление дня»
+    S.nonce = d.nonce; S.clientSeed = d.clientSeed; S.bonus = d.bonus || null; S.promoUsed = d.promoUsed || []; S.storyDay = d.storyDay || null; if (d.season) S.season = d.season; if ('legacyRank' in d) S.legacyRank = d.legacyRank; S.legacyTop = d.legacyTop || null; S.cos = d.cos || {}; S.equip = d.equip || {}; if (S.cos['hw-badge'] && !d.equip) Object.keys(S.cos).forEach(id => { const sl = COS_ITEMS[id]?.slot; if (sl && !S.equip[sl]) S.equip[sl] = id; }); S.freeOut = d.freeOut || 0; if (typeof cosApply === 'function') cosApply();
     // новый день по Москве — задания дня с нуля (в бою это делает сервер)
     S.tasks = d.day === mskDay() ? d.tasks : { early: 0, turnover: 0, crafts: 0, done: {} };
     if (d.ep){ const proofs = [...S.hist.crafts, ...S.hist.cases].map(x => x.r.proof).filter(p => p.epoch_id === d.ep.id && !p.server_seed);

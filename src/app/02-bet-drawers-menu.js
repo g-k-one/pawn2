@@ -74,6 +74,7 @@ function drawerTop(el){
 function showDrawer(id){
   track('screen', { id: id.replace(/Drawer$/, '') });   // какой экран открыли (шторки)
   $('backdrop').classList.toggle('top', !!(typeof FX !== 'undefined' && FX.keepDrawer && FX.on && FX.keepDrawer.id !== id));   // шторка поверх итога кейса
+  if (openDrawer && openDrawer.id !== id){ openDrawer.classList.remove('open'); openDrawer.style.transform = ''; }   // поверх другой шторки: прежняя уходит (иначе, например, Дебаг оставался висеть)
   openDrawer = $(id); drawerTop(openDrawer); openDrawer.classList.add('open'); $('backdrop').classList.add('on'); haptic();
 }
 function hideDrawer(){

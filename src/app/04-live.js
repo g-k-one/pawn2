@@ -37,15 +37,16 @@ function pushLive(html){
   }
   while (liveEl.children.length > Math.ceil((SW - 38) / 62) + 1) liveEl.lastElementChild.remove();
 }
-/* тап по дропу — кто, что и с каким тикетом */
+/* тап по дропу — кто, что и с каким тикетом; режим и ранг в заголовке — своим цветом */
+const hue = (t, c) => `<span style="color:${c}">${t}</span>`;
 liveEl.addEventListener('click', e => {
   const it = e.target.closest('.item'); if (!it) return;
   if (it.dataset.case){ const c = caseById(it.dataset.case); haptic(); notify({ img: it.dataset.img, color: c.c, title: c.name, text: `${it.dataset.who} ${$t("— выпало:")} ${it.dataset.lbl}` }); return; }
   const n = +it.dataset.n, t = TIERS[tierOfTicket(n)]; haptic();
-  if (it.classList.contains('ibets')){ notify({ img: it.dataset.img, color: '#7c5cff', title: `${$t("Ставки")} · ${$t("тикет")} ${tk(n)}`, text: `${it.dataset.who} — ${it.dataset.nft || '+' + fmt(+it.dataset.w) + ' GRAM'}` }); return; }
-  if (it.dataset.bank){ notify({ img: it.dataset.img, color: t.c, title: `${$t("Арена")} · ${t.name} · x${it.dataset.m}`,
+  if (it.classList.contains('ibets')){ notify({ img: it.dataset.img, color: '#7c5cff', title: `${hue($t("Ставки"), '#9a82ff')} · ${$t("тикет")} ${tk(n)}`, text: `${it.dataset.who} — ${it.dataset.nft || '+' + fmt(+it.dataset.w) + ' GRAM'}` }); return; }
+  if (it.dataset.bank){ notify({ img: it.dataset.img, color: t.c, title: `${hue($t("Арена"), '#ff8a3c')} · ${hue(t.name, t.c)} · x${it.dataset.m}`,
     text: `${it.dataset.who} — ${it.dataset.nft || '+' + fmt(+it.dataset.w) + ' GRAM'} · ${$t("тикет")} ${tk(n)}` }); return; }
-  notify({ img: it.dataset.img, color: t.c, title: `${t.name} · x${it.dataset.m}`, text: `${it.dataset.who} ${$t("— {0} · тикет", it.dataset.nft || '+' + fmt(+it.dataset.w) + ' GRAM')} ${tk(n)}` });
+  notify({ img: it.dataset.img, color: t.c, title: `${hue(t.name, t.c)} · x${it.dataset.m}`, text: `${it.dataset.who} ${$t("— {0} · тикет", it.dataset.nft || '+' + fmt(+it.dataset.w) + ' GRAM')} ${tk(n)}` });
 });
 let liveN = 0;
 /* ---------- дебаг → «Замер» → «Нагрузка»: лента «лайв» потоком и спам запросов ----------

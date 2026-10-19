@@ -38,7 +38,8 @@ function t2Html(el, h){ if (el.innerHTML !== h) el.innerHTML = h; }
 function t2Enter(){ t2GlowPatch(); clearInterval(auto); t2Prev = { ton: S.ton, gifts: S.gifts }; S.ton = t2Fee; S.gifts = []; renderSlots(); $('giftCnt').hidden = true; t2Main = S.tier; _setTier(t2Tier); if (tierOfTicket(t2Ticket) !== t2Tier) t2Ticket = TIERS[t2Tier].from; t2Smoke(true); t2Ava(t2Me()); renderBet(); t2Show(); t2Sync(); }   // вернулся на арену, а ты в комнате — снова аватарка и банк
 function t2Leave(){ if (t2Prev){ S.ton = t2Prev.ton; S.gifts = t2Prev.gifts.filter(g => INV.includes(g)); t2Prev = null; } t2Ava(false); t2Smoke(false); t2Tier = S.tier; renderBet(); setTier(t2Main ?? S.tier, { keepPrize: false }); restartAuto(); }
 // комната: таймер — до её старта; разыграна — открываем следующую (экран итога для tab2 — следующий шаг)
-function t2Apply(room){ const was = t2Me(); t2Room = room; t2End = room?.endsAt || 0;
+function t2Apply(room){ const was = t2Me(), same = t2Room && room && t2Room.id === room.id, ne = room?.endsAt || 0; t2Room = room;
+  t2End = same && ne && t2End && Math.abs(ne - t2End) < 1500 ? Math.min(ne, t2End) : ne;   // конец с сервера приходит с задержкой сети, каждый опрос чуть разный — берём самый ранний: кольцо не дёргается
   if (was !== t2Me()){ t2Ava(t2Me()); renderBet(true); } else if (t2Me() && $('bet').querySelector('.ton').textContent !== fmt(room.bank)) renderBet(true);
   t2Seats(t2Quiet); t2Quiet = false; t2Snap(); }
 // тикеты зафиксированы — колесо и число встают на тот тикет, что реально записан в бой (на сервере), даже если палец ещё крутил
@@ -56,6 +57,7 @@ reveal = (r, fast) => { $('fxPl')?.replaceChildren(); const p = _reveal(r, fast)
 // бой: ждём, пока закончится текущий крафт; если ты на другом табе — возвращаем в tab2; дальше — как в PvP
 let t2Go = false;
 function t2Fight(room){
+  if (t2End > Date.now()){ t2End = Date.now(); t2Ring(); }   // бой начался — кольцо таймера докручиваем до конца
   pvpWhenFree(async () => {
     if (openDrawer){ hideDrawer(); await wait(220); }   // бой начинается — все шторы и окна закрываем
     if ($('modal')?.classList.contains('on') && typeof closeModal === 'function') closeModal();
@@ -74,7 +76,8 @@ setInterval(() => { if (t2Go && openDrawer) hideDrawer();   // во время �
   t2Smoke(isT2() && !hid && !modeBusy);   // дым включаем после перехода — переход не дёргается; вне арены — на паузе
   if (!isT2() || hid){ if (t2Me() && ++t2Tick % 4 === 0) t2Sync(); return; } t2Show(); t2ArrowsSync(); if (!t2Room || (t2End && Date.now() >= t2End) || ++t2Tick % 4 === 0) t2Sync(); }, 250);   // один таймер на арену (стрелки — здесь же)   // раз в секунду — свежий банк
 // в кнопке: аватарка вместо молота с наковальней — ты в комнате
-function t2Ava(on){ CB.classList.toggle('t2in', on); if (on && !CB.querySelector('.t2ava')) CB.insertAdjacentHTML('beforeend', `<span class="ava-w t2ava"><img src="assets/avatar.webp" alt="">${frameHTML()}</span>`); }
+function t2Ava(on){ CB.classList.toggle('t2in', on); if (!on) return;
+  CB.querySelector('.t2ava')?.remove(); CB.insertAdjacentHTML('beforeend', `<span class="ava-w t2ava"><img src="${document.querySelector('.balance .ava')?.src || 'assets/avatar.webp'}" alt="">${frameHTML()}</span>`); }   // каждый вход — заново: фото и рамка всегда текущие
 CB.insertAdjacentHTML('beforeend', `<img class="t2lockico" src="assets/lock.svg" alt="">`);   // за 5 с до старта — замок вместо щита с мечом (и вместо аватарки)
 // тап по наковальне / ставке: в tab2 крафт не начинаем — входим в комнату с выбранным тикетом
 const _craftClick = $('craft').onclick;
@@ -94,6 +97,7 @@ $('craft').onclick = async () => {
   setBalance(S.balance - t2Fee); haptic('medium'); Sfx.coin(); t2Apply(r.room);
   notify({ type: 'ok', icon: 'ok', title: $t("Ты на арене"), text: $t("Крути колесо и угадай тикет — самый близкий крафтит на весь банк") });
   CB.animate([{ scale: .85 }, { scale: 1.08 }, { scale: 1 }], { duration: 360, easing: 'cubic-bezier(.3,1.4,.5,1)' });
+  const fx = entryOf({ me: true }, t2Fee); if (fx) setTimeout(() => entryFx(CB.querySelector('.t2ava') || CB, fx), 150);   // свой эффект входа
 };
 // уже в комнате: новый тикет с колеса отправляем, когда палец отпустил (как в PvP); за 5 с до старта тикет зафиксирован
 let t2LiveT = 0;
@@ -244,7 +248,8 @@ function t2Seats(quiet){
   const others = (t2Room?.entries || []).filter(x => !x.me).slice(0, T2A.slots), box = $('t2Seats');
   for (let i = 0; i < T2A.slots; i++){ const x = others[i], id = x ? x.who : '', el = box.children[i]; if (t2SeatIds[i] === id) continue; t2SeatIds[i] = id;
     el.className = 'ar-seat ' + (x ? 'taken' : 'empty'); el.innerHTML = x ? pvpAva(x) + `<small>${x.who}</small>` : T2_HELM;
-    if (x && !S.lite && !t2Hidden() && !quiet){ el.animate([{ scale: .3, opacity: 0 }, { scale: 1.15, opacity: 1, offset: .6 }, { scale: 1 }], { duration: 420, easing: 'cubic-bezier(.3,1.5,.5,1)' }); Sfx.coin(); haptic('light'); } }
+    if (x && !S.lite && !t2Hidden() && !quiet){ const fx = entryOf(x, t2Fee); if (fx) setTimeout(() => entryFx(el, fx), 200);   // эффект входа соперника — видят все в комнате
+      el.animate([{ scale: .3, opacity: 0 }, { scale: 1.15, opacity: 1, offset: .6 }, { scale: 1 }], { duration: 420, easing: 'cubic-bezier(.3,1.5,.5,1)' }); Sfx.coin(); haptic('light'); } }
 }
 // кнопка подарков в tab2 и tab3 — «Честность»: значок «i» в круге, открывает правила комнаты и хеш её зерна
 $('giftBtn').insertAdjacentHTML('beforeend', `<svg class="t2shield" viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="24" cy="24" r="12.5" stroke="#fff" stroke-width="2.66667"/><circle cx="24" cy="17.9" r="1.8" fill="#fff"/><path d="M24 22.6v8" stroke="#fff" stroke-width="2.66667" stroke-linecap="round"/></svg>`);

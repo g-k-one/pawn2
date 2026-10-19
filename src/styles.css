@@ -3578,3 +3578,5 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 .hx-prem .hx-lc img{animation:passFloat 3.6s ease-in-out infinite}
 .lite .hx-art,.lite .mp-art,.lite .hx-prem .hx-lc img{animation:none}
 @media (prefers-reduced-motion:reduce){.hx-art,.mp-art,.hx-prem .hx-lc img{animation:none}}
+/* оформление: плитка эффекта входа — картинка всплеска целиком */
+.cos-img img[src*="fx-potion-icon"]{width:84%;height:84%;object-fit:contain}
