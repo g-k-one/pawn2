@@ -218,22 +218,26 @@ function renderMenu(){
   const sw = (id, c, ic, t, sub, on) => `<button class="mrow" id="${id}" style="--c:${c}"><i>${svg(ic)}</i><span class="mt">${t}${sub ? `<small>${sub}</small>` : ''}</span><span class="switch${on ? ' on' : ''}"></span></button>`;
   const row = (ic, t, c, e, extra = '') => `<button class="mrow" style="--c:${c}"${extra}><i>${svg(ic)}</i>${t}<em>${e}</em></button>`;
   $('menuBody').innerHTML =
-    `<button class="mprof menu-top"><img src="assets/avatar.webp" alt=""><span><b>GK</b><small>${S.demo ? $t("∞ фантиков") : fmt(S.balance) + ' GRAM'}</small></span>${S.demo ? '' : `<em>${$t("Пополнить")}</em>`}</button>` +
-    rankBar(S.xp) +
-    `<button class="mbonus" data-go="cases"><span class="mb-t"><b>${$t("Бонусы")}</b><small>${$t("кейсы, задания, супер дроп и друзья")}</small><span class="mb-chips"><span>${$t("Задания {0}/", tasksDone())}${TASKS.length}</span>${dailyDone() ? `<span class="ok">${$t("Кейс готов")}</span>` : ''}</span></span><span class="mb-art">${caseArt(caseById('satoshi'))}${caseArt(caseById('durov'))}</span></button>` +
+    (SEASON_ON ? '<div class="mtop">' : '') + `<button class="mprof menu-top"><span class="ava-w"><img src="assets/avatar.webp" alt="">${typeof frameHTML === 'function' ? frameHTML() : ''}</span><span><b>${cosBadge()}GK${legacyBadge()}</b><small>${S.demo ? $t("∞ фантиков") : fmt(S.balance) + ' GRAM'}</small></span>${S.demo ? '' : `<em>${$t("Пополнить")}</em>`}</button>` +
+    (SEASON_ON ? seasonMenuCard() + '</div>' : rankBar(S.xp) +   // в сезоне — одна карточка пасса в цветах темы вместо полосы звания и «Бонусов»
+    `<button class="mbonus" data-go="cases"><span class="mb-t"><b>${SEASON_ON ? $t("Сезонный пасс") : $t("Бонусы")}</b><small>${SEASON_ON ? $t("уровни, задания, кейсы и супер дроп") : $t("кейсы, задания, супер дроп и друзья")}</small><span class="mb-chips"><span>${SEASON_ON ? $t("Задания {0}/", seasonTasksDone()) + 3 : $t("Задания {0}/", tasksDone()) + TASKS.length}</span>${SEASON_ON ? (seasonReady() ? `<span class="ok">${$t("награды: {0}", seasonReady())}</span>` : '') : dailyDone() ? `<span class="ok">${$t("Кейс готов")}</span>` : ''}</span></span><span class="mb-art">${caseArt(caseById('satoshi'))}${caseArt(caseById('durov'))}</span></button>`) +
     `<div class="mban2"><button class="mb2 hist" data-go="hist"><span class="mb2-t"><b>${$t("История")}</b><small>${$t("игры, кошелёк и бонусы")}</small></span><span class="mb2-art">${histFan()}</span></button>` +
     `<button class="mb2 pf" data-go="pfi"><span class="mb2-t"><b>${$t("Честность")}</b><small>${$t("проверь любой результат")}</small></span><span class="mb2-art"><i class="mb2-sh">${svg(IC.shield)}</i><em>00000</em></span></button></div>` +
+    // группы по смыслу: что моё (вывод, оформление, друзья) · как играю · настройки устройства · помощь
+    `<div class="mgrp-t">${$t("Профиль")}</div><div class="mgrp">` +
+      row(IC.out, $t("Вывод NFT"), '#30A5FF', INV.length ? `${INV.length} ${$n("подарок|подарка|подарков", INV.length)}` : '', ' data-go="withdraw"') +   // заметно, сверху: не все находят вывод через баланс
+      (SEASON_ON ? row('<path d="M12 3l2.4 5 5.6.8-4 3.9.9 5.5L12 15.6 7.1 18.2l.9-5.5-4-3.9 5.6-.8z"/>', $t("Оформление"), '#FFB835', `${Object.keys(S.cos).length} ${$t("из")} ${Object.keys(COS_ITEMS).length}`, ' data-go="cos"') : '') +
+      row('<circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M21 20c0-2.6-1.5-4.8-3.8-5.6"/>', $t("Рефералка"), '#EB57B0', `${REF.friends.length} ${$t("друзей")}`, ' data-go="refs"') + `</div>` +
     `<div class="mgrp-t">${$t("Игра")}</div><div class="mgrp">` +
       sw('fastRow', '#FFB835', NICON.bolt, $t("Быстрый крафт"), $t("сразу число и дроп"), S.fast) +
       `<button class="mrow" id="autoRow" style="--c:#30A5FF"><i>${svg(AC_ICO)}</i><span class="mt">${$t("Автокрафт")}<small>${$t("серия крафтов или ставок со стопами")}</small></span><em class="mchev">${svg('<path d="M9 6l6 6-6 6"/>')}</em></button>` +
-      sw('liteRow', '#12D53D', NICON.leaf, $t("Экономный режим"), $t("без анимаций — для слабых телефонов"), S.lite) +
-      sw('demoRow', '#AE3FC4', NICON.candy, $t("Демо-режим"), $t("фантики вместо GRAM"), S.demo) +
+      sw('demoRow', '#AE3FC4', NICON.candy, $t("Демо-режим"), $t("фантики вместо GRAM"), S.demo) + `</div>` +
+    `<div class="mgrp-t">${$t("Настройки")}</div><div class="mgrp">` +
+      sw('soundRow', '#F57A37', NICON.sound, $t("Звук"), '', S.sound) +
       sw('vibroRow', '#30A5FF', NICON.vibro, $t("Вибрация"), '', S.vibro) +
-      sw('soundRow', '#F57A37', NICON.sound, $t("Звук"), '', S.sound) + `</div>` +
-    `<div class="mgrp-t">${$t("Другое")}</div><div class="mgrp">` +
-      row(IC.out, $t("Вывод NFT"), '#30A5FF', INV.length ? `${INV.length} ${$n("подарок|подарка|подарков", INV.length)}` : '', ' data-go="withdraw"') +   // заметно, сверху: не все находят вывод через баланс
-      row(IC.users, $t("Рефералка"), '#EB57B0', `${REF.friends.length} ${$t("друзей")}`, ' data-go="refs"') +
-      `<div class="mrow" style="--c:#AE3FC4"><i>${svg(IC.globe)}</i>${$t("Язык")}<span class="seg">${[['ru', 'RU'], ['en', 'EN']].map(([k, t]) => `<button data-lang="${k}"${S.lang === k ? ' class="on"' : ''}>${t}</button>`).join('')}</span></div>` +
+      sw('liteRow', '#12D53D', NICON.leaf, $t("Экономный режим"), $t("без анимаций — для слабых телефонов"), S.lite) +
+      `<div class="mrow" style="--c:#AE3FC4"><i>${svg(IC.globe)}</i>${$t("Язык")}<span class="seg">${[['ru', 'RU'], ['en', 'EN']].map(([k, t]) => `<button data-lang="${k}"${S.lang === k ? ' class="on"' : ''}>${t}</button>`).join('')}</span></div>` + `</div>` +
+    `<div class="mgrp-t">${$t("Помощь")}</div><div class="mgrp">` +
       row(IC.chat, $t("Поддержка"), '#12D53D', '', ' data-go="support"') +
       `<button class="mrow" id="dbgRow" style="--c:#EB57B0"><i>${svg(NICON.bug)}</i>${$t("Дебаг")}<em>${dbgLabel()}</em></button></div>` +
     `<div class="wwarn rg"><i>18+</i><span><b>${$t("Играй ответственно")}</b><small>${$t("Ставь только то, что готов потерять, и делай перерывы. Если игра перестала быть развлечением — остановись.")}</small></span></div>` +
@@ -243,7 +247,7 @@ $('menuBtn').onclick = () => { renderMenu(); showDrawer('menuDrawer'); };
 $('menuBody').addEventListener('click', e => {
   if (e.target.closest('.menu-top')){ openWallet('dep'); return; }
   const go = e.target.closest('[data-go]')?.dataset.go;
-  if (go){ haptic(); if (go === 'cases') openCases('tasks'); else if (go === 'top') openCases('top'); else if (go === 'support') tgOpen(SUPPORT); else if (go === 'refs') openCases('refs'); else if (go === 'withdraw') openWallet('out'); else if (go === 'hist') openHistory(); else if (go === 'pfi') swapDrawer('pfiDrawer', renderPFInfo); else if (go === 'pvp') openPvp(); else if (go === 'bets') openBets(); return; }
+  if (go){ haptic(); if (go === 'cases') openCases('tasks'); else if (go === 'top') openCases('top'); else if (go === 'support') tgOpen(SUPPORT); else if (go === 'cos') openCos(); else if (go === 'refs') openCases('refs'); else if (go === 'withdraw') openWallet('out'); else if (go === 'hist') openHistory(); else if (go === 'pfi') swapDrawer('pfiDrawer', renderPFInfo); else if (go === 'pvp') openPvp(); else if (go === 'bets') openBets(); return; }
   const lg = e.target.closest('[data-lang]');
   // язык: запоминаем и перезапускаем — все тексты строятся заново на выбранном языке
   if (lg){ if (S.lang === lg.dataset.lang) return; haptic(); try { localStorage.setItem('bm-lang', lg.dataset.lang); } catch(_){} location.reload(); return; }

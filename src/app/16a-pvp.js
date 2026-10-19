@@ -97,7 +97,12 @@ let arenaOn = false, arenaSeats = [];
 const pvpWhenFree = fn => { if (!S.busy || arenaOn) return fn(); setTimeout(() => pvpWhenFree(fn), 400); };
 const pvpLeft = v => v.endsAt ? Math.max(0, (v.endsAt - Date.now()) / 1000) : PVP_TIME;   // пусто — таймер ещё не пошёл
 const mmss = s => { const c = Math.ceil(s); return `${Math.floor(c / 60)}:${String(c % 60).padStart(2, '0')}`; };
-const pvpAva = x => `<span class="tav" style="--tc:${avc(x.who)}">${x.me ? '<img src="assets/avatar.webp" alt="">' : x.who[0].toUpperCase()}</span>`;
+// рамка — соседом аватарки в обёртке: внутри .tav она закрывала фон с буквой
+const pvpAva = x => { const fr = x.me ? frameHTML() : botFrame(x.who), av = `<span class="tav" style="--tc:${avc(x.who)}">${x.me ? '<img src="assets/avatar.webp" alt="">' : x.who[0].toUpperCase()}</span>`; return fr ? `<span class="ava-w pv">${av}${fr}</span>` : av; };
+// мок: у части соперников надета рамка (в бою — equip.frame участника с сервера)
+// мок: у части соперников значок у имени (в бою — equip.badge участника с сервера)
+function botBadge(n){ if (!SEASON_ON) return ''; const h = [...n].reduce((a, c) => a + c.charCodeAt(0) * 7, 0) % 3; return h === 0 ? BADGE_SVG.pumpkin : ''; }
+function botFrame(n){ if (!SEASON_ON) return ''; const h = [...n].reduce((a, c) => a + c.charCodeAt(0), 0) % 5, f = h === 0 ? COS_ITEMS['gold-frame'] : h === 1 ? COS_ITEMS['hw-frame'] : null; return f ? `<img class="ava-fr" src="${f.img}" style="--k:${f.k}" alt="">` : ''; }
 const tierOfN = n => TIERS[tierOfTicket(n)];
 // системная кнопка «Назад» Telegram — пока открыта арена
 const tgBack = on => { try { const b = Telegram.WebApp.BackButton; b.offClick(leaveArena); if (on){ b.onClick(leaveArena); b.show(); } else b.hide(); } catch(_){} };
@@ -448,7 +453,7 @@ function pvlList(p, r){
 // игрок строкой: аватар, ник, тикет и расстояние; справа — итог
 const pvlRow = (x, p, r) => { const nft = x.win ? (x.me ? r.nft : p.winNft) : null, ch = x.me ? r.change : p.winChange;
   return `<div class="trow${x.me ? ' me' : ''}${x.win ? ' win' : ''}">${pvpAva(x)}` +
-    `<span class="tn"><b>${x.me ? $t("Ты") : '@' + x.who}</b><small>${$t("тикет")} <i class="tkc" style="color:${tierOfN(x.guess).c}">${tk(x.guess)}</i> · ±${x.dist.toLocaleString(LOC)}</small>` +
+    `<span class="tn"><b>${x.me ? `${cosBadge()}${typeof ME_NAME === 'function' ? ME_NAME() : 'GK'}` : botBadge(x.who) + '@' + x.who}</b><small>${$t("тикет")} <i class="tkc" style="color:${tierOfN(x.guess).c}">${tk(x.guess)}</i> · ±${x.dist.toLocaleString(LOC)}</small>` +
     `</span>` + pvlWin(x, p, r) + `</div>`; };
 // сверху — статистика боя (Бой · Банк · Множитель · Игроков), ниже все игроки по близости к тикету — победитель первым
 const pvlHTML = (p, r) => `<div class="sect pvls">` +

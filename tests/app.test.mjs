@@ -62,7 +62,7 @@ test('кейс: открытие и проверка доказательств�
   const { page, ctx, errors } = await open();
   const s0 = await waitSave(page, s => s.hist.cases.length);
   await page.click('#menuBtn'); await page.waitForTimeout(400); await page.click('[data-go="cases"]'); await page.waitForTimeout(500);
-  await page.click('#casesTabs [data-k="cases"]'); await page.waitForTimeout(400); await page.click('[data-info="durov"]'); await page.waitForTimeout(500);
+  await page.click((await page.$('.cban')) ? '.cban' : '#casesTabs [data-k="cases"]'); await page.waitForTimeout(400); await page.click('[data-info="durov"]');   // в сезоне кейсы — баннером в «Пассе», иначе вкладкой await page.waitForTimeout(500);
   await page.click('#caseGo');
   await page.waitForSelector('#fx.done', { timeout: 20000 }); await page.waitForTimeout(400); await page.click('#cTake'); await page.waitForTimeout(1500);
   await waitSave(page, s => s.hist.cases.length === s0.hist.cases.length + 1);

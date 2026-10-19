@@ -111,3 +111,20 @@ function betMorph(w0){ const b = $('bet'), w1 = b.offsetWidth, m = modeNow(); if
   arrShow(m, w1);
   if (Math.abs(w1 - w0) > 1){ betMorphing = true; b.animate([{ width: w0 + 'px', overflow: 'hidden' }, { width: w1 + 'px', overflow: 'hidden' }], { duration: 260, easing: 'cubic-bezier(.33,0,.2,1)' }).finished.finally(() => { betMorphing = false; }); }   // ровно, без «доезда»
 }
+/* таблетки (.seg) — плавная подложка, как у режимов на главной. Таблетки перерисовываются целиком (innerHTML),
+   поэтому прошлое положение подложки помним по набору подписей и едем от него к новой кнопке */
+const SEG_AT = new Map();
+function segGlide(){
+  document.querySelectorAll('.seg').forEach(seg => {
+    const on = seg.querySelector('button.on'); if (!on || !on.offsetWidth) return;
+    let th = seg.querySelector(':scope>.segth'); const key = [...seg.querySelectorAll('button')].map(b => b.textContent).join('|');
+    const x = on.offsetLeft - 3, w = on.offsetWidth, prev = SEG_AT.get(key);
+    if (!th){ th = document.createElement('i'); th.className = 'segth'; seg.prepend(th); seg.classList.add('glide');
+      th.style.transition = 'none'; th.style.top = on.offsetTop + 'px'; th.style.height = on.offsetHeight + 'px';   // высота — сразу, иначе подложка «вырастает» из нуля и дёргается
+      if (prev){ th.style.width = prev.w + 'px'; th.style.transform = `translateX(${prev.x}px)`; } th.offsetWidth; th.style.transition = ''; }
+    if (th.dataset.x !== String(x) || th.dataset.w !== String(w)){ th.dataset.x = x; th.dataset.w = w; th.style.top = on.offsetTop + 'px'; th.style.height = on.offsetHeight + 'px'; th.style.width = w + 'px'; th.style.transform = `translateX(${x}px)`; }
+    SEG_AT.set(key, { x, w });
+  });
+}
+let segRaf = 0;
+new MutationObserver(() => { if (!segRaf) segRaf = requestAnimationFrame(() => { segRaf = 0; segGlide(); }); }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });

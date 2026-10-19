@@ -355,6 +355,7 @@ function makeForge(host){
     im.onload = () => { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, t.t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, im);
       for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
       t.ok = true; };
+    im.onerror = () => { t.err = true; };   // для диагностики (Дебаг → строка внизу)
     im.src = base + 'fx-' + name + '.webp';
     return t;
   }
@@ -1478,6 +1479,10 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
       return { stop(){ e.stopping = true; }, kill(){ live.delete(e); }, alive: () => live.has(e), set(k, v){ e.s[k] = v; } };
     },
     stopAll(){ live.forEach(e => e.stopping = true); },
+    // диагностика для Дебага: есть ли WebGL, загрузились ли атласы, видеокарта, сколько частиц в последнем кадре
+    info(){ if (ok === null) return 'fx: —'; if (!ok) return 'fx: нет WebGL';
+      const T = Object.entries(tex), bad = T.filter(([, v]) => v.err).map(([k]) => k), di = gl.getExtension('WEBGL_debug_renderer_info');
+      return `fx: ${T.filter(([, v]) => v.ok).length}/${T.length}${bad.length ? ' ошибка ' + bad.join(',') : ''} · q${quality} · ${stats.quads | 0} · ${di ? String(gl.getParameter(di.UNMASKED_RENDERER_WEBGL)).slice(0, 40) : 'gpu ?'}${gl.isContextLost() ? ' · контекст потерян' : ''}`; },
     // заранее: холст и атлас — чтобы первый эффект (удар молота на первом крафте) не пропал, пока грузится картинка
     preload(atlas){ if (ok === null){ ok = setup(); if (typeof S !== 'undefined' && S.lite) quality = 0; } if (ok) texture(atlas); },
   };

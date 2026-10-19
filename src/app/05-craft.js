@@ -77,7 +77,7 @@ function renderDbg(){
   const d = S.dbg, last = TIERS.length - 1;
   const chip = (k, v, label, c, dis) => `<button class="dbg-c${d[k] === v ? ' on' : ''}" data-k="${k}" data-v="${v}" style="--c:${c || '#fff'}"${dis ? ' disabled' : ''}>${label}</button>`;
   // вкладки: всё по смыслу, чтобы не листать длинный список
-  const tabs = [['craft', $t("Крафт")], ['player', $t("Игрок")], ['exp', $t("Арена и ставки")], ['perf', $t("Замер")], ['events', $t("События")]];
+  const tabs = [['craft', $t("Крафт")], ['player', $t("Игрок")], ['season', $t("Сезон")], ['exp', $t("Арена и ставки")], ['perf', $t("Замер")], ['events', $t("События")]];
   const sec = {
     craft: () =>
       `<div class="dbg-l">${$t("Точный тикет")}</div><div class="dbg-t"><input id="dbgTicket" type="number" inputmode="numeric" min="0" max="99999" placeholder="0 – 99 999" value="${d.ticket ?? ''}"><button class="dbg-c" data-k="ticketClear" data-v="1">${$t("Сброс")}</button></div>` +
@@ -100,6 +100,16 @@ function renderDbg(){
       `<div class="dbg-l">${$t("Онбординг")}</div><div class="dbg-g">${chip('noOnb', false, $t("Показывать"))}${chip('noOnb', true, $t("Выключен"))}<button class="dbg-c" data-k="onbNow" data-v="1">${$t("Показать сейчас")}</button></div>` +
       `<div class="dbg-l">${$t("Сохранённый прогресс")}</div><div class="dbg-g"><button class="dbg-c" data-k="resetSave" data-v="1" style="--c:#FF4C35">${$t("Сбросить и начать заново")}</button></div>`,
     perf: () => pfDbg() + loadDbg(),
+    // сезон (баттл пасс): включить / как было, уровень одним тапом, премиум, награды
+    season: () =>
+      `<div class="dbg-l">${$t("Бонусы")}</div><div class="dbg-g"><button class="dbg-c${SEASON_ON ? ' on' : ''}" data-k="season" data-v="1" style="--c:#F57A37">${$t("Сезон")}</button><button class="dbg-c${SEASON_ON ? '' : ' on'}" data-k="season" data-v="0" style="--c:#fff">${$t("Как было")}</button></div>` +
+      (SEASON_ON ? `<div class="dbg-l">${$t("Сезон {0} · уровень {1} · {2} XP", S.season.id, seasonLv(), xpFmt(S.season.xp))}</div><div class="dbg-g">${[0, 1, 3, 5, 10, 15, 20, 29, 30].map(v => `<button class="dbg-c${seasonLv() === v ? ' on' : ''}" data-k="sSet" data-v="${v}" style="--c:#F57A37">${v}</button>`).join('')}` +
+        `<button class="dbg-c" data-k="sLv" data-v="1" style="--c:#F57A37">${$t("+1 уровень")}</button><button class="dbg-c" data-k="sNear" data-v="1" style="--c:#FFB835">${$t("Почти следующий")}</button></div>` +
+        `<div class="dbg-l">${$t("Премиум")}</div><div class="dbg-g"><button class="dbg-c${S.season.prem ? '' : ' on'}" data-k="sPrem" data-v="0" style="--c:#fff">${$t("Выкл")}</button><button class="dbg-c${S.season.prem ? ' on' : ''}" data-k="sPrem" data-v="1" style="--c:#FFC24D">${$t("Вкл")}</button></div>` +
+        `<div class="dbg-l">${$t("Награды")}</div><div class="dbg-g"><button class="dbg-c" data-k="sGot" data-v="0" style="--c:#fff">${$t("Не забраны")}</button><button class="dbg-c" data-k="sGot" data-v="1" style="--c:#fff">${$t("Все забраны")}</button>` +
+        `<button class="dbg-c" data-k="sEnd" data-v="1" style="--c:#FFB835">${$t("Закончить сезон")}</button><button class="dbg-c" data-k="sReset" data-v="1" style="--c:#FF4C35">${$t("Сбросить сезон")}</button></div>` +
+        `<div class="dbg-l">${$t("Переход: призы прежнему топу")}${S.legacyTop ? ' · ' + $t("выданы за {0} место", S.legacyTop.place) : ''}</div><div class="dbg-g">${[1, 3, 7, 15].map(v => `<button class="dbg-c" data-k="sTop" data-v="${v}" style="--c:#FFC24D">${$t("{0} место", v)}</button>`).join('')}<button class="dbg-c" data-k="sTop" data-v="0" style="--c:#fff">${$t("Сбросить")}</button></div>` +
+        `<p class="dbg-n">${$t("Уровень ставит XP сезона ровно на начало уровня. «Почти следующий» — за 10 XP до нового уровня.")}</p>` : '') ,
     // аналитика: что и когда записалось (новые сверху); в бою то же уходит на ANALYTICS_URL
     events: () => `<div class="dbg-l">${$t("События аналитики")} · ${EVENTS.length}${ANALYTICS_URL ? ' · ' + $t("отправляются") : ' · ' + $t("пока никуда не отправляются")}</div>` +
       `<div class="dbg-ev">${EVENTS.slice().reverse().map(e => { const { name, t, sid, ...p } = e, k = Object.keys(p);
@@ -114,7 +124,7 @@ function renderDbg(){
     `<div class="dbg-tabs">${tabs.map(([k, l]) => `<button class="dbg-tab${dbgTab === k ? ' on' : ''}" data-tab="${k}">${l}</button>`).join('')}</div>` +
     sec[dbgTab]() +
     // версия сборки и размеры экрана — по скриншоту видно, открыта ли свежая версия (Telegram кэширует) и как посчиталась сцена
-    `<p class="dbg-n dbg-ver">${diagLine()}</p>`;
+    `<p class="dbg-n dbg-ver">${diagLine()} · ${Forge.info()}</p>`;
 }
 $('dbgBody').addEventListener('input', e => { if (e.target.id !== 'dbgTicket') return; const v = e.target.value.trim(); S.dbg.ticket = v === '' ? null : Math.max(0, Math.min(TICKETS - 1, Math.floor(+v) || 0)); if (S.dbg.ticket != null) S.dbg.tier = -1; });
 $('dbgBody').addEventListener('click', e => {
@@ -133,6 +143,16 @@ $('dbgBody').addEventListener('click', e => {
   if (k === 'race'){ c.classList.add('ld'); loadRace(v).finally(() => { c.classList.remove('ld'); renderDbg(); }); return; }
   if (k === 'bots'){ c.classList.add('ld'); loadBots(v).finally(() => { c.classList.remove('ld'); renderDbg(); }); return; }
   if (k === 'resetSave'){ haptic('medium'); Store.reset(); return; }
+  // сезон: включить/выключить (перезагрузка — как смена языка), прокрутить уровни, премиум, сброс
+  if (k === 'season'){ if ((v === '1') !== SEASON_ON){ LSset('bm-season', v === '1'); Store.save?.(); location.reload(); } return; }
+  if (k === 'sLv'){ seasonFresh(); const add = Math.min(+v * SEASON.per, SEASON.lv * SEASON.per - S.season.xp); if (add > 0) seasonXp(add); haptic(); renderDbg(); return; }
+  if (k === 'sPrem'){ S.season.prem = v === '1'; if (S.season.prem) cosGive('gold-frame'); document.body.classList.toggle('sprem', SEASON_ON && S.season.prem); haptic(); renderDbg(); return; }
+  if (k === 'sSet'){ seasonFresh(); S.season.xp = +v * SEASON.per; haptic(); renderDbg(); return; }
+  if (k === 'sNear'){ seasonFresh(); const lv = Math.min(SEASON.lv - 1, seasonLv()); S.season.xp = (lv + 1) * SEASON.per - 10; haptic(); renderDbg(); return; }
+  if (k === 'sGot'){ S.season.got = {}; if (v === '1') SEASON_RW.filter(r => r.l <= seasonLv()).forEach(r => { S.season.got['f' + r.l] = 1; if (S.season.prem) S.season.got['p' + r.l] = 1; }); haptic(); renderDbg(); return; }
+  if (k === 'sTop'){ if (v === '0'){ S.legacyTop = null; S.legacyRank = undefined; } else { S.legacyTop = null; legacyTopGrant(+v); } haptic(); renderDbg(); return; }
+  if (k === 'sEnd'){ const old = S.season; S.season = seasonNew(); seasonSettle(old); haptic('medium'); renderDbg(); return; }   // как будто сезон закончился: незабранное выдаётся само, прогресс — с нуля
+  if (k === 'sReset'){ S.season = { id: seasonNo(), xp: 0, prem: false, got: {} }; haptic('medium'); renderDbg(); return; }
   if (k === 'ticketClear'){ S.dbg.ticket = null; haptic(); renderDbg(); return; }
   if (k === 'stock'){ API.dbgStock(c.dataset.id, +v).then(() => { S.stock[c.dataset.id] = +v; haptic(); renderDbg(); }, () => notify({ type: 'err', icon: 'err', title: $t("Нет связи"), text: $t("Попробуй ещё раз") })); return; }
   if (k === 'onbNow'){ hideDrawer(); setTimeout(() => Onb.start(true), 300); return; }
@@ -185,6 +205,7 @@ async function fair(stake, gifts = [], tonStake = stake){
 /* ---------- настройки: быстрый крафт, звук, экономный режим, демо ---------- */
 const LS = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v === '1'; } catch(_){ return d; } };
 const LSset = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0'); } catch(_){} };
+const SEASON_ON = LS('bm-season', true);   // бонусы: сезон (16k-season.js) или как было — Дебаг → Игрок → «Бонусы»
 S.fast = LS('bm-fast', false);
 S.sound = LS('bm-sound', true);
 S.vibro = LS('bm-vibro', true);

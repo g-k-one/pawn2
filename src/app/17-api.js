@@ -67,6 +67,15 @@ const API = {
   /* POST /share/story-image {img: JPEG base64 1080×1920} → {url} — картинку по публичной https-ссылке (хватит суток хранения) для WebApp.shareToStory.
      Мок: хранилища нет — фронт берёт общую картинку assets/story.jpg */
   async storyImage(){ return { ok: false, mock: true }; },
+  /* --- сезон (16k-season.js): всё проверяет сервер --- */
+  /* POST /season/claim {season, key: 'f12'|'p12'} → {ok, reward} — награда уровня, раз; премиум-дорожка — только с купленным премиумом. Кейс из награды открывается на сервере (domain case:<id>) */
+  async seasonClaim(id, k){ return { ok: true }; },
+  /* POST /season/buy {season} → {ok, balance} — премиум за SEASON.price GRAM, раз за сезон */
+  async seasonBuy(id){ return { ok: true }; },
+  /* POST /season/task {id, xp} → {ok, got} — XP за задание дня сезона, раз в день по МСК */
+  async seasonTask(id, xp){ return { ok: true, got: true }; },
+  /* POST /cos/equip {slot, id|null} → {ok, equip} — надеть/снять оформление (только то, что есть у игрока) */
+  async cosEquip(slot, id){ return { ok: true }; },
   /* POST /share/story-reward → {ok, xp} — XP за сторис раз в сутки по Москве; второй раз за день — {ok:false}. День награды — в состоянии игрока (storyDay) */
   async storyReward(){ return S.storyDay === shDay() ? { ok: false } : { ok: true, xp: STORY_XP }; },   // дебаг: запас бесплатных кейсов
   async bets(list){ track('bets', { n: list.length, total: list.reduce((a, b) => a + b.amount, 0) }); return betsMock(list); },
@@ -115,6 +124,7 @@ const EVENTS = window.__pawnEvents = [], EV_Q = [], EV_SID = Math.random().toStr
 function track(name, props = {}){
   const e = { name, t: Date.now(), sid: EV_SID, ...props }; EVENTS.push(e); if (EVENTS.length > 200) EVENTS.shift();
   if (ANALYTICS_URL){ EV_Q.push(e); if (EV_Q.length >= 20) evFlush(); }
+  if (name === 'share' && typeof seasonBump === 'function') seasonBump('shares');   // задание сезона «Поделись выигрышем»
   if (typeof dbgTab !== 'undefined' && dbgTab === 'events' && openDrawer?.id === 'dbgDrawer') renderDbg();   // открыт Дебаг → «События» — видно сразу
 }
 function evFlush(){
@@ -134,7 +144,7 @@ const Store = (() => {
   const mskDay = () => new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10);   // сутки по Москве: задания обновляются в 00:00 МСК
   const snapshot = () => ({ v: 1, day: mskDay(), balance: S.balance, xp: S.xp, inv: INV, tasks: S.tasks, week: S.week, stock: S.stock, ach: S.ach,
     hist: { crafts: S.hist.crafts.slice(0, CAP), cases: S.hist.cases.slice(0, CAP), wallet: S.hist.wallet.slice(0, CAP), rewards: S.hist.rewards.slice(0, CAP) },
-    nonce: S.nonce, clientSeed: S.clientSeed, bonus: S.bonus, promoUsed: S.promoUsed, storyDay: S.storyDay, ep: S.ep && { id: S.ep.id, seed: S.ep.seed, commitment: S.ep.commitment }, refPending: REF.pending });
+    nonce: S.nonce, clientSeed: S.clientSeed, bonus: S.bonus, promoUsed: S.promoUsed, storyDay: S.storyDay, season: S.season, legacyRank: S.legacyRank, legacyTop: S.legacyTop, cos: S.cos, equip: S.equip, freeOut: S.freeOut, ep: S.ep && { id: S.ep.id, seed: S.ep.seed, commitment: S.ep.commitment }, refPending: REF.pending });
   const ser = v => JSON.stringify(v, (k, x) => x && typeof x === 'object' && NSET.has(x) ? { $n: NKEY(x) } : x);
   let last = '';
   function save(){
@@ -145,7 +155,7 @@ const Store = (() => {
     if (!SAVE) return;
     const d = JSON.parse(JSON.stringify(SAVE), (k, x) => x && typeof x === 'object' && x.$n ? NBY.get(x.$n) || NFTS.find(n => n.name === x.$n.split('#')[0]) || NFTS[0] : x);
     S.balance = d.balance; S.xp = d.xp; INV = d.inv; S.stock = d.stock; S.ach = d.ach; S.week = d.week; REF.pending = d.refPending || 0;
-    Object.assign(S.hist, d.hist); S.nonce = d.nonce; S.clientSeed = d.clientSeed; S.bonus = d.bonus || null; S.promoUsed = d.promoUsed || []; S.storyDay = d.storyDay || null;
+    Object.assign(S.hist, d.hist); S.hist.wallet.forEach(w => { if (w.type === 'restore' && /сезон|season/i.test(w.method || '')) w.type = 'pass'; });   // премиум сезона из ранних сборок был записан как «восстановление дня» S.nonce = d.nonce; S.clientSeed = d.clientSeed; S.bonus = d.bonus || null; S.promoUsed = d.promoUsed || []; S.storyDay = d.storyDay || null; if (d.season) S.season = d.season; if ('legacyRank' in d) S.legacyRank = d.legacyRank; S.legacyTop = d.legacyTop || null; S.cos = d.cos || {}; S.equip = d.equip || {}; if (S.cos['hw-badge'] && !d.equip) Object.keys(S.cos).forEach(id => { const sl = COS_ITEMS[id]?.slot; if (sl && !S.equip[sl]) S.equip[sl] = id; }); S.freeOut = d.freeOut || 0; if (typeof cosApply === 'function') cosApply();
     // новый день по Москве — задания дня с нуля (в бою это делает сервер)
     S.tasks = d.day === mskDay() ? d.tasks : { early: 0, turnover: 0, crafts: 0, done: {} };
     if (d.ep){ const proofs = [...S.hist.crafts, ...S.hist.cases].map(x => x.r.proof).filter(p => p.epoch_id === d.ep.id && !p.server_seed);

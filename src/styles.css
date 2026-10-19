@@ -785,7 +785,7 @@ img{display:block;-webkit-user-drag:none}
 .cinfo-h img{width:70%;height:auto;filter:drop-shadow(0 10px 24px color-mix(in srgb,var(--c) 45%,transparent))}
 .cinfo-h b{font-size:32px;text-transform:uppercase;background:linear-gradient(#fff 30%,var(--c));-webkit-background-clip:text;background-clip:text;color:transparent}
 .cinfo-h small{font-size:16px;color:rgba(255,255,255,.55)}
-#caseBody .tgrid{grid-template-columns:repeat(3,1fr);justify-items:center}
+#caseBody .tgrid{grid-template-columns:repeat(3,minmax(0,1fr));justify-items:stretch}   /* колонки строго равные: в Safari плитки с NFT сжимались по содержимому */
 #caseDrawer .dr-h .back{padding:0}
 /* друзья */
 .refhero{padding:16px;border-radius:20px;background:radial-gradient(100% 120% at 0% 0%,rgba(235,87,176,.35),transparent 70%),#151517;margin-top:6px}
@@ -2081,7 +2081,7 @@ html[lang=en] .bcase.free::before{content:"Free"}
 .hcard.hl .hl-t b{font-size:17px;line-height:22px}
 .hcard.hl .hk-ic{width:44px;height:44px}
 /* у строк с длинным названием левая часть шире (правая — по содержимому), название — до 2 строк */
-.hcard.hl .hk-b{grid-template-columns:1fr 22px auto}
+.hcard.hl .hk-b{grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr)}   /* стрелка всегда по центру карточки */
 .hcard.hl .hl-t b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:16px;line-height:20px}
 .hcard.hl .hl-t small:empty,.hcard.hl .hl-t small:only-child{display:none}
 /* аватар друга в строке истории — на весь квадрат иконки, без подложки */
@@ -3049,3 +3049,525 @@ i.gm.fant{-webkit-mask-image:url(assets/fantik.webp);mask-image:url(assets/fanti
 .dbg-ev span{grid-column:2;font:400 12.5px/1.4 var(--serif);color:rgba(255,255,255,.72);word-break:break-word}
 .sh-xp{color:#F57A37;margin-left:6px}   /* награда за сторис — XP всегда оранжевым */
 #shareDrawer .dr-h h3{justify-content:center}   /* «Поделиться» — по центру, как картинка под ним */
+/* ===== Сезон (баттл пасс) ===== */
+.shero{position:relative;margin:0 0 8px;padding:16px;border-radius:22px;overflow:hidden;background:radial-gradient(120% 140% at 85% 0%,#FFB547 0%,#F5713A 45%,#B8361F 100%)}
+.sh-top{display:none}
+.sh-lv{display:flex;flex-direction:column;align-items:center;justify-content:center;width:96px;height:96px;border-radius:50%;background:rgba(0,0,0,.18);box-shadow:inset 0 0 0 6px rgba(255,255,255,.22)}
+.sh-lv small{font-size:13px;line-height:1;text-transform:uppercase;color:rgba(255,255,255,.88)}
+.sh-lv b{font-size:52px;line-height:1;color:#fff}
+.spass{display:flex;align-items:stretch;gap:12px;width:100%;margin:0 0 8px;padding:0 16px 0 0;overflow:hidden;border:0;border-radius:22px;text-align:left;font:inherit;color:#fff;background:linear-gradient(120deg,#3A2A10,#6B4512 55%,#A8681A);box-shadow:inset 0 0 0 2px rgba(255,200,90,.55)}
+.spass img{flex:none;align-self:center;width:120px;height:120px;margin:8px 0 8px 8px;object-fit:contain}   /* пропуск — целиком, по высоте карточки */
+.spass span{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;padding:16px 0}
+.spass b{font-size:22px;line-height:1.1;text-transform:uppercase;color:#FFD36B}
+.spass small{font:400 13.5px/1.35 var(--serif);color:rgba(255,255,255,.88)}
+.spass em{display:flex;align-items:center;gap:6px;margin-top:4px;padding:6px 14px;border-radius:99px;background:linear-gradient(180deg,#FFD36B,#F5A23A);font-style:normal;font-size:17px;line-height:20px;text-transform:uppercase;color:#3A2208}
+.spass em .gm{background:#3A2208}
+.stopr{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 20px;padding:12px 16px;border:0;border-radius:22px;background:rgba(255,255,255,.06);font:inherit;color:#fff;text-align:left}
+.stopr img{width:44px;height:44px;object-fit:contain}
+.stopr span{flex:1;display:flex;flex-direction:column;gap:2px}
+.stopr b{font-size:20px;line-height:1.1;text-transform:uppercase}
+.stopr small{font:400 13.5px/1.35 var(--serif);color:rgba(255,255,255,.72)}
+.stopr i svg{width:20px;height:20px;fill:none;stroke:rgba(255,255,255,.72);stroke-width:2.4}
+.strack{margin:20px 0 8px}
+.st-h{display:grid;grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr);gap:8px;margin-bottom:8px}
+.st-h b{text-align:center;font-size:18px;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.st-h b.p{color:#FFC24D}
+.st-all{width:100%;margin:0 0 12px}
+.st-row{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr);gap:8px;align-items:center;padding:4px 0}
+.st-n{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:#2A2A30;font-style:normal;font-size:20px;color:rgba(255,255,255,.72)}
+.st-row.open .st-n{background:#F57A37;color:#fff}
+.st-row.next .st-n{background:#2A2A30;color:#fff;box-shadow:inset 0 0 0 3px #F57A37}
+.scell{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:112px;padding:12px 8px;border:0;border-radius:22px;font:inherit;color:#fff;background:rgba(255,255,255,.08)}
+.scell img{width:56px;height:56px;object-fit:contain}
+.scell img.snft{border-radius:14px}
+.scell b{font-size:17px;line-height:1.1;text-transform:uppercase;text-align:center}
+.scell.free b{color:#fff}
+.scell.prem{background:radial-gradient(90% 80% at 50% 35%,#8A5A1C 0%,#4A2C0C 100%);box-shadow:inset 0 0 0 2px rgba(255,194,77,.55)}   /* тёмное золото: награда на нём читается */
+.scell.prem b{color:#FFD36B}
+.scell.soon{opacity:.6}
+.scell.lock{opacity:.7}
+.scell.got{opacity:.38}
+.scell.ready{cursor:pointer}
+.sc-go{margin-top:4px;padding:4px 12px;border-radius:99px;background:#12D53D;font-style:normal;font-size:15px;line-height:18px;text-transform:uppercase;color:#fff}
+.sc-ic{position:absolute;top:8px;right:8px;display:flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:50%;background:rgba(0,0,0,.35)}
+.sc-ic svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2.6}
+.sc-ic.ok{background:#12D53D}
+.sb-ready{margin-left:6px;font-style:normal;color:#12D53D}
+/* «Пасс» без вкладок: заголовок экрана; баннер кейсов — как у супер дропа, синий */
+#casesTabs.ptitle{border-bottom:0}
+#casesTabs.ptitle h3{margin:0;font-size:28px;line-height:1;text-transform:uppercase}
+.sdban.cban{margin-top:8px;background:radial-gradient(90% 140% at 100% 50%,rgba(48,165,255,.4),transparent 60%),linear-gradient(110deg,#0d2a55,#0a1428);box-shadow:none}
+.cban .sdb-t small{color:#30A5FF}
+.cban .sdb-t b{color:#fff}
+.cban .sdb-t em{font:400 13.5px/1.35 var(--serif);font-style:normal;white-space:normal;color:rgba(255,255,255,.72)}
+.sdban>span.cb-art:not(.sdb-p){position:relative;flex:0 0 112px;width:112px;height:72px}
+.cb-art img{position:absolute;width:76px;height:76px;object-fit:contain}
+.cb-art img:first-child{right:0;top:-10px}
+.cb-art img:last-child{left:0;top:6px}
+/* Сезон: XP под номером уровня, сундуки после 30-го, задания темы и премиума, значок старого звания, рамка премиума */
+.st-n small{position:absolute;top:100%;margin-top:2px;font-size:11.5px;line-height:1;white-space:nowrap;color:rgba(255,255,255,.55)}
+.schest{display:flex;align-items:center;gap:12px;margin:8px 0 20px;padding:16px;border-radius:22px;background:radial-gradient(90% 80% at 50% 35%,#8A5A1C 0%,#4A2C0C 100%)}
+.schest.lock{opacity:.7}
+.schest img{width:56px;height:56px;object-fit:contain}
+.schest span{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.schest b{font-size:18px;line-height:1.15;text-transform:uppercase;color:#FFD36B}
+.schest small{font:400 13.5px/1.35 var(--serif);color:rgba(255,255,255,.88)}
+.schest .sc-ic{position:static}
+.arow small.pm{color:#FFC24D}
+.arow small.th{color:#FF9A2E}
+.arow.plock{opacity:.6}
+.arow.plock>i svg{width:16px;height:16px;fill:none;stroke:#FFC24D;stroke-width:2.4}
+.lrank{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:99px;background:rgba(245,122,55,.2);font-style:normal;font-size:13px;line-height:18px;vertical-align:middle;color:#F57A37}
+
+/* шторка покупки премиума */
+.pass-h{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.pass-h img{width:140px;height:140px;object-fit:contain}
+.pass-h b{font-size:30px;line-height:1.1;text-transform:uppercase;color:#FFD36B}
+.pass-h small{font:400 13.5px/1.35 var(--serif);color:rgba(255,255,255,.72)}
+.pass-l{display:flex;flex-direction:column;gap:8px;margin-top:20px}
+.pass-l>div{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:18px;background:rgba(255,194,77,.08)}
+.pass-l i{display:flex;flex:none;width:28px;height:28px;align-items:center;justify-content:center;border-radius:50%;background:#FFC24D}
+.pass-l i svg{width:16px;height:16px;fill:none;stroke:#3A2208;stroke-width:2.6}
+.pass-l span{display:flex;flex-direction:column;gap:2px}
+.pass-l b{font-size:17px;line-height:1.2;text-transform:uppercase}
+.pass-l small{font:400 13.5px/1.35 var(--serif);color:rgba(255,255,255,.72)}
+.pass-n{margin:16px 0 0;font:400 12.5px/1.4 var(--serif);text-align:center;color:rgba(255,255,255,.72)}
+#passFoot{display:flex;flex-direction:column;gap:8px}
+/* супер дроп — без обводки и ярче; кейсы — с воздухом */
+.sdban{box-shadow:none!important;background:radial-gradient(90% 140% at 100% 50%,rgba(235,87,176,.55),transparent 62%),linear-gradient(110deg,#5a1688,#2c0c48)!important}
+.sdban.cban{background:radial-gradient(90% 140% at 100% 50%,rgba(48,165,255,.5),transparent 62%),linear-gradient(110deg,#123a78,#0b1a38)!important}
+.cban .sdb-t{}
+.sdban>span.cb-art:not(.sdb-p){flex:0 0 120px;width:120px;height:92px}
+.cb-art img{width:84px;height:84px}
+/* выгода премиума: сумма наград двух дорожек */
+.pass-v{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:20px}
+.pass-v span{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px;border-radius:18px;background:rgba(255,255,255,.06)}
+.pass-v span:first-child{background:radial-gradient(90% 80% at 50% 35%,#8A5A1C 0%,#4A2C0C 100%)}
+.pass-v small{font-size:13px;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.pass-v b{display:flex;align-items:center;gap:6px;font-size:30px;line-height:1;color:var(--blue)}
+.pass-v span:first-child b{color:#FFD36B}
+.pass-v span:first-child .gm{background:#FFD36B}
+/* меню: карточка пасса в цветах темы */
+.mpass{position:relative;display:flex;width:100%;margin:0 0 8px;padding:16px;border:0;border-radius:22px;overflow:hidden;text-align:left;font:inherit;color:#fff;background:radial-gradient(120% 140% at 85% 0%,#FFB547 0%,#F5713A 45%,#B8361F 100%)}
+.mp-art{position:absolute;right:-12px;top:50%;width:150px;height:150px;margin-top:-75px;object-fit:contain;pointer-events:none}
+.mp-t{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding-right:118px;min-width:0;width:100%}
+.mp-t>small{font-size:15px;line-height:1;text-transform:uppercase;color:rgba(255,255,255,.88)}
+.mp-t>b{font-size:34px;line-height:1;text-transform:uppercase}
+.mp-bar{display:block;width:100%;height:10px;border-radius:99px;background:rgba(0,0,0,.25);overflow:hidden}
+.mp-bar b{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#FFF3C4,#fff)}
+/* карточка премиума: одна крупная цифра выгоды */
+.spass .sp-v{display:flex;align-items:center;gap:6px;font-size:28px;line-height:1;font-weight:400;color:#FFD36B}
+.spass .sp-v .gm{width:22px;height:19px;background:#FFD36B}
+/* тема «Хэллоуин» (data-theme="hw" у шторок «Пасса»): узор с летучими мышами под тёмной вуалью, фиолетово-оранжевые блоки */
+
+.drawer[data-theme="hw"] .sect{background:linear-gradient(160deg,rgba(91,26,140,.5),rgba(40,14,64,.7))}
+.drawer[data-theme="hw"] .arow{border-color:rgba(255,154,46,.12)}
+.drawer[data-theme="hw"] .sect-h .cnt{color:#FF9A2E}
+.drawer[data-theme="hw"] .scell.free{background:rgba(91,26,140,.45)}
+.drawer[data-theme="hw"] .st-n{background:#3a1a55}
+.drawer[data-theme="hw"] .st-h b{color:#C9A6F0}
+.drawer[data-theme="hw"] .st-h b.p{color:#FFC24D}
+.drawer[data-theme="hw"] #casesTabs.ptitle h3{color:#FF9A2E}
+/* шторка награды */
+.srw-h img{width:120px;height:120px;object-fit:contain;border-radius:22px}
+.srw-h b{color:#fff}
+.srw-h.p b{color:#FFD36B}
+.srw-st{margin:16px 0 0;font-size:18px;text-transform:uppercase;text-align:center;color:rgba(255,255,255,.72)}
+.srw-st.ok{color:#12D53D}
+.srw-in{width:100%;margin-top:16px}
+/* «Пасс»: срок справа от заголовка; шапка и премиум — одна карточка через разделитель */
+#casesTabs.ptitle{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pt-days{padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.08);font-style:normal;font-size:16px;line-height:1;text-transform:uppercase;color:rgba(255,255,255,.88)}
+.drawer[data-theme="hw"] .pt-days{background:rgba(255,138,31,.18);color:#FF9A2E}
+/* «Играй ответственно» — красным */
+.wwarn.rg{background:rgba(255,76,53,.12);box-shadow:inset 0 0 0 1.5px rgba(255,76,53,.6),inset 0 0 22px rgba(255,76,53,.12)}
+.wwarn.rg>i{background:#FF4C35;color:#fff}
+.wwarn.rg b{color:#FF6A55}
+/* косметика сезона: на плитке, значок у имени, рамка, скин кнопки крафта */
+
+.cos-badge{width:20px;height:20px;margin-left:6px;vertical-align:-3px;object-fit:contain}
+
+.cos-skin-hw #anvil{content:url(assets/season-halloween.webp);width:66%!important;height:auto!important;aspect-ratio:1;left:17%!important;top:14%!important;transform:none;object-fit:contain;filter:none}
+.cos-skin-hw #hammer{display:none}   /* скин «Тыква»: тыква целиком вместо наковальни с молотом */
+.cos-skin-hw #craft .orb{filter:hue-rotate(-150deg) saturate(1.3)}
+/* XP под номером уровня — на подложке, чтобы линия шкалы не перечёркивала */
+.st-n small{padding:1px 6px;border-radius:99px;background:#120a1c}
+/* шкала уровней — градиентами (в теме — оранжевый → фиолетовый), XP под уровнем — крупнее и контрастнее */
+.drawer[data-theme="hw"] .st-n{background:linear-gradient(140deg,#3a1a55,#24103a)}
+.drawer[data-theme="hw"] .st-row.next .st-n{box-shadow:inset 0 0 0 3px #FF9A2E}
+.st-n small{margin-top:4px;padding:2px 8px;font-size:13px;line-height:16px;color:#fff;background:rgba(0,0,0,.6)}
+.drawer[data-theme="hw"] .st-n small{background:#2a1240;color:#FFD9B0}
+/* «Забрать всё» — закреплена внизу шторки */
+.st-all{position:sticky;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;width:100%;margin:8px 0 0;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+/* тема «Хэллоуин»: фон без узора — свечение; декор: летучая мышь и шляпа */
+.drawer[data-theme="hw"]{background:radial-gradient(90% 40% at 100% 0%,rgba(255,122,31,.22),transparent 70%),radial-gradient(90% 50% at 0% 45%,rgba(142,45,226,.28),transparent 70%),linear-gradient(180deg,#1d0c2e,#0f0718)}
+.drawer[data-theme="hw"] .sect{position:relative;overflow:visible}
+.drawer[data-theme="hw"] .shero+.sect::after{content:"";position:absolute;right:-10px;top:-38px;width:56px;height:56px;background:url(assets/hw-hat.webp) center/contain no-repeat;transform:rotate(14deg);pointer-events:none}
+
+.drawer[data-theme="hw"] .strack{position:relative}
+/* премиум в шапке — крупный золотой блок */
+/* NFT-заглушка: метка «пример» */
+.sc-ex{position:absolute;top:8px;left:8px;padding:2px 8px;border-radius:99px;background:rgba(0,0,0,.45);font-style:normal;font-size:12px;line-height:16px;text-transform:uppercase;color:rgba(255,255,255,.85)}
+.arow small.th{display:flex!important;flex-direction:row!important;align-items:center!important;gap:4px}
+.arow small.th img{width:16px;height:16px}
+/* шторка покупки: золотое свечение сверху, одна строка выгоды, золотая кнопка */
+#passDrawer{background:radial-gradient(120% 45% at 50% 0%,rgba(255,194,77,.38),rgba(245,113,58,.12) 45%,transparent 75%),#17171b!important}
+#passDrawer[data-theme="hw"]{background:radial-gradient(120% 45% at 50% 0%,rgba(255,194,77,.38),rgba(245,113,58,.12) 45%,transparent 75%),linear-gradient(180deg,#1d0c2e,#0f0718)!important}
+.pass-h.glow img{filter:drop-shadow(0 0 28px rgba(255,194,77,.65))}
+.pass-v{grid-template-columns:1fr!important}
+.pass-v span{padding:16px!important;background:linear-gradient(150deg,#FFE7A0 0%,#FFC24D 45%,#F59A2A 100%)!important}
+.pass-v small{color:#5A2E06!important}
+.pass-v b{font-size:38px!important;color:#3A1A02!important}
+.pass-v b .gm{background:#3A1A02!important}
+.pass-v em{font:500 13.5px/1.35 var(--serif);font-style:normal;color:#5A3410}
+.btn-main.gold{background:linear-gradient(180deg,#FFE08A,#F5A23A)!important;color:#3A1A02!important;box-shadow:0 8px 24px rgba(245,154,42,.4)!important}
+/* меню: профиль + пасс одним баннером, сверху оранжевый градиент; премиум — золотая метка */
+.mtop{margin:0 0 8px;padding:12px 12px 0;border-radius:26px;overflow:hidden;background:radial-gradient(130% 100% at 90% 0%,#FFA53A 0%,#E2531E 42%,#5B1A8C 100%)}
+.mtop .mprof{margin:0 0 12px;background:none}
+.mtop .mpass{margin:0 -12px;width:calc(100% + 24px);border-radius:0;background:none!important;padding-top:4px}
+.mtop .mprof small{color:#fff}
+.mb-chips span.pm{background:linear-gradient(180deg,#FFE08A,#F5A23A);color:#3A1A02}
+/* золотая рамка премиума — на Арене (её видят соперники) */
+
+.mtop .lrank{background:rgba(0,0,0,.28);color:#fff}
+/* «Пасс» v3: шапка — текст слева, арт справа во всю высоту, премиум — золотом во всю ширину снизу */
+.shero{padding:16px;border-radius:22px}
+.hx-top{display:grid;grid-template-columns:minmax(0,1fr) 140px;align-items:end;gap:8px}
+.hx-l{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0;padding-bottom:4px}
+.hx-l em{padding:4px 12px;border-radius:99px;background:rgba(0,0,0,.22);font-style:normal;font-size:18px;line-height:22px;text-transform:uppercase;color:#fff}
+.hx-l>b{font-size:40px;line-height:1;text-transform:uppercase;color:#fff}
+.hx-l small{font:500 13.5px/1.35 var(--serif);color:#fff}
+.hx-bar{position:relative;width:100%;margin-top:6px}
+.hx-bar i{display:block;height:14px;border-radius:99px;background:rgba(0,0,0,.25);overflow:hidden}
+.hx-bar i b{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#FFF3C4,#fff)}
+.hx-bat{position:absolute;right:-18px;top:-30px;width:52px;height:52px;object-fit:contain;transform:rotate(10deg);pointer-events:none}
+.hx-art{width:172px;height:172px;margin:-24px -28px -12px -20px;object-fit:contain;justify-self:end;pointer-events:none}
+.hx-prem{display:grid;grid-template-columns:104px minmax(0,1fr);gap:8px 12px;align-items:center;width:calc(100% + 32px);margin:16px -16px -16px;padding:16px;border:0;text-align:left;font:inherit;color:#3A1A02;background:linear-gradient(150deg,#FFE7A0 0%,#FFC24D 45%,#F59A2A 100%);box-shadow:inset 0 2px 0 rgba(255,255,255,.55)}
+.hx-prem>img{width:104px;height:104px;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(120,60,0,.35))}
+.hx-prem>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.hx-prem b{font-size:22px;line-height:1;text-transform:uppercase;color:#5A2E06}
+.hx-val{display:flex;align-items:center;gap:6px;font-size:28px;line-height:1;text-transform:uppercase;color:#3A1A02}
+.hx-val .gm{width:22px;height:19px;background:#3A1A02}
+.hx-prem ul{display:flex;flex-direction:column;gap:4px;margin:2px 0 0;padding:0;list-style:none}
+.hx-prem li{display:flex;align-items:center;gap:6px;font:600 13.5px/1.3 var(--serif);color:#4A2A08}
+.hx-prem li svg{flex:none;width:14px;height:14px;fill:none;stroke:#3A1A02;stroke-width:3}
+.hx-prem>em{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:99px;background:#3A1A02;font-style:normal;font-size:20px;line-height:1;text-transform:uppercase;color:#FFD36B}
+.hx-prem>em .gm{background:#FFD36B}
+.hx-prem.on{grid-template-columns:72px minmax(0,1fr)}
+.hx-prem.on>img{width:72px;height:72px}
+/* шкала: одна линия, заливка до текущего XP; кружки — сплошные */
+.strack{position:relative}
+.st-line,.st-fill{position:absolute;left:50%;width:6px;margin-left:-3px;top:var(--l0,0);border-radius:3px;pointer-events:none}
+.st-line{height:var(--l1,0);background:rgba(255,255,255,.1)}
+.st-fill{height:var(--lf,0);background:#FF8A1F;box-shadow:0 0 12px rgba(255,138,31,.5);transition:height .4s}
+.drawer[data-theme="hw"] .st-line{background:rgba(155,80,220,.3)}
+.st-row.open .st-n{background:#FF8A1F;color:#fff;box-shadow:0 4px 14px rgba(255,138,31,.45)}
+.drawer[data-theme="hw"] .st-row.open .st-n{background:#FF8A1F;box-shadow:0 4px 16px rgba(255,138,31,.5)}
+/* «Забрать» — зелёным, как «Честность», чёрный текст */
+.sc-go,.btn-main.claim{background:linear-gradient(130deg,#12D53D 0%,#00D9FF 100%)!important;color:#062417!important}
+.btn-main.claim{box-shadow:0 10px 30px rgba(0,0,0,.6),0 0 24px rgba(18,213,61,.35)!important}
+/* декор: шляпа ниже, паутина в углу заданий */
+.drawer[data-theme="hw"] .shero+.sect::after{top:-22px!important}
+/* меню: свечение сверху, одинаковые отступы баннера, тыква крупнее */
+#menuDrawer:has(.mtop){background:radial-gradient(100% 280px at 50% 0%,rgba(255,138,31,.3),transparent 70%),linear-gradient(#1f1f21,#0e0e10 30%)}
+.mtop{padding:16px!important}
+.mtop .mprof{margin:0 0 12px!important;padding:0!important}
+.mtop .mpass{margin:0 -16px -16px!important;width:calc(100% + 32px)!important;padding:4px 16px 16px!important}
+.mtop .mp-art{width:184px;height:184px;right:-18px;top:auto;bottom:-22px;margin-top:0}
+.mtop .mp-t{padding-right:150px}
+.thq{display:inline-grid;place-items:center;width:22px;height:22px;margin-left:4px;border:0;border-radius:50%;background:#FF9A2E;color:#2a1240;font:700 15px/1 var(--font);vertical-align:2px}
+.hx-val{white-space:nowrap;font-size:24px}
+.hx-val .gm{width:20px;height:17px}
+/* шкала без замеров: линия и заливка — по строкам (--t верх, --b низ), строки встык */
+.st-line,.st-fill{display:none}
+.strack .st-row{padding:6px 0;background:linear-gradient(rgba(255,255,255,.1),rgba(255,255,255,.1)) center/6px 100% no-repeat}
+.drawer[data-theme="hw"] .strack .st-row{background-image:linear-gradient(rgba(155,80,220,.3),rgba(155,80,220,.3))}
+.strack .st-row.last{background-size:6px 50%;background-position:center top}
+.strack .st-row::before,.strack .st-row::after{content:"";position:absolute;left:50%;width:6px;margin-left:-3px;background:#FF8A1F;box-shadow:0 0 10px rgba(255,138,31,.45);pointer-events:none}
+.strack .st-row::before{top:0;height:calc(50% * var(--t,0))}
+.strack .st-row::after{top:50%;height:calc(50% * var(--b,0))}
+.strack .st-row.last::after{display:none}
+
+.st-n{z-index:2}
+.st-row.next .st-n small{background:#FF8A1F!important;color:#2a1240!important}
+.st-me{position:absolute;right:-30px;top:50%;width:26px;height:26px;margin-top:-13px;border-radius:50%;box-shadow:0 0 0 2px #FF8A1F}
+.scell.soon{opacity:.5}
+/* премиум в шапке: заголовок меньше, пропуск крупнее */
+.hx-prem{grid-template-columns:128px minmax(0,1fr)}
+.hx-prem>img{width:128px;height:128px;margin:-8px 0}
+.hx-prem b{font-size:17px}
+.strack{gap:0!important;row-gap:0!important}
+.strack .st-row{margin:0!important}
+.hx-prem{grid-template-columns:112px minmax(0,1fr)!important;gap:8px 10px}
+.hx-prem>img{width:112px!important;height:112px!important}
+.hx-prem li{font-size:13px}
+/* аватарка с рамкой-картинкой (как украшения аватарок в Discord) */
+.ava-w{position:relative;display:inline-block;flex:none;line-height:0}
+.ava-fr{position:absolute;left:50%;top:50%;width:calc(100% * var(--k,1.9));height:auto;max-width:none;transform:translate(-50%,-50%);pointer-events:none;z-index:2}
+.tav{position:relative;overflow:visible}
+.tav .ava-fr{width:calc(100% * var(--k,1.9))}
+.t2ava.ava-w img:first-child{width:100%;height:100%;border-radius:50%}
+/* шторка «Оформление» */
+.cos-pv{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 0 8px}
+.cos-pv .ava-w.big img:first-child{width:96px;height:96px;border-radius:50%}
+.cos-pv b{font-size:28px;line-height:1;text-transform:uppercase}
+.cos-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.cos-i{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;border:0;border-radius:18px;background:rgba(255,255,255,.06);font:inherit;color:#fff;text-align:center}
+.cos-i.on{box-shadow:inset 0 0 0 2px #12D53D;background:rgba(18,213,61,.1)}
+.cos-i.lock{opacity:.55}
+.cos-i b{font-size:15px;line-height:1.1;text-transform:uppercase}
+.cos-i small{font:400 11.5px/1.3 var(--serif);color:rgba(255,255,255,.72)}
+.cos-img{position:relative;display:grid;place-items:center;width:64px;height:64px}
+.cos-img>img{width:56px;height:56px;object-fit:contain}
+.cos-img.fr .cos-av{width:40px;height:40px;border-radius:50%}
+.cos-img.fr .cos-fr{position:absolute;left:50%;top:50%;width:calc(40px * var(--k));max-width:none;transform:translate(-50%,-50%)}
+.cos-none{width:48px;height:48px;border-radius:50%;border:2px dashed rgba(255,255,255,.3)}
+/* шкала: дыра у первой строки, градиенты заливки и кружков снова */
+.st-bat{position:absolute;left:50%;top:-24px;width:52px;height:52px;margin-left:-26px;z-index:3;pointer-events:none}
+.strack .st-row::before{background:linear-gradient(180deg,#B04BE8,#FF8A1F)}
+.strack .st-row::after{background:linear-gradient(180deg,#FF8A1F,#B04BE8)}
+.st-row.open .st-n,.drawer[data-theme="hw"] .st-row.open .st-n{background:linear-gradient(140deg,#FFB547 0%,#FF6A1F 50%,#8E2DE2 100%)!important}
+/* паутина: линии разной непрозрачности; в шапке, у заданий, у супер дропа */
+.drawer[data-theme="hw"] .shero{isolation:isolate}
+.balance .ava-w{position:relative;z-index:2;margin-right:-4px}
+.balance .ava-w .ava{margin-right:0}
+.strack .st-row>img.st-bat{background:none!important;box-shadow:none!important;border-radius:0!important;opacity:1!important}
+.cos-pv b{margin-top:20px}
+.cos-i{justify-content:flex-start}
+/* профиль в меню: аватарка не растягивается (был пустой промежуток до имени) */
+.mprof>.ava-w{flex:none}
+/* 18+ крупнее; замок на закрытых плитках крупнее */
+.wwarn.rg>i{width:44px;height:44px;font-size:20px;letter-spacing:-.02em}
+.sc-ic{width:30px!important;height:30px!important;top:8px;right:8px}
+.sc-ic svg{width:18px!important;height:18px!important}
+/* шторка награды */
+.srw-card{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 16px;border-radius:22px;background:rgba(91,26,140,.35);text-align:center}
+.srw-card.p{background:radial-gradient(90% 80% at 50% 35%,#8A5A1C 0%,#4A2C0C 100%)}
+.srw-pic{display:grid;place-items:center;width:140px;height:140px;border-radius:28px;background:rgba(255,255,255,.06)}
+.srw-pic img{width:112px;height:112px;object-fit:contain;border-radius:18px}
+.srw-card>b{font-size:30px;line-height:1.05;text-transform:uppercase}
+.srw-card.p>b{color:#FFD36B}
+.srw-tags{display:flex;gap:8px}
+.srw-tags span{padding:4px 12px;border-radius:99px;background:rgba(0,0,0,.3);font-size:15px;line-height:18px;text-transform:uppercase;color:rgba(255,255,255,.88)}
+.srw-tags span.pm{background:linear-gradient(180deg,#FFE08A,#F5A23A);color:#3A1A02}
+.srw-st{margin:8px 0 0;padding:12px 16px;border-radius:16px;font-size:18px;line-height:1.2;text-transform:uppercase;text-align:center;background:rgba(255,255,255,.06);color:rgba(255,255,255,.88)}
+.srw-st.ok{background:rgba(18,213,61,.14);color:#12D53D}
+.srw-st.lock{background:rgba(255,194,77,.14);color:#FFC24D}
+.srw-st.got{color:rgba(255,255,255,.55)}
+.srw-about{margin:8px 0 0;font:400 13.5px/1.4 var(--serif);text-align:center;color:rgba(255,255,255,.72)}
+.tav:has(.ava-fr){overflow:visible}
+.tav img.ava-fr{width:calc(100% * var(--k,1.9))!important;height:auto!important;border-radius:0!important;object-fit:contain}
+.tav>img:not(.ava-fr){position:relative}
+.st-n{font-size:24px!important;line-height:1}
+.st-n small{margin-top:-6px!important}
+/* профиль в меню: рамка и значок не попадают под общие размеры картинок */
+.mprof .ava-w>img:first-child{width:56px;height:56px;border-radius:50%;object-fit:cover}
+.mprof img.ava-fr,.menu-top img.ava-fr{width:calc(56px * var(--k,1.9))!important;height:auto!important;border-radius:0!important}
+.mprof b{display:flex!important;align-items:center;flex-wrap:wrap;gap:6px}
+.cos-badge{width:24px!important;height:24px!important;margin:0!important;flex:none}
+.cos-pv b{display:flex;align-items:center;gap:8px}
+.mprof b{flex-wrap:nowrap!important;white-space:nowrap}
+.mprof .lrank{margin-left:0!important}
+.mtop .cos-badge{padding:3px;border-radius:50%;background:rgba(0,0,0,.35);width:28px!important;height:28px!important}
+.srw-about{margin-top:16px!important}
+.tn b{display:flex;align-items:center;gap:6px}
+.tn b .cos-badge{width:20px!important;height:20px!important}
+.pass-v1{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:20px;padding:16px;border-radius:22px;background:linear-gradient(150deg,#FFE7A0 0%,#FFC24D 45%,#F59A2A 100%);text-align:center}
+.pass-v1 .hx-val{font-size:28px}
+.pass-v1 small{font:500 13px/1.35 var(--serif);color:#5A3410}
+/* ===== связка «заголовок + описание» — одна на все карточки пасса, меню и шторок =====
+   заголовок карточки: SONGER 20px заглавными; описание: 13.5px/1.35, серый .72 (на золоте — коричневый) */
+:root{--t-card:20px;--t-desc:400 13.5px/1.35 var(--serif)}
+.sect-h b,.schest b,.pass-l b,.mb-t b,.mb2-t b,.wwarn b,.spass b,.hx-prem>div>b,.stopr b{font-size:var(--t-card)!important;line-height:1.1}
+.sect-h small,.schest small,.pass-l small,.mb-t>small,.mb2-t small,.wwarn small,.srw-about,.sh-t small,.hx-l small,.pass-h small,.pass-n,.cban .sdb-t em,.sdban .sdb-t em,.hx-prem li,.pass-v1 small,.cos-i small{font:var(--t-desc)!important}
+.sect-h small,.schest small,.pass-l small,.srw-about,.pass-h small,.pass-n,.cban .sdb-t em,.sdban .sdb-t em,.cos-i small{color:rgba(255,255,255,.72)!important}
+.hx-prem li,.pass-v1 small{color:#4A2A08!important}
+/* шкала: отрезок между уровнями — свой, у всех одинаковый градиент; от кружка до кружка, с зазором */
+.strack .st-row::before{display:none}
+.strack .st-row.first::before{display:block;top:0;height:calc((50% - 24px) * var(--t,0));background:linear-gradient(180deg,#B04BE8,#FF8A1F);border-radius:3px}
+.strack .st-row::after{top:calc(50% + 26px);height:calc((100% - 52px) * var(--b,0));border-radius:3px;background:linear-gradient(180deg,#FF8A1F,#B04BE8);z-index:1}
+.strack .st-row{background:linear-gradient(rgba(155,80,220,.25),rgba(155,80,220,.25)) center/6px 100% no-repeat}
+/* оформление: рамка во всю аватарку, плитки по центру */
+.cos-img.fr .cos-fr{height:auto!important}
+.cos-i{justify-content:center!important}
+.sdban.cban{padding:16px!important}
+.cban .sdb-t b{font-size:28px!important;line-height:1.1;letter-spacing:.06em}
+.hx-xp{padding:2px 10px;border-radius:99px;background:rgba(0,0,0,.25);font-size:16px;line-height:20px;color:#fff}
+.sch-bar{display:block;height:8px;margin-top:6px;border-radius:99px;background:rgba(0,0,0,.3);overflow:hidden}
+.sch-bar b{display:block;height:100%;background:#FFD36B}
+.hx-l>b{white-space:nowrap;font-size:36px!important}
+.cban .sdb-t b{letter-spacing:0!important;white-space:nowrap}
+/* плитки наград — одной высоты, «Забрать» не двигает шкалу */
+.scell{height:176px!important;min-height:0!important;justify-content:center}
+.scell b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* премиум: заголовок слева во всю ширину, выгода — двумя строками крупно */
+.hx-prem .hx-pt{grid-column:1/-1;font-size:22px!important;line-height:1;color:#5A2E06;text-transform:uppercase}
+.hx-val{flex-direction:column;align-items:flex-start!important;gap:2px;white-space:normal!important}
+.hx-val>small{font-size:16px;line-height:1;text-transform:uppercase;color:#5A2E06}
+.hx-val>span{display:flex;align-items:center;gap:6px;font-size:36px;line-height:1;color:#3A1A02}
+.hx-val>span .gm{width:26px;height:22px;background:#3A1A02}
+.pass-v1 .hx-val{align-items:center!important}
+.pass-v1 .hx-val>small{font:400 16px/1 var(--font)!important;color:#5A2E06!important;text-transform:uppercase}
+/* баннеры «Супер дроп» и «Кейсы» — одна структура: метка 15 · крупно 44 · описание 13.5 в одну строку, одинаковая высота */
+.cban .sdb-t b{font-size:44px!important;line-height:44px!important;letter-spacing:.04em!important}
+.sdban .sdb-t em{white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis}
+.sdban{min-height:113px}
+.sdban>span.cb-art:not(.sdb-p){height:80px!important}
+/* плитки наград: обычная высота, «Забрать» — поверх, внизу плитки: ничего не прыгает */
+.scell{height:auto!important;min-height:132px!important;padding-bottom:28px!important}
+.scell .sc-go{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);margin:0}
+/* премиум: слева «Премиум / пропуск» в две строки и картинка, справа сверху — выгода */
+.hx-prem{align-items:start!important}
+.hx-lc{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.hx-prem .hx-pt{grid-column:auto!important;font-size:20px!important;line-height:1!important;color:#8A4E10!important}
+.hx-prem .hx-lc img{width:112px;height:112px;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(120,60,0,.35))}
+/* плитки: место под «Забрать» снизу, чтобы двухстрочное название не налезало */
+.scell{min-height:148px!important;padding-bottom:44px!important}
+.scell.got,.scell.lock,.scell.soon{padding-bottom:12px!important}
+#menuDrawer:has(.mtop){background:radial-gradient(100% 300px at 50% 0%,rgba(255,84,40,.42),rgba(226,60,30,.12) 55%,transparent 80%),linear-gradient(#1f1f21,#0e0e10 30%)!important}
+/* «Оформление»: плитки одного вида — картинка 72px, название в 1 строку, подпись под ним */
+.cos-i{justify-content:flex-start!important;gap:8px!important;padding:16px 8px!important}
+.cos-img{width:72px!important;height:72px!important;flex:none}
+.cos-img>img{width:64px!important;height:64px!important}
+.cos-img.fr .cos-av{width:48px!important;height:48px!important}
+.cos-img.fr .cos-fr{width:calc(48px * var(--k))!important}
+.cos-none{width:48px!important;height:48px!important}
+.cos-i b{font-size:15px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cos-i small{font:400 12.5px/1.3 var(--serif)!important}
+.cos-i.on small{color:#12D53D!important}
+.hx-prem .hx-lc{align-self:center}
+.hx-prem .hx-pt{font-size:18px!important;color:#8A4E10!important}
+/* плитки наград — компактные; «Забрать» висит на нижней кромке и не меняет высоту */
+.scell{min-height:120px!important;padding:12px 18px!important;overflow:visible}
+.scell .sc-go{bottom:-14px!important;z-index:3;box-shadow:0 4px 12px rgba(0,0,0,.45)}
+.strack .st-row{padding:10px 0!important}
+/* баннеры: воздух между меткой, числом и описанием */
+.sdban .sdb-t{gap:6px!important}
+.cban .sdb-t{position:relative;z-index:1}
+.cban .sdb-t b{font-size:40px!important;line-height:44px!important;letter-spacing:.02em!important}
+.sdban>span.cb-art:not(.sdb-p){flex:0 0 104px!important;width:104px!important}
+.cb-art img{width:72px!important;height:72px!important}
+.ava-w.pv{flex:none;line-height:normal}
+.ar-seat .ava-w.pv{display:block;width:100%;height:100%}
+.ava-w.pv>.ava-fr{z-index:2}
+.cos-pv{padding-top:56px!important}
+.mtop .cos-badge{padding:0!important;background:none!important;width:24px!important;height:24px!important}
+.cos-badge{color:inherit}
+#casesTabs.ptitle h3{display:flex;align-items:center;gap:8px}
+.thq.ph{width:28px;height:28px;font-size:18px;margin:0;vertical-align:0}
+.pass-l i.num{background:#FF8A1F!important;color:#2a1240;font-style:normal;font-size:16px}
+.hx-prem .hx-pt{font-size:26px!important;color:#9A5A14!important}
+.hx-prem>em{background:rgba(58,26,2,.12)!important;color:#3A1A02!important}
+/* баннер кейсов: кейсы сменяют друг друга по кругу и покачиваются (только opacity/transform) */
+.sdban>span.cb-art:not(.sdb-p){animation:sdbSway 3.2s ease-in-out infinite}
+.cb-art img{position:absolute!important;left:50%!important;top:50%!important;right:auto!important;width:96px!important;height:96px!important;margin:-48px 0 0 -48px;opacity:0;animation:cbCycle 10s calc(var(--i) * 2.5s) infinite}
+@keyframes cbCycle{0%,22%{opacity:1;transform:scale(1)}27%,100%{opacity:0;transform:scale(.9)}}
+.lite .cb-art img,.lite .sdban>span.cb-art{animation:none}
+.lite .cb-art img:first-child{opacity:1}
+.scell{min-height:0!important;padding:14px 18px!important;justify-content:center!important}
+.strack .st-row{padding:6px 0!important}
+/* ===== правки 19.10: без обрезки текста, плитки фиксированной высоты, «Забрать» по центру картинки ===== */
+/* история: название и подпись переносятся, без «…» */
+.hcard.hl .hl-t b,.hl-b>.hk-v b,.hl-b .hk-v b{white-space:normal!important;display:block!important;-webkit-line-clamp:unset!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere}
+.hcard.hl .hk-v small,.hl-b .hk-v small{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+/* плитки наград: одна высота, текст до 2 строк без «…» (шрифт чуть меньше, если длинный), «Забрать» — поверх центра картинки */
+.scell{height:132px!important;min-height:0!important;padding:12px 14px!important;justify-content:flex-start!important;gap:6px!important}
+.scell img{flex:none}
+.scell b{font-size:16px!important;line-height:1.1!important;-webkit-line-clamp:unset!important;display:block!important;overflow:visible!important}
+.scell .sc-go{top:40px!important;bottom:auto!important;transform:translate(-50%,-50%)!important}
+/* шкала: отрезок от центра уровня до центра следующего (кружки сверху), без зазоров */
+.strack .st-row::after{top:50%!important;height:calc(100% * var(--b,0))!important}
+.strack .st-row.first::before{top:0!important;height:calc(50% * var(--t,0))!important}
+.st-n,.st-n small{position:relative;z-index:2}
+.st-n small{position:absolute}
+/* арена: имя соперника — поверх рамки */
+.ar-seat small{z-index:4}
+/* меню: «Пополнить» на одном расстоянии сверху и справа, тыква целиком */
+.mtop .mprof{align-items:flex-start!important}
+.mtop .mprof em{margin:0!important}
+.mtop .mp-art{width:150px!important;height:150px!important;bottom:-8px!important;right:-6px!important}
+.mtop .mp-t{padding-right:130px!important}
+/* премиум в шапке: картинка крупнее, текст по центру относительно неё, заголовок светлее, гем крупнее */
+.hx-prem{grid-template-columns:136px minmax(0,1fr)!important;align-items:center!important}
+.hx-prem .hx-lc{position:relative}
+.hx-prem .hx-lc img{width:136px!important;height:136px!important;margin:-12px 0}
+.hx-prem .hx-pt{color:#B06A18!important}
+.hx-val>span .gm{width:30px!important;height:26px!important}
+/* куплен: золотое сияние и отметка */
+.hx-prem.on{background:linear-gradient(150deg,#FFF1B8 0%,#FFD25A 40%,#FFA83A 100%)!important;box-shadow:inset 0 2px 0 rgba(255,255,255,.7),inset 0 0 0 2px rgba(255,255,255,.5)!important}
+.hx-ok{position:absolute;right:6px;bottom:6px;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#12D53D;box-shadow:0 0 0 3px #FFE7A0}
+.hx-ok svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:3}
+.scell{justify-content:center!important}
+.sc-pic{position:relative;display:block;flex:none}
+.scell .sc-pic .sc-go{position:absolute;left:50%;top:50%!important;bottom:auto!important;transform:translate(-50%,-50%)!important;white-space:nowrap}
+.hx-prem{grid-template-columns:120px minmax(0,1fr)!important}
+.hx-prem .hx-lc img{width:120px!important;height:120px!important}
+.hx-prem .hx-pt{font-size:22px!important;white-space:nowrap}
+/* таблетки: плавная подложка */
+.seg.glide{position:relative}
+.seg .segth{position:absolute;left:3px;top:3px;bottom:3px;border-radius:999px;background:#fff;transition:transform .3s cubic-bezier(.3,1.2,.5,1),width .3s cubic-bezier(.3,1.2,.5,1);pointer-events:none}
+.seg.glide button{position:relative;z-index:1}
+.seg.glide button.on{background:none}
+/* ===== правки: кейсы плавно, тыква целиком, шапка без мыши, премиум «активен» картинкой ===== */
+@keyframes cbCycle{0%{opacity:0;transform:scale(.94)}8%,25%{opacity:1;transform:scale(1)}33%,100%{opacity:0;transform:scale(.94)}}
+.cb-art img{animation-duration:12s!important;animation-delay:calc(var(--i) * 3s)!important;animation-timing-function:ease-in-out!important}
+.mtop .mp-art{width:132px!important;height:132px!important;bottom:6px!important;right:4px!important;top:auto!important}
+.hx-top{grid-template-columns:minmax(0,1fr) 150px!important}
+.hx-art{width:168px!important;height:168px!important;margin:-6px -14px -8px -18px!important}
+.shero{overflow:visible!important}
+.hx-prem.on{background:linear-gradient(150deg,#FFE7A0 0%,#FFC24D 45%,#F59A2A 100%)!important;box-shadow:inset 0 2px 0 rgba(255,255,255,.55)!important}
+.hx-prem{border-radius:0 0 22px 22px}
+/* шторка покупки: без лишнего отступа сверху */
+#passDrawer .dr-h{padding-bottom:0}
+.pass-h{margin-top:-8px}
+/* шкала: аватарка над кружком текущего уровня, с нахлёстом; заливка — оранжевая, чтобы не путалась с «пусто» */
+.st-me{right:auto!important;left:50%!important;top:-20px!important;margin:0 0 0 -15px!important;width:30px!important;height:30px!important;z-index:3}
+.strack .st-row::after,.strack .st-row.first::before{background:linear-gradient(180deg,#FF8A1F,#FFB547)!important}
+/* рамка у соперника вне арены (история): фон аватарки не пропадает, размер — как у обычной */
+.ava-w.pv{position:relative;display:inline-grid;place-items:center}
+.ava-w.pv>.tav{background:var(--tc,#30A5FF)!important;color:#0b0b0e}
+.mp-t>small{opacity:.5}
+.mtop .mb-chips{flex-wrap:nowrap!important;position:relative;z-index:2;width:calc(100% + 130px);gap:4px}
+.mtop .mb-chips span{font-size:11.5px;padding:3px 7px;white-space:nowrap}
+.st-me{top:-27px!important}
+.hx-l small{white-space:nowrap}
+.seg .segth{bottom:auto!important}
+.pass-v1 .hx-val>span{font-size:30px;text-align:center}
+/* меню: тыква пасса не обрезается; значок ближе к имени */
+.mtop .mpass{overflow:visible!important}
+.mtop{overflow:visible!important}
+.mprof b{gap:3px!important}
+/* плашка с именем — поверх рамки аватарки везде */
+.ar-seat small,.t2seats .ar-seat small{z-index:5!important}
+.ar-seat .ava-fr{z-index:2}
+.mtop .mp-art{top:-6px!important;bottom:auto!important;right:6px!important;width:128px!important;height:128px!important;margin:0!important}
+.hx-l small{white-space:normal!important;position:relative;z-index:2}
+.hx-art{position:relative;z-index:1}
+/* в истории рамки не показываем — в маленькой плашке не помещаются */
+.seg button.on{transition:color .2s}
+.hx-top{align-items:start!important}
+.hx-l{padding-bottom:0!important}
+.hx-art{align-self:center;margin:-10px -14px -10px -18px!important}
+.hx-l{align-self:stretch;height:100%}
+.hx-l>em{margin-bottom:auto}
+/* история: плашка цвета аватарки, рамка помещается внутрь */
+.hp.pvp-w{background:var(--tc)!important;overflow:visible}
+.hp.pvp-w .ava-w.pv{transform:scale(.62)}
+.hp.pvp-w .tav{box-shadow:none}
+/* рамка всегда поверх картинки аватарки, имя — поверх рамки */
+.ava-w>.ava-fr,.tav .ava-fr{z-index:3!important}
+.ava-w>img:first-child,.ava-w>.tav{position:relative;z-index:1}
+.hx-l>em{white-space:nowrap;position:relative;z-index:2}
+.hx-l>b,.hx-l small{position:relative;z-index:2}
+.cban .sdb-t b{word-spacing:-.18em;position:relative;z-index:2}
+/* шторка пропуска: без свечения у картинки — его обрезал край прокрутки */
+.pass-h.glow img{filter:none!important}
+#passBody{padding-top:8px}
+/* шторки пасса — то же оранжево-красное свечение сверху, что у меню */
+#passDrawer,#passDrawer[data-theme="hw"]{background:radial-gradient(100% 300px at 50% 0%,rgba(255,84,40,.42),rgba(226,60,30,.12) 55%,transparent 80%),linear-gradient(180deg,#1d0c2e,#0f0718)!important}
+.drawer[data-theme="hw"]{background:radial-gradient(100% 300px at 50% 0%,rgba(255,84,40,.42),rgba(226,60,30,.12) 55%,transparent 80%),radial-gradient(90% 50% at 0% 45%,rgba(142,45,226,.28),transparent 70%),linear-gradient(180deg,#1d0c2e,#0f0718)!important}
+/* полоски при прокрутке: следы от линий заданий и блоков, вылезающих за край (шляпа). Свой слой для прокрутки и отрисовка блоков внутри своих границ */
+#casesBody{transform:translateZ(0);will-change:scroll-position}
+.drawer[data-theme="hw"] .sect{isolation:isolate}
+.drawer[data-theme="hw"] .arow{border-bottom-color:rgba(255,154,46,.12);background-clip:padding-box}
+.wwarn.rg>i{color:#000!important}

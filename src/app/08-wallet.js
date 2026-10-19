@@ -20,7 +20,7 @@ S.bonus = null;                                              // { pct, max, unti
 const bonusOn = () => S.bonus && S.bonus.until > Date.now() ? S.bonus : null;
 const bonusOf = a => { const b = bonusOn(); return b ? Math.min(Math.floor(a * b.pct) / 100, b.max) : 0; };
 const leftT = ms => { const s = Math.max(0, Math.ceil(ms / 1000)), h = s / 3600 | 0, m = (s / 60 | 0) % 60, x = String(s % 60).padStart(2, '0'); return h ? `${h}:${String(m).padStart(2, '0')}:${x}` : `${m}:${x}`; };
-const bonusHTML = () => { const b = bonusOn(); return b ? `<div class="wbonus"><i>${svg(NICON.ok)}</i><span><b>${$t("Бонус на пополнение")}</b><small><em id="bonusT">${leftT(b.until - Date.now())}</em> · ${$t("макс бонус {0} GRAM", fmt(b.max))}</small></span><strong>+${b.pct}%</strong></div>` : ''; };
+const bonusHTML = () => { const b = bonusOn(); return b ? `<div class="wbonus"><i>${svg(NICON.ok)}</i><span><b>${$t("Бонус на одно пополнение")}</b><small><em id="bonusT">${leftT(b.until - Date.now())}</em> · ${$t("макс бонус {0} GRAM", fmt(b.max))}</small></span><strong>+${b.pct}%</strong></div>` : ''; };
 const promoHTML = () => `<div class="promo"><input id="promoIn" placeholder="${$t("Промокод")}" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="32"><button class="pill-btn" data-act="promo">${$t("Применить")}</button></div>`;
 // dbg — из дебага: код можно вводить повторно (на сервере тоже)
 async function applyPromo(btn, dbgCode){
@@ -40,13 +40,13 @@ setInterval(() => { if (!S.bonus || openDrawer !== $('walletDrawer') || walletTa
 function syncBalBtn(){ const b = $('balAdd'); if (b) b.innerHTML = S.wallet ? svg('<path d="M12 6v12M6 12h12"/>') : svg(WICO); }
 function openWallet(tab = 'dep'){ if (S.busy) return; if (S.demo){ notify({ type: 'demo', img: 'assets/fantik.webp', title: $t("В демо баланс бесконечный"), text: $t("Кошелёк работает только на GRAM") }); return; } walletTab = tab; outSel = new Set(); swapDrawer('walletDrawer', renderWallet); }
 function walletBtn(){
-  const go = $('walletGo'), n = outSel.size, fee = Math.round(n * OUT_FEE * 100) / 100;
+  const go = $('walletGo'), n = outSel.size, fee = Math.round(Math.max(0, n - freeOuts()) * OUT_FEE * 100) / 100;   // премиум сезона: первые выводы без комиссии
   go.classList.remove('off');
   if (walletTab === 'dep'){ const bn = S.wallet ? bonusOf(depAmount) : 0;
     go.innerHTML = S.wallet ? `${$t("Пополнить на {0} GRAM", fmt(depAmount))}` + (bn ? `<small>${$t("+{0} GRAM бонусом", fmt(bn))}</small>` : '') : $t("Подключить кошелёк"); }
   // всегда две строки — шторка не прыгает при выборе. Комиссия видна ещё до выбора
   else { go.innerHTML = n ? `${$t("Вывести {0} NFT", n)}<small>${$t("по одному · комиссия {0} GRAM", fmt(fee))}</small>`
-    : `${$t("Выбери подарки для вывода")}<small>${$t("комиссия {0} GRAM за каждый", OUT_FEE)}</small>`; go.classList.toggle('off', !n); }
+    : `${$t("Выбери подарки для вывода")}<small>${freeOuts() ? $t("без комиссии — ещё {0}, дальше {1} GRAM", freeOuts(), OUT_FEE) : $t("комиссия {0} GRAM за каждый", OUT_FEE)}</small>`; go.classList.toggle('off', !n); }
 }
 function renderWallet(){
   $('walletTabs').innerHTML = [['dep', $t("Пополнить")], ['out', $t("Вывести NFT")]].map(([k, t]) => `<button class="tab${k === walletTab ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
@@ -140,7 +140,7 @@ $('walletGo').onclick = async () => {
     if (bn) S.hist.wallet.unshift({ type: 'bonus', t: Date.now() + 1, amount: bn, name: `+${pct}%`, method: $t("бонус к пополнению") });
     setTimeout(() => { setBalance(S.balance + depAmount + bn); Sfx.coin(); notify({ type: 'ok', img: 'assets/hero-gem.webp', title: `+${fmt(depAmount + bn)} GRAM`, text: `${$t("Пополнение с")} ${S.wallet.name}` + (bn ? ` · ${$t("бонус +{0}%", pct)}` : '') }); checkAch(); }, 250);
   } else {
-    const list = INV.filter(g => outSel.has(g.id)), fee = Math.round(list.length * OUT_FEE * 100) / 100;
+    const list = INV.filter(g => outSel.has(g.id)), fee = Math.round(Math.max(0, list.length - freeOuts()) * OUT_FEE * 100) / 100;
     if (!list.length){ haptic('rigid'); btn.animate([{ translate: '-5px 0' }, { translate: '5px 0' }, { translate: '0 0' }], { duration: 200, iterations: 2 }); return; }
     if (fee > S.balance){ notify({ type: 'err', icon: 'coin', title: $t("Не хватает на комиссию"), text: `${$t("Нужно {0} GRAM — пополни баланс", fmt(fee))}` }); return; }
     btn.disabled = true; btn.classList.add('wait'); btn.textContent = $t("Отправляем…");
@@ -157,9 +157,10 @@ $('walletGo').onclick = async () => {
         notify({ type: 'err', icon: 'err', ms: 6000, title: `${$t("Сначала напиши")} ${RELAYER}`, text: $t("Без сообщения релееру вывод не пройдёт. NFT остались у тебя, комиссия не списана"), action: { label: $t("Написать"), fn: () => tgOpen('https://t.me/' + RELAYER.slice(1)) } }); break; }
       if (!res.ok){ INV.unshift(g); haptic('rigid');                                  // этот не прошёл — вернулся в инвентарь
         notify({ type: 'err', key: 'out' + g.id, img: g.nft.src, ms: 5000, title: `${g.nft.name} #${g.num} ${$t("не выведен")}`, text: $t("NFT остался в инвентаре, комиссия не списана — попробуй ещё раз") }); continue; }
-      S.hist.wallet.unshift({ type: 'nft', t: Date.now(), name: g.nft.name, num: g.num ?? g.nft.num, model: g.nft.model, img: g.nft.src, bg: [g.a, g.b], value: g.value, fee: OUT_FEE, method: `${$t("в Telegram · комиссия {0} GRAM", OUT_FEE)}`, status: $t("в пути") });
-      setBalance(Math.round((S.balance - OUT_FEE) * 100) / 100);
-      notify({ type: 'ok', key: 'out' + g.id, img: g.nft.src, title: `${g.nft.name} #${g.num} ${$t("отправлен")}`, text: `${$t("Придёт в профиль Telegram · комиссия {0} GRAM", fmt(OUT_FEE))}` });
+      const f = freeOuts() ? 0 : OUT_FEE; if (!f) useFreeOut();   // вывод без комиссии: премиум сезона или награда уровня
+      S.hist.wallet.unshift({ type: 'nft', t: Date.now(), name: g.nft.name, num: g.num ?? g.nft.num, model: g.nft.model, img: g.nft.src, bg: [g.a, g.b], value: g.value, fee: f, method: f ? `${$t("в Telegram · комиссия {0} GRAM", f)}` : $t("в Telegram · без комиссии (премиум)"), status: $t("в пути") });
+      if (f) setBalance(Math.round((S.balance - f) * 100) / 100);
+      notify({ type: 'ok', key: 'out' + g.id, img: g.nft.src, title: `${g.nft.name} #${g.num} ${$t("отправлен")}`, text: f ? `${$t("Придёт в профиль Telegram · комиссия {0} GRAM", fmt(f))}` : $t("Придёт в профиль Telegram · без комиссии") });
     }
     checkAch();
   }

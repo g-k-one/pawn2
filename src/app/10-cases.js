@@ -2,7 +2,7 @@
    КЕЙСЫ: платные (Дуров, Сатоши) и бесплатные (Бист — за задания дня, Маск — за неделю)
    ========================================================= */
 const CASES = [
-  { id: 'durov', name: $t("Кейс Павла Дурова"), short: $t("Павел Дуров"), img: 'assets/chest-durov.webp', who: 'assets/who-durov.webp', c: '#30A5FF', price: 1, items: [
+  { id: 'durov', name: $t("Кейс Павла Дурова"), short: $t("Дуров"), img: 'assets/chest-durov.webp', who: 'assets/who-durov.webp', c: '#30A5FF', price: 1, items: [
     { t: 'nft', rare: 1, ch: 1.48 }, { t: 'nft', ch: 5.69 }, { t: 'gram', v: 1.5, ch: 13.6 }, { t: 'gram', v: .7, ch: 27.2 }, { t: 'gram', v: .3, ch: 33.4 }, { t: 'xp', v: 25, ch: 18.63 }] },
   { id: 'satoshi', name: $t("Кейс Сатоши Накамото"), short: $t("Сатоши"), img: 'assets/chest-satoshi.webp', who: 'assets/who-satoshi.webp', c: '#FFB835', price: 2.5, items: [
     { t: 'nft', rare: 1, ch: 6.7 }, { t: 'nft', ch: 18.8 }, { t: 'gram', v: 25, ch: 2.28 }, { t: 'xp', v: 150, ch: 9.4 }, { t: 'xp', v: 100, ch: 23.1 }, { t: 'xp', v: 50, ch: 39.72 }] },

@@ -3,9 +3,11 @@
    Сегодня (задания дня, неделя, супер дроп) · Кейсы · Профиль (таблетки: друзья | топ | достижения)
    casesTab — что показано: today · super (страница супер дропа внутри «Сегодня») · pass · cases · ach · refs · top
    ========================================================= */
-let casesTab = 'today', friendsSeg = 'ach';
-const BTAB_OF = { today: 'today', tasks: 'today', super: 'today', cases: 'cases', ach: 'friends', refs: 'friends', top: 'friends' };
-function openCases(tab){ if (tab){ casesTab = tab === 'tasks' ? 'today' : tab; if (tab === 'refs' || tab === 'top' || tab === 'ach') friendsSeg = tab; } swapDrawer('casesDrawer', renderCases); }
+/* В сезоне (16k-season.js, SEASON_ON): вкладки Сезон · Кейсы (только платные) · Друзья (таблетки: друзья | топ сезона); неделя, запас бесплатных кейсов и достижения скрыты */
+let casesTab = SEASON_ON ? 'season' : 'today', friendsSeg = SEASON_ON ? 'refs' : 'ach';
+const BTAB_OF = { today: 'today', tasks: 'today', super: SEASON_ON ? 'season' : 'today', season: 'season', cases: 'cases', ach: 'friends', refs: 'friends', top: SEASON_ON ? 'season' : 'friends' };
+const HOME_TAB = SEASON_ON ? 'season' : 'today';
+function openCases(tab){ if (tab){ casesTab = tab === 'tasks' || tab === 'today' ? HOME_TAB : SEASON_ON && tab === 'ach' ? 'refs' : tab; if (tab === 'refs' || tab === 'top' || tab === 'ach') friendsSeg = tab; } swapDrawer('casesDrawer', renderCases); }
 // баннер супер дропа: слева — что делать и тикет крупно, справа — сам приз крупно со свечением и ценой
 const sdBanner = () => `<button class="sdban" data-go="super"><span class="sdb-t"><small>${$t("Супер дроп")}</small><b>${tk(SUPER.target)}</b>` +
   `<em>${$t("Выбей этот тикет первым — NFT твой")}</em></span>${SUPER.nft ? `<img class="sdb-n" src="${SUPER.nft.nft.src}" alt="">` : ''}</button>`;
@@ -14,6 +16,10 @@ const backRow = (k, t) => `<button class="bback" data-go="${k}">${svg('<path d="
 // бесплатные кейсы: txt — короткая подпись на карточке, how — что сделать (в описании кейса), lock — текст на кнопке, пока закрыт
 const caseState = c => {
   if (!c.need) return { ok: true };
+  if (SEASON_ON && S.stock[c.id] > 0) return { ok: true, n: S.stock[c.id], k: 1, txt: $t("В запасе ×{0}", S.stock[c.id]), how: $t("Из прошлого сезона · в запасе ×{0}", S.stock[c.id]), lock: '' };   // остались с прошлого сезона
+  if (SEASON_ON){ const at = SEASON_RW.filter(r => r.free.c === c.id).map(r => r.l), nx = at.find(l => l > seasonLv());
+    return { ok: false, n: 0, k: nx ? Math.min(1, S.season.xp / (nx * SEASON.per)) : 1, txt: $t("Награда сезона"),
+      how: $t("Награда сезона · уровни {0}", at.join(', ')), lock: nx ? $t("На {0} уровне", nx) : $t("Награда сезона") }; }
   if (c.need === 'daily'){ const d = tasksDone(), n = TASKS.length, left = n - d;
     return { ok: S.stock.beast > 0, n: S.stock.beast, k: d / n, txt: $t("3 задания сегодня · {0}/{1}", d, n), how: $t("Выполни все 3 задания сегодня · {0}/{1}", d, n),
       lock: left ? $t("Ещё {0} {1}", left, $n("задание|задания|заданий", left)) : $t("Новый — завтра") }; }
@@ -36,16 +42,19 @@ const achRow = ([id, t, rw, ok, act, prog]) => {
 };
 function renderCases(){
   const cur = BTAB_OF[casesTab] || 'today';
-  $('casesTabs').innerHTML = [['today', $t("Сегодня")], ['cases', $t("Кейсы")], ['friends', $t("Профиль")]].map(([k, t]) => `<button class="tab${k === cur ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
+  $('casesTabs').classList.toggle('ptitle', SEASON_ON);   // в сезоне вкладок нет: «Пасс» — один экран, кейсы и супер дроп — баннерами, друзья — в меню
+  $('casesTabs').innerHTML = SEASON_ON ? `<h3>${({ cases: $t("Кейсы"), refs: $t("Друзья"), super: $t("Супер дроп") })[casesTab] || $t("Сезонный пасс")}${casesTab === 'season' ? '<button class="thq ph" data-sact="phelp" aria-label="?">?</button>' : ''}</h3>${casesTab === 'season' ? `<em class="pt-days">${$t("ещё {0}", leftDays(seasonLeft()))}</em>` : ''}` :
+    [['today', $t("Сегодня")], ['cases', $t("Кейсы")], ['friends', $t("Профиль")]].map(([k, t]) => `<button class="tab${k === cur ? ' on' : ''}" data-k="${k}">${t}</button>`).join('');
   $('casesTabs').querySelector('.on')?.scrollIntoView({ inline: 'center', block: 'nearest' });
   const b = $('casesBody');
   // «Профиль»: таблетки внутри вкладки
-  const seg = `<div class="bseg seg">${[['ach', $t("Достижения")], ['refs', $t("Друзья")], ['top', $t("Топ")]].map(([k, t]) => `<button class="${k === casesTab ? 'on' : ''}" data-go="${k}">${t}</button>`).join('')}</div>`;
+  const seg = SEASON_ON ? '' : `<div class="bseg seg">${[['ach', $t("Достижения")], ['refs', $t("Друзья")], ['top', $t("Топ")]].map(([k, t]) => `<button class="${k === casesTab ? 'on' : ''}" data-go="${k}">${t}</button>`).join('')}</div>`;   // в сезоне топ — внутри «Сезона», в «Друзьях» таблеток нет
   // задания, достижения, друзья, топ — с сервера: при первом открытии — скелет строк (каталог кейсов — свой, без ожидания)
   { const fr = BTAB_OF[casesTab] === 'friends'; if (casesTab !== 'cases' && skelGate('bon:' + (fr ? friendsSeg : casesTab), b, renderCases, 'row', fr ? seg : '')) return; }
-  if (casesTab === 'cases'){
-    b.innerHTML = `<div class="bgrid">${CASES.map(caseCard).join('')}</div>` +
-      `<p class="bnote">${$t("Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить и открывать по одному, когда захочешь.")}</p>`;
+  if (casesTab === 'season') renderSeason(b);
+  else if (casesTab === 'cases'){
+    b.innerHTML = (SEASON_ON ? backRow('season', $t("Сезонный пасс")) : '') + `<div class="bgrid">${CASES.map(caseCard).join('')}</div>` +
+      `<p class="bnote">${SEASON_ON ? $t("Кейсы открываются за GRAM. Бесплатные кейсы Мистера Биста и Илона Маска — награды уровней сезона.") : $t("Платные кейсы открываются за GRAM. Бесплатные — за задания: Мистер Бист за день, Илон Маск за неделю. Их можно копить и открывать по одному, когда захочешь.")}</p>`;
   } else if (casesTab === 'ach'){
     b.innerHTML = seg + `<div class="sect"><div class="sect-h"><span><b>${$t("Достижения")}</b><small>${$t("засчитываются по кнопке «Проверить»")}</small></span><em class="cnt">${ACH.filter(a => S.ach.got[a[0]]).length}/${ACH.length}</em></div>` + ACH.filter(a => !S.ach.got[a[0]]).map(achRow).join('') +
       // выполненные — свёрнуты: сверху то, что ещё можно сделать
@@ -63,7 +72,7 @@ function renderCases(){
       (S.week.missed.length ? `<button class="btn-main" data-act="restore">${$t("Восстановить 1 день · {0} GRAM", S.week.restorePrice)}</button>` : `<button class="btn-main${S.stock.musk ? '' : ' off'}" data-open="musk">${$t("Открыть кейс Маска")}${S.stock.musk > 1 ? ' ×' + S.stock.musk : ''}</button>`) + `</div>` + rulesHTML(RULES);
   } else if (casesTab === 'super'){
     const sd = SUPER.nft;
-    b.innerHTML = backRow('today', $t("Сегодня")) + `<div class="sdhero"><img class="sdlogo" src="assets/superdrop-logo.webp" alt="Super Drop"><div class="sdcard" id="sdCard">${cardHTML(sd, 236, true)}</div></div>` +
+    b.innerHTML = (SEASON_ON ? backRow('season', $t("Сезонный пасс")) : backRow('today', $t("Сегодня"))) + `<div class="sdhero"><img class="sdlogo" src="assets/superdrop-logo.webp" alt="Super Drop"><div class="sdcard" id="sdCard">${cardHTML(sd, 236, true)}</div></div>` +
       `<div class="sdtarget"><small>${$t("Загаданный тикет")}</small><div class="sddig">${superDigits()}</div><p>${$t("Выбей его первым в крафте — и NFT твой")}</p></div>` +
       `<div class="stats"><div><small>${$t("Приз")}</small><b class="g">${fmt(sd.value)}${GU}</b></div><div><small>${$t("Мин. ставка")}</small><b class="g">${SUPER.min}${GU}</b></div></div>` +
       `<div class="sect"><div class="sect-h"><span><b>${$t("Прошлые супер дропы")}</b></span></div>${SUPER.last.map(([n, g, t]) => `<div class="trow"><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${t}</small></span><span class="tb2">${g}</span></div>`).join('')}</div>` +
@@ -83,9 +92,11 @@ function renderCases(){
   } else {
     const me = 34;
     const ri = rankOf(S.xp), nx = RANKS[ri + 1], kx = nx ? (S.xp - RANKS[ri][1]) / (nx[1] - RANKS[ri][1]) : 1;
-    b.innerHTML = seg + `<div class="tophero"><img class="ava" src="assets/avatar.webp" alt=""><div class="th"><div class="th-n"><b>GK</b><em>${me} ${$t("место")}</em></div><span class="th-r">${RANKS[ri][0]}</span>` +
-      `<div class="th-x">${XPI}<i><b style="width:${(kx * 100).toFixed(1)}%"></b></i><small>${xpFmt(S.xp)} / ${xpFmt((nx || RANKS[ri])[1])}</small></div></div><span class="cupw"><img class="cup" src="assets/top.webp" alt=""></span></div>` +
-      `<div class="sect"><div class="sect-h"><span><b>${$t("Топ по XP")}</b></span></div>${TOP.map(([n, xp], i) => `<div class="trow"><em class="${i < 3 ? 'm' + i : ''}">${i + 1}</em><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${RANKS[rankOf(xp)][0]}</small></span><span class="txp">${XPI}${xpFmt(xp)}</span></div>`).join('')}</div>` +
+    // в сезоне: уровень сезона вместо звания, топ — по XP сезона (мок: те же ники, XP поделён на 5)
+    const sl = SEASON_ON ? seasonLv() : 0, sk = SEASON_ON ? (sl >= SEASON.lv ? 1 : (S.season.xp - sl * SEASON.per) / SEASON.per) : 0, TOPS = SEASON_ON ? TOP.map(([n, xp]) => [n, Math.round(xp / 5)]) : TOP;
+    b.innerHTML = (SEASON_ON ? backRow('season', $t("Сезон")) : seg) + `<div class="tophero"><img class="ava" src="assets/avatar.webp" alt=""><div class="th"><div class="th-n"><b>GK</b><em>${me} ${$t("место")}</em></div><span class="th-r">${SEASON_ON ? $t("Уровень {0}", sl) : RANKS[ri][0]}</span>` +
+      `<div class="th-x">${XPI}<i><b style="width:${((SEASON_ON ? sk : kx) * 100).toFixed(1)}%"></b></i><small>${SEASON_ON ? `${xpFmt(S.season.xp)} XP` : `${xpFmt(S.xp)} / ${xpFmt((nx || RANKS[ri])[1])}`}</small></div></div><span class="cupw"><img class="cup" src="assets/top.webp" alt=""></span></div>` +
+      `<div class="sect"><div class="sect-h"><span><b>${SEASON_ON ? $t("Топ сезона {0}", S.season.id) : $t("Топ по XP")}</b></span></div>${TOPS.map(([n, xp], i) => `<div class="trow"><em class="${i < 3 ? 'm' + i : ''}">${i + 1}</em><span class="tav" style="--tc:${avc(n)}">${n[0].toUpperCase()}</span><span class="tn"><b>@${n}</b><small>${SEASON_ON ? $t("Уровень {0}", Math.min(SEASON.lv, Math.floor(xp / SEASON.per))) : RANKS[rankOf(xp)][0]}</small></span><span class="txp">${XPI}${xpFmt(xp)}</span></div>`).join('')}</div>` +
       rulesHTML(TOP_RULES);
   }
 }
@@ -123,7 +134,7 @@ $('caseGo').onclick = () => tryOpenCase(infoCase);
 function tryOpenCase(c, m = 1){
   if (c.need && !S.dbg.freeCases && !caseState(c).ok){
     haptic('rigid');
-    return notify({ type: 'warn', icon: 'gift', color: c.c, title: `${c.name} ${$t("закрыт")}`, text: c.need === 'daily' ? `${$t("Выполни все задания дня: {0}/", tasksDone())}${TASKS.length}` : $t("Выполняй задания дня всю неделю") });
+    return notify({ type: 'warn', icon: 'gift', color: c.c, title: `${c.name} ${$t("закрыт")}`, text: SEASON_ON ? caseState(c).how : c.need === 'daily' ? `${$t("Выполни все задания дня: {0}/", tasksDone())}${TASKS.length}` : $t("Выполняй задания дня всю неделю") });
   }
   caseRun(c, false, m);
 }
@@ -175,6 +186,7 @@ async function caseRun(c, again, m = 1){
     if (c.price) setBalance(S.balance + c.price);   // не открылся — деньги вернулись, в кошелёк не пишем
     return failScreen('case', { c });
   }
+  seasonBump('cases');   // задание сезона «Открой любой кейс»
   // платное открытие — строкой в «Финансы → Кошелёк», чтобы все траты GRAM были в одном месте
   if (c.price && !S.demo) S.hist.wallet.unshift({ type: 'case', t: Date.now(), amount: c.price, name: c.name, img: c.img, method: $t("кейс") });
   if (c.need) S.stock[c.id] = Math.max(0, S.stock[c.id] - m);   // из запаса уходит столько, сколько открыто
@@ -236,7 +248,7 @@ function caseDrop(c, it, r, g){
     if (caseDrop.on) return; caseDrop.on = true;
     if (g){ if (how === 'sell') setTimeout(() => setBalance(S.balance + g.value), 900); else INV = [g, ...INV]; }
     else if (it.t === 'gram') setTimeout(() => setBalance(S.balance + it.v), 900);
-    else addXp(it.v);
+    else addXp(it.v, 'case');
     haptic('medium'); Sfx.coin();
     await closeFx(); $('fx').classList.remove('case');
     setTimeout(() => pushLive(liveCaseHTML(c, it, { me: true, img: g ? g.nft.src : null, value: g ? g.value : null, label: g ? g.nft.name : null })), 300);
@@ -247,7 +259,7 @@ function caseDrop(c, it, r, g){
   $('cSell') && ($('cSell').onclick = () => take('sell'));
   $('cAgain') && ($('cAgain').onclick = () => {
     if (c.price > S.balance){ notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM") }); return; }
-    if (g) INV = [g, ...INV]; else if (it.t === 'gram') setBalance(S.balance + it.v); else addXp(it.v);
+    if (g) INV = [g, ...INV]; else if (it.t === 'gram') setBalance(S.balance + it.v); else addXp(it.v, 'case');
     gotNote('take'); caseRun(c, true);
   });
   $('fx').classList.add('done');

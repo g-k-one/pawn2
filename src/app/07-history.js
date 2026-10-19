@@ -64,17 +64,18 @@ function renderHist(detail){ histMore = null;
   } else if (histTab === 'rewards'){
     const L = S.hist.rewards;
     b.innerHTML = L.length ? hPage(L, x => { const g = x.rw.g != null, c = g ? '#30A5FF' : '#F57A37';
-      return hline(c, x.kind === 'task' ? $t("Задание дня") : x.kind === 'story' ? $t("Сторис") : $t("Достижение"), tAgo(x.t), hpic(g ? 'assets/gem-small.svg' : 'assets/xp.webp'), rewardTitle(x), '', '+' + (g ? fmt(x.rw.g) : x.rw.xp), g ? 'GRAM' : 'XP', g ? '#12D53D' : '#F57A37', svg(x.kind === 'task' ? IC.check : '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>')); }) : `<p class="hempty">${$t("Наград пока нет")}</p>`;
+      return hline(c, x.kind === 'task' ? $t("Задание дня") : x.kind === 'story' ? $t("Сторис") : x.kind === 'season' ? $t("Сезон") : x.kind === 'legacy' ? $t("Подарок") : $t("Достижение"), tAgo(x.t), hpic(g ? 'assets/gem-small.svg' : 'assets/xp.webp'), rewardTitle(x), '', '+' + (g ? fmt(x.rw.g) : x.rw.xp), g ? 'GRAM' : 'XP', g ? '#12D53D' : '#F57A37', svg(x.kind === 'task' ? IC.check : '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>')); }) : `<p class="hempty">${$t("Наград пока нет")}</p>`;
   } else if (histTab === 'wallet'){
     // комиссия за вывод NFT — отдельной строкой сразу под выводом (списание GRAM — своя операция)
-    const L = S.hist.wallet.flatMap(w => w.type === 'nft' ? [w, { type: 'fee', t: w.t, amount: w.fee ?? OUT_FEE, name: w.name, num: w.num, model: w.model }] : [w]);
-    const lab = { dep: $t("Пополнение"), nftin: $t("Депозит NFT"), nft: $t("Вывод NFT"), sell: $t("Продажа NFT"), restore: $t("Восстановление дня"), fee: $t("Комиссия за вывод"), case: $t("Открытие кейса"), promo: $t("Промокод"), bonus: $t("Бонус к пополнению") };
+    const L = S.hist.wallet.flatMap(w => w.type === 'nft' && w.fee !== 0 ? [w, { type: 'fee', t: w.t, amount: w.fee ?? OUT_FEE, name: w.name, num: w.num, model: w.model }] : [w]);
+    const lab = { dep: $t("Пополнение"), nftin: $t("Депозит NFT"), nft: $t("Вывод NFT"), sell: $t("Продажа NFT"), restore: $t("Восстановление дня"), pass: $t("Сезон"), fee: $t("Комиссия за вывод"), case: $t("Открытие кейса"), promo: $t("Промокод"), bonus: $t("Бонус к пополнению") };
     b.innerHTML = L.length ? hPage(L, w => { if (w.type === 'xp') return hline('#F57A37', $t("Опыт за игры"), w.day === xpDay() ? $t("сегодня") : new Date(w.day + 'T12:00:00').toLocaleDateString(LOC, { day: 'numeric', month: 'short' }),
         hpic('assets/xp.webp'), $t("Оборот {0} GRAM", fmt(w.turn)), $t("0.5 XP за 1 GRAM"), '+' + fmt(w.xp), 'XP', '#F57A37', svg('<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.3l6-.7z"/>'));
       // промокод на % — строка без суммы: «+10%» (GRAM придут бонусом вместе с пополнением)
       const dep = ['dep', 'sell', 'nftin', 'promo', 'bonus'].includes(w.type), c = dep ? '#12D53D' : '#F57A37';
-      return hline(c, lab[w.type], tAgo(w.t), w.img ? hpic(w.img, w.bg) : hpic('assets/gem-small.svg'),
-        w.name ? w.name + (w.num ? ' #' + w.num : '') : (w.type === 'restore' ? $t("День недели") : $t("На баланс")), [w.model, w.status && retitle(w.status) !== $t("выполнено") ? `<i class="pend">${retitle(w.status)}</i>` : ''].filter(Boolean).join(' · '), w.pct ? '+' + w.pct + '%' : w.amount != null ? (dep ? '+' : '−') + fmt(w.amount) : w.value ? '≈' + fmt(w.value) : 'NFT', !w.pct && (w.amount != null || w.value) ? 'GRAM' : '', dep ? '#12D53D' : '#fff', `${svg(w.type === 'restore' ? '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M9.5 15l2 2 3.5-4"/>' : dep ? '<path d="M12 5v14M5 12l7 7 7-7"/>' : '<path d="M12 19V5M5 12l7-7 7 7"/>')}`); }) : `<p class="hempty">${$t("Операций пока нет")}</p>`;
+      const cc = w.type === 'case' && CASES.find(k => k.img === w.img)?.c;   // открытие кейса — плашка цвета самого кейса
+      return hline(c, lab[w.type], tAgo(w.t), w.img ? hpic(w.img, cc ? [cc, hexMix(cc, '#000000', .35)] : w.bg) : hpic('assets/gem-small.svg'),
+        w.name ? w.name + (w.num ? ' #' + w.num : '') : (w.type === 'restore' ? $t("День недели") : $t("На баланс")), [w.model, w.status && retitle(w.status) !== $t("выполнено") ? `<i class="pend">${retitle(w.status)}</i>` : ''].filter(Boolean).join(' · '), w.pct ? '+' + w.pct + '%' : w.amount != null ? (dep ? '+' : '−') + fmt(w.amount) : w.value ? '≈' + fmt(w.value) : 'NFT', !w.pct && (w.amount != null || w.value) ? 'GRAM' : '', dep ? '#12D53D' : '#fff', `${svg(w.type === 'pass' ? '<path d="M4 8a2 2 0 0 0 2-2h12a2 2 0 0 0 2 2v8a2 2 0 0 0-2 2H6a2 2 0 0 0-2-2z"/><path d="M10 12l1.5 1.5L14.5 10"/>' : w.type === 'restore' ? '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M9.5 15l2 2 3.5-4"/>' : dep ? '<path d="M12 5v14M5 12l7 7 7-7"/>' : '<path d="M12 19V5M5 12l7-7 7 7"/>')}`); }) : `<p class="hempty">${$t("Операций пока нет")}</p>`;
   } else {
     // PvP: «поставлено» — свой взнос, а не банк; проигрыш в PvP в ранги не идёт
     // крафты — отдельно; арена и ставки — своими блоками ниже. Сверху — итог по всем играм
@@ -180,7 +181,7 @@ function logCraft(r, how){ S.hist.crafts.unshift({ kind: 'craft', t: Date.now(),
 function pvpCard(c, i){
   const r = c.r, p = r.pvp, t = TIERS[r.ti], won = p.won;
   const right = won ? (r.nft ? hpic(r.nft.nft.src, giftBg(r.nft)) : hpic('assets/hero-gem-128.webp')) + `<span class="hk-v"><b class="pos">+${fmt(r.win)}</b><small>${r.nft ? (c.how === 'sell' ? $t("NFT продан") : $t("NFT забран")) : 'GRAM'}</small></span>`
-    : `<span class="hp pvp-w">${pvpAva({ who: p.winner })}</span><span class="hk-v"><b>0</b><small>GRAM</small></span>`;
+    : `<span class="hp pvp-w" style="--tc:${avc(p.winner)}">${pvpAva({ who: p.winner })}</span><span class="hk-v"><b>0</b><small>GRAM</small></span>`;
   return `<button class="hcard" data-i="${i}" style="--c:${won ? t.c : '#8a8a96'}"><span class="hk-h"><em>${noTag(c)}${t.name} · x${r.mult}</em><small>${tAgo(c.t)}</small></span>` +
     `<span class="hk-b"><span class="hk-s"><span class="hps">${hpic('assets/gem-small.svg')}</span><span class="hk-v"><b>${fmt(p.fee)}</b><small>GRAM</small></span></span>` +
     `<i class="hk-ar">${svg(ARW)}</i><span class="hk-s win">${right}</span></span></button>`;

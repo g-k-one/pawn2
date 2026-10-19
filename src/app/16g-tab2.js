@@ -74,7 +74,7 @@ setInterval(() => { if (t2Go && openDrawer) hideDrawer();   // во время �
   t2Smoke(isT2() && !hid && !modeBusy);   // дым включаем после перехода — переход не дёргается; вне арены — на паузе
   if (!isT2() || hid){ if (t2Me() && ++t2Tick % 4 === 0) t2Sync(); return; } t2Show(); t2ArrowsSync(); if (!t2Room || (t2End && Date.now() >= t2End) || ++t2Tick % 4 === 0) t2Sync(); }, 250);   // один таймер на арену (стрелки — здесь же)   // раз в секунду — свежий банк
 // в кнопке: аватарка вместо молота с наковальней — ты в комнате
-function t2Ava(on){ CB.classList.toggle('t2in', on); if (on && !CB.querySelector('.t2ava')) CB.insertAdjacentHTML('beforeend', `<img class="t2ava" src="assets/avatar.webp" alt="">`); }
+function t2Ava(on){ CB.classList.toggle('t2in', on); if (on && !CB.querySelector('.t2ava')) CB.insertAdjacentHTML('beforeend', `<span class="ava-w t2ava"><img src="assets/avatar.webp" alt="">${frameHTML()}</span>`); }
 CB.insertAdjacentHTML('beforeend', `<img class="t2lockico" src="assets/lock.svg" alt="">`);   // за 5 с до старта — замок вместо щита с мечом (и вместо аватарки)
 // тап по наковальне / ставке: в tab2 крафт не начинаем — входим в комнату с выбранным тикетом
 const _craftClick = $('craft').onclick;

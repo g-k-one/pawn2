@@ -16,7 +16,8 @@ function stockUp(id){ S.stock[id]++; const c = caseById(id);
 function bumpTasks(r){
   if (S.demo) return;
   S.tasks.crafts++; S.tasks.turnover = Math.round((S.tasks.turnover + r.stake) * 1000) / 1000;
-  if (dailyDone() && !S.tasks.stocked){ S.tasks.stocked = 1; stockUp('beast'); if (weekDone()) stockUp('musk'); }
-  TASKS.forEach(([k, t, n, rw]) => { if (S.tasks[k] >= n && !S.tasks.done[k]){ S.tasks.done[k] = 1; track('task_done', { id: k }); setTimeout(() => { grant(rw); logReward('task', k, rw); notify({ type: 'ok', icon: 'ok', title: $t("Задание выполнено"), text: `${t} · ${rewText(rw)}` }); }, 1600); } });
+  if (SEASON_ON) return seasonCount(r);   // в сезоне — свои задания дня (16k-season.js)
+  if (dailyDone() && !S.tasks.stocked && !SEASON_ON){ S.tasks.stocked = 1; stockUp('beast'); if (weekDone()) stockUp('musk'); }   // в сезоне кейсы — награды уровней
+  TASKS.forEach(([k, t, n, rw0]) => { const rw = seasonTaskRw(rw0); if (S.tasks[k] >= n && !S.tasks.done[k]){ S.tasks.done[k] = 1; track('task_done', { id: k }); setTimeout(() => { grant(rw); logReward('task', k, rw); notify({ type: 'ok', icon: 'ok', title: $t("Задание выполнено"), text: `${t} · ${rewText(rw)}` }); }, 1600); } });
 }
 
