@@ -9,7 +9,7 @@ const SHW = 1080, SHH = 1350;
 let shCtx = null, shImg = '';
 const shLoad = (src, cors) => new Promise(ok => { if (!src) return ok(null); const im = new Image(); if (cors) im.crossOrigin = 'anonymous';
   const t = setTimeout(() => ok(null), 4000); im.onload = () => { clearTimeout(t); ok(im); }; im.onerror = () => { clearTimeout(t); ok(null); }; im.src = src; });
-const STORY_XP = 50;                                      // XP за сторис — раз в сутки по Москве (проверяет сервер)
+const STORY_XP = 20;                                      // XP за сторис — раз в сутки по Москве (проверяет сервер)
 const shDay = () => new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10);
 const shBrag = m => m.text.split('\n')[0];   // первая строка — для шеринга ссылкой (приглашение shareWin допишет сам)
 const shLines = (a, ...r) => [a, '', ...r].join('\n');   // текст сообщения: первая фраза, пустая строка, дальше короткие строки с эмодзи

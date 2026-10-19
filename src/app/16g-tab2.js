@@ -45,7 +45,9 @@ function t2Apply(room){ const was = t2Me(), same = t2Room && room && t2Room.id =
     const entries = [...t2Room.entries.map(x => nw.get(x.who) || x), ...room.entries.filter(x => !old.has(x.who))];
     room = { ...room, entries, bank: Math.max(room.bank || 0, t2Room.bank || 0) }; }
   t2Room = room;
-  t2End = same && ne && t2End && Math.abs(ne - t2End) < 1500 ? Math.min(ne, t2End) : ne;   // конец с сервера приходит с задержкой сети, каждый опрос чуть разный — берём самый ранний: кольцо не дёргается
+  // конец с сервера приходит с задержкой сети и точностью часов ±1 с — каждый опрос чуть разный. В той же комнате кольцо подстраивается
+  // плавно: раньше — до 0.4 с за опрос, позже — до 0.15 с (не скачет назад); пропал конец в ответе — держим прежний, а не полный круг
+  t2End = same && t2End ? (ne && Math.abs(ne - t2End) < 4000 ? t2End + Math.max(-400, Math.min(150, ne - t2End)) : ne || t2End) : ne;
   if (was !== t2Me()){ t2Ava(t2Me()); renderBet(true); } else if (t2Me() && $('bet').querySelector('.ton').textContent !== fmt(room.bank)) renderBet(true);
   t2Seats(t2Quiet); t2Quiet = false; t2Snap(); }
 // тикеты зафиксированы — колесо и число встают на тот тикет, что реально записан в бой (на сервере), даже если палец ещё крутил
@@ -97,13 +99,13 @@ $('craft').onclick = async () => {
   if (t2Locked() || t2Full()){ if (hamAnim) settle(); haptic('rigid'); notify({ type: 'err', icon: 'fire', title: t2Full() ? $t("Арена заполнена") : $t("Комната уже стартует"), text: $t("Следующая откроется сразу после старта") }); return; }
   strike(.6, REST + 8).then(settle);   // удар мечом по щиту — как молотом по наковальне на крафте
   if (t2Fee > S.balance){ haptic('rigid'); notify({ type: 'err', icon: 'coin', title: $t("Недостаточно GRAM"), text: $t("Пополни баланс — тапни по нему сверху") }); return; }
+  { const fx = entryOf({ me: true }, t2Fee); if (fx) entryFx(CB, fx); }   // эффект входа — сразу по тапу, не дожидаясь ответа сервера
   t2Joining = true; CB.classList.add('t2wait'); let r;   // пока сервер отвечает — кнопка в ожидании
   try { r = await API.pvpJoin(t2Fee, t2Ticket); } catch(_){ r = { ok: false, error: 'net' }; } finally { t2Joining = false; t2Ver++; CB.classList.remove('t2wait'); }
   if (!r.ok){ haptic('rigid'); notify({ type: 'err', icon: 'fire', title: r.error === 'taken' ? $t("Этот тикет уже занят") : r.error === 'full' ? $t("Арена заполнена") : $t("Комната уже стартует"), text: r.error === 'taken' ? $t("Сдвинь ползунок или выбери случайный") : r.error === 'full' ? $t("Следующая откроется сразу после старта") : $t("Открываем следующую") }); if (r.error !== 'taken') t2Sync(); return; }
   setBalance(S.balance - t2Fee); haptic('medium'); Sfx.coin(); t2Apply(r.room);
   notify({ type: 'ok', icon: 'ok', title: $t("Ты на арене"), text: $t("Крути колесо и угадай тикет — самый близкий крафтит на весь банк") });
   CB.animate([{ scale: .85 }, { scale: 1.08 }, { scale: 1 }], { duration: 360, easing: 'cubic-bezier(.3,1.4,.5,1)' });
-  const fx = entryOf({ me: true }, t2Fee); if (fx) setTimeout(() => entryFx(CB.querySelector('.t2ava') || CB, fx), 150);   // свой эффект входа
 };
 // уже в комнате: новый тикет с колеса отправляем, когда палец отпустил (как в PvP); за 5 с до старта тикет зафиксирован
 let t2LiveT = 0;
@@ -254,7 +256,7 @@ function t2Seats(quiet){
   const others = (t2Room?.entries || []).filter(x => !x.me).slice(0, T2A.slots), box = $('t2Seats');
   for (let i = 0; i < T2A.slots; i++){ const x = others[i], id = x ? x.who : '', el = box.children[i]; if (t2SeatIds[i] === id) continue; t2SeatIds[i] = id;
     el.className = 'ar-seat ' + (x ? 'taken' : 'empty'); el.innerHTML = x ? pvpAva(x) + `<small>${x.who}</small>` : T2_HELM;
-    if (x && !S.lite && !t2Hidden() && !quiet){ const fx = entryOf(x, t2Fee); if (fx) setTimeout(() => entryFx(el, fx), 200);   // эффект входа соперника — видят все в комнате
+    if (x && !S.lite && !t2Hidden() && !quiet){ const fx = entryOf(x, t2Fee); if (fx) entryFx(el, fx);   // эффект входа соперника — видят все в комнате
       el.animate([{ scale: .3, opacity: 0 }, { scale: 1.15, opacity: 1, offset: .6 }, { scale: 1 }], { duration: 420, easing: 'cubic-bezier(.3,1.5,.5,1)' }); Sfx.coin(); haptic('light'); } }
 }
 // кнопка подарков в tab2 и tab3 — «Честность»: значок «i» в круге, открывает правила комнаты и хеш её зерна

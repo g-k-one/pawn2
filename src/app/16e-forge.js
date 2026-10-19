@@ -1430,11 +1430,11 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
   // Ожидание: капли кружат воронкой и стягиваются в центр → удар: лужа-желе с перелётом, 7 струй по 3 бусины разлетаются,
   // тянутся нитями, рвутся на капли, падают и тают; лужа колышется и стягивается. Из жижи вырастают призраки (режим 20)
   const GOO = 600;   // сторона квадрата жижи в единицах эффекта
-  DEF.potion = { atlas: 'potion', period: 2.5, gfx: { speed: 1, ramp: 'potion' },
+  DEF.potion = { atlas: 'potion', period: 2.5, rate: 1.5, gfx: { speed: 1.5, ramp: 'potion' },
     init: s => Object.assign(s, { b: [], gh: [], tw: [], mb: new Float32Array(72), mbn: 0, hit: false, ghosts: false, sw: Array.from({ length: 7 }, (_, i) => ({ a: i / 7 * 6.28, r: R(11, 16) })) }),
     update(s, dt, at){
-      const HIT = .32, t = s.cycle, B = s.b;
-      if (t < HIT){ const k = t / HIT; B.length = 0;   // воронка: капли по спирали к центру, растут и сливаются
+      const HIT = .14, t = s.cycle, B = s.b;   // короткое ожидание: всплеск почти сразу с входом
+      if (t < HIT){ const k = Math.min(1, t / HIT); B.length = 0;   // воронка: капли по спирали к центру, растут и сливаются
         for (const w of s.sw){ w.a += dt * (3 + k * 12); const d = 118 * (1 - k) ** 1.4 + 6; B.push({ x: 180 + Math.cos(w.a) * d, y: 182 + Math.sin(w.a) * d * .75, r: w.r * (.6 + k * .9) }); } }
       else if (!s.hit){ s.hit = true; s.shake = 0; B.length = 0;
         for (let i = 0; i < 3; i++) B.push({ core: true, ph: i * 2.1, x: 180, y: 182, r: 0 });
@@ -1464,7 +1464,7 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
       for (const p of s.gh) p.rot += (Math.sin(p.age * 4 + p.ph) * .25 - p.rot) * Math.min(1, dt * 3);   // покачивается, а не крутится
       step(s.gh, dt); step(s.tw, dt);
     },
-    render(s, c){ const at = c.at, t = s.cycle - .32;
+    render(s, c){ const at = c.at, t = s.cycle - .14;
       if (t >= 0 && t < .5){ const k = t / .5; sprite(c, 180, 182, 240 + 260 * easeOut(k), 0, (1 - k) * .5, 1, at.map['sglow:W0'], 1, [.3, .9, .25]);   // отсвет и ударная волна
         sprite(c, 180, 182, 80 + 420 * easeOut(k), 0, (1 - k) * .6, 1, at.map['sglow:W0'], .55, [.55, 1, .4]); }
       if (s.mbn) sprite(c, 180, 180, GOO, 0, 1, 0, at.map['glow:W0'], 1, null, 0, [19, 0, 0, 0, RAMP_ROW.potion]);   // жижа — один квадрат на весь эффект
@@ -1500,11 +1500,11 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
         e.ox = r.left + r.width / 2; e.oy = r.top + r.height / 2; e.k = r.width / 360; e.clip = r; }
       const vis = !e.clip || (e.clip.bottom > 0 && e.clip.top < h && e.clip.right > 0 && e.clip.left < w);
       if (!vis) continue;                                                      // за экраном — не считаем и не рисуем
-      e.s.t += dt; e.s.cycle += dt;
+      const edt = dt * (e.def.rate || 1); e.s.t += edt; e.s.cycle += edt;   // rate — своя скорость времени эффекта (1.5 — в полтора раза быстрее)
       if (e.stopping){ e.fade = Math.max(0, e.fade - dt / .4); if (!e.fade){ live.delete(e); continue; } }
       if (e.def.period && !e.loop && e.s.cycle >= e.def.period){ live.delete(e); continue; }   // разовый эффект отыграл
       const j0 = performance.now();
-      e.def.update(e.s, dt, e.at);
+      e.def.update(e.s, edt, e.at);
       if (!e.tex.ok) continue;
       e.dt = dt; const sh = e.s.shake || 0; if (sh > .1){ e.s.shake *= Math.pow(.02, dt); } const bx = e.ox, by = e.oy; e.ox += (Math.random() - .5) * sh * e.k; e.oy += (Math.random() - .5) * sh * e.k;
       nq = 0; e.def.render(e.s, e); js += performance.now() - j0; e.ox = bx; e.oy = by;
