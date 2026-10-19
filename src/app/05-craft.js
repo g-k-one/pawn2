@@ -145,7 +145,7 @@ $('dbgBody').addEventListener('click', e => {
   if (k === 'resetSave'){ haptic('medium'); Store.reset(); return; }
   // сезон: включить/выключить (перезагрузка — как смена языка), прокрутить уровни, премиум, сброс
   if (k === 'season'){ if ((v === '1') !== SEASON_ON){ LSset('bm-season', v === '1'); Store.save?.(); location.reload(); } return; }
-  const sSrv = () => API.dbgSeason({ xp: S.season.xp, prem: !!S.season.prem, got: Object.keys(S.season.got) }).catch(() => {});   // в тестовом боте — то же на сервере
+  const sSrv = () => API.dbgSeason({ xp: S.season.xp, prem: !!S.season.prem, got: Object.keys(S.season.got) }).catch(() => {});   // при подключённом сервере (отладка) — то же на сервере
   if (k === 'sLv'){ seasonFresh(); const add = Math.min(+v * SEASON.per, SEASON.lv * SEASON.per - S.season.xp); if (add > 0) seasonXp(add); sSrv(); haptic(); renderDbg(); return; }
   if (k === 'sPrem'){ S.season.prem = v === '1'; if (S.season.prem) cosGive('gold-frame'); sSrv(); document.body.classList.toggle('sprem', SEASON_ON && S.season.prem); haptic(); renderDbg(); return; }
   if (k === 'sSet'){ seasonFresh(); S.season.xp = +v * SEASON.per; sSrv(); haptic(); renderDbg(); return; }

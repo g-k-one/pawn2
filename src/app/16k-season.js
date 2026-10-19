@@ -159,8 +159,9 @@ function entryFx(el, id){
   Forge.play('potion', { x: r.left + r.width / 2, y: r.top + r.height / 2, size: Math.max(r.width, 48) * 2.6 }); Sfx.coin?.(); haptic('medium');
 }
 // эффект входа игрока на Арене: свой — из надетого; соперник — с сервера (eq.entry), в моке — у части ботов
-const ENTRY_ROOM = 2;   // комната 2 GRAM — витрина: «Зелье» при входе у всех
-const entryOf = (x, fee) => fee === ENTRY_ROOM && SEASON_ON ? 'hw-entry' : x.me ? (cosOn('entry') ? S.equip.entry : null) : x.eq ? x.eq.entry || null : SEASON_ON && [...x.who].reduce((a, c) => a + c.charCodeAt(0) * 3, 0) % 4 === 0 ? 'hw-entry' : null;
+const ENTRY_ROOM = 2;   // комната 2 GRAM — витрина: «Зелье» при входе у всех, у кого не надет свой эффект
+const entryOf = (x, fee) => { const own = x.me ? (cosOn('entry') ? S.equip.entry : null) : x.eq ? x.eq.entry || null : SEASON_ON && [...x.who].reduce((a, c) => a + c.charCodeAt(0) * 3, 0) % 4 === 0 ? 'hw-entry' : null;
+  return own || (fee === ENTRY_ROOM && SEASON_ON ? 'hw-entry' : null); };   // надетое — всегда своё; «Зелье» в комнате 2 GRAM — только тем, у кого ничего не надето
 function srwHTML(rw){
   if (rw.cos) return `<img class="scos" src="${COS_IMG[rw.cos] || seasonTheme().art}" alt=""><b>${COS[rw.cos][0]}</b>`;
   if (rw.dep) return `<img src="assets/hw-caul.webp" alt=""><b>+${rw.dep[0]}% ${$t("к пополнению")}</b>`;
