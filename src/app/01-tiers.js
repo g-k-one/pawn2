@@ -43,7 +43,7 @@ let noClick = false;
 tiersEl.addEventListener('click', e => {
   const b = e.target.closest('.tier'); if (!b || S.busy || noClick) return;
   const ni = +b.dataset.i; if (ni === S.tier) return;
-  selHaptic(); setTier(ni, { dir: Math.sign(ni - S.tier) }); restartAuto();
+  selHaptic(); Sfx.swipe(); setTier(ni, { dir: Math.sign(ni - S.tier) }); restartAuto();
 });
 const selHaptic = () => { if (S.vibro === false) return; try { Telegram.WebApp.HapticFeedback.selectionChanged(); } catch(_){ haptic(); } };
 /* свайп влево/вправо по экрану — соседний ранг. Контент тянется за пальцем с параллаксом, на краях — сопротивление */

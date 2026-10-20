@@ -257,7 +257,7 @@ const Sfx = (() => {
     tick: (p = 1, hi = 0) => tone(1500 + 350 * p + 1100 * hi, .022, .045 * p, 'square'),
     lock: () => { tone(160, .16, .16, 'sine', 55); tone(2400, .03, .04, 'square'); },
     whoosh: () => noise(.45, 300, .8, .1),
-    swipe: () => noise(.18, 900, 1.2, .05),
+    swipe: () => noise(.18, 900, 1.2, .1),
     up: ti => { tone(260 + 70 * ti, .32, .09, 'sawtooth', 900 + 160 * ti); setTimeout(() => tone(1046 + 120 * ti, .25, .05, 'triangle'), 120); },
     rank: ti => { const base = [392, 440, 523, 587, 659][ti]; [0, 4, 7, 12, 16].slice(0, 2 + ti).forEach((s, i) => setTimeout(() => tone(base * 2 ** (s / 12), .5, .07, 'triangle'), i * 90)); },
     clang: () => { tone(1900, .7, .05, 'triangle'); tone(2870, .55, .035, 'sine'); tone(130, .3, .2, 'sine', 45); noise(.14, 2200, .7, .14); },
