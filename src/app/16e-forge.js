@@ -16,19 +16,41 @@ function makeForge(host){
   /* ── частицы: те же поля и та же физика, что в vfx.luau ── */
   const P0 = { x: 0, y: 0, vx: 0, vy: 0, rot: 0, vr: 0, size: 64, grow: 0, stretch: 1, age: 0, life: 1, cells: [0], add: 1, alpha: 1,
     drag: 0, grav: 0, sway: 0, fadeIn: .12, fadeOut: .4, orient: false, speedStretch: 0, tint: null, pul: .05, pf: 9,
-    sc: null, scW: null, scH: null, shear: 0, mode: 0, heat: null, ero: null, ramp: null, bx: 0, by: 0, broke: false, ph: 0, tc: null, floor: null, bounce: .35 };
+    sc: null, scW: null, scH: null, shear: 0, mode: 0, heat: null, ero: null, ramp: null, bx: 0, by: 0, broke: false, ph: 0, tc: null, floor: null, bounce: .35,
+    // сложное поведение (у простых частиц выключено — ничего не стоит): поток, притяжение, пружина домой, ожидание, след, дочерние частицы
+    flow: 0, fz: 1, ax: null, ay: 0, pull: 0, swirl: 0, kr: 0, hx: null, hy: 0, spring: 0, wait: 0, trail: 0, tn: 0, th: 0, onDie: null };
   // пул: погибшие частицы не выбрасываются, а переиспользуются — нет мусора для сборщика, ровнее кадр
   const POOL = [];
-  const spawn = (L, o) => { const p = Object.assign(POOL.pop() || {}, P0, o); if (o.ph == null) p.ph = Math.random() * 6.28; L.push(p); return p; };
+  // след хранится в своём буфере частицы (_tr) и переживает пул — без новых массивов
+  const spawn = (L, o) => { const p = Object.assign(POOL.pop() || {}, P0, o); if (o.ph == null) p.ph = Math.random() * 6.28;
+    if (p.trail){ if (!p._tr || p._tr.length < p.trail * 2) p._tr = new Float32Array(p.trail * 2); p.tn = 0; p.th = 0; } L.push(p); return p; };
+  // поле течения (curl noise): вихри без источников и стоков — частицы текут, закручиваются и не слипаются в точку.
+  // Потенциал — сумма трёх волн; скорость — его ротор (производные посчитаны вручную). FT — общее время потока
+  let FT = 0;
+  const FV = [0, 0];
+  function curl(x, y, z){
+    x *= z; y *= z; const t = FT, A = x * .011 + t * .3, B = y * .013 - t * .2, C = x * .023 - y * .017 + t * .5, D = x * .041 + y * .037 - t * .7;
+    const dx = .011 * Math.cos(A) * Math.cos(B) + .0115 * Math.cos(C) - .01025 * Math.sin(D), dy = -.013 * Math.sin(A) * Math.sin(B) - .0085 * Math.cos(C) - .00925 * Math.sin(D);
+    FV[0] = dy / .02; FV[1] = -dx / .02; return FV;
+  }
   function step(L, dt){
     for (let i = L.length; i--;){
       const p = L[i]; p.age += dt;
-      if (p.age >= p.life){ L[i] = L[L.length - 1]; L.pop(); if (POOL.length < 3000) POOL.push(p); continue; }
+      if (p.age >= p.life || (p.kr && p.ax !== null && Math.abs(p.x - p.ax) + Math.abs(p.y - p.ay) < p.kr)){
+        if (p.onDie) p.onDie(p, L);   // дочерние частицы: ракета → салют, капля → брызги
+        L[i] = L[L.length - 1]; L.pop(); if (POOL.length < 3000) POOL.push(p); continue; }
+      if (p.age < p.wait) continue;   // ждёт своей очереди: стоит на месте (рассыпание картинки идёт волной)
+      if (p.flow){ const f = curl(p.x, p.y, p.fz), r = Math.min(1, dt * 3); p.vx += (f[0] * p.flow - p.vx) * r; p.vy += (f[1] * p.flow - p.vy) * r; }
+      if (p.ax !== null){ const dx = p.ax - p.x, dy = p.ay - p.y, l = Math.hypot(dx, dy) + 1;   // притяжение к точке + закрутка вокруг неё (воронка)
+        p.vx += (dx * p.pull - dy * p.swirl) / l * dt; p.vy += (dy * p.pull + dx * p.swirl) / l * dt; }
+      if (p.hx !== null){ p.vx += (p.hx - p.x) * p.spring * dt; p.vy += (p.hy - p.y) * p.spring * dt; }   // пружина домой: собирается в картинку
       const d = Math.max(0, 1 - p.drag * dt);
       p.vx *= d; p.vy = p.vy * d + p.grav * dt;
       p.x += (p.vx + Math.sin(p.age * 5 + p.ph) * p.sway) * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
       // пол (поверхность наковальни): падающая частица отскакивает, теряя скорость
       if (p.floor !== null && p.y > p.floor && p.vy > 0){ p.y = p.floor; p.vy *= -p.bounce; p.vx *= .7; }
+      // след: кольцевой буфер последних позиций (раз в кадр)
+      if (p.trail){ const T = p._tr; T[p.th * 2] = p.x; T[p.th * 2 + 1] = p.y; p.th = (p.th + 1) % p.trail; if (p.tn < p.trail) p.tn++; }
     }
   }
   // цвет по жизни: tc = [[доля жизни, [r, g, b]], …] — искра остывает (белая → жёлтая → оранжевая → красная); в общий черновик, без новых массивов
@@ -36,7 +58,7 @@ function makeForge(host){
   const tcol = (K, k) => { let i = 1; while (i < K.length - 1 && K[i][0] < k) i++; const [a, A] = K[i - 1], [b, B] = K[i], u = Math.min(1, Math.max(0, (k - a) / (b - a)));
     TC[0] = A[0] + (B[0] - A[0]) * u; TC[1] = A[1] + (B[1] - A[1]) * u; TC[2] = A[2] + (B[2] - A[2]) * u; return TC; };
   // мягкая кривая прозрачности: плавное появление и угасание
-  const fade = (p, k) => { const a = Math.min(1, Math.max(0, k / p.fadeIn)), b = Math.min(1, Math.max(0, (1 - k) / p.fadeOut)); return p.alpha * a * a * (3 - 2 * a) * b * b * (3 - 2 * b); };
+  const fade = (p, k) => { const a = p.fadeIn ? Math.min(1, Math.max(0, k / p.fadeIn)) : 1, b = Math.min(1, Math.max(0, (1 - k) / p.fadeOut)); return p.alpha * a * a * (3 - 2 * a) * b * b * (3 - 2 * b); };
   // накопитель частоты: rate штук в секунду, дробные остатки копятся
   const emit = (acc, k, rate, dt, f) => { acc[k] = (acc[k] || 0) + rate * dt * EMIT[quality]; while (acc[k] >= 1){ acc[k] -= 1; f(); } };
   const seq = (at, mask, ...st) => st.length ? st.map(s => at.map[mask + ':' + s]) : [at.map[mask]];
@@ -112,18 +134,43 @@ function makeForge(host){
   function draw(c, L){
     const cell = c.at.cell;
     for (const p of L){
-      const k = p.age / p.life, s = p.size * (p.sc ? crv(p.sc, k) : 1 + p.grow * k) * (1 + p.pul * Math.sin(p.age * p.pf + p.ph)) / cell, ce = p.cells[Math.min(p.cells.length - 1, Math.floor(k * p.cells.length))];
+      const k = p.wait ? Math.max(0, p.age - p.wait) / (p.life - p.wait) : p.age / p.life, al = fade(p, k);
+      if (al <= .003) continue;   // невидимую не считаем (тысячи частиц картинки — заметная экономия)
+      const s = p.size * (p.sc ? crv(p.sc, k) : 1 + p.grow * k) * (p.pul ? 1 + p.pul * Math.sin(p.age * p.pf + p.ph) : 1) / cell, ce = p.cells.length > 1 ? p.cells[Math.min(p.cells.length - 1, Math.floor(k * p.cells.length))] : p.cells[0];
+      if (p.tn > 1) trail(c, p, k, s * cell);
       let fx = null; if (p.mode){ fx = FXS; fx[0] = p.mode; fx[1] = p.ero ? crv(p.ero, k) : 0; fx[2] = p.heat ? crv(p.heat, k) : 1; fx[3] = p.ph; fx[4] = p.ramp ? RAMP_ROW[p.ramp] : -1; }
       if (p.orient){
         // маска искры нарисована по диагонали (голова внизу-слева): M = R(a − 3π/4) · (I + (st − 1)·u·uᵀ)
         const st = p.stretch * (1 + Math.hypot(p.vx, p.vy) * p.speedStretch), b = Math.atan2(p.vy, p.vx) - 2.35619449;
         const cb = Math.cos(b), sb = Math.sin(b), h = (st - 1) / 2;
-        quad(c, ce, (cb * (1 + h) + sb * h) * s, (sb * (1 + h) - cb * h) * s, (-cb * h - sb * (1 + h)) * s, (cb * (1 + h) - sb * h) * s, p.x, p.y, fade(p, k) * flick(p), p.add, p.tc ? tcol(p.tc, k) : p.tint, 0, fx);
+        quad(c, ce, (cb * (1 + h) + sb * h) * s, (sb * (1 + h) - cb * h) * s, (-cb * h - sb * (1 + h)) * s, (cb * (1 + h) - sb * h) * s, p.x, p.y, al * flick(p), p.add, p.tc ? tcol(p.tc, k) : p.tint, 0, fx);
       } else {
-        const cs = Math.cos(p.rot), sn = Math.sin(p.rot), w = s * (p.scW ? crv(p.scW, k) : 1), hh = s * p.stretch * (p.scH ? crv(p.scH, k) : 1), sh = p.shear || 0;
+        const cs = p.rot ? Math.cos(p.rot) : 1, sn = p.rot ? Math.sin(p.rot) : 0, w = s * (p.scW ? crv(p.scW, k) : 1), hh = s * p.stretch * (p.scH ? crv(p.scH, k) : 1), sh = p.shear || 0;
         // ось y со скосом: (sh, 1) — верх маски уходит вбок, основание на месте
-        quad(c, ce, cs * w, sn * w, (cs * sh - sn) * hh, (sn * sh + cs) * hh, p.x, p.y, fade(p, k) * flick(p), p.add, p.tc ? tcol(p.tc, k) : p.tint, 0, fx);
+        quad(c, ce, cs * w, sn * w, (cs * sh - sn) * hh, (sn * sh + cs) * hh, p.x, p.y, al * flick(p), p.add, p.tc ? tcol(p.tc, k) : p.tint, 0, fx);
       }
+    }
+  }
+  // след частицы: сплошная мягкая лента (режим 21) по последним точкам — к хвосту тоньше и прозрачнее, по оси белое ядро.
+  // Вершины пишутся прямо в буфер, без новых массивов: следов сотни на кадр
+  function trail(c, p, k, w){
+    const T = p._tr, n = p.tn, N = p.trail, a = fade(p, k) * c.fade, tint = p.tc ? tcol(p.tc, k) : (p.tint || FULL), k2 = c.k, add = p.add;
+    if (a <= .003) return;
+    const P = i => (p.th - n + i + N) % N * 2;   // i-я точка от хвоста
+    let j0 = P(0), x0 = T[j0], y0 = T[j0 + 1], j1 = P(1), nx0 = -(T[j1 + 1] - y0), ny0 = T[j1] - x0, l0 = Math.hypot(nx0, ny0) || 1; nx0 /= l0; ny0 /= l0;
+    for (let i = 1; i < n; i++){
+      const j = P(i), x1 = T[j], y1 = T[j + 1], jn = P(Math.min(n - 1, i + 1)), jp = P(i - 1);
+      let nx1 = -(T[jn + 1] - T[jp + 1]), ny1 = T[jn] - T[jp]; const l1 = Math.hypot(nx1, ny1); if (l1 < 1e-4){ nx1 = nx0; ny1 = ny0; } else { nx1 /= l1; ny1 /= l1; }
+      const u0 = (i - 1) / (n - 1), u1 = i / (n - 1), w0 = w * (.15 + .85 * u0) / 2, w1 = w * (.15 + .85 * u1) / 2;
+      if ((nq + 1) * VF * 4 > buf.length){ const b = new Float32Array(buf.length * 2); b.set(buf); buf = b; }
+      let o = nq * VF * 4;
+      for (let v = 0; v < 4; v++){ const e = v === 0 || v === 3 ? 0 : 1, sd = v < 2 ? -1 : 1, x = e ? x1 : x0, y = e ? y1 : y0, nx = e ? nx1 : nx0, ny = e ? ny1 : ny0, ww = e ? w1 : w0;
+        buf[o++] = (c.ox + (x + nx * ww * sd - 180) * k2) * dpr; buf[o++] = (c.oy + (y + ny * ww * sd - 180) * k2) * dpr; buf[o++] = 0; buf[o++] = 0;
+        buf[o++] = a; buf[o++] = add; buf[o++] = tint[0]; buf[o++] = tint[1]; buf[o++] = tint[2];
+        buf[o++] = e ? u1 : u0; buf[o++] = v < 2 ? 0 : 1; buf[o++] = 21; buf[o++] = .6; buf[o++] = .8; buf[o++] = 0;
+        buf[o++] = 0; buf[o++] = 0; buf[o++] = 0; buf[o++] = 0; buf[o++] = -1; }
+      nq++; fill += Math.hypot(x1 - x0, y1 - y0) * (w0 + w1) * k2 * k2;
+      x0 = x1; y0 = y1; nx0 = nx1; ny0 = ny1;
     }
   }
   // отрезок: ячейка, растянутая от точки до точки (мягкая — свечение, сплошная — ядро линии)
@@ -243,6 +290,8 @@ function makeForge(host){
     'float n=texture2D(nz,vq*.7+vec2(vf.w*.37,t*.4)).g;float st=texture2D(sp,vec2(vq.y*.55+t*.55+vf.w*.21,(floor(vf.w)+.1+fract(vq.x+(n-.5)*.3)*.8)/8.)).r;' +
     'float v=m*(.62+st*.6)+(n-.5)*.12;float e=vf.y;float a=smoothstep(e,e+.05,v);float x=clamp(pow(v,.75)*vf.z,0.,1.);if(gp.x>0.){x=floor(x*gp.x+.5)/gp.x;}' +
     'vec3 col=texture2D(rp,vec2(x,RW)).rgb*vt;a*=va.x;gl_FragColor=vec4(col*a,a*(1.-va.y));return;}' +
+    // 21 — мягкая лента следа: поперёк — мягкий профиль с белым ядром (vf.y), вдоль — к хвосту (vq.x=0) гаснет; vf.z — яркость
+    'if(vf.x>20.9&&vf.x<21.5){float ac=abs(vq.y*2.-1.);float a=(1.-ac)*(1.-ac)*pow(vq.x,1.4)*vf.z*va.x;vec3 col=mix(vt,vec3(1.),exp(-ac*ac*10.)*vf.y*vq.x);gl_FragColor=vec4(col*a,a*(1.-va.y));return;}' +
     'if(vf.x<.5){vec4 c=texture2D(tx,vu);float a=c.a*va.x;gl_FragColor=vec4(c.rgb*vt*a,a*(1.-va.y));return;}' +
     // 4 — лучи света веером (шум по углу), 5 — радужный обод (форма из атласа, цвет по углу и времени),
     // 6 — серп-взмах (дуга с утончёнными концами и белым ядром), 7 — поток внутри скруглённой кнопки (бегущие прожилки + блик)
@@ -1492,6 +1541,88 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
         sprite(c, 180, 180, GOO, 0, 1, 0, at.map['glow:W0'], 1, null, 0, [19, 0, 0, 0, RAMP_ROW.potion], q); }
       draw(c, s.tw); draw(c, s.gh); } };
 
+  /* ── сложные частицы: приёмы потока, притяжения, следа, дочерних частиц и частиц из картинки ── */
+
+  // точки картинки: сетка n×n, непрозрачные клетки → [x, y, r, g, b] (x, y — от −0.5 до 0.5). Картинка с чужого сервера без CORS
+  // прочитаться не может — тогда точек нет и эффект молча пропускается. Кэш по адресу и сетке
+  const PIX = {};
+  function pixels(src, n){
+    const key = (src.src || src) + '|' + n; if (PIX[key]) return PIX[key];
+    const r = PIX[key] = { ok: false, pts: [] }, im = typeof src === 'string' ? Object.assign(new Image(), { crossOrigin: 'anonymous', src }) : src;
+    const go = () => { try { const c2 = document.createElement('canvas'); c2.width = c2.height = n; const g = c2.getContext('2d', { willReadFrequently: true });
+        const k = Math.min(n / im.naturalWidth, n / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; g.drawImage(im, (n - w) / 2, (n - h) / 2, w, h);
+        const d = g.getImageData(0, 0, n, n).data;
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++){ const i = (y * n + x) * 4; if (d[i + 3] > 110) r.pts.push((x + .5) / n - .5, (y + .5) / n - .5, d[i] / 255, d[i + 1] / 255, d[i + 2] / 255); }
+      } catch (_){ r.pts = []; } r.ok = true; };
+    if (im.complete && im.naturalWidth) go(); else { im.addEventListener('load', go); im.addEventListener('error', () => { r.ok = true; }); }
+    return r;
+  }
+
+  // Рассыпание / сборка картинки (продажа, вывод, раскрытие NFT): каждая клетка картинки — частица своего цвета.
+  // 'out' — волна слева направо: клетка вспыхивает (раскалённая кромка), отрывается, уносится потоком вверх, остывает и гаснет;
+  // 'in' — частицы слетаются вихрем и пружиной встают на место, волной слева направо, в конце — вспышка.
+  // Forge.play('dust', { x, y, size, img: адрес или <img>, dir: 'out' | 'in', box: сторона картинки в ед. эффекта (220), tint: цвет кромки })
+  DEF.dust = { atlas: 'aura', period: 2.6,
+    init(s){ const o = s.o || {}; Object.assign(s, { p: [], made: false, dir: o.dir || 'out', box: o.box || 220, T: o.tint || [1, .62, .25], px: pixels(o.img || base + '../hero-gem.webp', [32, 44, 52][quality]) }); },
+    update(s, dt, at){
+      if (!s.made){ if (!s.px.ok) { s.cycle = 0; return; } s.made = true; s.cycle = 0;
+        const P = s.px.pts, B = s.box, T = s.T, S = B / [32, 44, 52][quality] * 1.08, cell = at.map['solid:W0'];   // сплошные клетки встык — пока стоят, это сама картинка
+        for (let i = 0; i < P.length; i += 5){ const u = P[i], v = P[i + 1], col = [P[i + 2], P[i + 3], P[i + 4]], hx = 180 + u * B, hy = 180 + v * B;
+          if (s.dir === 'out'){ const w = .12 + (u + .5) * 1.05 + v * .18 + R(0, .1);
+            spawn(s.p, { x: hx, y: hy, vx: R(20, 70), vy: R(-50, -10), wait: w, life: w + R(.8, 1.3), flow: 70, fz: 2, grav: -70, drag: .8, size: S, cells: [cell], add: .1,
+              sc: [[0, 1], [.12, 1.25], [1, .1]], tc: [[0, col], [.06, [1, .96, .85]], [.35, T], [1, [T[0] * .4, T[1] * .2, T[2] * .2]]], fadeIn: 0, fadeOut: .45, pul: 0 }); }
+          else { const a = R(0, 6.28), d = R(90, 210), w = (u + .5) * .55 + R(0, .08);
+            spawn(s.p, { x: hx + Math.cos(a) * d, y: hy + Math.sin(a) * d, vx: -Math.sin(a) * 160, vy: Math.cos(a) * 160, hx, hy, spring: 90, drag: 7, wait: w, life: 2.55, size: S, cells: [cell], add: .1,
+              sc: [[0, .3], [.3, 1]], tc: [[0, T], [.25, [1, .96, .85]], [.4, col], [1, col]], fadeIn: .08, fadeOut: .02, pul: 0 }); }
+        }
+      }
+      step(s.p, dt);
+    },
+    render(s, c){ const at = c.at, t = s.cycle;
+      if (s.made && s.dir === 'in' && t > 1.05 && t < 1.6){ const k = (t - 1.05) / .55; sprite(c, 180, 180, s.box * (1 + .9 * easeOut(k)), 0, (1 - k) ** 2 * .7, 1, at.map['sglow:W0'], 1, s.T); }
+      draw(c, s.p); } };
+
+  // Огоньки (поток): частицы текут по вихревому полю и тянут за собой след — живое движение без ручных траекторий
+  DEF.wisps = { atlas: 'aura',
+    init: s => Object.assign(s, { p: [] }),
+    update(s, dt, at){
+      emit(s.acc, 1, 18, dt, () => spawn(s.p, { x: 180 + R(-140, 140), y: R(120, 340), vy: -40, flow: 85, fz: 1.4, grav: -45, trail: 14, size: R(14, 22), life: R(2.2, 3.2), cells: [at.map['glow:W0']], add: 1,
+        tc: [[0, [.7, 1, 1]], [.5, [.5, .55, 1]], [1, [.45, .2, .85]]], fadeIn: .12, fadeOut: .4, pul: .2, pf: R(5, 9) }));
+      step(s.p, dt);
+    },
+    render(s, c){ draw(c, s.p); } };
+
+  // Воронка (притяжение + закрутка): частицы со всех сторон затягивает по спирали в центр, где копится заряд
+  DEF.vortex = { atlas: 'aura',
+    init: s => Object.assign(s, { p: [] }),
+    update(s, dt, at){
+      emit(s.acc, 1, 45, dt, () => { const a = R(0, 6.28), r = R(150, 175);
+        spawn(s.p, { x: 180 + Math.cos(a) * r, y: 180 + Math.sin(a) * r, vx: -Math.sin(a) * 140, vy: Math.cos(a) * 140, ax: 180, ay: 180, pull: 900, swirl: 230, kr: 12, drag: 1.6, trail: 8,
+          size: R(8, 13), life: 3, cells: [at.map['glow:W0']], add: 1, tc: [[0, [.55, .4, 1]], [.5, [.8, .6, 1]], [1, [1, .95, 1]]], fadeIn: .15, fadeOut: .1, pul: 0 }); });
+      step(s.p, dt);
+    },
+    render(s, c){ const at = c.at, w = wob(s.t * 3, 1);
+      sprite(c, 180, 180, 150 + 20 * w, 0, .55, 1, at.map['sglow:W0'], 1, [.6, .45, 1]); sprite(c, 180, 180, 60 + 8 * w, s.t * .8, .9, 1, at.map['star:W0'], 1, [1, .95, 1]);
+      draw(c, s.p); } };
+
+  // Салют (дочерние частицы): ракета со следом гаснет → из неё вылетает шар искр со следами, часть искр ещё раз трещит мелкими белыми
+  const FW = [[1, .45, .3], [.45, .8, 1], [1, .85, .35], [.75, .45, 1], [.45, 1, .6]];
+  DEF.fireworks = { atlas: 'aura',
+    init: s => { Object.assign(s, { p: [], fl: [] }); s.acc[1] = .95; },   // первая ракета — сразу
+    burst(s, at, p){ const col = FW[(Math.random() * FW.length) | 0], G = at.map['glow:W0'], n = Math.round(46 * EMIT[quality]);
+      s.fl.push({ x: p.x, y: p.y, t: 0, col });
+      const crack = (q, L) => { for (let i = 0; i < 3; i++){ const a = R(0, 6.28); spawn(L, { x: q.x, y: q.y, vx: Math.cos(a) * 90, vy: Math.sin(a) * 90, size: 8, life: R(.08, .16), cells: [G], add: 1, tint: [1, 1, 1], fadeIn: .01, fadeOut: .6, pul: 0 }); } };
+      for (let i = 0; i < n; i++){ const a = i / n * 6.28 + R(-.05, .05), v = R(260, 400) * Math.sqrt(R(.35, 1));
+        spawn(s.p, { x: p.x, y: p.y, vx: Math.cos(a) * v + p.vx * .3, vy: Math.sin(a) * v + p.vy * .3, drag: 1.7, grav: 140, trail: 8, size: R(9, 14), life: R(.8, 1.3), cells: [G], add: 1,
+          tc: [[0, [1, 1, .95]], [.15, col], [.7, col.map(x => x * .6)], [1, col.map(x => x * .2)]], fadeIn: .01, fadeOut: .35, pul: 0, onDie: Math.random() < .25 ? crack : null }); } },
+    update(s, dt, at){
+      emit(s.acc, 1, 1.2, dt, () => spawn(s.p, { x: R(110, 250), y: 370, vx: R(-40, 40), vy: R(-580, -500), grav: 380, drag: .3, life: R(.75, .95), trail: 14, size: 12, cells: [at.map['glow:W0']], add: 1,
+        tint: [1, .8, .5], fadeIn: .02, fadeOut: .05, pul: 0, onDie: q => this.burst(s, at, q) }));
+      step(s.p, dt); for (const f of s.fl) f.t += dt; s.fl = s.fl.filter(f => f.t < .35);
+    },
+    render(s, c){ for (const f of s.fl){ const k = f.t / .35; sprite(c, f.x, f.y, 90 + 140 * easeOut(k), 0, (1 - k) ** 2 * .8, 1, c.at.map['sglow:W0'], 1, f.col); }
+      draw(c, s.p); } };
+
   /* ── запуск и цикл ── */
   const live = new Set();
   let raf = 0, last = 0, ok = null, idle30 = true;
@@ -1515,6 +1646,7 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
     if (HR && !host.isConnected){ live.clear(); raf = 0; return; }
     if (w !== W || h !== H || d !== dpr){ W = w; H = h; dpr = d; cv.width = Math.round(w * d); cv.height = Math.round(h * d); gl.viewport(0, 0, cv.width, cv.height); }
     gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+    FT = (now / 1000) % 1000;
     gl.uniform2f(loc.res, cv.width, cv.height); gl.uniform1f(loc.tm, (now / 1000) % 200); gl.uniform1f(loc.lq, quality < 2 ? 1 : 0);   // время по кругу: большие числа в шейдере теряют точность — шум «ступенится»
     for (const e of live){
       if (e.el){ if (!e.el.isConnected){ live.delete(e); continue; }
@@ -1560,7 +1692,7 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
       const def = DEF[name]; if (!def) return null;
       if (ok === null){ ok = setup(); if (typeof S !== 'undefined' && S.lite) quality = 0; } if (!ok) return null;
       const a = FX_ATLAS[def.atlas];
-      const e = { def, at: a, tex: texture(def.atlas), s: { t: 0, cycle: 0, acc: {} }, loop: !!o.loop, el: o.el || null, fade: 1, stopping: false,
+      const e = { def, at: a, tex: texture(def.atlas), s: { t: 0, cycle: 0, acc: {}, o }, loop: !!o.loop, el: o.el || null, fade: 1, stopping: false,
         ox: o.x ?? (host ? host.clientWidth : innerWidth) / 2, oy: o.y ?? (host ? host.clientHeight : innerHeight) / 2, k: (o.size || Math.min(innerWidth, innerHeight)) / 360, clip: null };
       def.init.call(def, e.s, a);
       cv.style.display = ''; live.add(e); kick();

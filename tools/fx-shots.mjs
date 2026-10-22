@@ -8,7 +8,8 @@ import { writeFile } from 'node:fs/promises';
 
 const names = (process.argv[2] || 'anvil,potion').split(','), out = process.argv[3] && !process.argv[3].startsWith('--') ? process.argv[3] : 'design/rive/lab-fx/shots';
 const PORT = 8799;
-const TIMES = { anvil: [.02, .06, .12, .2, .3, .45, .6, .8, 1.1, 1.5], potion: [.04, .09, .14, .2, .3, .45, .7, .95, 1.2, 1.5] };
+const TIMES = { anvil: [.02, .06, .12, .2, .3, .45, .6, .8, 1.1, 1.5], potion: [.04, .09, .14, .2, .3, .45, .7, .95, 1.2, 1.5],
+  dust: [.05, .3, .5, .7, .9, 1.1, 1.3, 1.6, 1.9, 2.3], dustin: [.05, .2, .35, .5, .65, .8, .95, 1.1, 1.3, 1.8] };
 const html = `<!doctype html><meta charset=utf-8><body style="margin:0;background:#0d0c14">
 <script>
 let T = 1000, Q = [], seed = 7; Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -29,8 +30,8 @@ for (const name of names){
   await page.waitForTimeout(400);
   const times = TIMES[name] || [.05, .15, .3, .5, .8, 1.2, 1.6, 2, 2.5, 3];
   const png = await page.evaluate(async ({ name, times }) => {
-    F.play(name, { x: 210, y: 210, size: 360 }); const cv = document.querySelector('.fx-cv');
-    const sheet = document.createElement('canvas'), N = times.length, cw = 280; sheet.width = cw * 5; sheet.height = cw * Math.ceil(N / 5);
+    F.play(name === 'dustin' ? 'dust' : name, { x: 210, y: 210, size: 360, dir: name === 'dustin' ? 'in' : 'out' }); const cv = document.querySelector('.fx-cv');
+    await new Promise(r => setTimeout(r, 400)); const sheet = document.createElement('canvas'), N = times.length, cw = 280; sheet.width = cw * 5; sheet.height = cw * Math.ceil(N / 5);
     const g = sheet.getContext('2d'); g.fillStyle = '#0d0c14'; g.fillRect(0, 0, sheet.width, sheet.height); g.font = '12px sans-serif'; g.fillStyle = '#9a98b0';
     let t = 0; for (let i = 0; i < N; i++){ adv((times[i] - t) * 1000); t = times[i];
       g.drawImage(cv, 0, 0, cv.width, cv.height, (i % 5) * cw, Math.floor(i / 5) * cw, cw, cw); g.fillText(times[i].toFixed(2) + ' с', (i % 5) * cw + 6, Math.floor(i / 5) * cw + 16); }
@@ -38,7 +39,7 @@ for (const name of names){
   }, { name, times });
   await writeFile(`${out}/${name}.png`, Buffer.from(png.split(',')[1], 'base64'));
   // время кадра: реальные замеры без подмены часов не нужны — считаем частицы, квадраты и перерисовку
-  const st = await page.evaluate(n => { const r = []; F.play(n, { x: 210, y: 210, size: 360 }); for (let i = 0; i < 40; i++){ adv(17); r.push([F.stats.quads, F.stats.over]); } return r; }, name);
+  const st = await page.evaluate(n => { const r = []; F.play(n === 'dustin' ? 'dust' : n, { x: 210, y: 210, size: 360, dir: n === 'dustin' ? 'in' : 'out' }); for (let i = 0; i < 40; i++){ adv(17); r.push([F.stats.quads, F.stats.over]); } return r; }, name);
   const mq = Math.max(...st.map(r => r[0])), mo = Math.max(...st.map(r => r[1]));
   console.log(`${name}: до ${mq} квадратов за кадр, перерисовка до ×${mo.toFixed(2)} → ${out}/${name}.png`);
 }
