@@ -12,36 +12,61 @@ body{margin:0;background:#0b0d14;color:#fff;font:14px/1.4 system-ui,sans-serif;d
 .pre button{background:#1a1d28;border:0;border-radius:12px;color:#fff;padding:8px 12px;font:inherit;cursor:pointer}
 .pre button.on{outline:2px solid #30A5FF}
 label.chk{grid-column:1/4;display:flex;gap:8px;align-items:center}
+.meter{width:min(100%,420px);box-sizing:border-box;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;background:#1a1d28;border-radius:22px;padding:12px 16px;font-size:13px;color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
+.meter b{color:#fff}
+.meter button{background:#30A5FF;border:0;border-radius:10px;color:#fff;padding:8px 12px;font:inherit;cursor:pointer}
+#stres{width:100%}
+.meter label{display:flex;gap:6px;align-items:center}
 </style></head><body>
 <div id="stage"></div>
+<div class="meter"><span id="fps">—</span><label><input type="checkbox" id="lt"> Lite</label><button type="button" id="st">Тест вращения</button><button type="button" id="sh">Блик</button><span id="stres"></span></div>
 <div class="pre" id="pre"></div>
 <div class="ctl" id="ctl"></div>
 <script src="../../src/app/16l-extrude.js"></script>
 <script>
+// у наборов без отделки — сброс отделки и позы, чтобы после «Казино» не оставались обводки
+const BASE = { strokes: [], innerGlow: null, glow: null, sideEmit: 0, skew: 0, bevel: 0, round: false, grow: 0, metal: 0, curve: 0, gloss: .55, ambient: .45, yaw: -22, pitch: 12, persp: 900, depth: 36, faceAngle: 90 };
 const PRE = {
+  'Пузырь':  { face: ['#ffd1f0', '#ff6ec7', '#b02ce0'], side: ['#9a20c8', '#3a0758'], round: true, bevel: 16, grow: 4, curve: .2, gloss: .9, ambient: .5,
+    strokes: [{ color: '#3a0758', width: 2, inset: 0 }], depth: 18, yaw: -14, pitch: 10, text: 'WIN!' },
+  'Казино':  { face: ['#ff5a36', '#d0140c', '#7a0306'], side: ['#ffe24a', '#ff9e1a', '#7a1a00'], sideEmit: .75, gloss: .35,
+    strokes: [{ color: '#ffd84a', width: 1.5, inset: 2.5 }, { color: '#2a0000', width: 1.2, inset: 0 }], innerGlow: { color: '#ff7a1a', size: 2.5 },
+    glow: { color: '#ffae1e', size: 16, strength: .9 }, skew: .2, yaw: 0, pitch: 24, persp: 520, depth: 22, text: 'CASINO' },
   'GRAM':    { face: ['#ffffff', '#9fd6ff', '#30A5FF'], side: ['#1d63ff', '#081236'] },
-  'Золото':  { face: ['#fff6c8', '#ffd25a', '#e08a12'], side: ['#b8650a', '#3a1600'] },
+  'Золото':  { face: ['#fff4b8', '#ffc93a', '#c97a0c'], side: ['#e0a020', '#4a2200'], metal: .85, bevel: 3.5, curve: .5, gloss: .4, glow: { color: '#ffb22a', size: 12, strength: .35 } },
   'Джекпот': { face: ['#fff', '#ff9be0', '#c03bff', '#4a2bff'], side: ['#7a1fd6', '#170634'] },
   'Хэллоуин':{ face: ['#ffe9b0', '#ff9a2e', '#ff4c1a'], side: ['#6d1fa8', '#12041f'] },
-  'Хром':    { face: ['#ffffff', '#9aa3b5', '#f2f4f8', '#6b7284'], side: ['#5a6070', '#14161c'] },
+  'Хром':    { face: ['#e8ecf4', '#9aa6bd'], side: ['#8a93a8', '#1a1e28'], metal: 1, bevel: 3, curve: .9, gloss: .5 },
   'Неон':    { face: ['#d9fff0', '#12D53D'], side: ['#0a8f6a', '#03241f'] },
 };
 const t = Extrude.mount(document.getElementById('stage'), PRE.GRAM);
 const pre = document.getElementById('pre');
-for (const k in PRE){ const b = document.createElement('button'); b.textContent = k; b.onclick = () => { t.set(PRE[k]); [...pre.children].forEach(x => x.classList.toggle('on', x === b)); }; pre.append(b); }
+for (const k in PRE){ const b = document.createElement('button'); b.textContent = k; b.onclick = () => { const P = { ...BASE, text: document.getElementById('tx')?.value || 'PAWN', ...PRE[k] };
+  document.querySelectorAll('[data-k]').forEach(r => { if (r.dataset.k in P){ r.value = P[r.dataset.k]; r.nextElementSibling.textContent = P[r.dataset.k]; } });
+  t.set({ ...BASE, text: document.getElementById('tx')?.value || 'PAWN', ...PRE[k] }); if (PRE[k].text) document.getElementById('tx').value = PRE[k].text; [...pre.children].forEach(x => x.classList.toggle('on', x === b)); }; pre.append(b); }
 pre.firstChild.classList.add('on');
 const ctl = document.getElementById('ctl'), D = Extrude.defaults;
 ctl.insertAdjacentHTML('beforeend', `<div>Текст</div><input type="text" id="tx" value="${D.text}">`);
 document.getElementById('tx').oninput = e => t.set({ text: e.target.value.replace(/\\n/g, '\n') || ' ' });
 [['depth', 'Глубина', 0, 120, 1], ['layers', 'Копий (0 — авто)', 0, 128, 1], ['gloss', 'Блик', 0, 1.5, .05], ['ambient', 'Тень', 0, 1, .05],
- ['faceAngle', 'Угол градиента', 0, 360, 5], ['persp', 'Перспектива', 250, 3000, 10], ['yaw', 'Поворот', -90, 90, 1], ['pitch', 'Наклон', -60, 60, 1], ['spin', 'Вращение °/с', 0, 180, 5]]
+ ['faceAngle', 'Угол градиента', 0, 360, 5], ['persp', 'Перспектива', 250, 3000, 10], ['yaw', 'Поворот', -90, 90, 1], ['pitch', 'Наклон', -60, 60, 1], ['spin', 'Вращение °/с', 0, 180, 5], ['bevel', 'Фаска', 0, 8, .5], ['metal', 'Металл', 0, 1, .05], ['curve', 'Изгиб лица', 0, 1.5, .05]]
 .forEach(([k, l, a, b, s]) => {
-  ctl.insertAdjacentHTML('beforeend', `<div>${l}</div><input type="range" min="${a}" max="${b}" step="${s}" value="${D[k]}" data-k="${k}"><span>${D[k]}</span>`);
+  ctl.insertAdjacentHTML('beforeend', `<div>${l}</div><input type="range" min="${a}" max="${b}" step="${s}" value="${D[k]}" data-k="${k}" id="r-${k}"><span>${D[k]}</span>`);
 });
 ctl.insertAdjacentHTML('beforeend', `<label class="chk"><input type="checkbox" id="sp" checked> Возвращаться в позу после броска</label>`);
 ctl.addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; const v = +e.target.value; e.target.nextElementSibling.textContent = v;
   t.set({ [k]: v }); });
 document.getElementById('sp').onchange = e => t.set({ spring: e.target.checked });
+// замер: раз в секунду — сколько кадров нарисовано и сколько копий в последнем; в покое должно быть 0
+const fps = document.getElementById('fps'); let pf = 0, stress = 0;
+setInterval(() => { const s = t.stats, k = s.frames - pf; pf = s.frames;
+  fps.innerHTML = `<b>${k}</b> к/с · копий <b>${s.layers}</b> из ${s.max}${k ? '' : ' · покой, кадров нет'}${stress ? ' · тест…' : ''}`; }, 1000);
+document.getElementById('st').onclick = e => { if (stress) return; const sp = t.stats; stress = 1; const f0 = sp.frames, t0 = performance.now();
+  t.set({ spin: 180 }); setTimeout(() => { const r = (t.stats.frames - f0) / ((performance.now() - t0) / 1000); t.set({ spin: +document.getElementById('r-spin').value }); stress = 0;
+    document.getElementById('stres').textContent = `Вращение 5 с: в среднем ${r.toFixed(0)} к/с`; }, 5000); };
+document.getElementById('sh').onclick = () => t.shine();
+document.getElementById('lt').onchange = e => t.set({ lite: e.target.checked });
+
 window.T = t;
 </script>
 </body></html>
