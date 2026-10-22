@@ -16,7 +16,7 @@ function makeForge(host){
   /* ── частицы: те же поля и та же физика, что в vfx.luau ── */
   const P0 = { x: 0, y: 0, vx: 0, vy: 0, rot: 0, vr: 0, size: 64, grow: 0, stretch: 1, age: 0, life: 1, cells: [0], add: 1, alpha: 1,
     drag: 0, grav: 0, sway: 0, fadeIn: .12, fadeOut: .4, orient: false, speedStretch: 0, tint: null, pul: .05, pf: 9,
-    sc: null, scW: null, scH: null, shear: 0, mode: 0, heat: null, ero: null, ramp: null, bx: 0, by: 0, broke: false, ph: 0 };
+    sc: null, scW: null, scH: null, shear: 0, mode: 0, heat: null, ero: null, ramp: null, bx: 0, by: 0, broke: false, ph: 0, tc: null, floor: null, bounce: .35 };
   // пул: погибшие частицы не выбрасываются, а переиспользуются — нет мусора для сборщика, ровнее кадр
   const POOL = [];
   const spawn = (L, o) => { const p = Object.assign(POOL.pop() || {}, P0, o); if (o.ph == null) p.ph = Math.random() * 6.28; L.push(p); return p; };
@@ -27,8 +27,14 @@ function makeForge(host){
       const d = Math.max(0, 1 - p.drag * dt);
       p.vx *= d; p.vy = p.vy * d + p.grav * dt;
       p.x += (p.vx + Math.sin(p.age * 5 + p.ph) * p.sway) * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      // пол (поверхность наковальни): падающая частица отскакивает, теряя скорость
+      if (p.floor !== null && p.y > p.floor && p.vy > 0){ p.y = p.floor; p.vy *= -p.bounce; p.vx *= .7; }
     }
   }
+  // цвет по жизни: tc = [[доля жизни, [r, g, b]], …] — искра остывает (белая → жёлтая → оранжевая → красная); в общий черновик, без новых массивов
+  const TC = [1, 1, 1];
+  const tcol = (K, k) => { let i = 1; while (i < K.length - 1 && K[i][0] < k) i++; const [a, A] = K[i - 1], [b, B] = K[i], u = Math.min(1, Math.max(0, (k - a) / (b - a)));
+    TC[0] = A[0] + (B[0] - A[0]) * u; TC[1] = A[1] + (B[1] - A[1]) * u; TC[2] = A[2] + (B[2] - A[2]) * u; return TC; };
   // мягкая кривая прозрачности: плавное появление и угасание
   const fade = (p, k) => { const a = Math.min(1, Math.max(0, k / p.fadeIn)), b = Math.min(1, Math.max(0, (1 - k) / p.fadeOut)); return p.alpha * a * a * (3 - 2 * a) * b * b * (3 - 2 * b); };
   // накопитель частоты: rate штук в секунду, дробные остатки копятся
@@ -46,14 +52,15 @@ function makeForge(host){
   // кривая по ключам [[доля жизни, значение], …] — линейно между ключами
   const crv = (K, k) => { if (k <= K[0][0]) return K[0][1]; for (let i = 1; i < K.length; i++) if (k <= K[i][0]){ const [a, va] = K[i - 1], [b, vb] = K[i]; return va + (vb - va) * (k - a) / (b - a); } return K[K.length - 1][1]; };
   // квадрат: (m00, m01) — образ оси x, (m10, m11) — оси y, в единицах эффекта; c — текущий эффект; fx = [режим, растворение, жар, зерно]
-  function quad(c, cell, m00, m01, m10, m11, tx, ty, a, add, tint, inset, fx){
+  // rect — своя рамка внутри ячейки [x0, y0, x1, y1] (жижа: квадрат только вокруг шариков)
+  function quad(c, cell, m00, m01, m10, m11, tx, ty, a, add, tint, inset, fx, rect){
     if (a <= .003 || cell == null) return;
     const at = c.at, h = at.cell / 2, k = c.k, ox = c.ox, oy = c.oy, f = fx || NOFX;
     if ((nq + 1) * VF * 4 > buf.length){ const b = new Float32Array(buf.length * 2); b.set(buf); buf = b; }
     const du = 1 / at.cols, dv = 1 / at.rows, u0 = (cell % at.cols) * du, v0 = Math.floor(cell / at.cols) * dv, ins = inset || 0;
     const r = tint ? tint[0] : 1, g = tint ? tint[1] : 1, bl = tint ? tint[2] : 1, al = a * c.fade;
     // обрезка по видимой части ячейки (атлас знает её рамку): режимы, которые рисуют без маски (2–4, 6, 7, 9–13, 15), — во всю ячейку
-    let tr = (f[0] < 2 || f[0] === 5 || f[0] === 8 || f[0] === 14 || (f[0] >= 18 && f[0] < 18.3)) && !ins && at.trim ? at.trim[cell] : FULL;
+    let tr = rect || ((f[0] < 2 || f[0] === 5 || f[0] === 8 || f[0] === 14 || (f[0] >= 18 && f[0] < 18.3)) && !ins && at.trim ? at.trim[cell] : FULL);
     // искажение шумом (режимы 1–1.5) тянет картинку из-за рамки — даём запас
     if (f[0] >= 1 && f[0] < 2 && tr !== FULL){ const e = .1; tr = TRS; TRS[0] = Math.max(0, at.trim[cell][0] - e); TRS[1] = Math.max(0, at.trim[cell][1] - e); TRS[2] = Math.min(1, at.trim[cell][2] + e); TRS[3] = Math.min(1, at.trim[cell][3] + e); }
     const ar = Math.abs(m00 * m11 - m01 * m10) * at.cell * at.cell * k * k * (tr[2] - tr[0]) * (tr[3] - tr[1]); if (ar === ar) fill += Math.min(ar, innerWidth * innerHeight);   // больше экрана не закрасить
@@ -111,11 +118,11 @@ function makeForge(host){
         // маска искры нарисована по диагонали (голова внизу-слева): M = R(a − 3π/4) · (I + (st − 1)·u·uᵀ)
         const st = p.stretch * (1 + Math.hypot(p.vx, p.vy) * p.speedStretch), b = Math.atan2(p.vy, p.vx) - 2.35619449;
         const cb = Math.cos(b), sb = Math.sin(b), h = (st - 1) / 2;
-        quad(c, ce, (cb * (1 + h) + sb * h) * s, (sb * (1 + h) - cb * h) * s, (-cb * h - sb * (1 + h)) * s, (cb * (1 + h) - sb * h) * s, p.x, p.y, fade(p, k) * flick(p), p.add, p.tint, 0, fx);
+        quad(c, ce, (cb * (1 + h) + sb * h) * s, (sb * (1 + h) - cb * h) * s, (-cb * h - sb * (1 + h)) * s, (cb * (1 + h) - sb * h) * s, p.x, p.y, fade(p, k) * flick(p), p.add, p.tc ? tcol(p.tc, k) : p.tint, 0, fx);
       } else {
         const cs = Math.cos(p.rot), sn = Math.sin(p.rot), w = s * (p.scW ? crv(p.scW, k) : 1), hh = s * p.stretch * (p.scH ? crv(p.scH, k) : 1), sh = p.shear || 0;
         // ось y со скосом: (sh, 1) — верх маски уходит вбок, основание на месте
-        quad(c, ce, cs * w, sn * w, (cs * sh - sn) * hh, (sn * sh + cs) * hh, p.x, p.y, fade(p, k) * flick(p), p.add, p.tint, 0, fx);
+        quad(c, ce, cs * w, sn * w, (cs * sh - sn) * hh, (sn * sh + cs) * hh, p.x, p.y, fade(p, k) * flick(p), p.add, p.tc ? tcol(p.tc, k) : p.tint, 0, fx);
       }
     }
   }
@@ -146,11 +153,11 @@ function makeForge(host){
     return p;
   }
   // одна копия на кадр (свечение, руна, кольцо)
-  function sprite(c, x, y, size, rot, alpha, add, cell, sy, tint, inset, fx){
+  function sprite(c, x, y, size, rot, alpha, add, cell, sy, tint, inset, fx, rect){
     // микро-жизнь: светящиеся спрайты чуть дышат и мерцают — у каждого свой ритм (по месту)
     if (add > .9 && !fx && size < 2000){ const w = wob(c.s.t * 2.3, (x + y) * .021); alpha *= 1 + .1 * w; size *= 1 + .035 * w; }
     const s = size / c.at.cell, st = sy == null ? 1 : sy, cs = Math.cos(rot), sn = Math.sin(rot);
-    quad(c, cell, cs * s, sn * s, -sn * s * st, cs * s * st, x, y, alpha, add, tint, inset, fx);
+    quad(c, cell, cs * s, sn * s, -sn * s * st, cs * s * st, x, y, alpha, add, tint, inset, fx, rect);
   }
 
   const VS = 'attribute vec2 p;attribute vec2 uv;attribute vec2 aa;attribute vec3 tn;attribute vec2 q;attribute vec4 fx;attribute vec4 cr;attribute float rw;uniform vec2 res;' +
@@ -160,13 +167,13 @@ function makeForge(host){
   const FS = '#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nuniform sampler2D tx;uniform sampler2D nz;uniform sampler2D rp;uniform sampler2D sp;uniform float tm;uniform float lq;uniform vec4 gp;uniform vec3 mb[24];uniform float mbn;' +
     'varying vec2 vu;varying vec2 va;varying vec3 vt;varying vec2 vq;varying vec4 vf;varying vec4 vc;varying float vr;' +
     'void main(){float RW=vr<0.?gp.w:vr;' +
-    // 19 — жижа (метаболы): поле Σ r²/d² от шариков; поверхность — порог поля, шарики сливаются и тянутся нитями.
+    // 19 — жижа (метаболы): поле Σ 1.3r²/(d² + 0.3r²) от шариков (без бесконечности в центре — внутри лужи нет бугров от каждой капли); поверхность — порог поля, шарики сливаются и тянутся нитями.
     // Объём: нормаль из градиента поля → рассеянный свет, блик, тёмная кромка; внутри течёт шум; вокруг — мягкое свечение
     'if(vf.x>18.9&&vf.x<19.5){float t=tm*gp.z;vec2 p=vq;float f=0.;vec2 g=vec2(0.);' +
-    'for(int i=0;i<24;i++){if(float(i)>=mbn)break;vec3 b=mb[i];vec2 d=p-b.xy;float r2=dot(d,d)+1e-5;float k=b.z*b.z/r2;f+=k;g-=2.*k/r2*d;}' +
+    'for(int i=0;i<24;i++){if(float(i)>=mbn)break;vec3 b=mb[i];vec2 d=p-b.xy;float r2=dot(d,d)+.3*b.z*b.z;float k=1.3*b.z*b.z/r2;f+=k;g-=2.*k/r2*d;}' +
     'if(f<.35){gl_FragColor=vec4(0.);return;}' +
     'float a=smoothstep(.93,1.07,f);float gw=smoothstep(.35,1.,f)*(1.-a)*.5;' +
-    'vec3 n=normalize(vec3(-g*.013,1.));vec3 L=normalize(vec3(-.45,-.65,.7));float dif=clamp(dot(n,L),0.,1.);float sp=pow(clamp(dot(reflect(-L,n),vec3(0.,0.,1.)),0.,1.),26.);' +
+    'vec3 n=normalize(vec3(-g/max(f,1.)*.013,1.));vec3 L=normalize(vec3(-.45,-.65,.7));float dif=clamp(dot(n,L),0.,1.);float sp=pow(clamp(dot(reflect(-L,n),vec3(0.,0.,1.)),0.,1.),26.);' +
     'float th=smoothstep(1.,4.,f);float w=texture2D(nz,p*1.1+vec2(t*.05,-t*.08)).g;float w2=texture2D(nz,p*2.2+vec2(w*.5,t*.06)).b;' +
     'float x=clamp(.16+dif*.52+th*.2+(w2-.5)*.34,0.,1.);float ol=1.-smoothstep(1.,1.25,f);' +
     'vec3 col=texture2D(rp,vec2(x,RW)).rgb*(1.-ol*.5)+vec3(sp*.9);vec3 gc=texture2D(rp,vec2(.62,RW)).rgb;' +
@@ -1400,31 +1407,41 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
     render(s, c){
       for (const p of s.fog) p.tint = [1, 1 - s.hotK * .15, 1 - s.hotK * .3]; draw(c, s.fog); draw(c, s.dust); } };
 
-  /* ── искры удара молота по наковальне (крафт и арена): вспышка в точке удара, веер раскалённых искр во все стороны
-     с гравитацией и отскоком; несколько крупных «летят в камеру» — растут, размываются, проносятся мимо и гаснут.
-     Цвет — s.tint (цвет ранга / огонь арены). Эффект задуман в px: size = 360 → 1 ед. = 1 px */
-  DEF.anvil = { atlas: 'aura', period: 1.8,
-    init: s => Object.assign(s, { sp: [], near: [], fired: false, tint: [1, .75, .35] }),
+  /* ── искры удара молота по наковальне (крафт и арена). Удар — 2–3 кадра: белая вспышка и блик-полоса; дальше
+     раскалённые искры веером вверх и в стороны — тонкие росчерки, длина по скорости (размытие движения), остывают
+     белый → жёлтый → оранжевый → тёмно-красный и гаснут в разное время; летевшие вниз отскакивают от наковальни.
+     Затухание — угольки медленно всплывают и краснеют, на месте удара тлеет пятно. Кольцо и жар — в разметке (.fi-ring, .fi-heat).
+     Цвет свечения — s.tint (ранг / огонь арены), искр — s.pal (Ставки — розовая). Эффект задуман в px: size = 360 → 1 ед. = 1 px */
+  DEF.anvil = { atlas: 'aura', period: 2,
+    init: s => Object.assign(s, { sp: [], em: [], fired: false, tint: [1, .75, .35] }),
     update(s, dt, at){
-      if (!s.fired){ s.fired = true; s.shake = 7; const hot = s.pal?.[0] || [1, .88, .55], warm = s.pal?.[1] || [1, .58, .2];   // pal — своя палитра искр (Ставки — розовая)
-        // раскалённые искры — во все стороны (вверх чуть больше), разная скорость, лёгкая гравитация: летят дугами и гаснут
-        for (let i = 0; i < 110; i++){ const a = R(0, 6.28), v = R(180, 980) * (Math.sin(a) < 0 ? 1.15 : .85);
-          spawn(s.sp, { x: 180 + R(-5, 5), y: 180 + R(-3, 3), vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: R(14, 34), life: R(.4, 1.15), drag: 2, grav: 520, orient: true, speedStretch: .003,
-            cells: [at.map['shard:W0']], add: 1, tint: Math.random() < .5 ? hot : warm, fadeIn: .01, fadeOut: .55, pul: 0 }); }
-        // мелкая искристая пыль — светящиеся точки, мерцают и гаснут
-        for (let i = 0; i < 50; i++){ const a = R(0, 6.28), v = R(60, 340);
-          spawn(s.sp, { x: 180, y: 180, vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: R(4, 9), life: R(.5, 1.2), drag: 2.5, grav: 120, cells: [at.map['glow:W0']], add: 1, tint: hot, fadeIn: .01, fadeOut: .6, pul: .3, pf: 18 }); }
-        // «в камеру»: крупные искры летят на нас — быстро растут, становятся мягким бликом и проносятся за край экрана
-        for (let i = 0; i < 16; i++){ const a = R(0, 6.28), v = R(360, 820);
-          spawn(s.near, { x: 180, y: 180, vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: R(12, 22), sc: [[0, .5], [.4, 3.5], [1, 12]], life: R(.35, .7), drag: -.6,
-            orient: true, speedStretch: .0012, cells: [at.map['glow:W0']], add: 1, alpha: .8, tint: i % 2 ? hot : warm, fadeIn: .05, fadeOut: .55, pul: 0 }); }
+      if (!s.fired){ s.fired = true; s.shake = 6; const N = n => Math.round(n * EMIT[quality]), hot = s.pal?.[0] || [1, .88, .55], warm = s.pal?.[1] || [1, .58, .2], G = at.map['glow:W0'];
+        const tc = [[0, [1, 1, .94]], [.12, hot], [.5, warm], [1, [warm[0] * .7, warm[1] * .3, warm[2] * .3]]];
+        // искры: веер ±100° от вертикали; медленных больше, чем быстрых. Ушедшие ниже горизонта бьются о наковальню
+        for (let i = 0; i < N(72); i++){ const a = -PI / 2 + (Math.random() * 2 - 1) * 1.75, v = 240 + 760 * Math.random() ** 1.7, dn = Math.sin(a) > .05;
+          spawn(s.sp, { x: 180 + R(-4, 4), y: 178, vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: R(8, 13), stretch: 1.3, speedStretch: .009, life: R(.4, 1.05), drag: 1.7, grav: 950, orient: true,
+            floor: dn ? 186 : null, bounce: R(.25, .45), cells: [G], add: 1, tc, fadeIn: .01, fadeOut: .35, pul: 0 }); }
+        // удар: короткие белые росчерки — самые быстрые и яркие, живут 2–4 кадра
+        for (let i = 0; i < N(14); i++){ const a = -PI / 2 + R(-1.4, 1.4), v = R(1000, 1500);
+          spawn(s.sp, { x: 180, y: 178, vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: R(9, 13), stretch: 1.3, speedStretch: .01, life: R(.07, .14), drag: 6, orient: true, cells: [G], add: 1, tint: [1, .97, .9], fadeIn: .01, fadeOut: .6, pul: 0 }); }
+        // искристая пыль у места удара
+        for (let i = 0; i < N(26); i++){ const a = -PI / 2 + R(-1.8, 1.8), v = R(60, 300);
+          spawn(s.sp, { x: 180, y: 178, vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: R(5, 9), life: R(.4, .9), drag: 2.5, grav: 160, cells: [G], add: 1, tc, fadeIn: .01, fadeOut: .6, pul: .3, pf: 18 }); }
+        // угольки: всплывают и покачиваются, остывают дольше всех — «долгое затухание»
+        for (let i = 0; i < N(12); i++){ const a = -PI / 2 + R(-1.2, 1.2), v = R(50, 170);
+          spawn(s.em, { x: 180 + R(-10, 10), y: 176, vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: R(9, 14), life: R(1.1, 1.9), drag: 1.8, grav: -35, sway: R(8, 18), cells: [G], add: 1,
+            tc: [[0, hot], [.6, warm], [1, tc[3][1]]], fadeIn: .02, fadeOut: .45, pul: .25, pf: R(6, 11) }); }
       }
-      step(s.sp, dt); step(s.near, dt);
+      step(s.sp, dt); step(s.em, dt);
     },
-    render(s, c){ const at = c.at, t = s.cycle, T = s.tint;
-      if (t < .3){ const k = t / .3; sprite(c, 180, 180, 240 + 320 * easeOut(k), 0, (1 - k) * .95, 1, at.map['sglow:W0'], 1, T); sprite(c, 180, 180, 180 + 220 * k, k * .5, 1 - k, 1, at.map['star:W0'], 1, [1, .95, .85]);
-        sprite(c, 180, 180, 80 + 520 * easeOut(k), 0, (1 - k) * .8, 1, at.map['ring:W0'], .7, [1, .8, .5]); sprite(c, 180, 180, 40 + 760 * easeOut(Math.min(1, k * 1.4)), 0, (1 - k) * .45, 1, at.map['ring:W0'], .6, [1, .6, .25]); }
-      draw(c, s.sp); draw(c, s.near); } };
+    render(s, c){ const at = c.at, t = s.cycle, T = s.tint, G = at.map['glow:W0'];
+      // тлеющее пятно на месте удара: остывает дольше вспышки
+      if (t < 1.2){ const k = t / 1.2; sprite(c, 180, 180, 70 + 30 * k, 0, (1 - k) ** 2 * .7, 1, at.map['sglow:W0'], .6, [1, .5, .2]); }
+      if (t < .32){ const k = t / .32;
+        sprite(c, 180, 180, 200 + 200 * easeOut(k), 0, (1 - k) ** 2 * .85, 1, at.map['sglow:W0'], 1, T);                   // свечение цветом ранга
+        sprite(c, 180, 180, 420 * easeOut(Math.min(1, k * 2)), 0, (1 - k) ** 3 * .9, 1, G, .07, [1, .92, .8]); }            // блик-полоса удара
+      if (t < .1){ const k = t / .1; sprite(c, 180, 180, 120 + 90 * k, k * .4, 1 - k, 1, at.map['star:W0'], 1, [1, .97, .9]); sprite(c, 180, 180, 90, 0, 1 - k, 1, G, 1, [1, 1, 1]); }   // белое ядро — самый яркий кадр
+      draw(c, s.sp); draw(c, s.em); } };
 
   // Зелье — эффект входа на Арену. Жижа — метаболы (режим 19): шарики сливаются в одну поверхность с объёмом и бликом.
   // Ожидание: капли кружат воронкой и стягиваются в центр → удар: лужа-желе с перелётом, 7 струй по 3 бусины разлетаются,
@@ -1467,7 +1484,12 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
     render(s, c){ const at = c.at, t = s.cycle - .14;
       if (t >= 0 && t < .5){ const k = t / .5; sprite(c, 180, 182, 240 + 260 * easeOut(k), 0, (1 - k) * .5, 1, at.map['sglow:W0'], 1, [.3, .9, .25]);   // отсвет и ударная волна
         sprite(c, 180, 182, 80 + 420 * easeOut(k), 0, (1 - k) * .6, 1, at.map['sglow:W0'], .55, [.55, 1, .4]); }
-      if (s.mbn) sprite(c, 180, 180, GOO, 0, 1, 0, at.map['glow:W0'], 1, null, 0, [19, 0, 0, 0, RAMP_ROW.potion]);   // жижа — один квадрат на весь эффект
+      // жижа — один квадрат, но только вокруг шариков (с запасом на свечение): видеокарта не красит пустоту
+      if (s.mbn){ const m = s.mb, q = s.rect || (s.rect = [0, 0, 0, 0]); q[0] = q[1] = 1; q[2] = q[3] = 0;
+        // запас — где поле всех шариков, собранных в одну точку, падает до порога свечения 0.35: Σ1.3r²/d² = 0.35
+        let r2 = 0; for (let i = 0; i < s.mbn; i++){ r2 += m[i * 3 + 2] ** 2; q[0] = Math.min(q[0], m[i * 3]); q[1] = Math.min(q[1], m[i * 3 + 1]); q[2] = Math.max(q[2], m[i * 3]); q[3] = Math.max(q[3], m[i * 3 + 1]); }
+        const e = Math.sqrt(r2 * 1.3 / .35); for (let i = 0; i < 4; i++) q[i] = Math.min(1, Math.max(0, q[i] + (i < 2 ? -e : e)));
+        sprite(c, 180, 180, GOO, 0, 1, 0, at.map['glow:W0'], 1, null, 0, [19, 0, 0, 0, RAMP_ROW.potion], q); }
       draw(c, s.tw); draw(c, s.gh); } };
 
   /* ── запуск и цикл ── */
