@@ -240,6 +240,11 @@ function makeForge(host){
     '§10§if(vf.x>18.9&&vf.x<19.5){float t=tm*gp.z;vec2 p=vq;float f=0.;vec2 g=vec2(0.);' +
     'for(int i=0;i<24;i++){if(float(i)>=mbn)break;vec3 b=mb[i];vec2 d=p-b.xy;float r2=dot(d,d)+.3*b.z*b.z;float k=1.3*b.z*b.z/r2;f+=k;g-=2.*k/r2*d;}' +
     'if(f<.35){gl_FragColor=vec4(0.);return;}' +
+    'if(vf.x>19.3&&vf.x<19.45){float rim=exp(-abs(f-1.)*7.);float gwn=exp(-abs(f-1.)*2.2)*.35;float hu=fract(atan(g.y,g.x)/6.2832+t*.08+p.x*.6);' +
+    'vec3 nc=mix(vec3(.2,1.,.85),vec3(.55,1.,.3),smoothstep(.0,.35,hu));nc=mix(nc,vec3(1.,.95,.35),smoothstep(.35,.55,hu));nc=mix(nc,vec3(.85,.45,1.),smoothstep(.55,.85,hu));nc=mix(nc,vec3(.2,1.,.85),smoothstep(.85,1.,hu));' +
+    'float ins=smoothstep(.97,1.04,f);float mist=texture2D(nz,p*1.4+vec2(t*.03,-t*.02)).r;float dt=0.;' +
+    'vec3 inner=mix(vec3(.08,.05,.16),vec3(.2,.12,.35),mist)+mix(vec3(.4,.6,1.),vec3(.9,.5,1.),mist)*dt*.9;float A=max(ins*.72,rim);' +
+    'gl_FragColor=vec4((inner*ins*.72+nc*(rim*1.15+gwn))*va.x,A*va.x);return;}' +
     'float a=smoothstep(.93,1.07,f);float gw=smoothstep(.35,1.,f)*(1.-a)*.5;' +
     'vec3 n=normalize(vec3(-g/max(f,1.)*.013,1.));vec3 L=normalize(vec3(-.45,-.65,.7));float dif=clamp(dot(n,L),0.,1.);float sp=pow(clamp(dot(reflect(-L,n),vec3(0.,0.,1.)),0.,1.),26.);' +
     'float th=smoothstep(1.,4.,f);float w=texture2D(nz,p*1.1+vec2(t*.05,-t*.08)).g;float w2=texture2D(nz,p*2.2+vec2(w*.5,t*.06)).b;' +
@@ -275,7 +280,7 @@ function makeForge(host){
   /* ── шейдер по частям: в общем тексте FS каждый режим — свой кусок (метка §семья§). Программа эффекта собирается только из семей,
      которые он рисует: видеокарта меньше компилирует (первый кадр без рывка) и держит меньше регистров на пиксель — все пиксели считаются быстрее.
      Семьи: 0 — готовый цвет, 1 — по температуре, 2 — туманность/нити, 3 — режимы 4–12, дальше по одной: 13…21 → 4…12 */
-  const fam = m => m < .5 ? 0 : m < 1.9 ? 1 : m < 3.9 ? 2 : m < 12.9 ? 3 : Math.floor(m + .1) - 9;
+  const fam = m => m < .5 ? 0 : m < 1.9 ? 1 : m < 3.9 ? 2 : m < 12.9 ? 3 : Math.floor(m + .05) - 9;   // +.05, а не больше: 23.9 — ещё семья 23, а не 24
   const FSP = (() => { const a = FS.split(/§(\d+|E)§/), parts = { head: a[0], tail: '' }, order = [];
     for (let i = 1; i < a.length; i += 2){ if (a[i] === 'E'){ parts.tail = a[i + 1]; continue; } parts[a[i]] = a[i + 1]; order.push(+a[i]); } return { parts, order }; })();
   // кусок режима из пакета: семьи 4+ (свой диапазон) — раньше открытых «всё, что больше» (3 — режимы 4–12, 2 — туманность), хвост — режим 1
@@ -620,7 +625,9 @@ function makeForge(host){
     list(){ return Object.keys(DEF).map(n => ({ name: n, ...this.meta(n) })); },
     // пакет эффектов (src/forge/*.js) и свой эффект: k — инструменты ядра; эффект — { atlas, period?, presets?, init(s), update(s, dt, at), render(s, c) }
     pack: forgePack,
-    define: (name, make) => forgePack(name, k => { k.DEF[name] = typeof make === 'function' ? make(k) : make; }),
+    // повторный define с тем же именем заменяет эффект (конструктор пересобирает его на каждое изменение)
+    define: (name, make) => { const id = 'def:' + name, i = FORGE_PACKS.findIndex(p => p.name === id); if (i >= 0) FORGE_PACKS.splice(i, 1);
+      forgePack(id, k => { k.DEF[name] = typeof make === 'function' ? make(k) : make; }); },
     get packs(){ return FORGE_PACKS.map(p => p.name); },
     set base(v){ base = v; },
     set maxDpr(v){ maxDpr = v; },

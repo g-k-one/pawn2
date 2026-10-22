@@ -25,7 +25,7 @@ let T = 1000, Q = [], seed = 7; Math.random = () => (seed = (seed * 16807) % 214
 window.requestAnimationFrame = f => (Q.push(f), Q.length); performance.now = () => T;
 const gc = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function(t, o){ return gc.call(this, t, Object.assign({}, o, { preserveDrawingBuffer: true })); };
 window.adv = ms => { const end = T + ms; while (T < end){ T += 1000 / 60; const f = Q.splice(0); f.forEach(g => g(T)); } };
-</script><script src="/src/app/16e-forge-atlas.js"></script><script src="/src/app/16e-forge.js"></script><script src="/src/forge/classic.js"></script><script src="/src/forge/particles.js"></script><script src="/src/forge/image.js"></script><script src="/src/forge/hits.js"></script>
+</script><script src="/src/app/16e-forge-atlas.js"></script><script src="/src/app/16e-forge.js"></script><script src="/src/forge/classic.js"></script><script src="/src/forge/particles.js"></script><script src="/src/forge/image.js"></script><script src="/src/forge/hits.js"></script><script src="/src/forge/motion.js"></script><script src="/src/forge/glass.js"></script><script src="/src/forge/compose.js"></script>
 <script>window.F = Forge; Forge.auto = false;</script>`;
 
 const srv = await serve(process.cwd(), PORT), br = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });

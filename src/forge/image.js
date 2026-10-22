@@ -45,7 +45,10 @@ Forge.pack('image', k => {
     'else if(md<3.5){float a=k*6.2832;vec3 y=mat3(.299,.596,.211,.587,-.274,-.523,.114,-.322,.312)*c.rgb;float h=atan(y.z,y.y)+a;float ch=length(y.yz);y.yz=vec2(cos(h),sin(h))*ch;' +
     'c.rgb=clamp(mat3(1.,1.,1.,.956,-.272,-1.106,.621,-.647,1.703)*y,0.,1.);}' +
     'else if(md<4.5){float n=texture2D(nz,u*1.4).r*.7+texture2D(nz,u*3.1).g*.3;float th=vf.z*1.15-.08;float e=smoothstep(th+.07,th,n);c.a*=smoothstep(th-.01,th+.025,n);ex=e*step(th,n+.0)*IM(u).a;ad=vt*ex*1.6;}' +
-    'else{float sl=.75+.25*sin(u.y*180.-t*9.);float fl=.88+.12*step(.93,fract(sin(floor(t*14.))*437.5));vec3 rb=.5+.5*cos(6.2832*(u.y*.8+t*.15+vec3(0.,.33,.67)));' +
+    'else if(md>5.5){float N=max(vf.w,6.);float row=floor(u.y*N);float d=H1(row*3.31)*.45;float rt=clamp((vf.z-d)/.55,0.,1.);float sg=H1(row*1.73)<.5?-1.:1.;' +
+    'vec2 w=u+vec2(sg*rt*rt*1.3,0.);float sp=rt*.04;c=vec4(IM(w+vec2(sp,0.)).r,IM(w).g,IM(w-vec2(sp,0.)).b,IM(w).a);c.a*=1.-smoothstep(.55,1.,rt);' +
+    'float ln=step(fract(u.y*N),.08)*step(.01,rt)*(1.-rt);ad=vec3(ln*.9)*IM(w).a;}' +
+    'else if(md>4.5){float sl=.75+.25*sin(u.y*180.-t*9.);float fl=.88+.12*step(.93,fract(sin(floor(t*14.))*437.5));vec3 rb=.5+.5*cos(6.2832*(u.y*.8+t*.15+vec3(0.,.33,.67)));' +
     'c.rgb=mix(c.rgb,c.rgb*.4+rb*.6,k*.7)*sl*fl;c.a*=mix(1.,.72,k);ad=rb*k*.12*c.a;}' +
     'float A=c.a*va.x;gl_FragColor=vec4(c.rgb*A+ad*va.x,max(A,ex*va.x)*(1.-va.y));return;}' +
     '');
