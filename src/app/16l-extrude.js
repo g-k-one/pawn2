@@ -25,8 +25,6 @@ function makeExtrude(){
     glow: null,                      // { color, size, strength } — свечение вокруг надписи, поверх боковин
     sideEmit: 0,                     // боковины светятся сами (0 — только свет, 1 — без теней)
     bevel: 0,                        // фаска по краю лица, px: кромка скошена и ловит свет, как у литой буквы
-    round: false,                    // фаска круглая (купол), а не скос: с большой фаской и grow — надутые буквы (bubble)
-    grow: 0,                         // буквы толще на N px, углы скругляются
     metal: 0, curve: 0,              // металл: отражение неба и земли (0–1); изгиб лица «подушкой» — линия горизонта бежит по буквам
     shine: { color: '#ffffff', width: .22, time: .9 },   // пробегающий блик: t.shine() — один проход; shineEvery — сам раз в N секунд
     shineEvery: 0,
@@ -59,7 +57,7 @@ void main(){ vL = aP.z;
   const FS = `precision highp float;
 uniform sampler2D uTex, uSdf; uniform mat3 uR; uniform vec2 uDr; uniform float uN, uFront, uGloss, uAmb, uFc, uSc, uIgS, uGlS, uGlR, uEmit;
 uniform vec3 uF[4], uS[4], uL, uK1C, uK2C, uIgC, uGlC, uShC; uniform vec2 uFd, uK1, uK2, uTx;
-uniform float uBev, uRound, uMet, uCurv, uShX, uShW, uBoost;
+uniform float uBev, uMet, uCurv, uShX, uShW, uBoost;
 varying vec2 vUV, vS, vT, vRot; varying float vL, vA;
 vec2 rot(vec2 v){ return vec2(vRot.x * v.x - vRot.y * v.y, vRot.y * v.x + vRot.x * v.y); }
 // металл: отражение выдуманного окружения — светлое небо, резкий горизонт, тёмная земля, яркое пятно от света
@@ -88,8 +86,7 @@ void main(){
     float dd = sd(vUV);
     // нормаль лица: плоско, плюс «подушка» и фаска у кромки (направление — по полю расстояний, наружу)
     vec3 nl = vec3((vT - .5) * vec2(1., -1.) * uCurv, 1.);
-    if (uRound > 0.) nl.xy += (m.gb * 2. - 1.) * 2.;   // купол: наклон из маски
-    else if (uBev > 0.){
+    if (uBev > 0.){
       vec2 g = vec2(sd(vUV + vec2(uTx.x, 0.)) - sd(vUV - vec2(uTx.x, 0.)), sd(vUV - vec2(0., uTx.y)) - sd(vUV + vec2(0., uTx.y)));
       float t = clamp(1. + dd / uBev, 0., 1.), th = t * t * 1.15;   // у самой кромки скос ~65°, к середине — плоско
       nl.xy += normalize(g + 1e-6) * tan(th); }
@@ -98,8 +95,7 @@ void main(){
     col = base * (.72 + .28 * max(dot(n, uL), 0.));
     float sh = .45 - n.x * 1.1 + n.y * .5;   // мягкий блик: полоса по диагонали, едет вслед за поворотом
     col += exp(-pow((vT.x * .8 + vT.y * .45 - sh) * 2.6, 2.)) * uGloss * .55;
-    if (uBev > 0. || uRound > 0.) col += pow(max(dot(n, normalize(uL + vec3(0., 0., 1.))), 0.), 30.) * uGloss * max(uRound, step(-uBev, dd));
-    if (uRound > 0.) col += pow(max(dot(n, normalize(uL + vec3(0., 0., 1.))), 0.), 160.) * uGloss * 1.4;   // пластик: резкое белое пятно поверх мягкого
+    if (uBev > 0.) col += pow(max(dot(n, normalize(uL + vec3(0., 0., 1.))), 0.), 30.) * uGloss * step(-uBev, dd);
     if (uMet > 0.) col = mix(col, env(n, base), uMet);
     if (uIgS > 0.) col = mix(col, uIgC, exp(min(dd, 0.) / uIgS) * .85);
     col = mix(col, uK1C, band(-dd, uK1)); col = mix(col, uK2C, band(-dd, uK2));
@@ -117,6 +113,61 @@ void main(){
   }
   gl_FragColor = vA * vec4(col * a, a); }`;
 
+  // счёт по пикселям для атласа: R — буква, G/B — нормаль кромки, A — непрозрачно; sdf — расстояние до кромки.
+  // Самодостаточная: её исходный текст запускается в фоновом потоке (Worker)
+  function PROC(j){
+    const { W, H, d, r, deco, rIn, rOut, sr } = j, n = W * H, A = new Float32Array(n), T = new Float32Array(n);
+    for (let i = 0; i < n; i++) A[i] = d[i * 4 + 3] / 255;
+    // размытие скользящим окном: строки, потом столбцы — почти гаусс за 2 прохода
+    const bh = (a, b, r) => { const k = 1 / (r * 2 + 1); for (let y = 0; y < H; y++){ const o = y * W; let s = 0; for (let x = 0; x <= r && x < W; x++) s += a[o + x];
+      for (let x = 0; x < W; x++){ b[o + x] = s * k; if (x + r + 1 < W) s += a[o + x + r + 1]; if (x >= r) s -= a[o + x - r]; } } };
+    const bv = (a, b, r) => { const k = 1 / (r * 2 + 1); for (let x = 0; x < W; x++){ let s = 0; for (let y = 0; y <= r && y < H; y++) s += a[y * W + x];
+      for (let y = 0; y < H; y++){ b[y * W + x] = s * k; if (y + r + 1 < H) s += a[(y + r + 1) * W + x]; if (y >= r) s -= a[(y - r) * W + x]; } } };
+    const Bl = A.slice(); for (let p = 0; p < 2; p++){ bh(Bl, T, r); bv(T, Bl, r); }
+    for (let i = 0; i < n; i++){ d[i * 4] = A[i] * 255; d[i * 4 + 1] = d[i * 4 + 2] = 128; d[i * 4 + 3] = 255; }
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++){
+      const i = y * W + x, gx = Bl[i + 1] - Bl[i - 1], gy = Bl[i + W] - Bl[i - W], l = Math.hypot(gx, gy);
+      if (l < 1e-4) continue;
+      // наружу = против роста маски; в картинке y вниз, в мире — вверх; хранится только направление
+      const nx = -gx / l, ny = gy / l;
+      d[i * 4 + 1] = (nx * .5 + .5) * 255; d[i * 4 + 2] = (ny * .5 + .5) * 255; }
+    const sdf = new Uint8Array(n).fill(128);
+    if (deco){
+      // расстояние до ближайшей точки (Фельценшвальб): столбцы, потом строки; g — квадраты расстояний
+      const L = Math.max(W, H), f = new Float64Array(L), e = new Float64Array(L), v = new Int32Array(L), z = new Float64Array(L + 1);
+      const one = len => { let k = 0; v[0] = 0; z[0] = -1e20; z[1] = 1e20;
+        for (let q = 1; q < len; q++){ let s = (f[q] + q * q - f[v[k]] - v[k] * v[k]) / (2 * q - 2 * v[k]);
+          while (s <= z[k]){ k--; s = (f[q] + q * q - f[v[k]] - v[k] * v[k]) / (2 * q - 2 * v[k]); }
+          k++; v[k] = q; z[k] = s; z[k + 1] = 1e20; }
+        k = 0; for (let q = 0; q < len; q++){ while (z[k + 1] < q) k++; const r = v[k]; e[q] = (q - r) * (q - r) + f[r]; } };
+      const edt = g => { for (let x = 0; x < W; x++){ for (let y = 0; y < H; y++) f[y] = g[y * W + x]; one(H); for (let y = 0; y < H; y++) g[y * W + x] = e[y]; }
+        for (let y = 0; y < H; y++){ const o = y * W; for (let x = 0; x < W; x++) f[x] = g[o + x]; one(W); for (let x = 0; x < W; x++) g[o + x] = e[x]; } };
+      const out = new Float32Array(n), inn = new Float32Array(n);
+      for (let i = 0; i < n; i++){ const on = A[i] >= .5; out[i] = on ? 0 : 1e20; inn[i] = on ? 1e20 : 0; }
+      edt(out); edt(inn);
+      // у самой кромки — по прозрачности (доли пикселя), дальше — по расстоянию; потом сгладить (ступеньки на диагоналях)
+      const F = new Float32Array(n);
+      for (let i = 0; i < n; i++) F[i] = A[i] > .02 && A[i] < .98 ? .5 - A[i] : out[i] > 0 ? Math.sqrt(out[i]) - .5 : .5 - Math.sqrt(inn[i]);
+      for (let p = 0; p < 2; p++){ bh(F, T, sr); bv(T, F, sr); }
+      const bw = sr * 4 + 2;   // полоса у края картинки — всегда «далеко снаружи», иначе по краю свечения видна рамка
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (x < bw || y < bw || x >= W - bw || y >= H - bw) F[y * W + x] = 1e3;
+      for (let i = 0; i < n; i++){ const dd = F[i]; sdf[i] = Math.max(0, Math.min(255, Math.round((.5 + dd / (2 * (dd < 0 ? rIn : rOut))) * 255))); }
+    }
+    return { d, sdf };
+  }
+  // фоновый поток — один на все надписи; нет потока (запрет, ошибка) — считаем тут же
+  let WK = null, wkN = 0;
+  const wkJobs = new Map();
+  function proc(job){
+    if (WK === null) try {
+      WK = new Worker(URL.createObjectURL(new Blob([`const PROC = ${PROC.toString()};\nonmessage = e => { const r = PROC(e.data); postMessage({ id: e.data.id, d: r.d, sdf: r.sdf }, [r.d.buffer, r.sdf.buffer]); };`], { type: 'text/javascript' })));
+      WK.onmessage = e => { const k = wkJobs.get(e.data.id); wkJobs.delete(e.data.id); k?.res(e.data); };
+      WK.onerror = () => { WK = false; wkJobs.forEach(k => k.res(PROC(k.job))); wkJobs.clear(); };
+    } catch (_){ WK = false; }
+    if (!WK) return Promise.resolve(PROC(job));
+    return new Promise(res => { job.id = ++wkN; wkJobs.set(job.id, { res, job }); WK.postMessage(job); });   // копия, не передача: при сбое потока посчитаем ещё раз тут
+  }
+
   function mount(el, opts){
     const o = Object.assign({}, DEF, opts);
     const cv = document.createElement('canvas');
@@ -125,14 +176,14 @@ void main(){
     el.appendChild(cv);
     const gl = cv.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false });   // края и так гладкие за счёт маски — сглаживание холста только тратит видеопамять
     let yaw = o.yaw, pitch = o.pitch, vy = 0, vp = 0, held = false, raf = 0, last = 0, dead = false;
-    let N = 0, n = 0, frames = 0, sdf = null, inset = [0, 0], dr = [1, 1], G = [], cellH = 0, AW = 1, AH = 1, CELLS = {}, LH = 1, EX = 0, GW = 0, MX = null, gpx = 0, boost = 0, anim = null, tx = [0, 0], shT = -1, shTimer = 0, sz = [1, 1], cw = 1, ch = 1, dpr = 1, tex = null, bufF = null, bufB = null, prog = null, U = {};
+    let N = 0, n = 0, frames = 0, sdf = null, inset = [0, 0], dr = [1, 1], G = [], cellH = 0, AW = 1, AH = 1, CELLS = {}, LH = 1, EX = 0, MX = null, gpx = 0, boost = 0, anim = null, tx = [0, 0], shT = -1, shTimer = 0, sz = [1, 1], cw = 1, ch = 1, dpr = 1, tex = null, bufF = null, bufB = null, prog = null, U = {};
 
     if (!gl){ el.textContent = o.text; return { set(){}, rotate(){}, destroy(){ cv.remove(); } }; }   // без WebGL — просто текст
     const sh = (t, s) => { const h = gl.createShader(t); gl.shaderSource(h, s); gl.compileShader(h); if (!gl.getShaderParameter(h, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(h)); return h; };
     prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
     gl.useProgram(prog);
-    ['uSz', 'uRes', 'uDep', 'uN', 'uCam', 'uR', 'uTex', 'uFront', 'uGloss', 'uAmb', 'uFc', 'uSc', 'uF', 'uS', 'uL', 'uFd', 'uSdf', 'uDr', 'uIgS', 'uGlS', 'uGlR', 'uEmit', 'uK1C', 'uK2C', 'uIgC', 'uGlC', 'uK1', 'uK2', 'uTx', 'uBev', 'uRound', 'uMet', 'uCurv', 'uShX', 'uShW', 'uShC', 'uInPx', 'uInUV', 'uLT', 'uLZ', 'uBoost'].forEach(k => U[k] = gl.getUniformLocation(prog, k));
+    ['uSz', 'uRes', 'uDep', 'uN', 'uCam', 'uR', 'uTex', 'uFront', 'uGloss', 'uAmb', 'uFc', 'uSc', 'uF', 'uS', 'uL', 'uFd', 'uSdf', 'uDr', 'uIgS', 'uGlS', 'uGlR', 'uEmit', 'uK1C', 'uK2C', 'uIgC', 'uGlC', 'uK1', 'uK2', 'uTx', 'uBev', 'uMet', 'uCurv', 'uShX', 'uShW', 'uShC', 'uInPx', 'uInUV', 'uLT', 'uLZ', 'uBoost'].forEach(k => U[k] = gl.getUniformLocation(prog, k));
     const aP = gl.getAttribLocation(prog, 'aP'), aQ = gl.getAttribLocation(prog, 'aQ'), aA = gl.getAttribLocation(prog, 'aA');
     [aP, aQ, aA].forEach(a => gl.enableVertexAttribArray(a));
     // движение букв: на каждую — сдвиг x, y, масштаб, поворот и сдвиг к зрителю, прозрачность (до 32 букв; дальше — как последняя)
@@ -155,20 +206,26 @@ void main(){
       gl.bindBuffer(gl.ARRAY_BUFFER, bufF); gl.bufferData(gl.ARRAY_BUFFER, f, gl.STATIC_DRAW);
       gl.bindBuffer(gl.ARRAY_BUFFER, bufB); gl.bufferData(gl.ARRAY_BUFFER, bb, gl.STATIC_DRAW);
     }
-    // запас под свечение (px картинки) — сторона квадрата лица больше букв на него
-    const glowPx = () => o.glow ? Math.ceil(o.glow.size * 3 * dpr) : 0;
+    // запас под свечение (px картинки) — сторона квадрата лица больше букв на него; дальше 2.5 размеров свечение уже не видно
+    const glowPx = () => o.glow ? Math.ceil(o.glow.size * 2.5 * dpr) : 0;
+    let bn = 0, ready = Promise.resolve(), PEND = null;   // PEND — знаки атласа, который сейчас собирается в фоне
+    // сборка: размер и атлас букв рисуются сразу, тяжёлый счёт по пикселям (размытие, нормали, поле расстояний) — в фоновом потоке,
+    // чтобы интерфейс не замирал; до готовности на холсте остаётся прежняя надпись (или пусто)
     function build(){
       dpr = Math.min(2, devicePixelRatio || 1); cw = Math.max(1, el.clientWidth); ch = Math.max(1, el.clientHeight);
-      cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
       const room = o.depth * o.pad * 2 + 8 + (o.glow ? o.glow.size * 2 : 0);
       let fs = o.size;
       if (!fs){   // подгонка: надпись с запасом под боковины и свечение
         const x = document.createElement('canvas').getContext('2d'); x.font = o.font.replace('{s}', 100);
-        const ls = String(o.fit || o.text).split('\n'), tw = Math.max(1, ...ls.map(l => x.measureText(l).width)) + 105 * ls.length * Math.abs(o.skew || 0) + (o.grow || 0) * 2;
+        const ls = String(o.fit || o.text).split('\n'), tw = Math.max(1, ...ls.map(l => x.measureText(l).width)) + 105 * ls.length * Math.abs(o.skew || 0);
         fs = Math.max(8, Math.min((cw - room) / tw * 100, (ch - room) / (1.05 * ls.length)));
       }
-      const m = maskData(fs);
-      CELLS = m.cells; cellH = m.cellH; AW = m.W; AH = m.H; gpx = m.gp; LH = m.lh; EX = m.ex; GW = m.gw; layout();
+      const m = atlas(fs), my = ++bn, W0 = cw, H0 = ch, D0 = dpr; PEND = m.cells;
+      return ready = proc(m.job).then(res => { if (dead || my !== bn) return; PEND = null; m.img.data.set(res.d); apply(m, res.sdf, W0, H0, D0); });
+    }
+    function apply(m, sdfData, W0, H0, D0){
+      cv.width = Math.round(W0 * D0); cv.height = Math.round(H0 * D0);
+      CELLS = m.cells; cellH = m.cellH; AW = m.W; AH = m.H; gpx = m.gp; LH = m.lh; EX = m.ex; MX = m.mx; layout();
       inset = [m.gp / m.W, m.gp / m.H]; dr = [m.rIn * 2 / dpr, m.rOut * 2 / dpr]; tx = [1.5 / m.W, 1.5 / m.H];
       N = o.layers || Math.max(8, Math.min(128, Math.round(o.depth * dpr * .9)));
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
@@ -176,32 +233,18 @@ void main(){
         if (data instanceof Uint8Array) gl.texImage2D(gl.TEXTURE_2D, 0, fmt, m.W, m.H, 0, fmt, gl.UNSIGNED_BYTE, data); else gl.texImage2D(gl.TEXTURE_2D, 0, fmt, fmt, gl.UNSIGNED_BYTE, data);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); };
-      up(tex, 0, gl.RGBA, m.img); up(sdf, 1, gl.LUMINANCE, m.sdf); gl.activeTexture(gl.TEXTURE0);
+      up(tex, 0, gl.RGBA, m.img); up(sdf, 1, gl.LUMINANCE, sdfData); gl.activeTexture(gl.TEXTURE0);
       geom(); colors(); draw();
     }
-    // расстояние до ближайшей точки маски (Фельценшвальб): проход по столбцам, потом по строкам; g — квадраты расстояний
-    function edt(g, W, H){
-      const L = Math.max(W, H), f = new Float64Array(L), d = new Float64Array(L), v = new Int32Array(L), z = new Float64Array(L + 1);
-      const one = len => { let k = 0; v[0] = 0; z[0] = -1e20; z[1] = 1e20;
-        for (let q = 1; q < len; q++){
-          let s = (f[q] + q * q - f[v[k]] - v[k] * v[k]) / (2 * q - 2 * v[k]);
-          while (s <= z[k]){ k--; s = (f[q] + q * q - f[v[k]] - v[k] * v[k]) / (2 * q - 2 * v[k]); }
-          k++; v[k] = q; z[k] = s; z[k + 1] = 1e20; }
-        k = 0; for (let q = 0; q < len; q++){ while (z[k + 1] < q) k++; const r = v[k]; d[q] = (q - r) * (q - r) + f[r]; } };
-      for (let x = 0; x < W; x++){ for (let y = 0; y < H; y++) f[y] = g[y * W + x]; one(H); for (let y = 0; y < H; y++) g[y * W + x] = d[y]; }
-      for (let y = 0; y < H; y++){ for (let x = 0; x < W; x++) f[x] = g[y * W + x]; one(W); for (let x = 0; x < W; x++) g[y * W + x] = d[x]; }
-    }
-    // маска + нормали в одну картинку RGBA (R — буква, G/B — нормаль, A — непрозрачно, чтобы браузер не трогал цвет)
-    // и поле расстояний до кромки — отдельная серая картинка, считается только если есть отделка лица
-    function maskData(fs){
-      const lines = String(o.text).split('\n'), c = document.createElement('canvas'), x = c.getContext('2d'), font = o.font.replace('{s}', fs * dpr);
+    // атлас: ячейка на каждый знак (из текста и charset), одинаковые буквы делят одну ячейку; в job — всё для счёта по пикселям
+    function atlas(fs){
+      // willReadFrequently: холст в обычной памяти — снятие пикселей не ждёт видеокарту (а она может быть занята кадрами)
+      const c = document.createElement('canvas'), x = c.getContext('2d', { willReadFrequently: true }), font = o.font.replace('{s}', fs * dpr);
       x.font = font;
-      const lh = fs * dpr * 1.05, sk = o.skew || 0, r = Math.max(2, Math.round(dpr * 2.5)), gp = glowPx(), gw = (o.grow || 0) * dpr;
-      const rr0 = o.round ? Math.max(r, Math.round((o.bevel || 8) * dpr / 2)) : r;
-      const pad = Math.max(r * 2 + 2, o.round ? rr0 * 3 + 2 : 0) + gp + gw + 2;   // поле ячейки: размытие, свечение и утолщение не задевают соседей
+      const lh = fs * dpr * 1.05, sk = o.skew || 0, r = Math.max(2, Math.round(dpr * 2.5)), gp = glowPx();
+      const pad = r * 2 + 2 + gp + 2;   // поле ячейки: размытие и свечение не задевают соседей
       const cellH = Math.ceil(lh + pad * 2), ex = Math.abs(sk) * lh / 2;
-      MX = document.createElement('canvas').getContext('2d'); MX.font = font;   // для раскладки без пересборки
-      // ячейка на каждый знак — из текста и charset; одинаковые буквы делят одну ячейку
+      const mx = document.createElement('canvas').getContext('2d'); mx.font = font;   // для раскладки без пересборки
       const glyphs = [...new Set([...String(o.text) + (o.charset || '')].filter(ch => ch.trim()))].map(ch => {
         const mt = x.measureText(ch), L = Math.max(0, mt.actualBoundingBoxLeft || 0) + ex + pad, Rt = Math.max(mt.width, mt.actualBoundingBoxRight || 0) + ex + pad;
         return { ch, adv: mt.width, l: L, w: Math.ceil(L + Rt) }; });
@@ -210,46 +253,15 @@ void main(){
       glyphs.forEach(g => { if (cx + g.w > 2048){ cx = 0; H += cellH; } g.ux = cx; g.uy = H - cellH; cx += g.w; W = Math.max(W, cx); });
       W = Math.max(1, W); H = Math.min(2048, H);
       c.width = W; c.height = H; x.font = font; x.fillStyle = '#fff'; x.textAlign = 'left'; x.textBaseline = 'middle';
-      if (gw){ x.strokeStyle = '#fff'; x.lineWidth = gw * 2; x.lineJoin = 'round'; }
       glyphs.forEach(g => { const y = g.uy + cellH / 2;   // знак — в свою ячейку
         x.setTransform(1, 0, -sk, 1, sk * y, 0);   // курсив: верх уходит вправо, середина строки на месте
-        x.fillText(g.ch, g.ux + g.l, y); if (gw) x.strokeText(g.ch, g.ux + g.l, y); });
+        x.fillText(g.ch, g.ux + g.l, y); });
       x.setTransform(1, 0, 0, 1, 0, 0);
-      const img = x.getImageData(0, 0, W, H), d = img.data, n = W * H, A = new Float32Array(n), T = new Float32Array(n);
-      for (let i = 0; i < n; i++) A[i] = d[i * 4 + 3] / 255;
-      // размытие скользящим окном: строки, потом столбцы, дважды — почти гаусс
-      const pass = (src, dst, horiz, r = rb) => { const L = horiz ? W : H, M = horiz ? H : W, at = (j, k) => horiz ? j * W + k : k * W + j;
-        for (let j = 0; j < M; j++){ let s = 0; for (let k = 0; k <= r && k < L; k++) s += src[at(j, k)];
-          for (let k = 0; k < L; k++){ dst[at(j, k)] = s / (r * 2 + 1); if (k + r + 1 < L) s += src[at(j, k + r + 1)]; if (k - r >= 0) s -= src[at(j, k - r)]; } } }, rb = r;
-      const Bl = A.slice(), rr = rr0;
-      for (let p = 0; p < (o.round ? 3 : 2); p++){ pass(Bl, T, true, rr); pass(T, Bl, false, rr); }
-      const ks = o.round ? rr * 1.5 : 0;   // наклон купола: перепад высоты на пиксель × радиус
-      for (let y = 0; y < H; y++) for (let xx = 0; xx < W; xx++){
-        const i = y * W + xx, g = (a, b) => Bl[Math.min(H - 1, Math.max(0, y + b)) * W + Math.min(W - 1, Math.max(0, xx + a))];
-        const gx = g(1, 0) - g(-1, 0), gy = g(0, 1) - g(0, -1), l = Math.hypot(gx, gy);
-        // наружу = против роста маски; в картинке y вниз, в мире — вверх
-        const q = ks ? ks / 2 : 1 / Math.max(l, 1e-4);   // купол: наклон (до 2, ужат в 0–1); обычно — только направление
-        const nx = l > 1e-4 ? Math.max(-1, Math.min(1, -gx * q)) : 0, ny = l > 1e-4 ? Math.max(-1, Math.min(1, gy * q)) : 0;
-        d[i * 4] = A[i] * 255; d[i * 4 + 1] = (nx * .5 + .5) * 255; d[i * 4 + 2] = (ny * .5 + .5) * 255; d[i * 4 + 3] = 255;
-      }
-      // поле: + снаружи, − внутри (px картинки), кромка — где буква наполовину прозрачна; дальность — до самой дальней отделки
+      const img = x.getImageData(0, 0, W, H);
+      // поле расстояний: внутри — до самой дальней отделки, снаружи — до края свечения
       const rIn = Math.max(4, ...(o.strokes || []).map(k => ((k.inset || 0) + k.width) * dpr + 2), o.innerGlow ? o.innerGlow.size * 3 * dpr : 0, o.bevel ? o.bevel * dpr + 3 : 0), rOut = Math.max(4, gp);
-      const sdf = new Uint8Array(n).fill(128);
-      if (o.strokes?.length || o.innerGlow || o.glow || o.bevel){
-        const out = new Float64Array(n), inn = new Float64Array(n);
-        for (let i = 0; i < n; i++){ const on = A[i] >= .5; out[i] = on ? 0 : 1e20; inn[i] = on ? 1e20 : 0; }
-        edt(out, W, H); edt(inn, W, H);
-        // у самой кромки — по прозрачности (доли пикселя), дальше — по расстоянию; потом сгладить, чтобы не было ступенек на диагоналях
-        const F = new Float32Array(n);
-        for (let i = 0; i < n; i++) F[i] = A[i] > .02 && A[i] < .98 ? .5 - A[i] : out[i] > 0 ? Math.sqrt(out[i]) - .5 : .5 - Math.sqrt(inn[i]);
-        const sr = Math.max(1, Math.round(dpr));   // ~1 px экрана: ступеньки уходят, острые углы почти не тупятся
-        for (let p = 0; p < 2; p++){ pass(F, T, true, sr); pass(T, F, false, sr); }
-        const bw = sr * 4 + 2;   // полоса у края картинки — всегда «далеко снаружи», иначе по краю свечения видна рамка
-        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (x < bw || y < bw || x >= W - bw || y >= H - bw) F[y * W + x] = 1e3;
-        for (let i = 0; i < n; i++){ const dd = F[i];
-          sdf[i] = Math.max(0, Math.min(255, Math.round((.5 + dd / (2 * (dd < 0 ? rIn : rOut))) * 255))); }
-      }
-      return { W, H, img, sdf, gp, rIn, rOut, cells: Object.fromEntries(glyphs.map(g => [g.ch, g])), cellH, lh, ex, gw };
+      const job = { W, H, d: img.data, r, deco: !!(o.strokes?.length || o.innerGlow || o.glow || o.bevel), rIn, rOut, sr: Math.max(1, Math.round(dpr)) };
+      return { W, H, img, gp, rIn, rOut, cells: Object.fromEntries(glyphs.map(g => [g.ch, g])), cellH, lh, ex, mx, job };
     }
     // раскладка текста по ячейкам атласа: позиция буквы — по ширине всего, что левее (кернинг); с charset — по ширинам знаков (цифры не пляшут)
     function layout(){
@@ -258,11 +270,14 @@ void main(){
         const pens = []; let acc = 0, pre = '';
         ch.forEach(c => { pens.push(o.charset ? acc : MX.measureText(pre).width); pre += c; acc += CELLS[c]?.adv ?? MX.measureText(c).width; });
         const lw = o.charset ? acc : MX.measureText(l).width; tw = Math.max(tw, lw);
-        ch.forEach((c, i) => { const k = CELLS[c]; if (k) G.push({ ...k, pen: -lw / 2 + pens[i], cy }); }); });
-      sz = [(tw + EX * 2 + GW * 2) / dpr, LH * lines.length / dpr];
+        ch.forEach((c, i) => { const k = CELLS[c]; if (k) G.push({ ...k, pen: -lw / 2 + pens[i], cy, li }); }); });
+      sz = [(tw + EX * 2) / dpr, LH * lines.length / dpr];
     }
     // текст из уже готовых ячеек — только переложить квадраты (дёшево); есть новый знак — пересобрать атлас
     const covered = t => [...String(t)].every(c => !c.trim() || CELLS[c]);
+    // знаки есть в атласе, который уже собирается, — новую сборку не начинать: она отменила бы ту, и атлас не доехал бы никогда
+    // (готовая сборка сама разложит текущий текст)
+    const coming = t => PEND && [...String(t)].every(c => !c.trim() || PEND[c]);
     function retext(){ layout(); geom(); }
 
     function colors(){
@@ -275,7 +290,7 @@ void main(){
       [[U.uK1, U.uK1C, k[0]], [U.uK2, U.uK2C, k[1]]].forEach(([w, c, s]) => { gl.uniform2f(w, s ? s.inset || 0 : 0, s ? s.width : 0); gl.uniform3fv(c, hex(s ? s.color : '#000')); });
       gl.uniform1f(U.uIgS, ig ? ig.size : 0); gl.uniform3fv(U.uIgC, hex(ig ? ig.color : '#000'));
       gl.uniform1f(U.uGlS, g ? g.strength ?? 1 : 0); gl.uniform1f(U.uGlR, g ? g.size : 1); gl.uniform3fv(U.uGlC, hex(g ? g.color : '#000'));
-      gl.uniform1f(U.uBev, o.bevel || 0); gl.uniform1f(U.uRound, o.round ? 1 : 0); gl.uniform1f(U.uMet, o.metal || 0); gl.uniform1f(U.uCurv, o.curve || 0);
+      gl.uniform1f(U.uBev, o.bevel || 0); gl.uniform1f(U.uMet, o.metal || 0); gl.uniform1f(U.uCurv, o.curve || 0);
       gl.uniform3fv(U.uShC, hex(o.shine.color)); gl.uniform1f(U.uShW, o.shine.width);
       gl.uniform1i(U.uTex, 0); gl.uniform1i(U.uSdf, 1);
     }
@@ -336,12 +351,13 @@ void main(){
       clearTimeout(rt); rt = setTimeout(() => !dead && build(), 150); }); ro.observe(el);
     cv.addEventListener('webglcontextrestored', () => build());
 
-    /* ── появления и движение букв: t.play('drop' | 'pop' | 'slam' | 'wave' | 'out', { stagger, time, onLand(i) }) → Promise
+    /* ── появления и движение букв: t.play('drop' | 'pop' | 'slam' | 'wave' | 'out', { stagger, time, only, onLand(i) }) → Promise
        Кадры идут только пока играет; конец — буквы на месте (после 'out' — скрыты). lite и «уменьшение движения» — сразу конец. */
     const clamp = v => Math.max(0, Math.min(1, v));
     const back = p => { const c = 1.70158; return 1 + (c + 1) * (p - 1) ** 3 + c * (p - 1) ** 2; };   // с перелётом
     const bounce = p => { const a = 7.5625, d = 2.75; return p < 1 / d ? a * p * p : p < 2 / d ? a * (p -= 1.5 / d) * p + .75 : p < 2.5 / d ? a * (p -= 2.25 / d) * p + .9375 : a * (p -= 2.625 / d) * p + .984375; };
-    const put = (i, dx, dy, dz, s, r, a) => { i = Math.min(31, i); LT[i * 4] = dx; LT[i * 4 + 1] = dy; LT[i * 4 + 2] = s; LT[i * 4 + 3] = r; LZ[i * 2] = dz; LZ[i * 2 + 1] = a; };
+    // only: номер строки — двигается только она, остальные скрыты (ранг выходит, сумма ждёт своей очереди)
+    const put = (i, dx, dy, dz, s, r, a) => { if (anim?.o.only != null && G[i] && G[i].li !== anim.o.only) a = 0; i = Math.min(31, i); LT[i * 4] = dx; LT[i * 4 + 1] = dy; LT[i * 4 + 2] = s; LT[i * 4 + 3] = r; LZ[i * 2] = dz; LZ[i * 2 + 1] = a; };
     const land = (A, i) => { if (!A.hit.has(i)){ A.hit.add(i); A.o.onLand?.(i); } };
     const ANIM = {
       // буквы падают сверху по очереди и отскакивают
@@ -369,9 +385,9 @@ void main(){
       count: (A, t) => { const { from, to, fmt } = A.o, du = A.o.time ?? 2, p = clamp(t / du), q = clamp((t - du) / .45);
         const txt = fmt(p >= 1 ? to : from + (to - from) * (1 - (1 - p) ** 3));
         if (txt !== o.text){ const old = [...String(o.text)].reverse(), now = [...txt].reverse();
-          o.text = txt; if (covered(txt)) retext(); else build();
+          o.text = txt; if (PEND && coming(txt)) {} else if (covered(txt)) retext(); else build();
           now.forEach((c, j) => { if (c !== old[j]) A.pop[j] = t; });   // счёт позиций справа: разряды не сдвигаются, когда число растёт
-          if (t - A.tick > .06){ A.tick = t; A.o.onTick?.(txt); } }
+          if (t - A.tick > .06 || p >= 1){ A.tick = t; A.o.onTick?.(txt); } }   // щелчок не чаще 60 мс, но итог — всегда
         if (p >= 1) land(A, -1);
         const fin = p >= 1 ? Math.sin(q * Math.PI) * .16 : 0, L = G.length;
         G.forEach((g, i) => { const u = clamp((t - (A.pop[L - 1 - i] ?? -9)) / .2), b = (1 - u) ** 2 * .22, k = 1 + b + fin;
@@ -406,16 +422,20 @@ void main(){
     if (o.spin) wake();
     return {
       set(p){ if ('shineEvery' in p && p.shineEvery !== o.shineEvery) setTimeout(shLoop);
-        let re = ['font', 'size', 'depth', 'layers', 'pad', 'skew', 'strokes', 'innerGlow', 'glow', 'bevel', 'grow', 'charset', 'fit'].some(k => k in p && p[k] !== o[k]);
+        let re = ['font', 'size', 'depth', 'layers', 'pad', 'skew', 'strokes', 'innerGlow', 'glow', 'bevel', 'charset', 'fit'].some(k => k in p && p[k] !== o[k]);
         const tx = 'text' in p && p.text !== o.text;
-        if (tx && !re && !covered(p.text)) re = true;
+        if (tx && !re && !covered(p.text) && !coming(p.text)) re = true;
         Object.assign(o, p); yaw = o.yaw + ((yaw - o.yaw) % 360 + 540) % 360 - 180;   // после вращения — к позе ближним путём
-        if (re) build(); else { if (tx) retext(); colors(); draw(); }
+        if (re) build(); else { if (tx && !PEND) retext(); colors(); draw(); }
         cv.style.touchAction = o.drag && !o.lite ? 'none' : ''; cv.style.cursor = o.drag && !o.lite ? 'grab' : ''; wake(); },
       // повернуть программно (например, «встряхнуть» надпись при выигрыше); с пружиной сама вернётся
       rotate(dy, dp = 0, kick = false){ if (kick){ vy += dy; vp += dp; } else { yaw = dy; pitch = dp; } wake(); },
       shine, play, count,
+      // прервать: анимация и блик кончаются сразу, буквы — на место (ждущий play/count завершается)
+      stop(){ shT = -1; if (anim){ anim.keep = false; finish(); } },
       get pose(){ return { yaw, pitch }; },
+      get text(){ return o.text; },
+      get ready(){ return ready; },   // Promise: надпись собрана (сборка идёт в фоне)
       get stats(){ return { layers: n, max: N, frames }; },   // для замера: копий в последнем кадре, сколько всего, кадров нарисовано
       destroy(){ dead = true; cancelAnimationFrame(raf); clearTimeout(rt); clearTimeout(shTimer); ro.disconnect(); gl.getExtension('WEBGL_lose_context')?.loseContext(); cv.remove(); },
     };

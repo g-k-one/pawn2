@@ -28,10 +28,8 @@ label.chk{grid-column:1/4;display:flex;gap:8px;align-items:center}
 <script src="../../src/app/16l-extrude.js"></script>
 <script>
 // у наборов без отделки — сброс отделки и позы, чтобы после «Казино» не оставались обводки
-const BASE = { strokes: [], innerGlow: null, glow: null, sideEmit: 0, skew: 0, bevel: 0, round: false, grow: 0, charset: '', fit: '', metal: 0, curve: 0, gloss: .55, ambient: .45, yaw: -22, pitch: 12, persp: 900, depth: 36, faceAngle: 90 };
+const BASE = { strokes: [], innerGlow: null, glow: null, sideEmit: 0, skew: 0, bevel: 0, charset: '', fit: '', metal: 0, curve: 0, gloss: .55, ambient: .45, yaw: -22, pitch: 12, persp: 900, depth: 36, faceAngle: 90 };
 const PRE = {
-  'Пузырь':  { face: ['#ffd1f0', '#ff6ec7', '#b02ce0'], side: ['#9a20c8', '#3a0758'], round: true, bevel: 16, grow: 4, curve: .2, gloss: .9, ambient: .5,
-    strokes: [{ color: '#3a0758', width: 2, inset: 0 }], depth: 18, yaw: -14, pitch: 10, text: 'WIN!' },
   'Казино':  { face: ['#ff5a36', '#d0140c', '#7a0306'], side: ['#ffe24a', '#ff9e1a', '#7a1a00'], sideEmit: .75, gloss: .35,
     strokes: [{ color: '#ffd84a', width: 1.5, inset: 2.5 }, { color: '#2a0000', width: 1.2, inset: 0 }], innerGlow: { color: '#ff7a1a', size: 2.5 },
     glow: { color: '#ffae1e', size: 16, strength: .9 }, skew: .2, yaw: 0, pitch: 24, persp: 520, depth: 22, text: 'CASINO' },
@@ -78,6 +76,7 @@ const click = () => { try { ac ||= new AudioContext(); const o = ac.createOscill
 document.getElementById('cnt').onclick = () => { const v = Math.max(0, +document.getElementById('sum').value || 0);
   t.set({ charset: '0123456789.', fit: '0000.00', text: '0.00' });
   t.count(v, { time: 2.2, onTick: click, onLand: () => navigator.vibrate?.(20) }).then(() => t.shine()); };
+
 document.getElementById('lt').onchange = e => t.set({ lite: e.target.checked });
 
 window.T = t;
