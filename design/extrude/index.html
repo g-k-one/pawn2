@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Объём — лаборатория</title>
+<style>
+@font-face{font-family:"SONGER";src:url(../../assets/fonts/songer-extrabold.woff2) format("woff2");font-weight:800;font-display:block}
+body{margin:0;background:#0b0d14;color:#fff;font:14px/1.4 system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;gap:16px;padding:16px}
+#stage{width:min(100%,420px);height:260px;border-radius:22px;background:radial-gradient(circle at 50% 40%,#1b2340,#0b0d14 70%)}
+.ctl{width:min(100%,420px);display:grid;grid-template-columns:110px 1fr 44px;gap:8px 10px;align-items:center}
+.ctl input[type=text]{grid-column:2/4;background:#1a1d28;border:0;border-radius:10px;color:#fff;padding:8px 10px;font:inherit}
+.ctl span{opacity:.72;text-align:right;font-variant-numeric:tabular-nums}
+.pre{width:min(100%,420px);display:flex;flex-wrap:wrap;gap:8px}
+.pre button{background:#1a1d28;border:0;border-radius:12px;color:#fff;padding:8px 12px;font:inherit;cursor:pointer}
+.pre button.on{outline:2px solid #30A5FF}
+label.chk{grid-column:1/4;display:flex;gap:8px;align-items:center}
+</style></head><body>
+<div id="stage"></div>
+<div class="pre" id="pre"></div>
+<div class="ctl" id="ctl"></div>
+<script src="../../src/app/16l-extrude.js"></script>
+<script>
+const PRE = {
+  'GRAM':    { face: ['#ffffff', '#9fd6ff', '#30A5FF'], side: ['#1d63ff', '#081236'] },
+  'Золото':  { face: ['#fff6c8', '#ffd25a', '#e08a12'], side: ['#b8650a', '#3a1600'] },
+  'Джекпот': { face: ['#fff', '#ff9be0', '#c03bff', '#4a2bff'], side: ['#7a1fd6', '#170634'] },
+  'Хэллоуин':{ face: ['#ffe9b0', '#ff9a2e', '#ff4c1a'], side: ['#6d1fa8', '#12041f'] },
+  'Хром':    { face: ['#ffffff', '#9aa3b5', '#f2f4f8', '#6b7284'], side: ['#5a6070', '#14161c'] },
+  'Неон':    { face: ['#d9fff0', '#12D53D'], side: ['#0a8f6a', '#03241f'] },
+};
+const t = Extrude.mount(document.getElementById('stage'), PRE.GRAM);
+const pre = document.getElementById('pre');
+for (const k in PRE){ const b = document.createElement('button'); b.textContent = k; b.onclick = () => { t.set(PRE[k]); [...pre.children].forEach(x => x.classList.toggle('on', x === b)); }; pre.append(b); }
+pre.firstChild.classList.add('on');
+const ctl = document.getElementById('ctl'), D = Extrude.defaults;
+ctl.insertAdjacentHTML('beforeend', `<div>Текст</div><input type="text" id="tx" value="${D.text}">`);
+document.getElementById('tx').oninput = e => t.set({ text: e.target.value.replace(/\\n/g, '\n') || ' ' });
+[['depth', 'Глубина', 0, 120, 1], ['layers', 'Копий (0 — авто)', 0, 128, 1], ['gloss', 'Блик', 0, 1.5, .05], ['ambient', 'Тень', 0, 1, .05],
+ ['faceAngle', 'Угол градиента', 0, 360, 5], ['persp', 'Перспектива', 250, 3000, 10], ['yaw', 'Поворот', -90, 90, 1], ['pitch', 'Наклон', -60, 60, 1], ['spin', 'Вращение °/с', 0, 180, 5]]
+.forEach(([k, l, a, b, s]) => {
+  ctl.insertAdjacentHTML('beforeend', `<div>${l}</div><input type="range" min="${a}" max="${b}" step="${s}" value="${D[k]}" data-k="${k}"><span>${D[k]}</span>`);
+});
+ctl.insertAdjacentHTML('beforeend', `<label class="chk"><input type="checkbox" id="sp" checked> Возвращаться в позу после броска</label>`);
+ctl.addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; const v = +e.target.value; e.target.nextElementSibling.textContent = v;
+  t.set({ [k]: v }); });
+document.getElementById('sp').onchange = e => t.set({ spring: e.target.checked });
+window.T = t;
+</script>
+</body></html>
