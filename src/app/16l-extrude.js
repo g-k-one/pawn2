@@ -37,21 +37,29 @@ function makeExtrude(){
   const hex = c => { c = c.replace('#', ''); if (c.length === 3) c = c.replace(/./g, x => x + x); const n = parseInt(c, 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
   const ramp = a => { const o = new Float32Array(12); a.slice(0, 4).forEach((c, i) => o.set(hex(c), i * 3)); return o; };
 
-  const VS = `attribute vec3 aP;
-uniform vec2 uSz, uRes, uIn; uniform float uDep, uN, uCam, uFront; uniform mat3 uR;
-varying vec2 vUV, vS; varying float vL;
+  // буквы: у каждой своя ячейка в атласе и своё движение (uLT: сдвиг x, y, масштаб, поворот; uLZ: сдвиг к зрителю, прозрачность)
+  const VS = `attribute vec3 aP; attribute vec4 aQ; attribute vec3 aA;
+uniform vec2 uSz, uRes, uInPx, uInUV; uniform float uDep, uN, uCam, uFront; uniform mat3 uR;
+uniform vec4 uLT[32]; uniform vec2 uLZ[32];
+varying vec2 vUV, vS, vT, vRot; varying float vL, vA;
 void main(){ vL = aP.z;
-  // боковинам поле под свечение не нужно — их квадрат ужат до букв (меньше пустых точек)
-  vUV = abs(aP.z - uFront) < .5 ? aP.xy : mix(uIn, 1. - uIn, aP.xy);
+  int i = int(aA.z + .5); vec4 T = uLT[i]; vec2 Z = uLZ[i]; vA = Z.y;
+  vec2 loc = aQ.xy; vUV = aP.xy;
+  vT = vec2((aA.x + loc.x) / uSz.x + .5, .5 - (aA.y + loc.y) / uSz.y);   // место в надписи 0–1 — для градиента лица, без учёта движения
+  // боковинам поле под свечение не нужно — их квадрат ужат до буквы (меньше пустых точек)
+  if (abs(aP.z - uFront) >= .5){ loc -= aQ.zw * uInPx; vUV -= aQ.zw * vec2(uInUV.x, -uInUV.y); }
+  float c = cos(T.w), s = sin(T.w); vRot = vec2(c, s);
+  loc = mat2(c, s, -s, c) * loc * T.z;
   float t = aP.z / max(uN - 1., 1.);
-  vec3 p = uR * vec3((vUV.x - .5) * uSz.x, (.5 - vUV.y) * uSz.y, (.5 - t) * uDep);
+  vec3 p = uR * vec3(aA.xy + loc + T.xy, (.5 - t) * uDep * T.z + Z.x);
   float k = uCam / max(uCam - p.z, 1.);
   gl_Position = vec4(p.xy * k / (uRes * .5), 0., 1.); vS = gl_Position.xy; }`;
   const FS = `precision highp float;
 uniform sampler2D uTex, uSdf; uniform mat3 uR; uniform vec2 uDr; uniform float uN, uFront, uGloss, uAmb, uFc, uSc, uIgS, uGlS, uGlR, uEmit;
 uniform vec3 uF[4], uS[4], uL, uK1C, uK2C, uIgC, uGlC, uShC; uniform vec2 uFd, uK1, uK2, uTx;
-uniform float uBev, uRound, uMet, uCurv, uShX, uShW;
-varying vec2 vUV, vS; varying float vL;
+uniform float uBev, uRound, uMet, uCurv, uShX, uShW, uBoost;
+varying vec2 vUV, vS, vT, vRot; varying float vL, vA;
+vec2 rot(vec2 v){ return vec2(vRot.x * v.x - vRot.y * v.y, vRot.y * v.x + vRot.x * v.y); }
 // металл: отражение выдуманного окружения — светлое небо, резкий горизонт, тёмная земля, яркое пятно от света
 vec3 env(vec3 n, vec3 c){
   vec3 r = vec3(0., 0., -1.) + 2. * n.z * n;   // отражение взгляда (смотрим вдоль −z)
@@ -77,35 +85,35 @@ void main(){
     float zs = uFront < .5 ? 1. : -1.;
     float dd = sd(vUV);
     // нормаль лица: плоско, плюс «подушка» и фаска у кромки (направление — по полю расстояний, наружу)
-    vec3 nl = vec3((vUV - .5) * vec2(1., -1.) * uCurv, 1.);
+    vec3 nl = vec3((vT - .5) * vec2(1., -1.) * uCurv, 1.);
     if (uRound > 0.) nl.xy += (m.gb * 2. - 1.) * 2.;   // купол: наклон из маски
     else if (uBev > 0.){
       vec2 g = vec2(sd(vUV + vec2(uTx.x, 0.)) - sd(vUV - vec2(uTx.x, 0.)), sd(vUV - vec2(0., uTx.y)) - sd(vUV + vec2(0., uTx.y)));
       float t = clamp(1. + dd / uBev, 0., 1.), th = t * t * 1.15;   // у самой кромки скос ~65°, к середине — плоско
       nl.xy += normalize(g + 1e-6) * tan(th); }
-    nl = normalize(nl); nl.z *= zs;
-    vec3 n = uR * nl, base = rampF(dot(vUV - .5, uFd) + .5);
+    nl.xy = rot(nl.xy); nl = normalize(nl); nl.z *= zs;
+    vec3 n = uR * nl, base = rampF(dot(vT - .5, uFd) + .5);
     col = base * (.72 + .28 * max(dot(n, uL), 0.));
     float sh = .45 - n.x * 1.1 + n.y * .5;   // мягкий блик: полоса по диагонали, едет вслед за поворотом
-    col += exp(-pow((vUV.x * .8 + vUV.y * .45 - sh) * 2.6, 2.)) * uGloss * .55;
+    col += exp(-pow((vT.x * .8 + vT.y * .45 - sh) * 2.6, 2.)) * uGloss * .55;
     if (uBev > 0. || uRound > 0.) col += pow(max(dot(n, normalize(uL + vec3(0., 0., 1.))), 0.), 30.) * uGloss * max(uRound, step(-uBev, dd));
     if (uRound > 0.) col += pow(max(dot(n, normalize(uL + vec3(0., 0., 1.))), 0.), 160.) * uGloss * 1.4;   // пластик: резкое белое пятно поверх мягкого
     if (uMet > 0.) col = mix(col, env(n, base), uMet);
     if (uIgS > 0.) col = mix(col, uIgC, exp(min(dd, 0.) / uIgS) * .85);
     col = mix(col, uK1C, band(-dd, uK1)); col = mix(col, uK2C, band(-dd, uK2));
-    col += uShC * sweep();
-    if (uGlS > 0.){ gl_FragColor = vec4(col * a + uGlC * uGlS * exp(-max(dd, 0.) / uGlR) * (1. - smoothstep(.55, 1., dd / (uDr.y * .5))) * (1. - a), a); return; }   // свечение — сложением, прозрачность не трогает; к краю поля гаснет в ноль (иначе виден квадрат)
+    col += uShC * sweep(); col *= 1. + uBoost * .6;
+    if (uGlS > 0.){ gl_FragColor = vA * vec4(col * a + uGlC * uGlS * (1. + uBoost * 2.) * exp(-max(dd, 0.) / uGlR) * (1. - smoothstep(.55, 1., dd / (uDr.y * .5))) * (1. - a), a); return; }   // свечение — сложением, прозрачность не трогает; к краю поля гаснет в ноль (иначе виден квадрат)
   } else {                      // боковина: цвет по глубине + свет по нормали кромки
-    vec2 e = m.gb * 2. - 1.; float el = length(e);
+    vec2 e = rot(m.gb * 2. - 1.); float el = length(e);
     vec3 n = uR * vec3(e / max(el, .001), 0.);
     float d = el > .06 ? max(dot(n, uL), 0.) : .35;
     float sp = el > .06 ? pow(max(dot(n, normalize(uL + vec3(0., 0., 1.))), 0.), 22.) : 0.;
     vec3 b = rampS(vL / max(uN - 1., 1.));
     col = mix(b * (uAmb + (1. - uAmb) * d), b, uEmit) + sp * uGloss * .5;
     if (uMet > 0. && el > .06) col = mix(col, env(n, b), uMet * .8);
-    col += uShC * sweep() * .6;
+    col += uShC * sweep() * .6; col *= 1. + uBoost * .6;
   }
-  gl_FragColor = vec4(col * a, a); }`;
+  gl_FragColor = vA * vec4(col * a, a); }`;
 
   function mount(el, opts){
     const o = Object.assign({}, DEF, opts);
@@ -115,25 +123,35 @@ void main(){
     el.appendChild(cv);
     const gl = cv.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false });   // края и так гладкие за счёт маски — сглаживание холста только тратит видеопамять
     let yaw = o.yaw, pitch = o.pitch, vy = 0, vp = 0, held = false, raf = 0, last = 0, dead = false;
-    let N = 0, n = 0, frames = 0, sdf = null, inset = [0, 0], dr = [1, 1], tx = [0, 0], shT = -1, shTimer = 0, sz = [1, 1], cw = 1, ch = 1, dpr = 1, tex = null, bufF = null, bufB = null, prog = null, U = {};
+    let N = 0, n = 0, frames = 0, sdf = null, inset = [0, 0], dr = [1, 1], G = [], cellH = 0, AW = 1, AH = 1, gpx = 0, boost = 0, anim = null, tx = [0, 0], shT = -1, shTimer = 0, sz = [1, 1], cw = 1, ch = 1, dpr = 1, tex = null, bufF = null, bufB = null, prog = null, U = {};
 
     if (!gl){ el.textContent = o.text; return { set(){}, rotate(){}, destroy(){ cv.remove(); } }; }   // без WebGL — просто текст
     const sh = (t, s) => { const h = gl.createShader(t); gl.shaderSource(h, s); gl.compileShader(h); if (!gl.getShaderParameter(h, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(h)); return h; };
     prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
     gl.useProgram(prog);
-    ['uSz', 'uRes', 'uDep', 'uN', 'uCam', 'uR', 'uTex', 'uFront', 'uGloss', 'uAmb', 'uFc', 'uSc', 'uF', 'uS', 'uL', 'uFd', 'uIn', 'uSdf', 'uDr', 'uIgS', 'uGlS', 'uGlR', 'uEmit', 'uK1C', 'uK2C', 'uIgC', 'uGlC', 'uK1', 'uK2', 'uTx', 'uBev', 'uRound', 'uMet', 'uCurv', 'uShX', 'uShW', 'uShC'].forEach(k => U[k] = gl.getUniformLocation(prog, k));
-    const aP = gl.getAttribLocation(prog, 'aP'); gl.enableVertexAttribArray(aP);
+    ['uSz', 'uRes', 'uDep', 'uN', 'uCam', 'uR', 'uTex', 'uFront', 'uGloss', 'uAmb', 'uFc', 'uSc', 'uF', 'uS', 'uL', 'uFd', 'uSdf', 'uDr', 'uIgS', 'uGlS', 'uGlR', 'uEmit', 'uK1C', 'uK2C', 'uIgC', 'uGlC', 'uK1', 'uK2', 'uTx', 'uBev', 'uRound', 'uMet', 'uCurv', 'uShX', 'uShW', 'uShC', 'uInPx', 'uInUV', 'uLT', 'uLZ', 'uBoost'].forEach(k => U[k] = gl.getUniformLocation(prog, k));
+    const aP = gl.getAttribLocation(prog, 'aP'), aQ = gl.getAttribLocation(prog, 'aQ'), aA = gl.getAttribLocation(prog, 'aA');
+    [aP, aQ, aA].forEach(a => gl.enableVertexAttribArray(a));
+    // движение букв: на каждую — сдвиг x, y, масштаб, поворот и сдвиг к зрителю, прозрачность (до 32 букв; дальше — как последняя)
+    const LT = new Float32Array(128), LZ = new Float32Array(64);
+    const still0 = () => { for (let i = 0; i < 32; i++){ LT.set([0, 0, 1, 0], i * 4); LZ.set([0, 1], i * 2); } boost = 0; };
+    still0();
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     bufF = gl.createBuffer(); bufB = gl.createBuffer(); tex = gl.createTexture(); sdf = gl.createTexture();
 
-    // стопка квадратов: два буфера — от задней к лицу и наоборот (когда смотрим сзади)
+    // стопка квадратов: на каждую копию — по квадрату на букву; два буфера — от задней к лицу и наоборот (когда смотрим сзади)
+    // вершина: ячейка в атласе (u, v), копия, угол относительно опоры буквы (px), знак угла (для ужатия боковин), опора буквы (px), номер буквы
     function geom(){
-      const q = i => [0, 0, i, 1, 0, i, 0, 1, i, 1, 0, i, 1, 1, i, 0, 1, i], f = [], b = [];
-      for (let i = N; i--;) f.push(...q(i));
-      for (let i = 0; i < N; i++) b.push(...q(i));
-      gl.bindBuffer(gl.ARRAY_BUFFER, bufF); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(f), gl.STATIC_DRAW);
-      gl.bindBuffer(gl.ARRAY_BUFFER, bufB); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(b), gl.STATIC_DRAW);
+      const q = []; G.forEach((g, gi) => { const ax = (g.pen + g.adv / 2) / dpr, ay = g.cy / dpr, l = (g.pen - g.l) / dpr - ax, r = l + g.w / dpr, t = (g.cy + cellH / 2) / dpr - ay, b = t - cellH / dpr;
+        const u0 = g.ux / AW, u1 = (g.ux + g.w) / AW, v0 = g.uy / AH, v1 = (g.uy + cellH) / AH, k = Math.min(31, gi);
+        const V = (u, v, x, y, sx, sy) => [u, v, 0, x, y, sx, sy, ax, ay, k];
+        q.push(V(u0, v0, l, t, -1, 1), V(u1, v0, r, t, 1, 1), V(u0, v1, l, b, -1, -1), V(u1, v0, r, t, 1, 1), V(u1, v1, r, b, 1, -1), V(u0, v1, l, b, -1, -1)); });
+      const f = new Float32Array(N * q.length * 10), bb = new Float32Array(N * q.length * 10);
+      const put = (A, slot, i) => q.forEach((v, j) => { const o = (slot * q.length + j) * 10; A.set(v, o); A[o + 2] = i; });
+      for (let i = 0; i < N; i++){ put(f, N - 1 - i, i); put(bb, i, i); }
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufF); gl.bufferData(gl.ARRAY_BUFFER, f, gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufB); gl.bufferData(gl.ARRAY_BUFFER, bb, gl.STATIC_DRAW);
     }
     // запас под свечение (px картинки) — сторона квадрата лица больше букв на него
     const glowPx = () => o.glow ? Math.ceil(o.glow.size * 3 * dpr) : 0;
@@ -148,7 +166,8 @@ void main(){
         fs = Math.max(8, Math.min((cw - room) / tw * 100, (ch - room) / (1.05 * ls.length)));
       }
       const m = maskData(fs);
-      sz = [m.W / dpr, m.H / dpr]; inset = [m.gp / m.W, m.gp / m.H]; dr = [m.rIn * 2 / dpr, m.rOut * 2 / dpr]; tx = [1.5 / m.W, 1.5 / m.H];
+      G = m.glyphs; cellH = m.cellH; AW = m.W; AH = m.H; gpx = m.gp; sz = [m.tw / dpr, m.th / dpr];
+      inset = [m.gp / m.W, m.gp / m.H]; dr = [m.rIn * 2 / dpr, m.rOut * 2 / dpr]; tx = [1.5 / m.W, 1.5 / m.H];
       N = o.layers || Math.max(8, Math.min(128, Math.round(o.depth * dpr * .9)));
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
       const up = (t, unit, fmt, data) => { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
@@ -175,20 +194,34 @@ void main(){
     function maskData(fs){
       const lines = String(o.text).split('\n'), c = document.createElement('canvas'), x = c.getContext('2d'), font = o.font.replace('{s}', fs * dpr);
       x.font = font;
-      const lh = fs * dpr * 1.05, sk = o.skew || 0, r = Math.max(2, Math.round(dpr * 2.5)), gp = glowPx(), gw = (o.grow || 0) * dpr, pad = r * 2 + 2 + gp + gw;
-      const tw = Math.max(1, ...lines.map(l => x.measureText(l).width)) + Math.abs(sk) * lh * lines.length + gw * 2;
-      const W = Math.min(2048, Math.ceil(tw + pad * 2)), H = Math.min(2048, Math.ceil(lh * lines.length + pad * 2));
-      c.width = W; c.height = H; x.font = font; x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle';
-      x.setTransform(1, 0, -sk, 1, sk * H / 2, 0);   // курсив: верх уходит вправо, середина на месте
+      const lh = fs * dpr * 1.05, sk = o.skew || 0, r = Math.max(2, Math.round(dpr * 2.5)), gp = glowPx(), gw = (o.grow || 0) * dpr;
+      const rr0 = o.round ? Math.max(r, Math.round((o.bevel || 8) * dpr / 2)) : r;
+      const pad = Math.max(r * 2 + 2, o.round ? rr0 * 3 + 2 : 0) + gp + gw + 2;   // поле ячейки: размытие, свечение и утолщение не задевают соседей
+      const cellH = Math.ceil(lh + pad * 2), ex = Math.abs(sk) * lh / 2;
+      // раскладка: позиция буквы — по ширине всего, что левее (сохраняет кернинг), ячейка — по её собственным краям
+      const glyphs = []; let tw = 1;
+      lines.forEach((l, li) => { const lw = x.measureText(l).width, cy = ((lines.length - 1) / 2 - li) * lh; tw = Math.max(tw, lw);
+        let pre = '';
+        for (const ch of l){ const x0 = x.measureText(pre).width; pre += ch; if (!ch.trim()) continue;
+          const mt = x.measureText(ch), L = Math.max(0, mt.actualBoundingBoxLeft || 0) + ex + pad, Rt = Math.max(mt.width, mt.actualBoundingBoxRight || 0) + ex + pad;
+          glyphs.push({ ch, pen: -lw / 2 + x0, cy, adv: mt.width, l: L, w: Math.ceil(L + Rt) }); } });
+      // ячейки — рядами в атлас до 2048 px
+      let W = 0, H = cellH, cx = 0;
+      glyphs.forEach(g => { if (cx + g.w > 2048){ cx = 0; H += cellH; } g.ux = cx; g.uy = H - cellH; cx += g.w; W = Math.max(W, cx); });
+      W = Math.max(1, W); H = Math.min(2048, H);
+      c.width = W; c.height = H; x.font = font; x.fillStyle = '#fff'; x.textAlign = 'left'; x.textBaseline = 'middle';
       if (gw){ x.strokeStyle = '#fff'; x.lineWidth = gw * 2; x.lineJoin = 'round'; }
-      lines.forEach((l, i) => { const y = H / 2 + (i - (lines.length - 1) / 2) * lh; x.fillText(l, W / 2, y); if (gw) x.strokeText(l, W / 2, y); });
+      glyphs.forEach(g => { const y = g.uy + cellH / 2;
+        x.setTransform(1, 0, -sk, 1, sk * y, 0);   // курсив: верх уходит вправо, середина строки на месте
+        x.fillText(g.ch, g.ux + g.l, y); if (gw) x.strokeText(g.ch, g.ux + g.l, y); });
+      x.setTransform(1, 0, 0, 1, 0, 0);
       const img = x.getImageData(0, 0, W, H), d = img.data, n = W * H, A = new Float32Array(n), T = new Float32Array(n);
       for (let i = 0; i < n; i++) A[i] = d[i * 4 + 3] / 255;
       // размытие скользящим окном: строки, потом столбцы, дважды — почти гаусс
       const pass = (src, dst, horiz, r = rb) => { const L = horiz ? W : H, M = horiz ? H : W, at = (j, k) => horiz ? j * W + k : k * W + j;
         for (let j = 0; j < M; j++){ let s = 0; for (let k = 0; k <= r && k < L; k++) s += src[at(j, k)];
           for (let k = 0; k < L; k++){ dst[at(j, k)] = s / (r * 2 + 1); if (k + r + 1 < L) s += src[at(j, k + r + 1)]; if (k - r >= 0) s -= src[at(j, k - r)]; } } }, rb = r;
-      const Bl = A.slice(), rr = o.round ? Math.max(r, Math.round((o.bevel || 8) * dpr / 2)) : r;
+      const Bl = A.slice(), rr = rr0;
       for (let p = 0; p < (o.round ? 3 : 2); p++){ pass(Bl, T, true, rr); pass(T, Bl, false, rr); }
       const ks = o.round ? rr * 1.5 : 0;   // наклон купола: перепад высоты на пиксель × радиус
       for (let y = 0; y < H; y++) for (let xx = 0; xx < W; xx++){
@@ -216,7 +249,7 @@ void main(){
         for (let i = 0; i < n; i++){ const dd = F[i];
           sdf[i] = Math.max(0, Math.min(255, Math.round((.5 + dd / (2 * (dd < 0 ? rIn : rOut))) * 255))); }
       }
-      return { W, H, img, sdf, gp, rIn, rOut };
+      return { W, H, img, sdf, gp, rIn, rOut, glyphs, cellH, tw: tw + ex * 2 + gw * 2, th: lh * lines.length };
     }
     function colors(){
       const a = o.faceAngle * Math.PI / 180, L = o.light, ll = Math.hypot(...L) || 1;
@@ -243,11 +276,14 @@ void main(){
       gl.viewport(0, 0, cv.width, cv.height); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
       gl.uniformMatrix3fv(U.uR, false, R);
       gl.uniform2f(U.uSz, sz[0], sz[1]); gl.uniform2f(U.uRes, cw, ch); gl.uniform1f(U.uDep, o.depth); gl.uniform1f(U.uN, n);
-      gl.uniform1f(U.uCam, o.persp); gl.uniform1f(U.uFront, front ? 0 : n - 1); gl.uniform2f(U.uIn, inset[0], inset[1]); gl.uniform2f(U.uDr, dr[0], dr[1]); gl.uniform2f(U.uTx, tx[0], tx[1]);
+      gl.uniform1f(U.uCam, o.persp); gl.uniform1f(U.uFront, front ? 0 : n - 1); gl.uniform2f(U.uInUV, inset[0], inset[1]); gl.uniform2f(U.uInPx, gpx / dpr, gpx / dpr);
+      gl.uniform4fv(U.uLT, LT); gl.uniform2fv(U.uLZ, LZ); gl.uniform1f(U.uBoost, boost); gl.uniform2f(U.uDr, dr[0], dr[1]); gl.uniform2f(U.uTx, tx[0], tx[1]);
       gl.uniform1f(U.uShX, shT < 0 ? -9 : -1.8 + shT * 3.6);   // блик идёт слева направо через весь холст
       // ближние n копий: в bufF они в хвосте (от задней к лицу), в bufB — в начале
-      gl.bindBuffer(gl.ARRAY_BUFFER, front ? bufF : bufB); gl.vertexAttribPointer(aP, 3, gl.FLOAT, false, 0, front ? (N - n) * 72 : 0);
-      gl.drawArrays(gl.TRIANGLES, 0, n * 6);
+      const per = G.length * 6, off = front ? (N - n) * per * 40 : 0;
+      gl.bindBuffer(gl.ARRAY_BUFFER, front ? bufF : bufB);
+      gl.vertexAttribPointer(aP, 3, gl.FLOAT, false, 40, off); gl.vertexAttribPointer(aQ, 4, gl.FLOAT, false, 40, off + 12); gl.vertexAttribPointer(aA, 3, gl.FLOAT, false, 40, off + 28);
+      if (per) gl.drawArrays(gl.TRIANGLES, 0, n * per);
     }
 
     // движение: инерция после броска, пружина в позу покоя, вращение — кадры идут, только пока что-то движется
@@ -260,9 +296,10 @@ void main(){
         yaw += (vy + (calm ? 0 : o.spin)) * dt; pitch = Math.max(-80, Math.min(80, pitch + vp * dt));
       }
       if (shT >= 0){ shT += dt / o.shine.time; if (shT > 1) shT = -1; }
+      if (anim){ anim.t += dt; if (!anim.f(anim.t)) finish(); }
       draw(); o.onMove?.(yaw, pitch);
       const still = Math.abs(vy) + Math.abs(vp) < .4 && (!o.spring || Math.abs(o.yaw - yaw) + Math.abs(o.pitch - pitch) < .05);
-      if (held || (o.spin && !calm) || !still || shT >= 0) raf = requestAnimationFrame(tick); else last = 0;
+      if (held || (o.spin && !calm) || !still || shT >= 0 || anim) raf = requestAnimationFrame(tick); else last = 0;
     }
     // lite — один неподвижный кадр, без вращения; «уменьшение движения» в системе — без постоянного вращения и броска
     const rm = matchMedia('(prefers-reduced-motion: reduce)');
@@ -285,6 +322,51 @@ void main(){
       clearTimeout(rt); rt = setTimeout(() => !dead && build(), 150); }); ro.observe(el);
     cv.addEventListener('webglcontextrestored', () => build());
 
+    /* ── появления и движение букв: t.play('drop' | 'pop' | 'slam' | 'wave' | 'out', { stagger, time, onLand(i) }) → Promise
+       Кадры идут только пока играет; конец — буквы на месте (после 'out' — скрыты). lite и «уменьшение движения» — сразу конец. */
+    const clamp = v => Math.max(0, Math.min(1, v));
+    const back = p => { const c = 1.70158; return 1 + (c + 1) * (p - 1) ** 3 + c * (p - 1) ** 2; };   // с перелётом
+    const bounce = p => { const a = 7.5625, d = 2.75; return p < 1 / d ? a * p * p : p < 2 / d ? a * (p -= 1.5 / d) * p + .75 : p < 2.5 / d ? a * (p -= 2.25 / d) * p + .9375 : a * (p -= 2.625 / d) * p + .984375; };
+    const put = (i, dx, dy, dz, s, r, a) => { i = Math.min(31, i); LT[i * 4] = dx; LT[i * 4 + 1] = dy; LT[i * 4 + 2] = s; LT[i * 4 + 3] = r; LZ[i * 2] = dz; LZ[i * 2 + 1] = a; };
+    const land = (A, i) => { if (!A.hit.has(i)){ A.hit.add(i); A.o.onLand?.(i); } };
+    const ANIM = {
+      // буквы падают сверху по очереди и отскакивают
+      drop: (A, t) => { const st = A.o.stagger ?? .07, du = A.o.time ?? .6, h = sz[1] * 1.2 + 60;
+        G.forEach((g, i) => { const p = clamp((t - i * st) / du); put(i, 0, (1 - bounce(p)) * h, 0, 1, 0, clamp(p * 5)); if (p >= .364) land(A, i); });
+        return t < (G.length - 1) * st + du; },
+      // буквы выскакивают из точки с перелётом и лёгким доворотом
+      pop: (A, t) => { const st = A.o.stagger ?? .06, du = A.o.time ?? .5;
+        G.forEach((g, i) => { const p = clamp((t - i * st) / du); put(i, 0, 0, 0, Math.max(0, back(p)), (1 - p) * .6 * (i % 2 ? 1 : -1), clamp(p * 4)); if (p >= .6) land(A, i); });
+        return t < (G.length - 1) * st + du; },
+      // надпись влетает из-за экрана в лицо, удар, тряска и вспышка свечения (старт — не больше ×2 по площади ×3: дальше телефону тяжело)
+      slam: (A, t) => { const du = A.o.time ?? .4, p = clamp(t / du), e = p * p, q = clamp((t - du) / .45);
+        if (p >= 1) land(A, -1);
+        const sx = Math.sin(q * 46) * 7 * (1 - q), sy = Math.cos(q * 37) * 4 * (1 - q);
+        const k = 1 + (1 - e) * .7 + (p >= 1 ? Math.sin(q * 18) * .06 * (1 - q) : 0);
+        // крупнее — вся надпись от своего центра: буквы разъезжаются вместе с масштабом и не налезают друг на друга
+        G.forEach((g, i) => put(i, sx + (g.pen + g.adv / 2) / dpr * (k - 1), sy + g.cy / dpr * (k - 1), (1 - e) * 120, k, 0, clamp(p * 3)));
+        boost = p >= 1 ? (1 - q) ** 2 : 0;
+        return q < 1; },
+      // ожидание: волна по буквам, мягко нарастает и стихает
+      wave: (A, t) => { const du = A.o.time ?? 2.4, env = Math.sin(Math.PI * clamp(t / du));
+        G.forEach((g, i) => { const w = Math.sin(t * 7 - i * .7); put(i, 0, w * 8 * env, 0, 1 + w * .05 * env, w * .04 * env, 1); });
+        return t < du; },
+      // уход: буквы съёживаются и гаснут
+      out: (A, t) => { const st = A.o.stagger ?? .03, du = A.o.time ?? .32;
+        G.forEach((g, i) => { const p = clamp((t - i * st) / du); put(i, 0, p * 14, 0, 1 - p * p * .9, 0, 1 - p); });
+        A.keep = true; return t < (G.length - 1) * st + du; },
+    };
+    let done = null;
+    function finish(){ const A = anim; anim = null; if (!A?.keep) still0(); boost = 0; draw(); const d = done; done = null; d?.(); }
+    function play(name, opt = {}){
+      const f = ANIM[name]; if (!f) return Promise.resolve();
+      if (anim) finish();
+      return new Promise(res => { done = res;
+        const A = { t: 0, o: opt, hit: new Set(), keep: false }; A.f = t => f(A, t); anim = A;
+        if (o.lite || calm){ A.f(1e3); if (name !== 'out') G.forEach((g, i) => land(A, i)); finish(); return; }
+        A.f(0); draw(); wake(); });
+    }
+
     // шрифт ещё не загружен — нарисовать запасным и пересобрать один раз, когда придёт
     // блик: один проход по команде или сам раз в shineEvery секунд (между проходами — ни кадра)
     const shine = () => { if (dead || o.lite || calm) return; shT = 0; wake(); };
@@ -301,7 +383,7 @@ void main(){
         cv.style.touchAction = o.drag && !o.lite ? 'none' : ''; cv.style.cursor = o.drag && !o.lite ? 'grab' : ''; wake(); },
       // повернуть программно (например, «встряхнуть» надпись при выигрыше); с пружиной сама вернётся
       rotate(dy, dp = 0, kick = false){ if (kick){ vy += dy; vp += dp; } else { yaw = dy; pitch = dp; } wake(); },
-      shine,
+      shine, play,
       get pose(){ return { yaw, pitch }; },
       get stats(){ return { layers: n, max: N, frames }; },   // для замера: копий в последнем кадре, сколько всего, кадров нарисовано
       destroy(){ dead = true; cancelAnimationFrame(raf); clearTimeout(rt); clearTimeout(shTimer); ro.disconnect(); gl.getExtension('WEBGL_lose_context')?.loseContext(); cv.remove(); },
