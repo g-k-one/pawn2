@@ -39,13 +39,18 @@
 
 <script src="../../src/app/16e-forge-atlas.js"></script>
 <script src="../../src/app/16e-forge.js"></script>
+<script src="../../src/forge/classic.js"></script>
+<script src="../../src/forge/particles.js"></script>
+<script src="../../src/forge/image.js"></script>
+<script src="../../src/forge/hits.js"></script>
 <script>
 Forge.base = '../../assets/fx/'; Forge.auto = false;
 const NFT = ['agent', 'cat-globe', 'magic-ball', 'jelly-bunny', 'genesis', 'honey-bee', 'cheshire', 'bday'];
 // разделы: что для чего
 const CATS = {
   'В игре': ['anvil', 'potion', 'arena'],
-  'Картинка': ['glitch', 'static', 'glass', 'frost', 'ripple', 'twirl', 'lens', 'heat', 'pixel', 'jelly', 'shatter', 'dust'],
+  'Удары и щиты (LoL)': ['hitsigil', 'hitflare', 'hitsplash', 'hitimg', 'shield', 'aoe'],
+  'Картинка': ['glitch', 'static', 'glass', 'frost', 'ripple', 'twirl', 'lens', 'heat', 'pixel', 'jelly', 'shatter', 'dust', 'hitimg', 'outline', 'hue', 'burn', 'holo'],
   'Сложные частицы': ['wisps', 'vortex', 'fireworks', 'dust'],
   'Удары и взрывы': ['boom', 'toonboom', 'mushroom', 'eruption', 'shock', 'hit', 'slash', 'starwave', 'cracks', 'bolt', 'fbolt'],
   'Огонь и магия': ['fire', 'firetoon', 'portal', 'plasma', 'julia', 'sphere', 'charge', 'swirl', 'bubble', 'crystal'],
