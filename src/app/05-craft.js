@@ -219,7 +219,7 @@ function toggleVibro(){ S.vibro = !S.vibro; swOn('vibroRow', S.vibro); LSset('bm
 function toggleSound(){ S.sound = !S.sound; swOn('soundRow', S.sound); haptic(); LSset('bm-sound', S.sound); if (S.sound) Sfx.tick(.8); }
 function applyLite(){ document.body.classList.toggle('lite', S.lite); document.body.classList.toggle('nogl', S.lite || !!S.noGL); }
 function setLite(on){
-  S.lite = on; track('lite', { on }); swOn('liteRow', on); LSset('bm-lite', on); applyLite(); haptic(); Forge.quality = on ? 0 : 2;
+  S.lite = on; track('lite', { on }); swOn('liteRow', on); LSset('bm-lite', on); applyLite(); haptic(); Forge.quality = on ? 0 : 2; if (on) Forge.destroy();   // в экономном Горн не играет — видеопамять и контекст отдаём
   if (!on){ Glow.resize(); FullGlow.resize(); }
   notify(on ? { type: 'ok', icon: 'leaf', title: $t("Экономный режим"), text: $t("Без свечения и анимаций, крафт сразу показывает итог") } : { type: 'info', icon: 'leaf', title: $t("Экономный режим выключен") });
 }

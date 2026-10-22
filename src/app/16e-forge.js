@@ -401,6 +401,9 @@ function makeForge(host){
     (host || document.body).appendChild(cv);
     gl = cv.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false });
     if (!gl) return false;
+    // телефон может отнять контекст (мало памяти, долго в фоне) — тогда всё освобождаем, следующий эффект соберёт холст заново
+    cv.addEventListener('webglcontextlost', release);
+    document.addEventListener('visibilitychange', kick);
     const sh = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); return s; };
     prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)){ console.error('fx shader', gl.getProgramInfoLog(prog), gl.getShaderInfoLog(gl.getAttachedShaders(prog)[1])); return false; }
@@ -420,7 +423,7 @@ function makeForge(host){
     // полосы для прокрутки (хвосты, огонь внутри маски): повтор по ширине; пока не загрузились — чёрные
     gl.activeTexture(gl.TEXTURE3); stripT = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, stripT);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
-    { const im = new Image(); im.onload = () => { gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, stripT); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, im);
+    { const im = new Image(), g0 = gl; im.onload = () => { if (gl !== g0) return; gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, stripT); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, im);
       for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.REPEAT], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
       gl.activeTexture(gl.TEXTURE0); }; im.src = base + 'fx-strips.webp'; }
     gl.activeTexture(gl.TEXTURE0);
@@ -428,8 +431,9 @@ function makeForge(host){
   }
   function texture(name){
     if (tex[name]) return tex[name];
-    const t = tex[name] = { ok: false, t: gl.createTexture() }, im = new Image();
-    im.onload = () => { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, t.t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, im);
+    const t = tex[name] = { ok: false, t: gl.createTexture() }, im = new Image(), g0 = gl;
+    im.onload = () => { if (gl !== g0) return;   // картинка догрузилась после destroy — старый контекст уже освобождён
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, t.t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, im);
       for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
       t.ok = true; };
     im.onerror = () => { t.err = true; };   // для диагностики (Дебаг → строка внизу)
@@ -1677,7 +1681,22 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
     else { gl.clear(gl.COLOR_BUFFER_BIT); if (!live.size) cv.style.display = 'none'; }   // простой: холст убираем совсем — пустой слой на весь экран iPhone всё равно склеивает каждый кадр
   }
   const kick = () => { if (!raf && live.size){ last = performance.now(); raf = requestAnimationFrame(frame); } };
-  document.addEventListener('visibilitychange', kick);
+  // освободить всё: цикл, эффекты, текстуры и буферы видеокарты, сам контекст WebGL и холст, запасы частиц и точек картинок.
+  // Движок не умирает: следующий play/preload соберёт всё заново
+  function release(){
+    if (raf) cancelAnimationFrame(raf); raf = 0; live.clear();
+    document.removeEventListener('visibilitychange', kick);
+    if (gl && !gl.isContextLost()){
+      for (const k in tex) gl.deleteTexture(tex[k].t);
+      for (const t of [noiseT, rampT, stripT]) if (t) gl.deleteTexture(t);
+      gl.deleteBuffer(vbo); gl.deleteBuffer(ibo); gl.deleteProgram(prog);
+      gl.getExtension('WEBGL_lose_context')?.loseContext();   // контекст отдаём сразу, не ждём сборщика (в Telegram на iOS их число ограничено)
+    }
+    if (cv){ cv.removeEventListener('webglcontextlost', release); cv.remove(); }
+    for (const k in tex) delete tex[k]; for (const k in PIX) delete PIX[k];
+    cv = gl = prog = vbo = ibo = noiseT = rampT = stripT = null; ok = null; W = H = 0;
+    POOL.length = 0; buf = new Float32Array(VF * 4 * 512);
+  }
 
   return {
     names: Object.keys(DEF), stats,
@@ -1699,12 +1718,15 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
       return { stop(){ e.stopping = true; }, kill(){ live.delete(e); }, alive: () => live.has(e), set(k, v){ e.s[k] = v; } };
     },
     stopAll(){ live.forEach(e => e.stopping = true); },
+    // освободить видеопамять и контекст WebGL (экономный режим: эффекты не нужны); следующий play соберёт всё заново
+    destroy: release,
     // диагностика для Дебага: есть ли WebGL, загрузились ли атласы, видеокарта, сколько частиц в последнем кадре
     info(){ if (ok === null) return 'fx: —'; if (!ok) return 'fx: нет WebGL';
       const T = Object.entries(tex), bad = T.filter(([, v]) => v.err).map(([k]) => k), di = gl.getExtension('WEBGL_debug_renderer_info');
       return `fx: ${T.filter(([, v]) => v.ok).length}/${T.length}${bad.length ? ' ошибка ' + bad.join(',') : ''} · q${quality} · ${stats.quads | 0} · ${di ? String(gl.getParameter(di.UNMASKED_RENDERER_WEBGL)).slice(0, 40) : 'gpu ?'}${gl.isContextLost() ? ' · контекст потерян' : ''}`; },
     // заранее: холст и атлас — чтобы первый эффект (удар молота на первом крафте) не пропал, пока грузится картинка
-    preload(atlas){ if (ok === null){ ok = setup(); if (typeof S !== 'undefined' && S.lite) quality = 0; } if (ok) texture(atlas); },
+    preload(atlas){ if (typeof S !== 'undefined' && S.lite) return;   // в экономном режиме эффектов нет — контекст и атлас не заводим
+      if (ok === null){ ok = setup(); if (typeof S !== 'undefined' && S.lite) quality = 0; } if (ok) texture(atlas); },
   };
 }
 const Forge = makeForge(null);
