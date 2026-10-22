@@ -6,7 +6,7 @@ Forge.pack('particles', k => {
 
   // точки картинки: сетка n×n, непрозрачные клетки → [x, y, r, g, b] (x, y — от −0.5 до 0.5). Картинка с чужого сервера без CORS
   // прочитаться не может — тогда точек нет и эффект молча пропускается. Кэш по адресу и сетке
-  const PIX = {};
+  const PIX = {}; k.cleanup.push(() => { for (const key in PIX) delete PIX[key]; });
   function pixels(src, n){
     const key = (src.src || src) + '|' + n; if (PIX[key]) return PIX[key];
     const r = PIX[key] = { ok: false, pts: [] }, im = typeof src === 'string' ? Object.assign(new Image(), { crossOrigin: 'anonymous', src }) : src;
@@ -23,9 +23,9 @@ Forge.pack('particles', k => {
   // 'out' — волна слева направо: клетка вспыхивает (раскалённая кромка), отрывается, уносится потоком вверх, остывает и гаснет;
   // 'in' — частицы слетаются вихрем и пружиной встают на место, волной слева направо, в конце — вспышка.
   // Forge.play('dust', { x, y, size, img: адрес или <img>, dir: 'out' | 'in', box: сторона картинки в ед. эффекта (220), tint: цвет кромки })
-  DEF.dust = { atlas: 'aura', period: 2.6,
+  DEF.dust = { atlas: 'aura', period: 2.6, img: true,   // img обязателен (адрес или <img>)
     presets: { in: { dir: 'in' }, gold: { tint: [1, .8, .3] }, ice: { tint: [.5, .85, 1] } },
-    init(s){ const o = s.o || {}; Object.assign(s, { p: [], made: false, dir: o.dir || 'out', box: o.box || 220, T: o.tint || [1, .62, .25], px: pixels(o.img || k.base + '../hero-gem.webp', [32, 44, 52][k.quality]) }); },
+    init(s){ const o = s.o || {}; Object.assign(s, { p: [], made: false, dir: o.dir || 'out', box: o.box || 220, T: o.tint || [1, .62, .25], px: pixels(o.img, [32, 44, 52][k.quality]) }); },
     update(s, dt, at){
       if (!s.made){ if (!s.px.ok) { s.cycle = 0; return; } s.made = true; s.cycle = 0;
         const P = s.px.pts, B = s.box, T = s.T, S = B / [32, 44, 52][k.quality] * 1.08, cell = at.map['solid:W0'];   // сплошные клетки встык — пока стоят, это сама картинка

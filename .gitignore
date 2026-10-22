@@ -10,3 +10,4 @@ design/rive/lab-3d-src/*.glb
 design/rive/lab/page/*
 !design/rive/lab/page/index.html
 design/rive/lab-fx/fx-*.webp
+dist-forge/

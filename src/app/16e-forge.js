@@ -5,8 +5,9 @@
    Один холст поверх экрана, кадр — по одному вызову отрисовки на эффект; без эффектов цикл стоит.
    Forge.play('fire', { x, y, size, loop, el }) → { stop() }. Эффект задуман в квадрате 360×360:
    x, y — центр квадрата на экране, size — его сторона в px; el — следовать за элементом (и обрезать по нему).
-   Файл самодостаточный (без общих переменных приложения) — его же грузит лаборатория.
-   ЯДРО: движок + то, что нужно игре (искры молота, зелье). Остальное — пакеты src/forge/*.js (classic, particles, image, hits),
+   Файл самодостаточный — не знает ни про какое приложение (Горн идёт и в другие проекты): всё про Pawn — в 16e-pawn-forge.js.
+   Отдельно для других проектов собирается одним файлом: npm run forge → dist/forge (см. docs/FORGE.md).
+   ЯДРО: движок + базовые эффекты (искры удара anvil, зелье potion). Остальное — пакеты src/forge/*.js (classic, particles, image, hits),
    подключаются только там, где нужны (витрина, лаборатория): Forge.pack(имя, k => { … }) — k даёт инструменты ядра (spawn, draw, sprite, band…),
    k.chunk(семья, текст) добавляет режим шейдера, k.DEF — эффекты. Свой эффект на месте: Forge.define(имя, k => ({ init, update, render })).
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -527,7 +528,7 @@ function makeForge(host){
   // качество: 2 — полное, 1 — среднее, 0 — эконом. Плотность холста, частота частиц, мелкая октава шума.
   // Авто: если кадр дольше 24 мс (меньше ~40 к/с) полторы секунды подряд — ступенью ниже, до конца сессии
   const DPR = [1, 1.25, 1.5], EMIT = [.5, .75, 1];
-  let quality = 2, auto = true, slow = 0, maxDpr = 1.5, lastDraw = 0, gap = 16;
+  let quality = 2, auto = true, slow = 0, maxDpr = 1.5, lastDraw = 0, gap = 16, lite = false;
   let fill = 0;
   const stats = { ms: 0, js: 0, quads: 0, over: 0 };   // замер: среднее время кадра движка и его расчётной части (мс), частиц на экране
   function frame(now){
@@ -607,14 +608,15 @@ function makeForge(host){
       gl.getExtension('WEBGL_lose_context')?.loseContext();   // контекст отдаём сразу, не ждём сборщика (в Telegram на iOS их число ограничено)
     }
     if (cv){ cv.removeEventListener('webglcontextlost', release); cv.remove(); }
-    for (const k in tex) delete tex[k]; for (const k in PIX) delete PIX[k]; for (const k in imgs) delete imgs[k];
+    for (const k in tex) delete tex[k]; for (const k in imgs) delete imgs[k]; for (const f of cleanup) f();   // пакеты чистят своё (точки картинок и т. п.)
     cv = gl = vbo = ibo = noiseT = rampT = stripT = null; progs = {}; cur = null; ok = null; W = H = 0; stripsAsked = false;
     for (const k in DEF) delete DEF[k].fm;
     POOL.length = 0; buf = new Float32Array(VF * 4 * 512);
   }
 
   // инструменты ядра для пакетов и своих эффектов (то же, чем написаны встроенные)
-  const kit = { P0, R, PI, easeOut, spawn, step, curl, tcol, WHITE3, fade, emit, seq, FULL, crv, quad, quad4, ribbon, flick, wob, draw, BX, BW, band, trail, arcBand, seg, branch, zig, sprite,
+  const cleanup = [];   // уборка пакетов при destroy
+  const kit = { cleanup, P0, R, PI, easeOut, spawn, step, curl, tcol, WHITE3, fade, emit, seq, FULL, crv, quad, quad4, ribbon, flick, wob, draw, BX, BW, band, trail, arcBand, seg, branch, zig, sprite,
     RAMPS, RAMP_ROW, RAMP_N, EMIT, DEF, chunk, get quality(){ return quality; }, get base(){ return base; } };
   FORGE_KITS.push(kit); for (const f of FORGE_PACKS) f.fn(kit);
   return {
@@ -634,13 +636,15 @@ function makeForge(host){
     // качество: 0 эконом · 1 среднее · 2 полное; auto — снижать само при тормозах
     get quality(){ return quality; }, set quality(v){ quality = Math.max(0, Math.min(2, v | 0)); },
     get auto(){ return auto; }, set auto(v){ auto = !!v; },
+    // экономный режим: эффекты на минимуме, заранее ничего не готовим, видеопамять и контекст отдаём; выключили — полное качество
+    get lite(){ return lite; }, set lite(v){ lite = !!v; quality = lite ? 0 : 2; if (lite) release(); },
     set idle30(v){ idle30 = !!v; },
     // x, y — центр квадрата эффекта на экране (px), size — его сторона; el — привязать к элементу
     play(name, o = {}){
       // пресет — имя:вариант ('glitch:hard'): готовый набор настроек; s — поправки состояния эффекта после init (цвета, палитры)
       const [nm, pv] = name.split(':'), def = DEF[nm]; if (!def) return null;
       const pre = pv && def.presets?.[pv]; if (pre) o = Object.assign({}, pre, o);
-      if (ok === null){ ok = setup(); if (typeof S !== 'undefined' && S.lite) quality = 0; } if (!ok) return null;
+      if (ok === null) ok = setup(); if (!ok) return null;
       const a = FX_ATLAS[def.atlas];
       const e = { def, at: a, tex: texture(def.atlas), s: { t: 0, cycle: 0, acc: {}, o }, loop: !!o.loop, el: o.el || null, fade: 1, stopping: false,
         ox: o.x ?? (host ? host.clientWidth : innerWidth) / 2, oy: o.y ?? (host ? host.clientHeight : innerHeight) / 2, k: (o.size || Math.min(innerWidth, innerHeight)) / 360, clip: null };
@@ -656,16 +660,12 @@ function makeForge(host){
     info(){ if (ok === null) return 'fx: —'; if (!ok) return 'fx: нет WebGL';
       const T = Object.entries(tex), bad = T.filter(([, v]) => v.err).map(([k]) => k), di = gl.getExtension('WEBGL_debug_renderer_info');
       return `fx: ${T.filter(([, v]) => v.ok).length}/${T.length}${bad.length ? ' ошибка ' + bad.join(',') : ''} · q${quality} · ${stats.quads | 0} · прогр. ${Object.keys(progs).length} · ${di ? String(gl.getParameter(di.UNMASKED_RENDERER_WEBGL)).slice(0, 40) : 'gpu ?'}${gl.isContextLost() ? ' · контекст потерян' : ''}`; },
-    // заранее: холст и атлас — чтобы первый эффект (удар молота на первом крафте) не пропал, пока грузится картинка
     _noise: () => noiseData(),   // для tools/fx-noise.mjs
-    preload(atlas){ if (typeof S !== 'undefined' && S.lite) return;   // в экономном режиме эффектов нет — контекст и атлас не заводим
-      if (ok === null){ ok = setup(); if (typeof S !== 'undefined' && S.lite) quality = 0; } if (ok){ pinned.add(atlas); texture(atlas); } },
+    // заранее: холст и атлас — чтобы первый эффект не пропал, пока грузится картинка; в экономном режиме — ничего
+    preload(atlas){ if (lite) return; if (ok === null) ok = setup(); if (ok){ pinned.add(atlas); texture(atlas); } },
   };
 }
 // пакеты — общие для всех экземпляров движка (общий холст и холсты внутри элементов): новый экземпляр получает уже подключённые
 const FORGE_PACKS = [], FORGE_KITS = [];
 function forgePack(name, fn){ if (FORGE_PACKS.some(p => p.name === name)) return; FORGE_PACKS.push({ name, fn }); for (const k of FORGE_KITS) fn(k); }
 const Forge = makeForge(null);
-// заранее, но в простое: сразу после старта подготовка (шум, текстуры) подвешивала слабый телефон на 0.2–0.75 с
-const forgeIdle = window.requestIdleCallback || (f => setTimeout(f, 2500));
-forgeIdle(() => { try { Forge.preload('aura'); } catch(_){} }, { timeout: 4000 });

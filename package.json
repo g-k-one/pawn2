@@ -9,7 +9,8 @@
     "serve": "node tools/serve.mjs",
     "test": "node --test --test-concurrency=1 tests/app.test.mjs",
     "dist": "node tools/dist.mjs",
-    "check": "npm run i18n && npm run build && npm test"
+    "check": "npm run i18n && npm run build && npm test",
+    "forge": "node tools/forge.mjs"
   },
   "devDependencies": {
     "acorn": "^8.12.1",
