@@ -54,5 +54,5 @@ setTimeout(() => (window.requestIdleCallback || (f => f()))(() => {
    // меню, бонусы и кейсы — открываются без подгрузки
    'chest-durov.webp', 'chest-satoshi.webp', 'chest-beast.webp', 'chest-musk.webp', 'who-durov.webp', 'who-satoshi.webp', 'who-beast.webp', 'who-musk.webp',
    'referrals.webp', 'superdrop-logo.webp', 'top.webp', 'xp.webp', 'gem-white.svg',
-   'fx/fx-strips.webp', 'fx/fx-fire.webp', 'fx/fx-aura.webp', 'fx/fx-coins.webp', 'fx/fx-confetti.webp'].forEach(f => { const im = new Image(); im.decoding = 'async'; im.src = 'assets/' + f; im.decode?.().catch(() => {}); });   // decode — картинка сразу готова к показу, без мигания
+   'fx/fx-aura.webp', 'fx/fx-potion.webp', 'fx/fx-noise.png'].forEach(f => { const im = new Image(); im.decoding = 'async'; im.src = 'assets/' + f; im.decode?.().catch(() => {}); });   // decode — картинка сразу готова к показу, без мигания
 }, { timeout: 2000 }), 1200);   // сразу после лоадера, как только приложение показалось

@@ -22,11 +22,20 @@ function makeForge(host){
     drag: 0, grav: 0, sway: 0, fadeIn: .12, fadeOut: .4, orient: false, speedStretch: 0, tint: null, pul: .05, pf: 9,
     sc: null, scW: null, scH: null, shear: 0, mode: 0, heat: null, ero: null, ramp: null, bx: 0, by: 0, broke: false, ph: 0, tc: null, floor: null, bounce: .35,
     // сложное поведение (у простых частиц выключено — ничего не стоит): поток, притяжение, пружина домой, ожидание, след, дочерние частицы
-    flow: 0, fz: 1, ax: null, ay: 0, pull: 0, swirl: 0, kr: 0, hx: null, hy: 0, spring: 0, wait: 0, trail: 0, tn: 0, th: 0, onDie: null };
+    flow: 0, fz: 1, ax: null, ay: 0, pull: 0, swirl: 0, kr: 0, hx: null, hy: 0, spring: 0, wait: 0, trail: 0, tn: 0, th: 0, onDie: null, keep: false, th3: 0,
+    // объём (3D): частица кувыркается — углы вокруг осей x и y (t3x, t3y) и их скорости; в шейдер уходит, какой стороной она к нам (перо, монета, лепесток)
+    f3: false, t3x: 0, t3y: 0, w3x: 0, w3y: 0 };
   // пул: погибшие частицы не выбрасываются, а переиспользуются — нет мусора для сборщика, ровнее кадр
   const POOL = [];
   // след хранится в своём буфере частицы (_tr) и переживает пул — без новых массивов
-  const spawn = (L, o) => { const p = Object.assign(POOL.pop() || {}, P0, o); if (o.ph == null) p.ph = Math.random() * 6.28;
+  // на среднем и экономном качестве разовые залпы реже (частицы из emit уже прорежены — их не трогаем), следы короче;
+  // keep: true — частицу не пропускать (монета, перо — то, что видно поштучно). Пропущенная — черновик, никуда не попадает
+  // потолок на слой частиц — страховка от лавины (долгий цикл, медленный кадр): сверх него новые не рождаются
+  const SPAWN = [.55, .8, 1], TRAIL = [.5, .75, 1], CAP = [250, 450, 800], SKIP = {};
+  let inEmit = false;
+  const spawn = (L, o) => { if (!o.keep && (L.length >= CAP[quality] || quality < 2 && !inEmit && Math.random() > SPAWN[quality])) return Object.assign(SKIP, o);
+    const p = Object.assign(POOL.pop() || {}, P0, o); if (o.ph == null) p.ph = Math.random() * 6.28;
+    if (p.trail && quality < 2) p.trail = Math.max(3, Math.round(p.trail * TRAIL[quality]));
     if (p.trail){ if (!p._tr || p._tr.length < p.trail * 2) p._tr = new Float32Array(p.trail * 2); p.tn = 0; p.th = 0; } L.push(p); return p; };
   // поле течения (curl noise): вихри без источников и стоков — частицы текут, закручиваются и не слипаются в точку.
   // Потенциал — сумма трёх волн; скорость — его ротор (производные посчитаны вручную). FT — общее время потока
@@ -44,6 +53,7 @@ function makeForge(host){
         if (p.onDie) p.onDie(p, L);   // дочерние частицы: ракета → салют, капля → брызги
         L[i] = L[L.length - 1]; L.pop(); if (POOL.length < 3000) POOL.push(p); continue; }
       if (p.age < p.wait) continue;   // ждёт своей очереди: стоит на месте (рассыпание картинки идёт волной)
+      if (p.f3){ p.t3x += p.w3x * dt; p.t3y += p.w3y * dt; }
       if (p.flow){ const f = curl(p.x, p.y, p.fz), r = Math.min(1, dt * 3); p.vx += (f[0] * p.flow - p.vx) * r; p.vy += (f[1] * p.flow - p.vy) * r; }
       if (p.ax !== null){ const dx = p.ax - p.x, dy = p.ay - p.y, l = Math.hypot(dx, dy) + 1;   // притяжение к точке + закрутка вокруг неё (воронка)
         p.vx += (dx * p.pull - dy * p.swirl) / l * dt; p.vy += (dy * p.pull + dx * p.swirl) / l * dt; }
@@ -64,7 +74,7 @@ function makeForge(host){
   // мягкая кривая прозрачности: плавное появление и угасание
   const fade = (p, k) => { const a = p.fadeIn ? Math.min(1, Math.max(0, k / p.fadeIn)) : 1, b = Math.min(1, Math.max(0, (1 - k) / p.fadeOut)); return p.alpha * a * a * (3 - 2 * a) * b * b * (3 - 2 * b); };
   // накопитель частоты: rate штук в секунду, дробные остатки копятся
-  const emit = (acc, k, rate, dt, f) => { acc[k] = (acc[k] || 0) + rate * dt * EMIT[quality]; while (acc[k] >= 1){ acc[k] -= 1; f(); } };
+  const emit = (acc, k, rate, dt, f) => { acc[k] = (acc[k] || 0) + rate * dt * EMIT[quality]; inEmit = true; while (acc[k] >= 1){ acc[k] -= 1; f(); } inEmit = false; };
   const seq = (at, mask, ...st) => st.length ? st.map(s => at.map[mask + ':' + s]) : [at.map[mask]];
 
   /* ── отрисовка: вершины копятся в буфер кадра, один вызов на эффект ──
@@ -149,7 +159,12 @@ function makeForge(host){
         const cb = Math.cos(b), sb = Math.sin(b), h = (st - 1) / 2;
         quad(c, ce, (cb * (1 + h) + sb * h) * s, (sb * (1 + h) - cb * h) * s, (-cb * h - sb * (1 + h)) * s, (cb * (1 + h) - sb * h) * s, p.x, p.y, al * flick(p), p.add, p.tc ? tcol(p.tc, k) : p.tint, 0, fx);
       } else {
-        const cs = p.rot ? Math.cos(p.rot) : 1, sn = p.rot ? Math.sin(p.rot) : 0, w = s * (p.scW ? crv(p.scW, k) : 1), hh = s * p.stretch * (p.scH ? crv(p.scH, k) : 1), sh = p.shear || 0;
+        const cs = p.rot ? Math.cos(p.rot) : 1, sn = p.rot ? Math.sin(p.rot) : 0; let w = s * (p.scW ? crv(p.scW, k) : 1), hh = s * p.stretch * (p.scH ? crv(p.scH, k) : 1); const sh = p.shear || 0;
+        // объём: кувырок сжимает квадрат по осям (отрицательный — изнанка), в шейдер — насколько частица смотрит на нас (для света и блика)
+        if (p.f3){ const cx = Math.cos(p.t3x), cy = Math.cos(p.t3y); w *= cy;
+          // толщина (монета — цилиндр): квадрат выше на ребро, в шейдер — доля ребра со знаком (с какой стороны оно видно)
+          if (p.th3){ const sx = Math.sin(p.t3x), ax = Math.abs(cx) + p.th3 * Math.abs(sx); hh *= ax; if (fx){ fx[2] = cx * cy; fx[1] = p.th3 * Math.abs(sx) / ax * (cx * sx < 0 ? -1 : 1); } }
+          else { hh *= cx; if (fx) fx[2] = cx * cy; } }
         // ось y со скосом: (sh, 1) — верх маски уходит вбок, основание на месте
         quad(c, ce, cs * w, sn * w, (cs * sh - sn) * hh, (sn * sh + cs) * hh, p.x, p.y, al * flick(p), p.add, p.tc ? tcol(p.tc, k) : p.tint, 0, fx);
       }
@@ -408,7 +423,22 @@ function makeForge(host){
   // картинка для слоя картинки (семья 22): по адресу или <img>; чужой сервер без CORS — не загрузится (err), эффект молча снимается.
   // Хранится, пока нужна: в простое выгружается вместе с атласами
   const imgs = {};
+  // несколько картинок (массив) — склеиваются в один лист 4×2 клеток по 256 px (вписаны по центру): эффект выбирает клетку в шейдере,
+  // кадр остаётся одной отрисовкой. До 8 картинок, ≈2 МБ видеопамяти
+  function sheetTex(list){
+    const key = 'sheet:' + list.map(x => x.src || x).join('|'); if (imgs[key]) return imgs[key];
+    const t = imgs[key] = { ok: false, t: gl.createTexture(), w: 1, h: 1, sheet: true }, g0 = gl, C = 256, ims = list.slice(0, 8).map(x => typeof x === 'string' ? Object.assign(new Image(), { crossOrigin: 'anonymous', src: x }) : x);
+    let left = ims.length;
+    const done = () => { if (--left || gl !== g0) return; try { const cv2 = document.createElement('canvas'); cv2.width = C * 4; cv2.height = C * 2; const g = cv2.getContext('2d');
+        ims.forEach((im, i) => { if (!im.naturalWidth) return; const k = Math.min(C / im.naturalWidth, C / im.naturalHeight) * .96, w = im.naturalWidth * k, h = im.naturalHeight * k; g.drawImage(im, (i % 4) * C + (C - w) / 2, (i >> 2) * C + (C - h) / 2, w, h); });
+        gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, t.t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv2);
+        for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+        t.n = ims.length; t.ok = true; } catch (_){ t.err = true; } gl.activeTexture(gl.TEXTURE0); };
+    for (const im of ims){ if (im.complete && im.naturalWidth) done(); else { im.addEventListener('load', done); im.addEventListener('error', done); } }
+    return t;
+  }
   function imgTex(src){
+    if (Array.isArray(src)) return sheetTex(src);
     const key = src.src || src; if (imgs[key]) return imgs[key];
     const t = imgs[key] = { ok: false, t: gl.createTexture(), w: 1, h: 1 }, g0 = gl;
     const im = typeof src === 'string' ? Object.assign(new Image(), { crossOrigin: 'anonymous', src }) : src;
@@ -554,7 +584,7 @@ function makeForge(host){
       const vis = !e.clip || (e.clip.bottom > 0 && e.clip.top < h && e.clip.right > 0 && e.clip.left < w);
       if (!vis) continue;                                                      // за экраном — не считаем и не рисуем
       if (e.img){ if (e.img.err){ live.delete(e); continue; } if (!e.img.ok) continue;   // картинка ещё грузится — эффект ждёт, время не идёт
-        if (!e.s.W){ const r = e.img.w / e.img.h, B = e.s.o.box || 240; e.s.W = r >= 1 ? B : B * r; e.s.H = r >= 1 ? B / r : B; } }
+        if (!e.s.W){ const r = e.img.sheet ? 1 : e.img.w / e.img.h, B = e.s.o.box || 240; e.s.W = r >= 1 ? B : B * r; e.s.H = r >= 1 ? B / r : B; } }
       let edt = dt * (e.def.rate || 1); if (e.s.freeze > 0){ e.s.freeze -= dt; edt = 0; }   // стоп-кадр удара: время эффекта стоит, кадр держится
       e.s.t += edt; e.s.cycle += edt;   // rate — своя скорость времени эффекта (1.5 — в полтора раза быстрее)
       if (e.stopping){ e.fade = Math.max(0, e.fade - dt / .4); if (!e.fade){ live.delete(e); continue; } }
@@ -621,8 +651,8 @@ function makeForge(host){
   FORGE_KITS.push(kit); for (const f of FORGE_PACKS) f.fn(kit);
   return {
     get names(){ return Object.keys(DEF); }, stats,
-    // для витрины: пресеты эффекта, нужна ли картинка, разовый ли (длина)
-    meta: n => ({ presets: Object.keys(DEF[n]?.presets || {}), img: !!DEF[n]?.img, period: DEF[n]?.period || 0 }),
+    // для витрины: пресеты эффекта, нужна ли картинка (img) или можно свою (imgOpt — своя монетка), разовый ли (длина)
+    meta: n => ({ presets: Object.keys(DEF[n]?.presets || {}), img: !!DEF[n]?.img, imgOpt: !!DEF[n]?.imgOpt, period: DEF[n]?.period || 0 }),
     // всё, что есть: [{ name, presets, img, period }]
     list(){ return Object.keys(DEF).map(n => ({ name: n, ...this.meta(n) })); },
     // пакет эффектов (src/forge/*.js) и свой эффект: k — инструменты ядра; эффект — { atlas, period?, presets?, init(s), update(s, dt, at), render(s, c) }
@@ -649,7 +679,7 @@ function makeForge(host){
       const e = { def, at: a, tex: texture(def.atlas), s: { t: 0, cycle: 0, acc: {}, o }, loop: !!o.loop, el: o.el || null, fade: 1, stopping: false,
         ox: o.x ?? (host ? host.clientWidth : innerWidth) / 2, oy: o.y ?? (host ? host.clientHeight : innerHeight) / 2, k: (o.size || Math.min(innerWidth, innerHeight)) / 360, clip: null };
       def.init.call(def, e.s, a); if (o.s) Object.assign(e.s, o.s);
-      if (def.img){ if (!o.img) return null; e.img = imgTex(o.img); }
+      if (def.img){ if (!o.img) return null; e.img = imgTex(o.img); } else if (def.imgOpt && o.img) e.img = imgTex(o.img);   // imgOpt — картинка по желанию (своя монетка)
       clearTimeout(idleT); cv.style.display = ''; live.add(e); kick();
       return { stop(){ e.stopping = true; }, kill(){ live.delete(e); }, alive: () => live.has(e), set(k, v){ e.s[k] = v; } };
     },

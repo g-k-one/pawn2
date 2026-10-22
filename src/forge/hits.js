@@ -13,10 +13,14 @@ Forge.pack('hits', k => {
     'else if(md<2.5){float th=max(vf.y,.01);float h=exp(-p.y*p.y/(th*th))*exp(-abs(p.x)*2.2);float v=exp(-p.x*p.x/(th*th))*exp(-abs(p.y)*2.2)*vf.z;float co=exp(-r*r*14.);' +
     'a=clamp(h+v+co,0.,1.)*smoothstep(1.,.85,max(abs(p.x),abs(p.y)));col=mix(vt,vec3(1.),clamp(co*1.4+max(h,v)*.35,0.,1.));}' +
     'else if(md<3.5){float d=abs(r-.8);float w=max(vf.y,.005);float sh=smoothstep(w,w*.4,d);a=max(sh,exp(-d/w*1.2)*.45)*smoothstep(1.,.95,r);col=mix(vt,vec3(1.),sh*.5);}' +
-    // .4 мультяшная колючая звезда: vf.w — лучей (целая часть) и зерно (дробная), vf.y — острота, vf.z — рваный край (сухая кисть); тёмная обводка
-    'else if(md<4.5){float N=floor(vf.w);float sd=fract(vf.w)*91.;float an=atan(p.y,p.x);float id=floor(an/6.2832*N+.5);float sp=pow(abs(cos(an*N*.5)),1.+vf.y*6.);' +
-    'float R0=(.38+.62*sp)*(.8-vf.z*.3+(.2+vf.z*.3)*H1(id*7.13+sd));float n=texture2D(nz,p*(1.7+vf.z*2.)+sd).r;R0+=(n-.5)*vf.z*.42;float e=R0-r;float sh=smoothstep(-.012,.012,e);' +
-    'float inn=smoothstep(.045,.075,e);col=mix(vt*.32,mix(vt,vec3(1.),smoothstep(R0*.7,0.,r)*.85),inn);a=sh*smoothstep(1.,.96,r);}' +
+    // .4 лучевой всплеск: N тонких лучей (vf.w — число, дробная часть — зерно) разной длины, сходят на нет к острому кончику; между ними — лучи короче;
+    // вокруг каждого мягкое свечение (vf.z — его сила), в центре белое ядро. vf.y — острота (1 — иглы, 0 — шире у основания). Без обводки и плашек
+    'else if(md<4.5){float N=floor(vf.w);float sd=fract(vf.w)*91.;float an=atan(p.y,p.x);float u=an/6.2832*N;float id=floor(u+.5);float du=(u-id)/N*6.2832;' +
+    'float L=.55+.45*H1(id*7.13+sd);float tw=.02+.07*(1.-vf.y);float x=abs(du)*r;float k1=clamp(r/L,0.,1.);float w=tw*pow(1.-k1,1.5)+.002;' +
+    'float ray=smoothstep(w+.008,w-.004,x)*step(r,L);float u2=u+.5;float id2=floor(u2+.5);float du2=(u2-id2)/N*6.2832;float L2=(.3+.32*H1(id2*3.7+sd))*L;' +
+    'float x2=abs(du2)*r;float k2=clamp(r/L2,0.,1.);float w2=tw*.55*pow(1.-k2,1.5)+.001;float ray2=smoothstep(w2+.006,w2-.003,x2)*step(r,L2)*.8;' +
+    'float gl=exp(-x/(w*3.+.012))*(1.-k1)*(.35+vf.z*2.);float core=exp(-r*r*55.);float halo=exp(-r*4.5)*.3;float rr=max(ray,ray2);' +
+    'a=clamp(rr+gl+core+halo,0.,1.)*smoothstep(1.,.95,r);col=mix(vt,vec3(1.),clamp(core*1.2+(1.-k1)*(1.-k1)*rr*.75,0.,1.));}' +
     'else if(md<5.5){float dc=smoothstep(1.,.9,r);float rim=smoothstep(.62,.92,r)*dc;a=dc*mix(.6+rim*.4,1.,step(.5,vf.y));col=mix(vt,vec3(1.),rim*.35);}' +
     'else if(md<6.5){float w=max(vf.y,.02)*(1.-abs(p.y)*.6);float b=exp(-p.x*p.x/(w*w));a=b*smoothstep(1.,.35,abs(p.y));col=mix(vt,vec3(1.),exp(-p.x*p.x/(w*w*.12))*.8);}' +
     // .8 щит из сот: шестиугольная сетка на сфере (края светятся, соты вспыхивают), край — френель; волна удара как у пузыря
@@ -27,8 +31,11 @@ Forge.pack('hits', k => {
     'a=clamp(eg*(.35+.65*fr)+fl*.22+fr*.55+rp*(.6+eg)+pow(r,14.)*.5,0.,1.)*smoothstep(1.,.97,r);col=mix(vt,vec3(1.),clamp(eg*.35+rp*.6+pow(r,10.)*.6,0.,1.));}' +
     // .9 кольцо-солнце: обод с шипами наружу (vf.w — шипов, vf.y — длина шипа); vf.z > .5 — пунктир вместо шипов (vf.w штрихов, vf.y — скорость вращения)
     'else if(md>8.5){float an=atan(p.y,p.x)/6.2832+.5;float N=max(vf.w,3.);float R1=.62;float sh;' +
-    'if(vf.z>.5){float ds=step(.42,fract(an*N+t*vf.y));sh=smoothstep(.035,.015,abs(r-R1))*ds;}else{float s=1.-abs(fract(an*N)-.5)*2.;float Ro=R1+.03+vf.y*.36*pow(s,2.2);' +
-    'sh=smoothstep(Ro,Ro-.02,r)*smoothstep(R1-.05,R1-.03,r);}a=max(sh,exp(-abs(r-R1)*14.)*.35)*smoothstep(1.,.95,r);col=mix(vt,vec3(1.),sh*.45);}' +
+    'if(vf.z>.5){float ds=step(.42,fract(an*N+t*vf.y));sh=smoothstep(.03,.012,abs(r-R1))*ds;a=max(sh,exp(-abs(r-R1)*14.)*.3)*smoothstep(1.,.95,r);col=mix(vt,vec3(1.),sh*.45);}' +
+    // шипы — тонкие иглы, гаснут к кончику; обод — тонкая светлая линия
+    'else{float s=1.-abs(fract(an*N)-.5)*2.;float h=vf.y*.36*pow(s,5.);float Ro=R1+.02+h;float tip=clamp((r-R1)/max(h,.01),0.,1.);' +
+    'sh=smoothstep(Ro,Ro-.012,r)*smoothstep(R1-.02,R1,r)*(1.-tip*.7);float bd=smoothstep(.02,.007,abs(r-R1));' +
+    'a=max(max(sh,bd),exp(-abs(r-R1)*12.)*.3)*smoothstep(1.,.95,r);col=mix(vt,vec3(1.),clamp(bd*.6+(1.-tip)*sh*.35,0.,1.));}}' +
     'else{if(r>1.){gl_FragColor=vec4(0.);return;}float fr=pow(r,3.2);float ca=cos(t*.6),sa=sin(t*.6);vec2 q=mat2(ca,-sa,sa,ca)*p;' +
     'float n=texture2D(nz,q*.55+vec2(t*.07,-t*.05)).r;float n2=texture2D(nz,q*.9-vec2(t*.04,t*.08)+n*.4).g;float en=pow(1.-abs(n2*2.-1.),9.)*.35;' +
     'vec2 hp=vec2(cos(vf.w),sin(vf.w))*.92;float rp=exp(-abs(length(p-hp)-vf.z*1.6)*16.)*(1.-vf.z)*step(.001,vf.z);' +

@@ -117,38 +117,6 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
   // язык рождается приплюснутым, вытягивается и сужается, гнётся по ветру скосом (основание стоит),
   // кончик колышет шум, к концу жизни язык рвётся по шуму (растворение) и остывает — краснеет.
   const FIRE_W = [[0, 1.3], [.3, 1], [.75, .8], [1, .6]], FIRE_H = [[0, .5], [.22, 1.05], [.7, 1.15], [1, 1.05]];
-  DEF.boom = { atlas: 'boom', period: 2.4,
-    init: s => Object.assign(s, { fired: false, smoke: [], fire: [], sparks: [] }),
-    update(s, dt, at){
-      const CX = 180, CY = 200;
-      if (s.cycle >= 2.4){ s.cycle -= 2.4; s.fired = false; }
-      if (!s.fired && s.cycle > .05){ s.fired = true;
-        for (let i = 1; i <= 16; i++){ const a = i / 16 * 6.28 + R(0, .3), sp = R(150, 350);
-          spawn(s.smoke, { x: CX, y: CY, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .8 - 40, rot: R(0, 6.28), vr: R(-.75, .75), size: R(70, 110), grow: 1.4, life: R(1, 1.4),
-            cells: seq(at, i % 2 ? 'smoke2' : 'smoke1', 'S0', 'S0', 'S1', 'S2', 'S3'), add: .35, alpha: .95, drag: 3.2, grav: -60, fadeIn: .04, fadeOut: .45 }); }
-        // ядро огненного шара — плазма в форме клубов: течёт и кипит, остывает от жёлтого к тёмно-красному, края рвутся
-        for (let i = 0; i < 5; i++){ const a = i / 5 * 6.28 + R(-.3, .3), sp = R(60, 180);
-          spawn(s.smoke, { x: CX, y: CY, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .8 - 30, rot: R(0, 6.28), vr: R(-.6, .6), size: R(105, 135), grow: .8, life: R(.65, .9), drag: 3,
-            cells: [at.map[i % 2 ? 'smoke2:S0' : 'smoke1:S0']], mode: 18, ramp: 'flame', add: .55, heat: [[0, 1.5], [.4, 1.05], [1, .55]], ero: [[0, .02], [.6, .12], [1, .7]], fadeIn: .02, fadeOut: .3 }); }
-        for (let i = 0; i < 10; i++) spawn(s.smoke, { x: CX + R(-30, 30), y: CY - 20, vx: R(-20, 20), vy: R(-80, -40), rot: R(0, 6.28), vr: R(-.25, .25), size: 90, grow: 1.6, life: 2,
-          cells: seq(at, 'smoke1', 'S1', 'S2', 'S3'), add: 0, alpha: .55, sway: 12, fadeIn: .25, fadeOut: .5 });
-        for (let i = 1; i <= 10; i++){ const a = i / 10 * 6.28;
-          spawn(s.fire, { x: CX, y: CY, vx: Math.cos(a) * 120, vy: Math.sin(a) * 120 - 60, rot: a + PI / 2, size: 110, grow: -.4, life: .45, cells: seq(at, 'flame1', 'F0', 'F1', 'F2', 'F3'), add: 1, drag: 2, fadeIn: .05, fadeOut: .5 }); }
-        for (let i = 0; i < 34; i++){ const a = R(0, 6.28), sp = R(300, 750);
-          spawn(s.sparks, { x: CX, y: CY, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, size: R(22, 38), life: R(.5, .9), cells: seq(at, 'streak', 'F0', 'F1', 'F2', 'F3'), add: 1, drag: 1.5, grav: 700, orient: true, speedStretch: .0015, fadeIn: .02, fadeOut: .5 }); }
-      }
-      for (const L of [s.smoke, s.fire, s.sparks]) step(L, dt);
-    },
-    render(s, c){
-      const at = c.at, CX = 180, CY = 200, t = s.cycle - .05;
-      draw(c, s.smoke);
-      if (t >= 0 && t < .5){ const k = t / .5; sprite(c, CX, CY, 60 + 460 * (1 - (1 - k) ** 3), 0, (1 - k) * .9, 1, at.map['ring:F1']); }
-      draw(c, s.fire); draw(c, s.sparks);
-      if (t >= 0 && t < .35){ const k = t / .35;
-        sprite(c, CX, CY, 260 + 200 * k, k * .5, 1 - k, 1, at.map['glow:F0']);
-        if (t < .16) sprite(c, CX, CY, 140 + 360 * (t / .16), .2, 1 - t / .16, 1, at.map['star:F0']); }
-    } };
-
   DEF.portal = { atlas: 'portal',
     init: s => Object.assign(s, { wisps: [], tun: [], inP: [] }),
     update(s, dt, at){
@@ -223,132 +191,6 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
       back.forEach(a => sprite(c, ...a)); draw(c, s.dust); top.forEach(a => sprite(c, ...a)); draw(c, s.sparks);
     } };
 
-  DEF.coins = { atlas: 'coins', period: 3,
-    init: s => Object.assign(s, { fired: false, items: [], tw: [] }),
-    update(s, dt, at){
-      const FLOOR = 318;
-      if (s.cycle >= 3){ s.cycle -= 3; s.fired = false; }
-      if (!s.fired && s.cycle > .1){ s.fired = true; s.items = [];
-        for (let i = 1; i <= 22; i++){ const a = -PI / 2 + R(-.6, .6), sp = R(380, 620);
-          s.items.push({ x: 180 + R(-10, 10), y: 250, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, spin: R(0, 6.28), vs: R(9, 16), rot: R(-.3, .3), size: R(36, 48),
-            gem: i % 6 === 0 ? 1 : i % 7 === 0 ? 2 : i % 11 === 0 ? 3 : 0, rest: false }); } }
-      for (const c of s.items){ if (c.rest) continue;
-        c.vy += 1300 * dt; c.x += c.vx * dt; c.y += c.vy * dt; c.spin += c.vs * dt;
-        if (c.y > FLOOR - c.size * .4 && c.vy > 0){ c.y = FLOOR - c.size * .4; c.vy *= -.42; c.vx *= .6; c.vs *= .6; if (Math.abs(c.vy) < 70){ c.rest = true; c.vy = 0; c.spin = 0; } } }
-      // блики: на случайной монете вспыхивает звёздочка
-      if (s.items.length && Math.random() < dt * 14){ const c = s.items[Math.floor(Math.random() * s.items.length)];
-        spawn(s.tw, { x: c.x + R(-8, 8), y: c.y + R(-10, 4), size: R(26, 40), life: .45, rot: R(0, 1), vr: 2, cells: seq(at, 'twinkle', 'W0', 'G0'), add: 1, fadeIn: .35, fadeOut: .5 }); }
-      step(s.tw, dt);
-    },
-    render(s, c){
-      const at = c.at, t = s.cycle - .1, all = Math.min(1, Math.max(0, (3 - s.cycle) / .35));
-      sprite(c, 180, 250, 360, 0, .35 * all, 1, at.map['sglow:G1'], .8);
-      if (t >= 0 && t < .5){ const k = t / .5; sprite(c, 180, 250, 160 + 260 * easeOut(k), k * .6, 1 - k, 1, at.map['burst:G0']); sprite(c, 180, 250, 220, 0, (1 - k) * .8, 1, at.map['sglow:G0']); }
-      for (const it of s.items){
-        let cell, sx = 1;
-        if (it.gem) cell = at.map[['gem', 'gem2', 'gemP'][it.gem - 1]];
-        else { const cs = Math.cos(it.spin), a = Math.abs(cs); cell = at.map[a > .7 ? 'coinF' : a > .25 ? 'coinT' : 'coinE']; sx = cs < 0 ? -1 : 1; }
-        // зеркало по знаку cos — монета вращается в обе стороны
-        sprite(c, it.x, it.y, it.size * sx * 1.6, it.rot * (it.rest ? .3 : 1), all, 0, cell, sx);
-      }
-      draw(c, s.tw);
-    } };
-
-  DEF.confetti = { atlas: 'confetti', period: 3.2,
-    init: s => Object.assign(s, { fired: false, parts: [], tw: [] }),
-    update(s, dt, at){
-      const COLS = [[1, .43, .77], [1, .81, .33], [.38, .81, 1], [.51, .91, .59], [.69, .52, 1]];
-      if (s.cycle >= 3.2){ s.cycle -= 3.2; s.fired = false; s.parts = []; }
-      if (!s.fired && s.cycle > .1){ s.fired = true;
-        for (const [x, dir] of [[20, 1], [340, -1]]) for (let i = 0; i < 60; i++){ const a = -PI / 2 + dir * R(.25, .75), sp = R(420, 900);
-          s.parts.push({ x, y: 330, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: R(0, 6.28), va: R(-6, 6), flip: R(0, 6.28), vf: R(6, 14), ph: R(0, 6.28), col: COLS[Math.floor(Math.random() * 5)], w: R(4.5, 7), age: 0 }); } }
-      for (const p of s.parts){ p.age += dt; const d = 1 - 2.6 * dt;
-        p.vx *= d; p.vy = Math.min(p.vy * d + 420 * dt, 110);   // предельная скорость падения: бумажка порхает
-        p.x += (p.vx + Math.sin(p.age * 5 + p.ph) * 40) * dt; p.y += p.vy * dt; p.a += p.va * dt; p.flip += p.vf * dt; }
-      if (s.cycle > .3 && s.cycle < 2.6 && s.parts.length && Math.random() < dt * 10){ const p = s.parts[Math.floor(Math.random() * s.parts.length)];
-        spawn(s.tw, { x: p.x, y: p.y, size: R(22, 36), life: .5, vr: 2, cells: seq(at, 'twinkle', 'W0', 'G0'), add: 1, fadeIn: .35, fadeOut: .5 }); }
-      step(s.tw, dt);
-    },
-    render(s, c){
-      const at = c.at, t = s.cycle - .1, solid = at.map['solid:W0'], cell = at.cell;
-      if (t >= 0 && t < .45){ const k = t / .45;
-        for (const x of [26, 334]){ sprite(c, x, 322, 120 + 180 * easeOut(k), k * .4, 1 - k, 1, at.map['burst:W0']); sprite(c, x, 322, 200, 0, (1 - k) * .8, 1, at.map['sglow:G0']); } }
-      // бумажка: сплошная ячейка, тонированная цветом; высота = cos переворота (кувыркается)
-      for (const p of s.parts){ const life = Math.min(1, Math.max(0, 1 - (p.age - 2.4) / .5)); if (life <= 0) continue;
-        const w = p.w * life / cell, h = (p.w * 1.6 * Math.abs(Math.cos(p.flip)) * life + .5) / cell, cs = Math.cos(p.a), sn = Math.sin(p.a);
-        quad(c, solid, cs * w, sn * w, -sn * h, cs * h, p.x, p.y, 1, 0, p.col, .3); }
-      draw(c, s.tw);
-    } };
-
-  DEF.charge = { atlas: 'charge', period: 2.4,
-    init: s => Object.assign(s, { fired: false, inP: [], rings: [], out: [] }),
-    update(s, dt, at){
-      const CX = 180, CY = 180, CH = 1.5;
-      if (s.cycle >= 2.4){ s.cycle -= 2.4; s.fired = false; }
-      const cy = s.cycle;
-      if (cy < CH){
-        // темп нарастает к разряду
-        emit(s.acc, 1, 20 + 50 * (cy / CH), dt, () => { const a = R(0, 6.28), d = R(130, 170);
-          spawn(s.inP, { x: CX + Math.cos(a) * d, y: CY + Math.sin(a) * d, vx: -Math.cos(a) * 60, vy: -Math.sin(a) * 60, size: R(18, 28), life: .5, cells: seq(at, 'spark', 'P1', 'P0'), add: 1, orient: true, speedStretch: .002, fadeIn: .3, fadeOut: .2 }); });
-        emit(s.acc, 2, 2.2, dt, () => spawn(s.rings, { x: CX, y: CY, size: 300, grow: -.8, life: .6, cells: seq(at, 'sring', 'P1', 'P0'), add: 1, alpha: .5, fadeIn: .4, fadeOut: .2 }));
-      }
-      if (!s.fired && cy >= CH){ s.fired = true;
-        for (let i = 0; i < 26; i++){ const a = R(0, 6.28), sp = R(260, 520);
-          spawn(s.out, { x: CX, y: CY, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, size: R(24, 40), life: R(.5, .8), rot: R(0, 6.28), vr: R(-4, 4), cells: seq(at, 'twinkle', 'W0', 'P0'), add: 1, drag: 3, fadeIn: .02, fadeOut: .6 }); } }
-      // искры ускоряются к центру
-      for (const p of s.inP){ const dx = CX - p.x, dy = CY - p.y, d = Math.max(Math.hypot(dx, dy), 6); p.vx += dx / d * 900 * dt; p.vy += dy / d * 900 * dt; if (d < 22) p.age = p.life; }
-      for (const L of [s.inP, s.rings, s.out]) step(L, dt);
-    },
-    render(s, c){
-      const at = c.at, CX = 180, CY = 180, CH = 1.5, cy = s.cycle, k = Math.min(1, cy / CH);
-      const orb = cy < CH ? 30 + 70 * k * k : 100 * Math.max(0, 1 - (cy - CH) / .5), jit = 1 + .06 * Math.sin(cy * 40) * k, f = Math.floor(cy * 20);
-      sprite(c, CX, CY, 360, 0, .25 + .3 * k, 1, at.map['sglow:P1']);
-      draw(c, s.rings); draw(c, s.inP);
-      if (orb > 1){ sprite(c, CX, CY, orb * 2.6 * jit, 0, .7, 1, at.map['sglow:P1']); sprite(c, CX, CY, orb * 1.6 * jit, 0, 1, .6, 0, 1, null, 0, PL('pink', .04, .6 + .2 * k, .7, .5)); sprite(c, CX, CY, orb * .5, 0, .45, 1, at.map['sglow:P0']);
-        if (cy < CH && f % 3) sprite(c, CX, CY, orb * 2.2, f * 1.7, .4 + .6 * k, 1, at.map[f % 2 ? 'crackle:P1' : 'crackle:P0']); }
-      const t = cy - CH;
-      if (t >= 0 && t < .5){ const e = t / .5; sprite(c, CX, CY, 200 + 260 * easeOut(e), e, (1 - e) * .8, 1, at.map['burst:P0']); sprite(c, CX, CY, 80 + 420 * easeOut(e), 0, (1 - e) * .9, 1, at.map['sring:P0']); }
-      draw(c, s.out);
-    } };
-
-  DEF.smoke = { atlas: 'smoke',
-    init: s => Object.assign(s, { puffs: [], small: [], tw: [] }),
-    update(s, dt, at){
-      const BX = 180, BY = 320, w = Math.sin(s.t * .8) * 20;
-      emit(s.acc, 1, 4.5, dt, () => spawn(s.puffs, { x: BX + R(-20, 20), y: BY, vx: R(-10, 10), vy: R(-90, -70), rot: R(0, 6.28), vr: R(-.4, .4), size: R(70, 90), grow: 1.6, life: R(3, 3.6),
-        cells: [at.map['puff:S3']], mode: 18, ramp: 'smoke', heat: [[0, 1.25], [1, .8]], ero: [[0, .05], [.7, .1], [1, .5]], add: 0, alpha: .9, drag: .25, sway: 10, fadeIn: .12, fadeOut: .45 }));
-      emit(s.acc, 2, 5, dt, () => spawn(s.small, { x: BX + R(-40, 40), y: BY - R(0, 20), vx: R(-30, 30), vy: R(-60, -40), rot: R(0, 6.28), vr: R(-.8, .8), size: R(36, 50), grow: .8, life: R(1.4, 2),
-        cells: seq(at, 'puffS', 'S3', 'S2'), add: 0, alpha: .7, sway: 14, fadeIn: .15, fadeOut: .5 }));
-      emit(s.acc, 3, 3, dt, () => spawn(s.tw, { x: BX + R(-30, 30), y: BY - 20, vx: R(-30, 30), vy: R(-150, -90), size: R(14, 22), life: R(.8, 1.2), vr: 3, cells: seq(at, 'twinkle', 'W0'), add: 1, alpha: .8, sway: 30, fadeIn: .2, fadeOut: .5 }));
-      for (const L of [s.puffs, s.small]) for (const p of L) p.vx += w * dt;
-      for (const L of [s.puffs, s.small, s.tw]) step(L, dt);
-    },
-    render(s, c){ sprite(c, 180, 330, 220 * (1 + .06 * Math.sin(s.t * 4)), 0, .55, 1, c.at.map['sglow:F1'], .45); for (const L of [s.small, s.puffs, s.tw]) draw(c, L); } };
-
-  DEF.shock = { atlas: 'shock', period: 2,
-    init: s => Object.assign(s, { fired: false, dust: [], sparks: [] }),
-    update(s, dt, at){
-      const GX = 180, GY = 280;
-      if (s.cycle >= 2){ s.cycle -= 2; s.fired = false; }
-      if (!s.fired && s.cycle > .1){ s.fired = true;
-        for (let i = 1; i <= 18; i++){ const a = i / 18 * 6.28 + R(-.1, .1), sp = R(240, 340), sm = i % 2 === 0;
-          spawn(s.dust, { x: GX + Math.cos(a) * 20, y: GY + Math.sin(a) * 7, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .32 - 20, rot: R(0, 6.28), vr: R(-1, 1), size: sm ? R(50, 64) : R(66, 90), grow: .9,
-            life: R(.9, 1.3), cells: seq(at, sm ? 'puffS' : 'dust', 'D0', 'D1'), add: 0, alpha: .85, drag: 2.8, grav: -12, fadeIn: .04, fadeOut: .55 }); }
-        for (let i = 0; i < 20; i++){ const a = -PI / 2 + R(-.9, .9), sp = R(280, 560);
-          spawn(s.sparks, { x: GX, y: GY - 6, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, size: R(18, 28), life: R(.5, .8), cells: seq(at, 'spark', 'G0', 'G1'), add: 1, drag: 1, grav: 1000, orient: true, speedStretch: .002, fadeIn: .02, fadeOut: .4 }); }
-      }
-      step(s.dust, dt); step(s.sparks, dt);
-    },
-    render(s, c){
-      const at = c.at, GX = 180, GY = 280, t = s.cycle - .1;
-      if (t >= 0 && t < .7){ const k = t / .7, e = easeOut(k);
-        sprite(c, GX, GY, 120 + 420 * e, 0, (1 - k) * .9, 1, at.map['ground:D0'], .55);
-        sprite(c, GX, GY, 60 + 260 * e, 0, (1 - k) ** 2, 1, at.map['ground:G0'], .5);
-        sprite(c, GX, GY, 260, 0, (1 - k) * .6, 1, at.map['sglow:G0'], .5); }
-      draw(c, s.dust); draw(c, s.sparks);
-      if (t >= 0 && t < .3){ const k = t / .3; sprite(c, GX, GY - 20, 150 + 160 * k, k * .3, 1 - k, 1, at.map['burst:G0']); }
-    } };
-
   DEF.comets = { atlas: 'comets',
     launch: () => ({ x: R(-60, 120), y: R(-60, 20), vx: R(170, 260), vy: R(120, 200), hue: Math.random() < .6 ? 0 : 1 }),
     init(s){ Object.assign(s, { kom: [], trail: [], bits: [], hits: [] }); for (let i = 1; i <= 3; i++){ const k = this.launch(); k.x += i * 70; k.y += i * 40; s.kom.push(k); } },
@@ -378,61 +220,6 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
   /* ── ауры по видео-референсам (циклы для фона редкого предмета) ──
      белые маски атласа aura красим цветом частицы (tint), серые — шейдером по градиенту; туманность и нити — целиком из шума */
   const pick = a => a[Math.floor(Math.random() * a.length)];
-  // 1. мерцание: ~60 четырёхлучевых звёзд в овале, каждая вспыхивает и гаснет (размер 0 → 1 → 0)
-  DEF.twinkle = { atlas: 'aura',
-    init: s => Object.assign(s, { st: [] }),
-    update(s, dt, at){
-      emit(s.acc, 1, s.t < .1 ? 600 : 70, dt, () => {
-        const a = R(0, 6.28), d = Math.sqrt(Math.random()), dot = Math.random() < .3, life = R(.5, 1.1);
-        spawn(s.st, { x: 180 + Math.cos(a) * d * 150, y: 180 + Math.sin(a) * d * 95, size: dot ? R(14, 22) : R(34, 80) * (Math.random() < .15 ? 1.5 : 1), sc: [[0, 0], [.45, 1], [1, 0]],
-          life, age: s.t < .1 ? R(0, life) : 0, cells: [at.map[dot ? 'glow:W0' : 'star:W0']], add: 1, alpha: R(.7, 1), tint: Math.random() < .5 ? [1, 1, 1] : [.5, .85, 1], fadeIn: .01, fadeOut: .01 });
-      });
-      step(s.st, dt);
-    },
-    render(s, c){
-      // ореол: то же мерцание мягким голубым пятном под каждой звездой
-      for (const p of s.st){ const k = p.age / p.life, a = Math.sin(Math.min(1, k) * PI); sprite(c, p.x, p.y, p.size * .9 * a, 0, .55 * a * p.alpha, 1, c.at.map['sglow:W0'], 1, [.2, .6, 1]); }
-      draw(c, s.st);
-    } };
-
-  // 2. дух: большие клубы дыма бирюзой (шейдер: градиент, искажение, растворение), яркое ядро ниже центра, белые осколки
-  DEF.spirit = { atlas: 'aura', gfx: { dist: .35, speed: .6, ramp: 'teal' },
-    wisp: (s, at, age) => spawn(s.sm, { x: 180 + R(-40, 40), y: 175 + R(-40, 40), rot: R(0, 6.28), vr: R(-.5, .5), size: R(200, 260), life: R(2.6, 3.6), age,
-      cells: [at.map[pick(['smoke1:L', 'smoke2:L', 'puff:L'])]], mode: 18, ramp: 'teal', add: .45, alpha: .65,
-      heat: [[0, .55], [.5, .72], [1, .5]], ero: [[0, .6], [.3, .2], [.7, .25], [1, .8]], fadeIn: .2, fadeOut: .3 }),
-    init(s, at){ Object.assign(s, { sm: [], sh: [] }); for (let i = 0; i < 9; i++) this.wisp(s, at, R(0, 2.5)); },
-    update(s, dt, at){
-      emit(s.acc, 1, 3, dt, () => this.wisp(s, at, 0));
-      emit(s.acc, 2, 35, dt, () => { const a = R(0, 6.28), d = R(0, 75);
-        spawn(s.sh, { x: 180 + Math.cos(a) * d, y: 185 + Math.sin(a) * d * .9, vx: -Math.sin(a) * 20, vy: Math.cos(a) * 20 - 8, rot: R(0, 6.28), vr: R(-6, 6), size: R(7, 15), life: R(.3, .7),
-          cells: [at.map['shard:W0']], add: 1, tint: [.85, 1, 1], fadeIn: .2, fadeOut: .5 }); });
-      step(s.sm, dt); step(s.sh, dt);
-    },
-    render(s, c){
-      const at = c.at, pl = 1 + .06 * Math.sin(s.t * 3);
-      sprite(c, 180, 180, 330, 0, .35, 1, at.map['sglow:W0'], 1, [.1, .55, .5]);
-      draw(c, s.sm);
-      sprite(c, 182, 205, 150 * pl, 0, .55, 1, at.map['sglow:W0'], .9, [.2, .8, .9]);
-      sprite(c, 182, 208, 70 * pl, 0, .45, 1, at.map['sglow:W0'], .9, [.6, 1, 1]);
-      draw(c, s.sh);
-    } };
-
-  // 4. облако: 4 мягких синих пятна медленно плавают друг через друга, разноцветные точки мерцают
-  DEF.cloud = { atlas: 'aura',
-    init(s){ Object.assign(s, { dots: [], blobs: [[.2, .4, 1], [.25, .55, 1], [.15, .35, .95], [.3, .75, 1]].map((tint, i) => ({ ph: i * 1.7, r: R(8, 22), sp: R(.25, .5), size: R(230, 290), tint })) }); },
-    update(s, dt, at){
-      emit(s.acc, 1, s.t < .1 ? 300 : 22, dt, () => { const a = R(0, 6.28), d = Math.sqrt(Math.random());
-        spawn(s.dots, { x: 180 + Math.cos(a) * d * 110, y: 180 + Math.sin(a) * d * 70, vx: R(-6, 6), vy: R(-6, 6), size: R(6, 16), life: R(1.5, 3), age: s.t < .1 ? R(0, 1.5) : 0,
-          cells: [at.map['glow:W0']], add: 1, alpha: R(.6, 1), tint: pick([[.6, 1, 1], [1, 1, 1], [1, .6, .35], [1, .5, .8], [.4, .8, 1]]), fadeIn: .3, fadeOut: .4 }); });
-      step(s.dots, dt);
-    },
-    render(s, c){
-      const at = c.at, t = s.t;
-      sprite(c, 180, 180, 330, 0, .45, 1, at.map['sglow:W0'], .75, [.1, .2, .7]);
-      for (const b of s.blobs) sprite(c, 180 + Math.cos(t * b.sp + b.ph) * b.r * 1.5, 180 + Math.sin(t * b.sp * 1.3 + b.ph) * b.r * .6, b.size, 0, .4, .8, at.map['sglow:W0'], .78, b.tint);
-      draw(c, s.dots);
-    } };
-
   // 5. нити: светящиеся прожилки (гребни шума) двумя слоями навстречу — переплетаются, как плазма
   DEF.threads = { atlas: 'aura', gfx: { speed: .5, ramp: 'violet' },
     init(){}, update(){},
@@ -455,96 +242,7 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
         sprite(c, 180 + Math.cos(a) * p.d, 180 + Math.sin(a) * p.d, p.s * 2.4, 0, .35 + .35 * Math.sin(t * p.sp + p.ph), 1, at.map['glow:W0'], 1, [.6, .5, 1]); }
     } };
 
-  // 7. кольцо: толстые мягкие кольца-эллипсы поворачиваются в разных фазах — кольцо будто крутится в объёме; тонкий яркий обод сверху
-  DEF.ring = { atlas: 'aura',
-    init(){}, update(){},
-    render(s, c){
-      const at = c.at, t = s.t;
-      for (let i = 0; i < 3; i++){ const ph = t * (1.1 + i * .35) + i * 2.1;
-        sprite(c, 180 + Math.cos(ph) * 3, 180 + Math.sin(ph * 1.3) * 3, 340, ph * .5, i ? .4 : .7, .5, at.map['sring:W0'], .9 + .08 * Math.sin(ph), [.05, .14, .95]); }
-      for (let i = 0; i < 2; i++){ const ph = t * (1.6 + i * .5) + i * 3;
-        sprite(c, 180, 180, 318, -ph * .6, .5, 1, at.map['ring:W0'], .92 + .07 * Math.sin(ph * 1.2), [.3, .5, 1]); }
-    } };
-
   /* ── по GIF-примерам (Clash Royale / Kitchen Masters / Misfitz): фазы и тайминг важнее числа частиц ── */
-  // раскрытие (как альбом в Clash Royale): ожидание ~2/3 времени — предмет дышит, радужный обод, расходятся круги,
-  // искры стягиваются, лучи разгоняются, предмет трясёт → белая вспышка на весь экран → предмет уже новый, выпрыгивает
-  DEF.reveal = { atlas: 'aura', period: 3.4, gfx: { speed: 1 },
-    init: s => Object.assign(s, { inS: [], outS: [], rip: [], fired: false, rr: 0 }),
-    update(s, dt, at){
-      if (s.cycle >= 3.4){ s.cycle -= 3.4; s.fired = false; }
-      const c = s.cycle, pre = Math.min(1, c / 1.9);
-      s.rr += (c < 2.05 ? .3 + pre * 2.2 : .25) * dt;
-      if (c < 1.9){
-        emit(s.acc, 1, 10 + 30 * c, dt, () => { const a = R(0, 6.28), d = R(120, 170);
-          spawn(s.inS, { x: 180 + Math.cos(a) * d, y: 180 + Math.sin(a) * d, vx: -Math.cos(a) * d * 1.4, vy: -Math.sin(a) * d * 1.4, size: R(14, 26), life: .6, rot: R(0, 1),
-            cells: [at.map['twinkle:W0']], add: 1, tint: [.7, .85, 1], fadeIn: .3, fadeOut: .3 }); });
-        emit(s.acc, 2, 2.8, dt, () => spawn(s.rip, { x: 180, y: 180, size: 150, grow: 1.6, life: .7, cells: [at.map['ring:W0']], add: 1, alpha: .5, tint: [.6, .8, 1], fadeIn: .05, fadeOut: .7 }));
-      }
-      if (!s.fired && c >= 2.05){ s.fired = true;
-        for (let i = 0; i < 30; i++){ const a = R(0, 6.28), sp = R(200, 480);
-          spawn(s.outS, { x: 180, y: 180, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, size: R(16, 34), life: R(.6, 1.1), rot: R(0, 6), vr: R(-5, 5),
-            cells: [at.map[Math.random() < .5 ? 'twinkle:W0' : 'star5:W0']], add: 1, drag: 2.5, tint: Math.random() < .5 ? [1, 1, 1] : [.85, .6, 1], fadeIn: .02, fadeOut: .6 }); } }
-      for (const L of [s.inS, s.outS, s.rip]) step(L, dt);
-    },
-    render(s, c){
-      const at = c.at, t = s.cycle, pre = Math.min(1, t / 1.9), post = t - 2.05, before = post < 0;
-      const shake = before ? pre * pre * 4 : 0, jx = Math.sin(t * 61) * shake, jy = Math.cos(t * 47) * shake;
-      sprite(c, 180, 180, 420 * (before ? .6 + pre * .5 : 1.1), s.rr, before ? pre * pre * .9 : Math.max(.35, 1 - post * 1.5), 1, 0, 1, before ? [.6, .8, 1] : [1, .85, 1], 0, [4, 9, 1, .3]);
-      sprite(c, 180, 180, 300 * (1 + .15 * Math.sin(t * (4 + pre * 10))), 0, .35 + .4 * pre, 1, at.map['sglow:W0'], 1, before ? [.25, .5, 1] : [.6, .3, 1]);
-      draw(c, s.rip);
-      sprite(c, 180 + jx, 180 + jy, 200 * (1 + .06 * Math.sin(t * 8)), 0, before ? .6 + .4 * pre : Math.max(0, .8 - post), 1, at.map['sring:W0'], 1, null, 0, [5, 0, 1, 0]);
-      // предмет: до вспышки синий гем, после — фиолетовый, выпрыгивает с перелётом
-      const pop = before ? 1 + .05 * Math.sin(t * 6) : 1 + .35 * Math.exp(-post * 6) * Math.cos(post * 14);
-      sprite(c, 180 + jx, 180 + jy, (before ? 120 : 140) * pop, Math.sin(t * 2) * .08, 1, 0, at.map[before ? 'gem' : 'gemP']);
-      draw(c, s.inS);
-      if (post >= 0 && post < .5){ const k = post / .5;
-        sprite(c, 180, 180, 120 + 500 * easeOut(k), 0, (1 - k) * .9, 1, at.map['sring:W0'], 1, [.8, .6, 1]);
-        sprite(c, 180, 180, 200 + 200 * k, k, 1 - k, 1, at.map['star:W0']); }
-      draw(c, s.outS);
-      // белая вспышка на весь экран: быстро набирается, полсекунды гаснет
-      const wf = t < 1.9 ? 0 : before ? (t - 1.9) / .15 : Math.max(0, 1 - post / .45);
-      if (wf > 0) sprite(c, 180, 180, 760, 0, wf * .95, 1, at.map['sglow:W0'], 1, [1, 1, 1]);
-    } };
-
-  // комбо (как диско-шары в Kitchen Masters): два шара сближаются, между ними трещат молнии (новые каждые 0.05 с),
-  // вокруг — радужное поле → радужная волна наружу, белая вспышка, осколки по всему экрану
-  DEF.combo = { atlas: 'aura', period: 2.8, gfx: { speed: 1 },
-    init: s => Object.assign(s, { arcs: [], sp: [], fired: false, jt: 0, ax: 110, bx: 250 }),
-    update(s, dt, at){
-      if (s.cycle >= 2.8){ s.cycle -= 2.8; s.fired = false; }
-      const c = s.cycle, d = c < 1.5 ? 70 - 25 * c / 1.5 : 45 * Math.max(0, 1 - (c - 1.5) / .12);
-      s.ax = 180 - d; s.bx = 180 + d; s.jt -= dt;
-      if (c < 1.55){ if (s.jt <= 0){ s.jt = .05; s.arcs = [0, 1, 2].map(() => zig(s.ax + 14, 180 + R(-6, 6), s.bx - 14, 180 + R(-6, 6), .45, 4)); } }
-      else s.arcs = [];
-      if (!s.fired && c >= 1.62){ s.fired = true;
-        for (let i = 0; i < 40; i++){ const a = R(0, 6.28), sp = R(250, 600);
-          spawn(s.sp, { x: 180, y: 180, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, size: R(14, 30), life: R(.5, 1), rot: R(0, 6), vr: R(-6, 6),
-            cells: [at.map[pick(['twinkle:W0', 'shard:W0', 'star5:W0'])]], add: 1, drag: 2, grav: 200, tint: [.5 + .5 * Math.random(), .5 + .5 * Math.random(), 1], fadeIn: .02, fadeOut: .5 }); } }
-      step(s.sp, dt);
-    },
-    render(s, c){
-      const at = c.at, t = s.cycle, ch = Math.min(1, t / 1.5);
-      if (t < 1.62){
-        sprite(c, 180, 180, 260 + 80 * ch, 0, .3 + .4 * ch, 1, at.map['sglow:W0'], .7, [.6, .4, 1]);
-        sprite(c, 180, 180, 230 + 40 * Math.sin(t * 12), t * 2, .5 + .3 * ch, 1, at.map['sring:W0'], .62, null, 0, [5, 0, 1, 0]);
-        for (const x of [s.ax, s.bx]){
-          sprite(c, x, 180, 90, 0, .9, 1, at.map['sglow:W0'], 1, [.7, .8, 1]);
-          sprite(c, x, 180, 74, t * 3, 1, 1, at.map['sring:W0'], 1, null, 0, [5, 0, 1, x / 100]);
-          sprite(c, x, 180, 40, 0, 1, 1, at.map['glow:W0'], 1, [1, 1, 1]); }
-        for (const p of s.arcs) for (let i = 1; i < p.length; i++){
-          seg(c, p[i - 1][0], p[i - 1][1], p[i][0], p[i][1], 14, .6, 1, at.map['sglow:W0'], [.4, .7, 1]);
-          seg(c, p[i - 1][0], p[i - 1][1], p[i][0], p[i][1], 3, 1, 1, at.map['solid:W0'], [1, 1, 1]); }
-      }
-      const post = t - 1.62;
-      if (post >= 0){ const k = Math.min(1, post / .6);
-        sprite(c, 180, 180, 120 + 520 * easeOut(k), post * 2, 1 - k, .8, at.map['sring:W0'], 1, null, 0, [5, 0, 1.2, 0]);
-        if (post < .35) sprite(c, 180, 180, 300 + 400 * post, 0, 1 - post / .35, 1, at.map['glow:W0'], 1, [1, 1, 1]);
-        const wf = post < .06 ? post / .06 : Math.max(0, 1 - (post - .06) / .3);
-        if (wf > 0) sprite(c, 180, 180, 760, 0, wf * .85, 1, at.map['sglow:W0'], 1, [1, 1, 1]); }
-      draw(c, s.sp);
-    } };
-
   // кнопка (как Kitchen Masters): внутри скруглённой кнопки бегут прожилки и проходит блик, мигают звёздочки;
   // квадрат 300×100 в центре — ставится поверх кнопки
   DEF.button = { atlas: 'aura', gfx: { speed: 1 },
@@ -560,37 +258,6 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
   // спираль-фон (подбор соперника, Squad Busters): двухрукавная спираль из градиента крутится, палитра меняется раз в 3 с,
   // из центра летят на камеру предметы (растут и разгоняются — перспектива)
   const SW = ['sw_purple', 'sw_blue', 'sw_green', 'sw_yellow'];
-  DEF.swirl = { atlas: 'aura', gfx: { speed: .8 },
-    init: s => Object.assign(s, { fl: [] }),
-    update(s, dt, at){ const i = Math.floor(s.t / 3) % 4;
-      emit(s.acc, 1, 5, dt, () => { const a = R(0, 6.28), sp = R(40, 90);
-        spawn(s.fl, { x: 180 + Math.cos(a) * 20, y: 180 + Math.sin(a) * 20, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: R(0, 6.28), vr: R(-2, 2), size: R(10, 16), grow: 3.5, life: R(2, 3), drag: -.6,
-          cells: [at.map[['star5:W0', 'shard:W0', 'gem', 'glow:W0'][i]]], add: i === 2 ? 0 : .8, alpha: .9, tint: i === 2 ? null : [1, 1, 1], fadeIn: .3, fadeOut: .3 }); });
-      step(s.fl, dt); },
-    render(s, c){ const t = s.t, i = Math.floor(t / 3) % 4, x = Math.min(1, (t / 3 % 1) / .15);
-      if (x < 1) sprite(c, 180, 180, 720, 0, 1, 0, 0, 1, null, 0, [9, 2, 1, RAMP_ROW[SW[(i + 3) % 4]]]);
-      sprite(c, 180, 180, 720, 0, x, 0, 0, 1, null, 0, [9, 2, 1, RAMP_ROW[SW[i]]]);
-      draw(c, s.fl); } };
-
-  // раскрытие героя (Squad Busters): белый шестиугольник пульсирует всё чаще, расходятся контуры-шестиугольники, лучи,
-  // вокруг плывут шестиугольнички → белая вспышка на экран → предмет выпрыгивает, широкая волна-шестиугольник
-  DEF.hexreveal = { atlas: 'aura', period: 3, gfx: { speed: 1 },
-    init: s => Object.assign(s, { hx: [] }),
-    update(s, dt){ if (s.cycle >= 3) s.cycle -= 3;
-      emit(s.acc, 1, 6, dt, () => { const a = R(0, 6.28), d = R(60, 160); s.hx.push({ x: 180 + Math.cos(a) * d, y: 180 + Math.sin(a) * d * .7, vy: R(-20, -5), s: R(14, 30), age: 0, life: R(1, 1.8) }); });
-      s.hx = s.hx.filter(h => { h.age += dt; h.y += h.vy * dt; return h.age < h.life; }); },
-    render(s, c){ const at = c.at, t = s.cycle, pre = Math.min(1, t / 2), pulse = 1 + .12 * Math.sin(t * (6 + pre * 14));
-      sprite(c, 180, 180, 520, 0, .55, 0, at.map['sglow:W0'], 1, [.45, .1, .85]);
-      sprite(c, 180, 180, 460, t * .3, .5 + .4 * pre, 1, 0, 1, [1, .75, 1], 0, [4, 10, 1, .2]);
-      for (const h of s.hx){ const al = Math.sin(h.age / h.life * PI); sprite(c, h.x, h.y, h.s * 2, 0, al * .8, 1, 0, 1, [.95, .8, 1], 0, [11, 6, 0, 0]); }
-      for (let i = 0; i < 3; i++){ const k = (t * 1.2 + i / 3) % 1; sprite(c, 180, 180, 120 + 300 * k, 0, (1 - k) * .7 * pre, 1, 0, 1, [1, .85, 1], 0, [11, 6, .03, 0]); }
-      if (t < 2.05) sprite(c, 180, 180, 110 * pulse * (1 + pre * .3), 0, 1, 1, 0, 1, [1, 1, 1], 0, [11, 6, 0, 0]);
-      const p = t - 2.05;
-      if (p >= 0){ const wf = p < .08 ? p / .08 : Math.max(0, 1 - (p - .08) / .5); if (wf > 0) sprite(c, 180, 180, 760, 0, wf * .95, 1, at.map['sglow:W0'], 1, [1, 1, 1]);
-        const k = Math.min(1, p / .6); sprite(c, 180, 180, 150 + 500 * easeOut(k), 0, 1 - k, 1, 0, 1, [1, .8, 1], 0, [11, 6, .05, 0]);
-        sprite(c, 180, 180, 140 * (1 + .3 * Math.exp(-p * 6) * Math.cos(p * 14)), Math.sin(t * 2) * .08, Math.min(1, p * 4), 0, at.map['gemP']); }
-    } };
-
   /* ── по Unity/Unreal-роликам: уровень «как в движке», но всё — несколько вызовов отрисовки ── */
   // гриб-взрыв (video-1-front): появляется за 2 кадра целиком — ножка и шапка из мультяшных клубов,
   // свет снизу (верхние края темнее), клубы медленно кипят; через ~1.6 с растворяется по шуму на клочья
@@ -617,35 +284,6 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
       if (t > 0 && t < 2.2){ const k = Math.min(1, t / 2.2); sprite(c, 180, 305, 300 + 60 * k, 0, (1 - k) * .9, 1, at.map['sglow:W0'], .28, [1, .45, .15]); }
       if (t > 0 && t < .4){ const k = t / .4; sprite(c, 180, 300, 120 + 300 * easeOut(k), 0, 1 - k, 1, at.map['sring:W0'], .3, [1, .7, .3]); }
       draw(c, s.lobes); draw(c, s.spk); draw(c, s.emb);
-    } };
-
-  // энергосфера (magic-sphere): красный шар с мультяшным ободом, внутри кружат тёмные дуги, по ободу и над ним
-  // ползут молнии (новые 7 раз в секунду), внутри плавают тёмные осколки, у земли — красный отсвет
-  DEF.sphere = { atlas: 'aura', gfx: { speed: 1 },
-    init: s => Object.assign(s, { arcs: [], jt: 0, sh: [], emb: [] }),
-    update(s, dt, at){
-      s.jt -= dt;
-      if (s.jt <= 0){ s.jt = R(.1, .18);
-        s.arcs = [0, 1].map(() => { const a0 = R(0, 6.28), sp = R(.7, 1.4), pts = [];
-          const bulge = R(8, 30); for (let i = 0; i <= 14; i++){ const a = a0 + sp * i / 14, rr = 93 + Math.sin(i / 14 * PI) * bulge + R(-3, 3); pts.push([180 + Math.cos(a) * rr, 175 + Math.sin(a) * rr]); }
-          return pts; }); }
-      emit(s.acc, 1, 4, dt, () => { const a = R(0, 6.28), d = R(10, 70);
-        spawn(s.sh, { x: 180 + Math.cos(a) * d, y: 175 + Math.sin(a) * d, vx: -Math.sin(a) * 30, vy: Math.cos(a) * 30, rot: R(0, 6), vr: R(-3, 3), size: R(10, 22), life: R(1, 1.8),
-          cells: [at.map['shard:W0']], add: 0, alpha: .8, tint: [.25, .02, .03], fadeIn: .3, fadeOut: .4 }); });
-      emit(s.acc, 2, 6, dt, () => { const a = R(0, 6.28);
-        spawn(s.emb, { x: 180 + Math.cos(a) * 100, y: 175 + Math.sin(a) * 100, vx: Math.cos(a) * 20, vy: -R(20, 60), size: R(4, 8), life: R(.8, 1.5), cells: [at.map['glow:W0']], add: 1, tint: [1, .5, .3], fadeIn: .2, fadeOut: .5 }); });
-      step(s.sh, dt); step(s.emb, dt);
-    },
-    render(s, c){ const at = c.at, t = s.t;
-      sprite(c, 180, 285, 260, 0, .6, 1, at.map['sglow:W0'], .22, [1, .2, .1]);
-      sprite(c, 180, 175, 300, 0, 1, .3, 0, 1, [.95, .1, .08], 0, [12, 0, 0, 0]);
-      sprite(c, 180, 175, 196, 0, .9, .3, 0, 1, null, 0, PL('redsph', .1, .72, .2, .5));
-      draw(c, s.sh);
-      for (const p of s.arcs) for (let i = 1; i < p.length; i++){
-        seg(c, p[i - 1][0], p[i - 1][1], p[i][0], p[i][1], 20, .55, 1, at.map['sglow:W0'], [1, .5, .3]);
-        seg(c, p[i - 1][0], p[i - 1][1], p[i][0], p[i][1], 3.5, 1, 1, at.map['solid:W0'], [1, .95, .85]); }
-      draw(c, s.emb);
-      sprite(c, 180, 175, 330 + 10 * Math.sin(t * 3), 0, .25, 1, at.map['sglow:W0'], 1, [1, .25, .15]);
     } };
 
   // извержение (kuny-az, Unreal): искры стягиваются по кругу на земле, загорается знак → по кольцу встают лучи света →
@@ -820,8 +458,9 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
       if (p >= 0){ const k = Math.min(1, p / 1.6); sprite(c, GX, GY + 110, 380, 0, (1 - k) * .7, 1, at.map['sglow:W0'], .25, [1, .35, .1]); }
       draw(c, s.sm); draw(c, s.ring); draw(c, s.deb); draw(c, s.ball);
       if (p >= 0 && p < .12){ const q = p / .12;
-        sprite(c, GX, GY, 380 + 160 * q, .4 * q, 1 - q * .3, .4, m('tstar'), 1, null, 0, [1, 0, 2.2, 0]);
-        sprite(c, GX, GY, 480, -.2, 1 - q, 1, m('tspikes'), 1, [1, .95, .7], 0, [1, 0, 2, 0]); }
+        // кадр удара — тонкие лучи (форма 23.4 пакета hits), а не маски-плашки: те резались краем квадрата
+        sprite(c, GX, GY, 420 + 120 * q, .4 * q, 1 - q * .3, 1, 0, 1, [1, .8, .45], 0, [23.4, .85, .2, 16.43]);
+        sprite(c, GX, GY, 200, 0, 1 - q, 1, at.map['glow:W0'], 1, [1, .97, .9]); }
       if (p >= 0 && p < .2) sprite(c, 180, 180, 760, 0, .55 * (1 - p / .2), 1, at.map['sglow:W0'], 1, [1, .85, .6]);
       draw(c, s.emb); draw(c, s.pre);
     } };

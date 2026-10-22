@@ -1,0 +1,265 @@
+<title>Витрина Горна</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!-- Исходник артефакта «Витрина Горна» (claude.ai/artifact/EhBGivSpnMB6eoct2MjpCw). Публикуется вместе с src/app/16e-forge*.js, src/forge/*.js, assets/fx, assets/nft. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  /* Кузница: тёплая окалина, раскалённый акцент, сталь для текста; карточки — заготовки на верстаке, код — клеймо под каждой */
+  :root{
+    --bg:#120e0c; --card:#1c1613; --stage:#0d0a09; --line:#30251f; --text:#f1e9e2; --dim:rgba(241,233,226,.72); --ember:#ff7a2f; --steel:#9fb4c8;
+    --f-display:'Unbounded',system-ui,sans-serif; --f-body:'Onest',system-ui,-apple-system,'Segoe UI',sans-serif; --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+    --r:22px; color-scheme:dark;
+  }
+  *{ box-sizing:border-box }
+  [hidden]{ display:none !important }
+  body{ background:var(--bg); color:var(--text); font:15px/1.5 var(--f-body); padding-block:28px 96px;
+    padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)) }
+  .wrap{ max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:28px }
+  header{ display:flex; flex-direction:column; gap:12px }
+  h1{ font:700 clamp(28px,5vw,44px)/1.05 var(--f-display); margin:0; letter-spacing:-.01em; text-wrap:balance }
+  h1 span{ color:var(--ember) }
+  .lead{ color:var(--dim); margin:0; max-width:64ch; font-size:15.5px }
+  .facts{ display:flex; flex-wrap:wrap; gap:8px }
+  .fact{ border:1px solid var(--line); border-radius:999px; padding:5px 12px; font:500 13px var(--f-body); color:var(--dim); font-variant-numeric:tabular-nums }
+  .fact b{ color:var(--text); font-weight:600 }
+  .controls{ display:flex; flex-direction:column; gap:12px }
+  .row{ display:flex; flex-wrap:wrap; gap:8px; align-items:center }
+  .chip{ appearance:none; border:1px solid var(--line); background:var(--card); color:var(--text); border-radius:999px; padding:7px 14px; font:500 13.5px var(--f-body); cursor:pointer }
+  .chip:hover{ border-color:#4a3a30 }
+  .chip[aria-pressed="true"]{ background:var(--ember); border-color:var(--ember); color:#1a0d05 }
+  .chip:focus-visible, button:focus-visible, select:focus-visible{ outline:2px solid var(--ember); outline-offset:2px }
+  label.pick{ display:flex; gap:8px; align-items:center; color:var(--dim); font-size:13.5px }
+  select{ background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:10px; padding:6px 8px; font:inherit; font-size:13.5px; max-width:100% }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:16px; display:flex; flex-direction:column; gap:10px; min-width:0 }
+  .stage{ position:relative; aspect-ratio:1; max-width:100%; border-radius:14px; background:radial-gradient(circle at 50% 58%,#231a15,var(--stage) 72%); cursor:pointer; border:0; padding:0; width:100% }
+  .stage .hint{ position:absolute; right:10px; bottom:8px; font:500 12.5px var(--f-body); color:var(--dim); pointer-events:none }
+  .title{ display:flex; justify-content:space-between; align-items:baseline; gap:8px }
+  .title h3{ margin:0; font:600 16px/1.25 var(--f-body) }
+  .tag{ font:500 12.5px var(--f-mono); color:var(--steel); white-space:nowrap }
+  .desc{ margin:0; color:var(--dim); font-size:13.5px; line-height:1.45 }
+  .presets{ display:flex; flex-wrap:wrap; gap:6px }
+  .presets .chip{ padding:4px 10px; font-size:12.5px }
+  .code{ display:flex; flex-direction:column; gap:6px; min-width:0 }
+  .code code{ min-width:0; white-space:pre-wrap; word-break:break-word; background:var(--stage); border:1px solid var(--line); border-radius:10px; padding:7px 10px; font:400 12.5px/1.5 var(--f-mono); color:#ffd2b3 }
+  .copy{ align-self:flex-start; border:1px solid var(--line); background:transparent; color:var(--dim); border-radius:10px; padding:5px 10px; font:500 12.5px var(--f-body); cursor:pointer }
+  .copy.ok{ color:var(--ember); border-color:var(--ember) }
+  section.how{ display:flex; flex-direction:column; gap:12px }
+  h2{ font:700 22px/1.2 var(--f-display); margin:0 }
+  .ex{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px }
+  .ex article{ background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:16px; display:flex; flex-direction:column; gap:8px; min-width:0 }
+  .ex h4{ margin:0; font:600 15px var(--f-body) }
+  .ex p{ margin:0; color:var(--dim); font-size:13.5px }
+  pre{ margin:0; overflow-x:auto; background:var(--stage); border:1px solid var(--line); border-radius:12px; padding:12px; font:400 12.5px/1.6 var(--f-mono); color:#ffd2b3 }
+  .stats{ position:fixed; left:0; right:0; bottom:0; z-index:9100; background:rgba(18,14,12,.94); border-top:1px solid var(--line);
+    padding:10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    display:flex; flex-wrap:wrap; gap:4px 18px; font:500 12.5px var(--f-mono); color:var(--dim); font-variant-numeric:tabular-nums }
+  .stats b{ color:var(--text); font-weight:500 }
+  .empty{ color:var(--dim); padding:24px 0 }
+  @media (prefers-reduced-motion: reduce){ .stage .hint{ display:none } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Горн <span>·</span> витрина эффектов</h1>
+    <p class="lead">Все эффекты движка вживую, с пресетами. Тап по сцене — повторить эффект. Под каждым — строка, которой он запускается.</p>
+    <div class="facts" id="facts"><span class="fact">загружаю движок…</span></div>
+  </header>
+
+  <div class="controls">
+    <div class="row" id="cats" role="group" aria-label="Разделы"></div>
+    <div class="row">
+      <label class="pick" for="img">Картинка для эффектов картинки <select id="img"></select></label>
+      <label class="pick" for="coinimg"><input type="checkbox" id="coinimg"> Монеты — из этой картинки</label>
+      <label class="pick" for="q">Качество <select id="q"><option value="2">полное</option><option value="1">среднее</option><option value="0">эконом</option></select></label>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <section class="how">
+    <h2>Как пользоваться</h2>
+    <p class="lead">Ядро — один файл, пакеты эффектов подключаются после него только там, где нужны. Подробно — README в сборке (npm run forge → dist-forge).</p>
+    <div class="ex">
+      <article><h4>Запустить эффект</h4><p>Квадрат эффекта — 360 единиц; x, y — центр на экране, size — сторона в пикселях.</p>
+<pre>Forge.play('goldboom', { x: 200, y: 340, size: 360 });</pre></article>
+      <article><h4>Пресет и привязка к элементу</h4><p>Имя:пресет — готовый набор цветов и настроек. el — эффект следует за элементом и обрезается по нему.</p>
+<pre>Forge.play('hitsigil:arcane', { el: card });
+Forge.play('shield:frost', { el: avatar, loop: true });</pre></article>
+      <article><h4>Эффект с картинкой</h4><p>img — адрес или &lt;img&gt;. Настоящую картинку на время эффекта прячут: эффект рисует её сам.</p>
+<pre>const h = Forge.play('shatter', { el: prize, img: gift.src });
+// замереть на последнем кадре: { hold: true }, потом h.stop()</pre></article>
+      <article><h4>Подключить</h4><p>Пакеты — после ядра, в этом порядке.</p>
+<pre>&lt;script src="forge/forge.js"&gt;&lt;/script&gt;
+&lt;script src="forge/forge-hits.js"&gt;&lt;/script&gt;
+&lt;script src="forge/forge-matter.js"&gt;&lt;/script&gt;</pre></article>
+      <article><h4>Свой эффект</h4><p>k — инструменты ядра: частицы, спрайты, ленты, формы, объёмные предметы.</p>
+<pre>Forge.define('pulse', k => ({ atlas: 'aura', period: 1,
+  init(s){}, update(s, dt){},
+  render(s, c){ const t = s.cycle;
+    k.sprite(c, 180, 180, 120 + 200 * t, 0, 1 - t, 1,
+      c.at.map['sglow:W0'], 1, [1, .6, .2]); } }));</pre></article>
+      <article><h4>Управление</h4><p>Ручка эффекта и общие настройки.</p>
+<pre>h.stop(); h.alive(); h.set('hitAt', 1.2);
+Forge.list();       // [{ name, presets, img, period }]
+Forge.lite = true;  // экономный режим
+Forge.destroy();    // отдать видеопамять</pre></article>
+    </div>
+  </section>
+</div>
+<div class="stats" id="st" aria-live="off"></div>
+
+<script src="src/app/16e-forge-atlas.js"></script>
+<script src="src/app/16e-forge.js"></script>
+<script>
+(async () => {
+  Forge.auto = false;
+  // пакеты по одному: так видно, что из какого пакета
+  const owner = {}; Forge.names.forEach(n => owner[n] = 'ядро');
+  for (const p of ['classic', 'particles', 'image', 'hits', 'motion', 'glass', 'matter', 'remaster']){
+    await new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'src/forge/' + p + '.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); });
+    Forge.names.forEach(n => owner[n] = p === 'remaster' && owner[n] === 'classic' ? 'remaster' : owner[n] || p);
+  }
+  const NFT = ['agent', 'cat-globe', 'magic-ball', 'jelly-bunny', 'genesis', 'honey-bee', 'cheshire', 'bday'];
+  const RU = {
+    goldboom: ['Золотой взрыв', 'Золото стягивается воронкой, вспышка и лучи, монеты с ребром кувыркаются, падают и блестят, золотая пыль остывает. Монету можно заменить своей картинкой: img.'],
+    feathers: ['Сгорающие перья', 'Мультяшные перья с изгибом: хлопок пуха, перья кувыркаются и планируют, каждое загорается с края, обугливается и рассыпается угольками с дымком.'],
+    coinrain: ['Дождь монет', 'Монеты с ребром падают, кувыркаясь, блестят и отскакивают. Монету можно заменить своей картинкой: img.'],
+    gems: ['Россыпь самоцветов', 'Камни вылетают, кувыркаются, бликуют гранями и падают.'],
+    petals: ['Сакура', 'Лепестки падают, порхают и кувыркаются; пресеты — розы, осень, снег.'],
+    hearts: ['Сердечки', 'Сердечки поднимаются и покачиваются, часть лопается искрами.'],
+    embers: ['Угли', 'Снизу поднимается жар: угольки кружат вверх и остывают.'],
+    ashfall: ['Пепел', 'Хлопья пепла падают, часть ещё тлеет по краю.'],
+    goldaura: ['Золотая аура', 'Золотая пыль поднимается вихрем, вспыхивают блики, проплывают монетки.'],
+    crit: ['Крит', 'По Leona и Mundo: два клинка крест-накрест, стоп-кадр, колючая звезда с перелётом, крест-вспышка, ромбы.'],
+    toonhit: ['Мультяшный удар', 'По Lulu и Mundo: жёлтая колючая звезда с обводкой выскакивает, вокруг звёздочки и кольцо.'],
+    hexshield: ['Щит из сот', 'По Morgana: сфера из шестиугольников, края светятся, соты вспыхивают, удары идут волной.'],
+    sunring: ['Кольцо-солнце', 'По Rakan: обод с шипами медленно крутится, шипы дышат, поднимаются угольки.'],
+    dashring: ['Пунктир на земле', 'По Ekko: два пунктирных круга крутятся навстречу, из центра расходятся волны.'],
+    spear: ['Копьё', 'По Kindred: длинный луч прошивает цель, крест-вспышка и искры, луч тает нитью.'],
+    inkburst: ['Рваная клякса', 'Белая клякса с рваным краем, тёмная дыра, штрихи, цветные каракули и ромбы.'],
+    neongoo: ['Неоновая жижа', 'Капли плавают и сливаются, по краю — неоновый перелив, внутри тёмный туман и точки.'],
+    slice: ['Нарезка', 'Картинка уходит полосами вбок с разъездом цветов или собирается из полос.'],
+    smear: ['Шлейф', 'Картинка влетает с эхом-шлейфом и приземляется с приплюскиванием.'],
+    tier: ['Ранги', 'Раскрытие ранга: База, Удача, Мега, Ультра, Джекпот — чем дороже, тем больше слоёв и ярче.'],
+    liquidglass: ['Жидкое стекло', 'Картинка под толстым стеклом: к краю сильнее преломляет с радугой, блик по кромке, отсвет бежит.'],
+    glasspop: ['Стеклянная карточка', 'Жидкое стекло выскакивает с перелётом, по нему проходит отсвет.'],
+    facets: ['Грани кристалла', 'Картинка в гранях: каждая сдвигает и освещает её по-своему, рёбра светятся.'],
+    magnifier: ['Лупа', 'Круглая линза гуляет по картинке и увеличивает её.'],
+    rainglass: ['Дождь на стекле', 'За стеклом картинка размыта, капли сползают и показывают её резкой.'],
+    frostwipe: ['Протереть изморозь', 'Палец проводит по заиндевевшему стеклу — след чистый, край рваный.'],
+    prism: ['Призма', 'По картинке ползут радужные полосы, цвета в них разъезжаются.'],
+    anvil: ['Искры молота', 'Белая вспышка, искры веером остывают и отскакивают, угольки тлеют.'],
+    potion: ['Зелье', 'Жижа сливается в лужу, струи рвутся на капли, из неё вылетают призраки.'],
+    hitsigil: ['Удар с печатью', 'По Hecarim: взмах-полумесяц, кадр удара, 4-лучевая печать сжимается, линии скорости.'],
+    hitflare: ['Крестовая вспышка', 'По Kayle: серп по земле, крест света, столбы вверх, угольки.'],
+    hitsplash: ['Всплеск', 'По Vladimir: снаряд со шлейфом, вспышка, разлёт светлых кругов и брызги.'],
+    hitimg: ['Удар по картинке', 'Вспышка, тёмный силуэт на ярком отсвете со стоп-кадром, контур гаснет.'],
+    shield: ['Щит', 'По Rakan: пузырь с перелётом, светится край, удары расходятся волной.'],
+    aoe: ['Круг действия', 'Круг на земле заполняется, руны крутятся, затем удар по всей площади.'],
+    skinswap: ['Смена обликов', 'Глитч по видео «Gauntlet: Glitched»: картинка мигает между 11 обликами — градиент, неон, наклейка, полутон, мазки кисти, тьма с прожилками, молния, мишень, маркер; часть кадров разрезана пополам со сдвигом. Пресеты: neon, dark, paper; «картинки» — каждый облик своя картинка (img: [массив], до 8), как в видео.'],
+    glitch: ['Глитч', 'В покое рябь, раз в 1–1.5 с срыв: полосы рвутся вбок, цвета разъезжаются.'],
+    static: ['Помехи', 'Зерно, бегущая полоса, дрожь строк, цвет выцветает.'],
+    glass: ['Стекло', 'Картинка под скруглённым стеклом: преломление и радуга по краю.'],
+    frost: ['Изморозь', 'Иней тает с картинки или нарастает на ней.'],
+    ripple: ['Волна', 'Волна расходится от центра и затухает.'],
+    twirl: ['Воронка', 'Картинку закручивает и втягивает в точку или раскручивает из неё.'],
+    lens: ['Линза', 'Картинка вздувается и опадает.'],
+    heat: ['Марево', 'Дрожащий жар над раскалённым предметом.'],
+    pixel: ['Пиксели', 'Картинка распадается на блоки или собирается из них.'],
+    jelly: ['Желе', 'Приплющивается и пружинит, волна бежит снизу вверх.'],
+    shatter: ['Разбить стекло', 'Трещины от точки удара, вспышка, осколки разлетаются и падают.'],
+    dust: ['Рассыпать в пыль', 'Картинка вспыхивает волной и улетает огненной пылью; пресет in — собирается.'],
+    outline: ['Контур', 'Вокруг картинки светится контур по её форме.'],
+    hue: ['Сдвиг цвета', 'Цвета картинки плавно идут по кругу.'],
+    burn: ['Сгорание', 'Картинка сгорает по шуму с горящей кромкой.'],
+    holo: ['Голограмма', 'Полосы, радуга и мерцание поверх картинки.'],
+    wisps: ['Огоньки', 'Частицы текут по вихревому потоку и тянут за собой след.'],
+    vortex: ['Воронка заряда', 'Частицы со всех сторон затягивает по спирали в центр.'],
+    fireworks: ['Салют', 'Ракета гаснет, из неё вылетает шар искр, часть трещит.'],
+    boom: ['Взрыв', 'Точка набухает → стоп-кадр и вспышка → огненный шар из клубов остывает в красное, волны, искры, обломки со следами, поднимается дым.'], toonboom: ['Мультяшный взрыв', 'Ожидание, звезда, главный клуб с перелётом, кольцо, угольки.'],
+    mushroom: ['Гриб', 'Мультяшный грибовидный взрыв со ступенями цвета.'], eruption: ['Извержение', 'Выброс огня и дыма снизу вверх.'],
+    cracks: ['Трещины', 'Ветвящиеся трещины, свет течёт от центра.'],
+    bolt: ['Молния', 'Ломаная молния; в момент удара пыль катится по земле, разлетаются искры и угольки.'], fbolt: ['Ветвящаяся молния', 'Ствол, ветви и веточки; ветви гаснут раньше.'],
+    fire: ['Костёр', 'Объёмное пламя из шума; угольки поднимаются, огонь стреляет искрами, дымок у кончиков, снизу дышит отсвет.'], firetoon: ['Мультяшный костёр', 'Маски языков с бегущей полосой внутри.'],
+    portal: ['Портал', 'Плазма в воронке; обломки и камни затягивает спиралью со следами, по ободу бегут блики.'], plasma: ['Плазма', 'Шум, искажённый шумом: течёт как магма.'],
+    julia: ['Аура Жюлиа', 'Фрактал: узор дышит и закручивается, светятся нити.'], bubble: ['Снаряд', 'Лента следа из трёх полос, голова дышит.'],
+    crystal: ['Снежинка', 'Растёт ветвлением, по граням бежит блик, рассыпается.'],
+    firering: ['Огненная рамка', 'Ленты огня бегут по кругу.'], button: ['Поток в кнопке', 'Прожилки и блик бегут внутри кнопки.'],
+    threads: ['Нити', 'Светящиеся нити из шума.'], nebula: ['Туманность', 'Туманность из шума.'], comets: ['Кометы', 'Пролетающие кометы с хвостом.'], arena: ['Туман арены', 'Мягкие клубы плывут по кругу.'],
+    hit: ['Попадание', 'Белое ядро, 4-лучевая звезда, кольцо, линии скорости, ромбы.'], slash: ['Взмах', 'Мягкий серп и яркое ядро по дуге, искры, вспышка на кончике.'],
+    starwave: ['Звёздная волна', 'Кольцо звёзд расходится и крутится, за ним кольцо и боке.'], sparkle: ['Блёстки', 'Звёздочки вспыхивают с перелётом, плывут мелкие боке.'],
+    starburst: ['Звёздный всплеск', 'В центре выскакивает звезда, звёздочки разлетаются со следами.'], sparkring: ['Рамка с блёстками', 'Светящееся кольцо, по нему бегут звёздочки со следами.'],
+    coins: ['Монеты', 'Фонтан монет и камней из сундука: кувыркаются в 3D, падают и отскакивают, блестят.'],
+    confetti: ['Конфетти', 'Две хлопушки: бумажки кувыркаются в 3D и порхают вниз.'],
+    charge: ['Заряд', 'Энергия стягивается спиралями, ядро пульсирует всё чаще, бьют разряды — выброс со звездой и волнами.'],
+    smoke: ['Дым', 'Клубы поднимаются, растут и тают: светлый верх, тёмный низ.'],
+    shock: ['Ударная волна', 'Удар по земле: вспышка, кольца, клубы пыли катятся в стороны, камешки отскакивают.'],
+    twinkle: ['Мерцание', 'Звёздное поле: точки мерцают, вспыхивают звёзды с лучами.'],
+    spirit: ['Дух', 'Призрачные клубы текут вверх по вихрю, огоньки со следами.'],
+    cloud: ['Облако', 'Пухлое облако клубится, подсвечено изнутри.'],
+    ring: ['Магический круг', 'Кольцо-солнце и пунктир крутятся навстречу, по ободу бегут звёзды.'],
+    combo: ['Комбо', 'Три быстрых удара, каждый больше, и финальный взрыв.'],
+    swirl: ['Галактика', 'Звёзды по спиральным рукавам вращаются вокруг ядра.'],
+    reveal: ['Раскрытие', 'Самоцвет в сиянии: свет дышит всё быстрее → вспышка → камень выскакивает и поворачивается к нам.'],
+    hexreveal: ['Раскрытие с гранями', 'Сфера из сот трескается и разлетается осколками-самоцветами — внутри камень.'],
+    sphere: ['Энергосфера', 'Щит-пузырь, вокруг по орбитам бегут искры, по поверхности бьют разряды.'],
+  };
+  const CATS = {
+    'Золото и перья': ['goldboom', 'feathers', 'coinrain', 'gems', 'coins'],
+    'Удары и щиты': ['hitsigil', 'crit', 'toonhit', 'hitflare', 'hitsplash', 'spear', 'hit', 'slash', 'combo', 'hitimg', 'shield', 'hexshield', 'sunring', 'dashring', 'aoe'],
+    'Награды': ['reveal', 'hexreveal', 'tier', 'charge', 'confetti', 'fireworks', 'firering', 'button'],
+    'Частицы': ['petals', 'hearts', 'embers', 'ashfall', 'wisps', 'vortex', 'starburst', 'starwave', 'sparkle', 'dust'],
+    'Ауры': ['goldaura', 'twinkle', 'spirit', 'cloud', 'ring', 'smoke', 'swirl', 'sphere', 'sparkring', 'threads', 'nebula', 'comets'],
+    'Стекло': ['liquidglass', 'glasspop', 'facets', 'magnifier', 'rainglass', 'frostwipe', 'prism', 'glass', 'frost', 'shatter'],
+    'Картинка': ['skinswap', 'glitch', 'static', 'ripple', 'twirl', 'lens', 'heat', 'pixel', 'jelly', 'slice', 'smear', 'outline', 'hue', 'burn', 'holo'],
+    'Моушн': ['skinswap', 'inkburst', 'neongoo', 'slice', 'glitch'],
+    'Огонь и взрывы': ['boom', 'toonboom', 'mushroom', 'eruption', 'shock', 'cracks', 'bolt', 'fbolt', 'fire', 'firetoon', 'portal', 'plasma', 'julia', 'bubble', 'crystal'],
+    'В игре Pawn': ['anvil', 'potion'],
+  };
+  const LS = k => { try { return localStorage.getItem('forge-' + k); } catch (_){ return null; } }, LSset = (k, v) => { try { localStorage.setItem('forge-' + k, v); } catch (_){} };
+  const $ = id => document.getElementById(id), grid = $('grid'), live = new Map(), all = Forge.names;
+  let cat = LS('cat'); if (!CATS[cat]) cat = 'Золото и перья';
+  const presetsN = all.reduce((a, n) => a + Forge.meta(n).presets.length, 0);
+  $('facts').innerHTML = `<span class="fact"><b>${all.length}</b> эффектов</span><span class="fact"><b>${presetsN}</b> пресетов</span><span class="fact">пакеты: <b>classic · particles · image · hits · motion · glass · matter · remaster</b></span>`;
+  $('img').innerHTML = NFT.map(n => `<option value="${n}">${n}</option>`).join('');
+  $('q').onchange = e => { Forge.quality = +e.target.value; };
+  $('img').onchange = () => draw(); $('coinimg').onchange = () => draw();
+  $('cats').innerHTML = Object.keys(CATS).map(c => `<button class="chip" type="button" data-c="${c}" aria-pressed="${c === cat}">${c}</button>`).join('');
+  $('cats').onclick = e => { const c = e.target.closest('[data-c]')?.dataset.c; if (!c) return; cat = c; LSset('cat', c); [...$('cats').children].forEach(b => b.setAttribute('aria-pressed', b.dataset.c === c)); draw(); };
+  const imgSrc = () => 'assets/nft/' + $('img').value + '.webp';
+  const useImg = m => m.img || m.imgOpt && $('coinimg').checked;
+  const codeFor = (n, pv) => { const m = Forge.meta(n); if (pv === 'картинки') return `Forge.play('${n}', { el, img: [облик1, облик2, …], loop: true })`; return `Forge.play('${pv ? n + ':' + pv : n}', { el${useImg(m) ? ', img' : ''}${m.period ? '' : ', loop: true'} })`; };
+  function start(card){
+    const n = card.dataset.n, pv = card.dataset.p || '', m = Forge.meta(n);
+    live.get(card)?.kill();
+    // «картинки» у смены обликов — каждый облик своя картинка (как в видео): отдаём все NFT списком
+    const many = n === 'skinswap' && pv === 'картинки';
+    live.set(card, Forge.play(pv && !many ? n + ':' + pv : n, { el: card.querySelector('.stage'), loop: !m.period, img: many ? NFT.slice(0, 6).map(x => 'assets/nft/' + x + '.webp') : useImg(m) ? imgSrc() : undefined }));
+  }
+  function draw(){
+    Forge.stopAll(); live.clear();
+    const list = CATS[cat].filter(n => all.includes(n));
+    grid.innerHTML = list.length ? list.map(n => { const m = Forge.meta(n), [ru, d] = RU[n] || [n, ''];
+      return `<div class="card" data-n="${n}" data-p="">
+        <button class="stage" type="button" aria-label="Повторить «${ru}»"><span class="hint">${m.period ? m.period + ' с · тап — ещё раз' : 'цикл'}</span></button>
+        <div class="title"><h3>${ru}</h3><span class="tag">${n} · ${owner[n]}</span></div>
+        <p class="desc">${d}</p>
+        ${m.presets.length ? `<div class="presets" role="group" aria-label="Пресеты"><button class="chip" type="button" data-pv="" aria-pressed="true">обычный</button>${(n === 'skinswap' ? [...m.presets, 'картинки'] : m.presets).map(p => `<button class="chip" type="button" data-pv="${p}" aria-pressed="false">${p}</button>`).join('')}</div>` : ''}
+        <div class="code"><code>${codeFor(n, '')}</code><button class="copy" type="button">Скопировать</button></div></div>`; }).join('') : '<p class="empty">В этом разделе пока нет эффектов.</p>';
+    for (const card of grid.children){ if (!card.dataset.n) continue;
+      card.querySelector('.stage').onclick = () => start(card);
+      card.querySelector('.presets')?.addEventListener('click', e => { const b = e.target.closest('[data-pv]'); if (!b) return; card.dataset.p = b.dataset.pv;
+        card.querySelectorAll('[data-pv]').forEach(x => x.setAttribute('aria-pressed', x === b)); card.querySelector('code').textContent = codeFor(card.dataset.n, b.dataset.pv); start(card); });
+      card.querySelector('.copy').onclick = e => { const btn = e.currentTarget, code = card.querySelector('code'), done = () => { btn.textContent = 'Скопировано'; btn.classList.add('ok'); setTimeout(() => { btn.textContent = 'Скопировать'; btn.classList.remove('ok'); }, 1400); };
+        try { navigator.clipboard.writeText(code.textContent).then(done, () => { getSelection().selectAllChildren(code); }); } catch (_){ getSelection().selectAllChildren(code); } };
+      start(card); }
+  }
+  // разовые — повторяем сами, когда отыграли
+  setInterval(() => { for (const [card, h] of live) if (h && !h.alive() && card.isConnected) start(card); }, 350);
+  setInterval(() => { const s = Forge.stats;
+    $('st').innerHTML = `<span>к/с <b>${(s.fps || 0).toFixed(0)}</b></span><span>кадр Горна <b>${s.ms.toFixed(2)} мс</b></span><span>частиц <b>${s.quads}</b></span><span>перерисовка <b>×${s.over.toFixed(2)}</b></span><span>программ шейдера <b>${(Forge.info().match(/прогр\. (\d+)/) || [, 0])[1]}</b></span>`; }, 500);
+  draw();
+})();
+</script>

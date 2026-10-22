@@ -1,5 +1,5 @@
 // Обзор эффектов строками: по 6 кадров на эффект, по 8 эффектов на лист — быстро увидеть слабые.
-// `node tools/fx-overview.mjs [имена через запятую (можно имя:пресет) | все] [папка]` → <папка>/overview-N.png
+// `node tools/fx-overview.mjs [имена через запятую (имя:пресет, имя+img — своя картинка) | все] [папка]` → <папка>/overview-N.png
 import { chromium } from 'playwright';
 import { serve } from './serve.mjs';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -23,8 +23,9 @@ for (let s = 0; s * per < pick.length; s++){
     const cw = 150, cols = 6, sh = document.createElement('canvas'); sh.width = cw * cols + 110; sh.height = cw * list.length;
     const g = sh.getContext('2d'); g.fillStyle = '#0d0c14'; g.fillRect(0, 0, sh.width, sh.height); g.font = '13px sans-serif';
     for (let r = 0; r < list.length; r++){ const n = list[r]; F.stopAll(); adv(700);
-      const m = F.meta(n.split(':')[0]), P = m.period || 2.4, ts = [.06, .16, .3, .48, .7, .92].map(k => k * P);
-      F.play(n, { x: 150, y: 150, size: 300, img: '/assets/nft/agent.webp', loop: !m.period });
+      const m = F.meta(n.replace('+img', '').split(':')[0]), P = m.period || 2.4, ts = [.06, .16, .3, .48, .7, .92].map(k => k * P);
+      // картинка — эффектам, которым она нужна, и тем, где её попросили (имя+img: своя монетка)
+      F.play(n.replace('+img', ''), { x: 150, y: 150, size: 300, img: m.img || n.includes('+img') ? '/assets/nft/agent.webp' : undefined, loop: !m.period });
       await new Promise(r => setTimeout(r, 200)); const cv = document.querySelector('.fx-cv'); let t = 0;
       for (let i = 0; i < cols; i++){ adv((ts[i] - t) * 1000); t = ts[i]; g.drawImage(cv, 0, 0, cv.width, cv.height, 110 + i * cw, r * cw, cw, cw); }
       g.fillStyle = '#e8e6f0'; g.fillText(n, 6, r * cw + 20); g.fillStyle = '#8c8aa0'; g.fillText((m.period ? m.period + ' с' : 'цикл'), 6, r * cw + 38); }

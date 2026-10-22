@@ -31,10 +31,10 @@ Forge.pack('particles', k => {
         const P = s.px.pts, B = s.box, T = s.T, S = B / [32, 44, 52][k.quality] * 1.08, cell = at.map['solid:W0'];   // сплошные клетки встык — пока стоят, это сама картинка
         for (let i = 0; i < P.length; i += 5){ const u = P[i], v = P[i + 1], col = [P[i + 2], P[i + 3], P[i + 4]], hx = 180 + u * B, hy = 180 + v * B;
           if (s.dir === 'out'){ const w = .12 + (u + .5) * 1.05 + v * .18 + R(0, .1);
-            spawn(s.p, { x: hx, y: hy, vx: R(20, 70), vy: R(-50, -10), wait: w, life: w + R(.8, 1.3), flow: 70, fz: 2, grav: -70, drag: .8, size: S, cells: [cell], add: .1,
+            spawn(s.p, { keep: true, x: hx, y: hy, vx: R(20, 70), vy: R(-50, -10), wait: w, life: w + R(.8, 1.3), flow: 70, fz: 2, grav: -70, drag: .8, size: S, cells: [cell], add: .1,
               sc: [[0, 1], [.12, 1.25], [1, .1]], tc: [[0, col], [.06, [1, .96, .85]], [.35, T], [1, [T[0] * .4, T[1] * .2, T[2] * .2]]], fadeIn: 0, fadeOut: .45, pul: 0 }); }
           else { const a = R(0, 6.28), d = R(90, 210), w = (u + .5) * .55 + R(0, .08);
-            spawn(s.p, { x: hx + Math.cos(a) * d, y: hy + Math.sin(a) * d, vx: -Math.sin(a) * 160, vy: Math.cos(a) * 160, hx, hy, spring: 90, drag: 7, wait: w, life: 2.55, size: S, cells: [cell], add: .1,
+            spawn(s.p, { keep: true, x: hx + Math.cos(a) * d, y: hy + Math.sin(a) * d, vx: -Math.sin(a) * 160, vy: Math.cos(a) * 160, hx, hy, spring: 90, drag: 7, wait: w, life: 2.55, size: S, cells: [cell], add: .1,
               sc: [[0, .3], [.3, 1]], tc: [[0, T], [.25, [1, .96, .85]], [.4, col], [1, col]], fadeIn: .08, fadeOut: .02, pul: 0 }); }
         }
       }

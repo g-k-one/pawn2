@@ -8,8 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { cpSync, rmSync, mkdirSync, readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 
 const root = fileURLToPath(new URL('../', import.meta.url)).replace(/\\/g, '/'), out = root + 'dist-forge/';
-// порядок важен: пакет берёт инструменты у тех, что подключены раньше (hits — у image, motion — у image и hits, compose — у hits)
-const PACKS = ['classic', 'particles', 'image', 'hits', 'motion', 'glass', 'compose'];
+// порядок важен: пакет берёт инструменты у тех, что подключены раньше (hits — у image; motion — у image и hits; matter — у hits; remaster — у hits и matter и заменяет эффекты classic)
+const PACKS = ['classic', 'particles', 'image', 'hits', 'motion', 'glass', 'matter', 'remaster'];
 const ver = JSON.parse(readFileSync(root + 'package.json', 'utf8')).version || '0', date = new Date().toISOString().slice(0, 10);
 const head = n => `/* Горн (Forge) — движок эффектов на WebGL${n ? ' · пакет «' + n + '»' : ''} · сборка ${date}. Описание — README.md рядом. */\n`;
 
@@ -24,7 +24,9 @@ for (const p of PACKS){ const src = head(p) + readFileSync(root + `src/forge/${p
 // сжатые копии
 for (const [f, src] of files){ const r = await build({ stdin: { contents: src, loader: 'js' }, write: false, minify: true, target: 'es2020', legalComments: 'none' });
   writeFileSync(out + f.replace(/\.js$/, '.min.js'), head(f === 'forge.js' ? '' : f.slice(6, -3)) + r.outputFiles[0].text); }
-cpSync(root + 'assets/fx', out + 'fx', { recursive: true });
+// картинки — только те атласы, что нужны эффектам (плюс шум и полосы)
+const used = new Set([...[root + 'src/app/16e-forge.js', ...PACKS.map(p => root + `src/forge/${p}.js`)].flatMap(f => [...readFileSync(f, 'utf8').matchAll(/atlas: '(\w+)'/g)].map(m => 'fx-' + m[1] + '.webp')), 'fx-noise.png', 'fx-strips.webp']);
+for (const f of readdirSync(root + 'assets/fx')) if (used.has(f)) cpSync(root + 'assets/fx/' + f, out + 'fx/' + f);
 cpSync(root + 'docs/FORGE.md', out + 'README.md');
 // пример: все пакеты, витрина по клику; картинка для эффектов картинки — своя, иначе они пропускаются
 writeFileSync(out + 'demo.html', `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

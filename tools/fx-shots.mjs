@@ -18,6 +18,7 @@ const T12 = [0, .1, .18, .22, .26, .32, .42, .55, .75, 1.05];
 Object.assign(TIMES, { hitsigil: T12, hitflare: [0, .08, .16, .19, .23, .3, .4, .55, .75, 1.05], hitsplash: [0, .1, .18, .24, .28, .35, .45, .6, .8, 1.05],
   shield: [.05, .15, .3, .6, .9, 1.2, 1.5, 1.8, 2.2, 2.6], aoe: [0, .2, .4, .6, .8, 1.1, 1.22, 1.3, 1.45, 1.7], hitimg: [0, .03, .06, .1, .14, .2, .3, .45, .65, .9],
   outline: [.1, .3, .5, .7, .9, 1.1, 1.3, 1.5, 1.7, 1.9], hue: [0, .4, .8, 1.2, 1.6, 2, 2.4, 2.8, 3.2, 3.6], burn: [0, .15, .3, .45, .6, .75, .9, 1.05, 1.2, 1.45], holo: [.1, .3, .5, .7, .9, 1.1, 1.3, 1.5, 1.7, 1.9] });
+Object.assign(TIMES, { skinswap: [.05, .13, .21, .29, .37, .45, .53, .61, .69, .77], goldboom: [.1, .3, .4, .46, .55, .7, .9, 1.2, 1.6, 2.2], feathers: [.03, .12, .3, .55, .8, 1.1, 1.4, 1.8, 2.3, 2.9], hearts: [.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5] });
 const IMG = '/assets/nft/agent.webp';
 const html = `<!doctype html><meta charset=utf-8><body style="margin:0;background:#0d0c14">
 <script>
@@ -25,7 +26,7 @@ let T = 1000, Q = [], seed = 7; Math.random = () => (seed = (seed * 16807) % 214
 window.requestAnimationFrame = f => (Q.push(f), Q.length); performance.now = () => T;
 const gc = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function(t, o){ return gc.call(this, t, Object.assign({}, o, { preserveDrawingBuffer: true })); };
 window.adv = ms => { const end = T + ms; while (T < end){ T += 1000 / 60; const f = Q.splice(0); f.forEach(g => g(T)); } };
-</script><script src="/src/app/16e-forge-atlas.js"></script><script src="/src/app/16e-forge.js"></script><script src="/src/forge/classic.js"></script><script src="/src/forge/particles.js"></script><script src="/src/forge/image.js"></script><script src="/src/forge/hits.js"></script><script src="/src/forge/motion.js"></script><script src="/src/forge/glass.js"></script><script src="/src/forge/compose.js"></script>
+</script><script src="/src/app/16e-forge-atlas.js"></script><script src="/src/app/16e-forge.js"></script><script src="/src/forge/classic.js"></script><script src="/src/forge/particles.js"></script><script src="/src/forge/image.js"></script><script src="/src/forge/hits.js"></script><script src="/src/forge/motion.js"></script><script src="/src/forge/glass.js"></script><script src="/src/forge/matter.js"></script><script src="/src/forge/remaster.js"></script>
 <script>window.F = Forge; Forge.auto = false;</script>`;
 
 const srv = await serve(process.cwd(), PORT), br = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -37,18 +38,18 @@ for (const name of names){
   await page.goto(`http://localhost:${PORT}/__fx.html`);
   await page.evaluate(() => { F.preload('aura'); F.preload('potion'); });
   await page.waitForTimeout(400);
-  const times = TIMES[name] || TIMES[name.split(':')[0]] || [.05, .15, .3, .5, .8, 1.2, 1.6, 2, 2.5, 3];
+  const times = TIMES[name] || TIMES[name.replace('+img', '').split(':')[0]] || [.05, .15, .3, .5, .8, 1.2, 1.6, 2, 2.5, 3];
   const png = await page.evaluate(async ({ name, times, IMG }) => {
-    F.play(name, { x: 210, y: 210, size: 360, img: IMG }); const cv = document.querySelector('.fx-cv');
+    const nm = name.replace('+img', ''), m = F.meta(nm.split(':')[0]); F.play(nm, { x: 210, y: 210, size: 360, img: m.img || name.includes('+img') ? IMG : undefined }); const cv = document.querySelector('.fx-cv');
     await new Promise(r => setTimeout(r, 400)); const sheet = document.createElement('canvas'), N = times.length, cw = 280; sheet.width = cw * 5; sheet.height = cw * Math.ceil(N / 5);
     const g = sheet.getContext('2d'); g.fillStyle = '#0d0c14'; g.fillRect(0, 0, sheet.width, sheet.height); g.font = '12px sans-serif'; g.fillStyle = '#9a98b0';
     let t = 0; for (let i = 0; i < N; i++){ adv((times[i] - t) * 1000); t = times[i];
       g.drawImage(cv, 0, 0, cv.width, cv.height, (i % 5) * cw, Math.floor(i / 5) * cw, cw, cw); g.fillText(times[i].toFixed(2) + ' с', (i % 5) * cw + 6, Math.floor(i / 5) * cw + 16); }
     return sheet.toDataURL('image/png');
   }, { name, times, IMG });
-  await writeFile(`${out}/${name.replace(':', '-')}.png`, Buffer.from(png.split(',')[1], 'base64'));
+  await writeFile(`${out}/${name.replace(':', '-').replace('+', '-')}.png`, Buffer.from(png.split(',')[1], 'base64'));
   // время кадра: реальные замеры без подмены часов не нужны — считаем частицы, квадраты и перерисовку
-  const st = await page.evaluate(([n, IMG]) => { const r = []; F.play(n, { x: 210, y: 210, size: 360, img: IMG }); for (let i = 0; i < 40; i++){ adv(17); r.push([F.stats.quads, F.stats.over]); } return r; }, [name, IMG]);
+  const st = await page.evaluate(([n, IMG]) => { const r = []; const nm = n.replace('+img', ''); F.play(nm, { x: 210, y: 210, size: 360, img: F.meta(nm.split(':')[0]).img || n.includes('+img') ? IMG : undefined }); for (let i = 0; i < 40; i++){ adv(17); r.push([F.stats.quads, F.stats.over]); } return r; }, [name, IMG]);
   const mq = Math.max(...st.map(r => r[0])), mo = Math.max(...st.map(r => r[1]));
   console.log(`${name}: до ${mq} квадратов за кадр, перерисовка до ×${mo.toFixed(2)} → ${out}/${name.replace(':', '-')}.png`);
 }

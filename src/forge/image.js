@@ -45,6 +45,42 @@ Forge.pack('image', k => {
     'else if(md<3.5){float a=k*6.2832;vec3 y=mat3(.299,.596,.211,.587,-.274,-.523,.114,-.322,.312)*c.rgb;float h=atan(y.z,y.y)+a;float ch=length(y.yz);y.yz=vec2(cos(h),sin(h))*ch;' +
     'c.rgb=clamp(mat3(1.,1.,1.,.956,-.272,-1.106,.621,-.647,1.703)*y,0.,1.);}' +
     'else if(md<4.5){float n=texture2D(nz,u*1.4).r*.7+texture2D(nz,u*3.1).g*.3;float th=vf.z*1.15-.08;float e=smoothstep(th+.07,th,n);c.a*=smoothstep(th-.01,th+.025,n);ex=e*step(th,n+.0)*IM(u).a;ad=vt*ex*1.6;}' +
+    // .7 смена обликов (глитч из моушн-дизайна): картинка в одном из 11 обликов; vf.w < 1 — линия раздела: выше облик vf.y, ниже vf.z,
+    // нижняя часть сдвинута вбок. Облики: 0 как есть · 1 градиент бирюза → розовый · 2 неоновый зелёный с прожилками и свечением края ·
+    // 3 синий верх / жёлтый низ · 4 наклейка: белая заливка, тёмная обводка, красная подложка с рваным краем · 5 розовый полутон · 6 мазки кисти за буквами · 7 тьма с прожилками и щупальцами · 8 молния · 9 мишень · 10 маркер-каракуля
+    'else if(md>6.5){float sp=vf.w;float lo=step(sp,u.y);float S=mix(vf.y,vf.z,lo);vec2 w=u+vec2(lo*step(sp,.999)*(H1(floor(sp*97.))-.5)*.06,0.);c=IM(w);' +
+    'float lm=dot(c.rgb,vec3(.3,.59,.11));float dl=0.;for(int i=0;i<8;i++){float b=float(i)*.785;dl=max(dl,IM(w+vec2(cos(b),sin(b))*.022).a);}float ol=clamp(dl-c.a,0.,1.);' +
+    // 20+ — облик из своей картинки: клетка листа 4×2 (несколько картинок, imgs)
+    'if(S>19.5){float ci=S-20.;vec2 cl=clamp(w,.004,.996);c=texture2D(im,(vec2(mod(ci,4.),floor(ci/4.))+cl)/vec2(4.,2.))*step(0.,w.x)*step(w.x,1.)*step(0.,w.y)*step(w.y,1.);dl=c.a;}' +
+    'else if(S<.5){}else if(S<1.5){vec3 g=mix(vec3(.25,1.,.95),vec3(1.,.3,.85),smoothstep(.3,.75,w.y));c.rgb=g*(.55+.6*lm);ad=vec3(.9,1.,1.)*ol*.9;c.a=max(c.a,ol);}' +
+    'else if(S<2.5){float vn=texture2D(nz,w*3.).r;float vein=pow(1.-abs(vn*2.-1.),8.);c.rgb=vec3(.08,.75,.55)*(.35+.7*lm)+vec3(.4,1.,.8)*vein*.6*c.a;ad=vec3(.2,1.,.7)*ol;c.a=max(c.a,ol*.9);}' +
+    'else if(S<3.5){vec3 g=w.y<.52?mix(vec3(.15,.35,1.),vec3(.45,.75,1.),w.y/.52):vec3(1.,.95,.1);c.rgb=g*(.6+.55*lm);ad=vec3(1.)*ol*.5;c.a=max(c.a,ol);}' +
+    'else if(S<4.5){float d2=0.;for(int i=0;i<8;i++){float b=float(i)*.785+.39;d2=max(d2,IM(w+vec2(cos(b),sin(b))*.07).a);}float rn=texture2D(nz,w*2.5).g;float pap=smoothstep(.45,.55,d2+(rn-.5)*.5);' +
+    'vec3 fill=vec3(.96)*(.85+.15*lm);c.rgb=mix(vec3(.85,.33,.3)*(.8+.2*rn),vec3(.08),clamp(ol*1.5,0.,1.));c.rgb=mix(c.rgb,fill,c.a);c.a=max(max(c.a,ol),pap*.95);}' +
+    'else if(S<5.5){vec2 g=fract(gl_FragCoord.xy/5.)-.5;float dt=step(length(g),.25+.3*lm);c.rgb=mix(vec3(.55,.1,.45),vec3(1.,.5,.9),dt)*(.6+.5*lm);ad=vec3(1.,.6,.95)*ol*.7;c.a=max(c.a,ol);}' +
+    // 6 мазки: розовые буквы, за ними цветные мазки кисти веером (красный, зелёный, оранжевый, синий) и тёмная обводка
+    'else if(S<6.5){float d2=0.;for(int i=0;i<8;i++){float b=float(i)*.785+.2;d2=max(d2,IM(w+vec2(cos(b),sin(b))*.17).a);}float kn=texture2D(nz,vec2(w.x*.7+w.y*1.4,w.y*.35)).r;' +
+    'float bs=(w.x+w.y*.55)*5.+kn*2.2;float lane=floor(bs);float stk=step(.3,fract(bs))*smoothstep(.3,.55,d2+(kn-.5)*.7)*step(.2,H1(lane*7.3));' +
+    'vec3 pal=H1(lane*3.1)<.25?vec3(.9,.2,.25):H1(lane*3.1)<.5?vec3(.25,.75,.4):H1(lane*3.1)<.75?vec3(1.,.55,.15):vec3(.3,.45,.95);' +
+    'vec3 fill=vec3(1.,.42,.82)*(.65+.45*lm);c.rgb=mix(pal*(.75+.25*kn),vec3(.08),clamp(ol*1.4,0.,1.));c.rgb=mix(c.rgb,fill,c.a);c.a=max(max(c.a,ol),stk*.95);}' +
+    // 7 тьма: тёмно-бирюзовые буквы, внутри светящиеся прожилки-трещины, вокруг тёмные щупальца-дымка
+    'else if(S<7.5){float vn=texture2D(nz,w*2.6+vec2(t*.03,0.)).r;float vein=pow(1.-abs(vn*2.-1.),14.);float d2=0.;for(int i=0;i<8;i++){float b=float(i)*.785;d2=max(d2,IM(w+vec2(cos(b),sin(b))*.05).a);}' +
+    'float tn=texture2D(nz,w*4.+vec2(0.,t*.08)).g;float ten=smoothstep(.55,.75,d2*tn*1.6)*(1.-c.a);c.rgb=vec3(.03,.13,.14)*(.6+.6*lm)+vec3(.3,1.,.95)*vein*1.1*c.a;' +
+    'c.rgb=mix(c.rgb,vec3(.02,.05,.07),ten);ad=vec3(.2,.9,.85)*ol*.6;c.a=max(max(c.a,ol*.8),ten*.85);}' +
+    // 8 молния: синий верх, жёлтый низ, наискосок через буквы — яркая молния (дрожит), вокруг голубое свечение
+    'else if(S<8.5){vec3 g=w.y<.52?mix(vec3(.15,.3,1.),vec3(.4,.7,1.),w.y/.52):vec3(1.,.95,.08);c.rgb=g*(.6+.55*lm);float jt=(texture2D(nz,vec2(w.x*3.,floor(t*20.)*.13)).r-.5)*.06;' +
+    'float ly=.2+w.x*.45+jt;float dd=abs(w.y-ly);float bolt=exp(-dd*140.)*step(-.05,w.x)*step(w.x,1.05);float bg=exp(-dd*22.)*.5;' +
+    'ad=vec3(1.,1.,.75)*bolt*1.6+vec3(.45,.75,1.)*(bg*.6+ol*.9);c.a=max(max(c.a,ol*.7),max(bolt,bg*.5));}' +
+    // 9 мишень: зелёные буквы, за ними тёмно-красные круги мишени и мелкие крестики
+    'else if(S<9.5){vec2 q=w-vec2(.5,.52);float rr=length(q*vec2(1.,1.25));float rg=step(.5,fract(rr*8.))*step(rr,.64);vec2 cl=fract(w*7.)-.5;vec2 ci=floor(w*7.);' +
+    'float xm=step(.72,H2(ci+3.))*(1.-smoothstep(.02,.05,min(abs(cl.x-cl.y),abs(cl.x+cl.y))))*step(max(abs(cl.x),abs(cl.y)),.16);' +
+    'vec3 fill=vec3(.15,.78,.56)*(.55+.55*lm);c.rgb=mix(vec3(.42,.17,.1),vec3(.2,.9,.65),xm);c.rgb=mix(c.rgb,vec3(.03,.2,.15),clamp(ol*1.4,0.,1.));c.rgb=mix(c.rgb,fill,c.a);' +
+    'c.a=max(max(c.a,ol),max(rg*.9,xm));}' +
+    // 10 маркер: белые буквы с тонкой чёрной обводкой, поверх — каракуля маркером (зелёный/фиолетовый) и пятно-клякса
+    'else{float sq=abs(w.y-(.55+.06*sin(w.x*22.+floor(t*6.))+.03*sin(w.x*61.)));float mk=smoothstep(.016,.008,sq)*step(.2,w.x)*step(w.x,.85);' +
+    'float bl=smoothstep(.12,.1,length((w-vec2(.14,.78))*vec2(1.,1.3))+(texture2D(nz,w*5.).r-.5)*.08);vec3 fill=vec3(.97)*(.85+.15*lm);' +
+    'c.rgb=mix(vec3(.05),fill,c.a);c.rgb=mix(c.rgb,vec3(.6,.25,.95),mk);c.rgb=mix(c.rgb,vec3(.35,.85,.2),bl);c.a=max(max(c.a,ol),max(mk,bl));}' +
+    'ad+=vec3(1.)*smoothstep(.012,0.,abs(u.y-sp))*.7*step(sp,.999)*max(c.a,dl);}' +
     'else if(md>5.5){float N=max(vf.w,6.);float row=floor(u.y*N);float d=H1(row*3.31)*.45;float rt=clamp((vf.z-d)/.55,0.,1.);float sg=H1(row*1.73)<.5?-1.:1.;' +
     'vec2 w=u+vec2(sg*rt*rt*1.3,0.);float sp=rt*.04;c=vec4(IM(w+vec2(sp,0.)).r,IM(w).g,IM(w-vec2(sp,0.)).b,IM(w).a);c.a*=1.-smoothstep(.55,1.,rt);' +
     'float ln=step(fract(u.y*N),.08)*step(.01,rt)*(1.-rt);ad=vec3(ln*.9)*IM(w).a;}' +
@@ -164,4 +200,14 @@ Forge.pack('image', k => {
         piece(c, fa); } } };
 
   Object.assign(k, { pic, piece, IMGFX, PR, P4, Q4, A4, WHITE });
+
+  // смена обликов (по видео «Gauntlet: Glitched»): картинка мигает между обликами 12–15 раз в секунду, иногда держит 2–3 кадра;
+  // часть кадров разрезана — верх в одном облике, низ в другом и сдвинут вбок, по линии разреза светлая кромка; на смене чуть подпрыгивает
+  DEF.skinswap = { atlas: 'aura', img: true, presets: { calm: { fps: 8, split: .3 }, wild: { fps: 18, split: .7 }, neon: { styles: [1, 2, 5, 8] }, dark: { styles: [2, 7, 9] }, paper: { styles: [0, 4, 6, 10] } },
+    // img — одна картинка, облики делает шейдер; imgs — массив картинок (до 8): каждая — свой облик, как в видео (styles тогда не нужны)
+    init(s){ const o = s.o, n = Array.isArray(o.img) ? Math.min(8, o.img.length) : 0; Object.assign(s, { fps: o.fps || 13, split: o.split ?? .5, st: n ? Array.from({ length: n }, (_, i) => 20 + i) : o.styles || [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], a: 0, b: 1, sp: 2, hold: 0, nx: 0, kick: 0 }); },
+    update(s, dt){ s.nx -= dt; s.kick = Math.max(0, s.kick - dt * 8);
+      if (s.nx <= 0){ const L = s.st, pick = () => L[(Math.random() * L.length) | 0]; let a = pick(); if (L.length > 1) while (a === s.a) a = pick();
+        s.a = a; s.b = pick(); s.sp = Math.random() < s.split ? R(.25, .75) : 2; s.nx = (Math.random() < .25 ? R(2, 3) : 1) / s.fps; s.kick = 1; } },
+    render(s, c){ const j = 1 + .035 * s.kick; pic(c, 180 + (Math.random() - .5) * 6 * s.kick, 180, s.W * j, s.H * j, [24.7, s.a, s.b, s.sp], .1); } };
 });
