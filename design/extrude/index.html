@@ -17,12 +17,17 @@ label.chk{grid-column:1/4;display:flex;gap:8px;align-items:center}
 .meter button{background:#30A5FF;border:0;border-radius:10px;color:#fff;padding:8px 12px;font:inherit;cursor:pointer}
 #stres{width:100%}
 .meter label{display:flex;gap:6px;align-items:center}
+.gal{display:flex;flex-direction:column;gap:6px;width:100%}
+.gal b{font-size:12.5px;color:inherit;opacity:.72;font-weight:600;margin-top:4px}
+.gal div{display:flex;flex-wrap:wrap;gap:6px}
+.gal button{padding:6px 10px;border-radius:10px;font-size:13px}
+.gal button.go{background:currentColor}
 .anims{display:flex;flex-wrap:wrap;gap:8px;width:100%}
 .anims input{width:90px;background:transparent;border:1px solid currentColor;border-radius:10px;color:inherit;padding:8px 10px;font:inherit}
 .anims button{background:transparent;border:1px solid currentColor;color:inherit}
 </style></head><body>
 <div id="stage"></div>
-<div class="meter"><span id="fps">—</span><label><input type="checkbox" id="lt"> Lite</label><button type="button" id="st">Тест вращения</button><button type="button" id="sh">Блик</button><span class="anims" id="an"><button type="button" data-a="drop">Падение</button><button type="button" data-a="pop">Выскок</button><button type="button" data-a="slam">Удар</button><button type="button" data-a="wave">Волна</button><button type="button" data-a="out">Уход</button></span><span class="anims"><input type="number" id="sum" value="125.4" min="0" step="0.1" aria-label="Сумма"><button type="button" id="cnt">Счётчик</button></span><span id="stres"></span></div>
+<div class="meter"><span id="fps">—</span><label><input type="checkbox" id="lt"> Lite</label><button type="button" id="st">Тест вращения</button><button type="button" id="sh">Блик</button><label><input type="checkbox" id="rl"> Слоями (как раньше)</label><span class="anims" id="an"></span><span class="anims"><input type="text" id="tx2" value="WIN!" aria-label="Новый текст" style="width:110px"></span><span class="anims"><input type="number" id="sum" value="125.4" min="0" step="0.1" aria-label="Сумма"><button type="button" id="cnt">Счётчик</button></span><span id="stres"></span></div>
 <div class="pre" id="pre"></div>
 <div class="ctl" id="ctl"></div>
 <script src="../../src/app/16l-extrude.js"></script>
@@ -61,14 +66,29 @@ document.getElementById('sp').onchange = e => t.set({ spring: e.target.checked }
 // замер: раз в секунду — сколько кадров нарисовано и сколько копий в последнем; в покое должно быть 0
 const fps = document.getElementById('fps'); let pf = 0, stress = 0;
 setInterval(() => { const s = t.stats, k = s.frames - pf; pf = s.frames;
-  fps.innerHTML = `<b>${k}</b> к/с · копий <b>${s.layers}</b> из ${s.max}${k ? '' : ' · покой, кадров нет'}${stress ? ' · тест…' : ''}`; }, 1000);
+  fps.innerHTML = `<b>${k}</b> к/с · ${s.render === 'ray' ? 'лучом' : `копий <b>${s.layers}</b> из ${s.max}`}${k ? '' : ' · покой, кадров нет'}${stress ? ' · тест…' : ''}`; }, 1000);
 document.getElementById('st').onclick = e => { if (stress) return; const sp = t.stats; stress = 1; const f0 = sp.frames, t0 = performance.now();
   t.set({ spin: 180 }); setTimeout(() => { const r = (t.stats.frames - f0) / ((performance.now() - t0) / 1000); t.set({ spin: +document.getElementById('r-spin').value }); stress = 0;
     document.getElementById('stres').textContent = `Вращение 5 с: в среднем ${r.toFixed(0)} к/с`; }, 5000); };
 document.getElementById('sh').onclick = () => t.shine();
-// появления: после удара и падения — блик; каждое приземление буквы — короткая вибрация (на телефоне)
-document.getElementById('an').onclick = e => { const a = e.target.dataset.a; if (!a) return;
-  t.play(a, { onLand: () => navigator.vibrate?.(8) }).then(() => { if (a === 'slam' || a === 'drop') t.shine(); }); };
+// витрина пресетов: по группам; смена текста — между полями «Текст» и «Новый текст»; удар буквы — короткая вибрация (на телефоне)
+const NAMES = { rise: 'Подъём', slide: 'Въезд', pop: 'Выскок', drop: 'Падение', flip: 'Переворот', spin: 'Карта', spiral: 'Спираль', type: 'Машинка', smear: 'Смаз', toss: 'Бросок', gather: 'Сборка', slam: 'Удар',
+  wave: 'Волна', breathe: 'Дыхание', float: 'Парение', glow: 'Пульс', jelly: 'Желе',
+  punch: 'Толчок', shake: 'Тряска', jiggle: 'Покачивание', squash: 'Сплющивание', hop: 'Прыжок', flash: 'Вспышка', twirl: 'Кувырок',
+  fade: 'Растворение', fall: 'Осыпание', scatter: 'Разлёт', implode: 'Схлопывание', flipout: 'Переворот прочь', zoomout: 'Зум прочь', out: 'Съёживание',
+  roll: 'Барабан', flip_: 'Табло', morph: 'Перетекание', pop_: 'Схлоп', scramble: 'Расшифровка' };
+const GT = { in: 'Появление', idle: 'Жизнь', accent: 'Акцент', swap: 'Смена текста', out: 'Уход' };
+const an = document.getElementById('an'); an.className = 'gal';
+an.innerHTML = Object.entries(GT).map(([g, title]) => `<b>${title}</b><div>${t.groups[g].map(k => `<button type="button" data-g="${g}" data-a="${k}">${NAMES[g === 'swap' && NAMES[k + '_'] ? k + '_' : k]}</button>`).join('')}</div>`).join('') +
+  `<b>Сценарий</b><div><button type="button" class="go" data-a="story">Удар → волна → толчок → смена → осыпание → подъём</button></div>`;
+const buzz = () => navigator.vibrate?.(8);
+const swapTo = () => { const a = document.getElementById('tx'), b = document.getElementById('tx2'), next = t.text === b.value ? a.value : b.value; return next || ' '; };
+an.onclick = async e => { const a = e.target.dataset.a, g = e.target.dataset.g; if (!a) return;
+  if (a === 'story'){ await t.play('slam', { onLand: buzz }); t.shine(); await t.play('wave', { time: 1.6 }); await t.play('punch', { onLand: buzz });
+    await t.swap(swapTo(), { style: 'roll', onLand: buzz }); await t.play('fall'); await new Promise(r => setTimeout(r, 300)); await t.play('rise'); return; }
+  if (g === 'swap') return t.swap(swapTo(), { style: a, onLand: buzz });
+  t.play(a, { onLand: buzz }).then(() => { if (a === 'slam' || a === 'drop') t.shine(); }); };
+document.getElementById('rl').onchange = e => t.set({ render: e.target.checked ? 'layers' : 'ray' });
 // счётчик: цифры — готовые ячейки атласа, число растёт до суммы без пересборки; щелчок на шаг, в конце удар и блик
 let ac = null;
 const click = () => { try { ac ||= new AudioContext(); const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 1500; g.gain.setValueAtTime(.06, ac.currentTime);
