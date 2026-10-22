@@ -11,8 +11,9 @@ export function serve(dir = root, p = port){
   dir = dir.replace(/^\/([A-Za-z]:)/, '$1');   // Windows: URL.pathname даёт /C:/… — без ведущего слэша
   const srv = createServer(async (req, res) => {
     const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^(\.\.[/\\])+/, '');
-    try { const body = await readFile(join(dir, /[\\/]$/.test(path) ? path + 'index.html' : path));
-      res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream', 'content-length': body.length }); res.end(body); }
+    const file = /[\\/]$/.test(path) ? path + 'index.html' : path;   // папка → её index.html, и тип — по нему (иначе браузер скачивает страницу)
+    try { const body = await readFile(join(dir, file));
+      res.writeHead(200, { 'content-type': TYPES[extname(file)] || 'application/octet-stream', 'content-length': body.length }); res.end(body); }
     catch { res.writeHead(404); res.end('not found'); }
   });
   return new Promise(r => srv.listen(p, () => r(srv)));

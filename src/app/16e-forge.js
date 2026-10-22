@@ -54,7 +54,7 @@ function makeForge(host){
     }
   }
   // цвет по жизни: tc = [[доля жизни, [r, g, b]], …] — искра остывает (белая → жёлтая → оранжевая → красная); в общий черновик, без новых массивов
-  const TC = [1, 1, 1];
+  const TC = [1, 1, 1], WHITE3 = [1, 1, 1];
   const tcol = (K, k) => { let i = 1; while (i < K.length - 1 && K[i][0] < k) i++; const [a, A] = K[i - 1], [b, B] = K[i], u = Math.min(1, Math.max(0, (k - a) / (b - a)));
     TC[0] = A[0] + (B[0] - A[0]) * u; TC[1] = A[1] + (B[1] - A[1]) * u; TC[2] = A[2] + (B[2] - A[2]) * u; return TC; };
   // мягкая кривая прозрачности: плавное появление и угасание
@@ -69,7 +69,7 @@ function makeForge(host){
        1…1.5 — «по температуре», как в AAA (дробная часть × 0.6 — мягкость края): атлас даёт серую маску, цвет берётся из градиента (ramp) по яркости × жару,
            края съедает растворение по шуму (erosion), кончики колышет искажение шумом — основание стоит. */
   const VF = 20;                                       // чисел на вершину: p2 uv2 aa2 tn3 q2 fx4 cr4 rw1
-  let stripT, cv, gl, prog, vbo, ibo, loc, buf = new Float32Array(VF * 4 * 512), nq = 0, W = 0, H = 0, dpr = 1, noiseT, rampT;
+  let stripT, cv, gl, vbo, ibo, buf = new Float32Array(VF * 4 * 512), nq = 0, W = 0, H = 0, dpr = 1, noiseT, rampT;
   const FULL = [0, 0, 1, 1], TRS = [0, 0, 1, 1], tex = {}, NOFX = [0, 0, 0, 0, -1], FXS = [0, 0, 0, 0, -1];   // FXS — общий черновик: без новых массивов на каждую частицу
   // кривая по ключам [[доля жизни, значение], …] — линейно между ключами
   const crv = (K, k) => { if (k <= K[0][0]) return K[0][1]; for (let i = 1; i < K.length; i++) if (k <= K[i][0]){ const [a, va] = K[i - 1], [b, vb] = K[i]; return va + (vb - va) * (k - a) / (b - a); } return K[K.length - 1][1]; };
@@ -77,7 +77,7 @@ function makeForge(host){
   // rect — своя рамка внутри ячейки [x0, y0, x1, y1] (жижа: квадрат только вокруг шариков)
   function quad(c, cell, m00, m01, m10, m11, tx, ty, a, add, tint, inset, fx, rect){
     if (a <= .003 || cell == null) return;
-    const at = c.at, h = at.cell / 2, k = c.k, ox = c.ox, oy = c.oy, f = fx || NOFX;
+    const at = c.at, h = at.cell / 2, k = c.k, ox = c.ox, oy = c.oy, f = fx || NOFX; mask |= 1 << fam(f[0]);
     if ((nq + 1) * VF * 4 > buf.length){ const b = new Float32Array(buf.length * 2); b.set(buf); buf = b; }
     const du = 1 / at.cols, dv = 1 / at.rows, u0 = (cell % at.cols) * du, v0 = Math.floor(cell / at.cols) * dv, ins = inset || 0;
     const r = tint ? tint[0] : 1, g = tint ? tint[1] : 1, bl = tint ? tint[2] : 1, al = a * c.fade;
@@ -102,7 +102,7 @@ function makeForge(host){
   function quad4(c, P, Q, A, alpha, add, tint, fx){
     if (alpha <= .003) return;
     if ((nq + 1) * VF * 4 > buf.length){ const b = new Float32Array(buf.length * 2); b.set(buf); buf = b; }
-    const k = c.k, ox = c.ox, oy = c.oy, al = alpha * c.fade, f = fx;
+    const k = c.k, ox = c.ox, oy = c.oy, al = alpha * c.fade, f = fx; mask |= 1 << fam(f[0]);
     fill += Math.abs((P[2][0] - P[0][0]) * (P[3][1] - P[1][1]) - (P[3][0] - P[1][0]) * (P[2][1] - P[0][1])) / 2 * k * k;
     let o = nq * VF * 4;
     for (let i = 0; i < 4; i++){
@@ -154,8 +154,9 @@ function makeForge(host){
   // след частицы: сплошная мягкая лента (режим 21) по последним точкам — к хвосту тоньше и прозрачнее, по оси белое ядро.
   // Вершины пишутся прямо в буфер, без новых массивов: следов сотни на кадр
   function trail(c, p, k, w){
-    const T = p._tr, n = p.tn, N = p.trail, a = fade(p, k) * c.fade, tint = p.tc ? tcol(p.tc, k) : (p.tint || FULL), k2 = c.k, add = p.add;
+    const T = p._tr, n = p.tn, N = p.trail, a = fade(p, k) * c.fade, tint = p.tc ? tcol(p.tc, k) : (p.tint || WHITE3), k2 = c.k, add = p.add;
     if (a <= .003) return;
+    mask |= 1 << 12;
     const P = i => (p.th - n + i + N) % N * 2;   // i-я точка от хвоста
     let j0 = P(0), x0 = T[j0], y0 = T[j0 + 1], j1 = P(1), nx0 = -(T[j1 + 1] - y0), ny0 = T[j1] - x0, l0 = Math.hypot(nx0, ny0) || 1; nx0 /= l0; ny0 /= l0;
     for (let i = 1; i < n; i++){
@@ -213,10 +214,13 @@ function makeForge(host){
   // доля сложения света (add): 0 — обычное смешивание, 1 — чистое сложение (как additiveness в Rive)
   const FS = '#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nuniform sampler2D tx;uniform sampler2D nz;uniform sampler2D rp;uniform sampler2D sp;uniform float tm;uniform float lq;uniform vec4 gp;uniform vec3 mb[24];uniform float mbn;' +
     'varying vec2 vu;varying vec2 va;varying vec3 vt;varying vec2 vq;varying vec4 vf;varying vec4 vc;varying float vr;' +
+    // слой картинки (семья 22): своя текстура im; за краями картинки — пусто
+    'uniform sampler2D im;vec4 IM(vec2 u){return texture2D(im,clamp(u,0.,1.))*step(0.,u.x)*step(u.x,1.)*step(0.,u.y)*step(u.y,1.);}' +
+    'float H1(float n){return fract(sin(n)*43758.5453);}float H2(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}' +
     'void main(){float RW=vr<0.?gp.w:vr;' +
     // 19 — жижа (метаболы): поле Σ 1.3r²/(d² + 0.3r²) от шариков (без бесконечности в центре — внутри лужи нет бугров от каждой капли); поверхность — порог поля, шарики сливаются и тянутся нитями.
     // Объём: нормаль из градиента поля → рассеянный свет, блик, тёмная кромка; внутри течёт шум; вокруг — мягкое свечение
-    'if(vf.x>18.9&&vf.x<19.5){float t=tm*gp.z;vec2 p=vq;float f=0.;vec2 g=vec2(0.);' +
+    '§10§if(vf.x>18.9&&vf.x<19.5){float t=tm*gp.z;vec2 p=vq;float f=0.;vec2 g=vec2(0.);' +
     'for(int i=0;i<24;i++){if(float(i)>=mbn)break;vec3 b=mb[i];vec2 d=p-b.xy;float r2=dot(d,d)+.3*b.z*b.z;float k=1.3*b.z*b.z/r2;f+=k;g-=2.*k/r2*d;}' +
     'if(f<.35){gl_FragColor=vec4(0.);return;}' +
     'float a=smoothstep(.93,1.07,f);float gw=smoothstep(.35,1.,f)*(1.-a)*.5;' +
@@ -227,7 +231,7 @@ function makeForge(host){
     'gl_FragColor=vec4((col*a+gc*gw)*va.x,(a+gw*.15)*va.x);return;}' +
     // 20 — призрак из жижи: картинка с волной (хвост извивается сильнее), проявляется снизу вверх по линии vf.y,
     // на линии — светящаяся кромка зелья; vf.z — сила волны, vf.w — фаза
-    'if(vf.x>19.9&&vf.x<20.5){float t=tm*gp.z;vec2 q=vq;float tl=pow(q.y,1.6);' +
+    '§11§if(vf.x>19.9&&vf.x<20.5){float t=tm*gp.z;vec2 q=vq;float tl=pow(q.y,1.6);' +
     'q.x+=sin(q.y*9.-t*7.+vf.w)*.05*tl*vf.z+sin(t*2.7+vf.w)*.012;q.y+=sin(q.x*7.+t*4.+vf.w)*.012*vf.z;' +
     'vec4 c=texture2D(tx,vc.xy+clamp(q,.01,.99)*vc.zw);float n=texture2D(nz,vq*1.5+vec2(vf.w,t*.3)).r;' +
     'float rv=vf.y;float sh=smoothstep(rv+.05,rv-.05,q.y+(n-.5)*.12);float ed=exp(-abs(q.y+(n-.5)*.12-rv)*28.)*step(.02,c.a);' +
@@ -235,13 +239,13 @@ function makeForge(host){
     'float A=c.a*sh*fl*va.x;gl_FragColor=vec4(col*A+texture2D(rp,vec2(.7,RW)).rgb*ed*.5*va.x,A);return;}' +
     // 16 — фрактал Жюлиа: z → z² + c, c медленно ходит по кругу (узор дышит и закручивается); цвет — по «скорости убегания»
     // и ловушке орбиты (как близко точка подходила к кругу) — даёт светящиеся нити. На экономном качестве — вдвое меньше шагов
-    'if(vf.x>15.9&&vf.x<16.5){float t=tm*gp.z;vec2 p=(vq-.5)*2.;float rr=length(p);if(rr>1.){gl_FragColor=vec4(0.);return;}' +
+    '§7§if(vf.x>15.9&&vf.x<16.5){float t=tm*gp.z;vec2 p=(vq-.5)*2.;float rr=length(p);if(rr>1.){gl_FragColor=vec4(0.);return;}' +
     'float an=t*.21+vf.w;vec2 cc=vec2(-.745,.115)+.06*vec2(cos(an),sin(an*1.3));float ca=cos(t*.05),sa=sin(t*.05);vec2 z=mat2(ca,-sa,sa,ca)*p*1.25*vf.y;' +
     'float it=0.;float trap=9.;float N=lq>.5?14.:28.;for(int i=0;i<28;i++){if(float(i)>=N)break;z=vec2(z.x*z.x-z.y*z.y,2.*z.x*z.y)+cc;trap=min(trap,abs(length(z)-.55));if(dot(z,z)>16.)break;it+=1.;}' +
     'float sm=it/N;float esc=step(it,N-.5);float gl=exp(-trap*22.);float v=clamp(esc*pow(sm,.7)*1.1+gl*.75,0.,1.);' +
     'float a=smoothstep(.08,.5,v)*smoothstep(1.,.6,rr)*vf.z;vec3 col=texture2D(rp,vec2(clamp(v*.95,0.,1.),RW)).rgb*vt;a*=va.x;gl_FragColor=vec4(col*a,a*(1.-va.y));return;}' +
     // 17 — плазма: шум, искажённый шумом, искажённым шумом (f(p + f(p + f(p)))) — течёт как жидкость; круглая маска
-    'if(vf.x>16.9&&vf.x<17.5){float t=tm*gp.z;vec2 p=vq*1.4+vf.w;float rr=length(vq*2.-1.);if(rr>1.){gl_FragColor=vec4(0.);return;}' +
+    '§8§if(vf.x>16.9&&vf.x<17.5){float t=tm*gp.z;vec2 p=vq*1.4+vf.w;float rr=length(vq*2.-1.);if(rr>1.){gl_FragColor=vec4(0.);return;}' +
     'vec2 q=vec2(texture2D(nz,p*.5+vec2(t*.02,0.)).r,texture2D(nz,p*.5+vec2(.37,.11)-vec2(0.,t*.025)).g);' +
     'vec2 w=vec2(texture2D(nz,p*.5+q*.9+vec2(.17,.92)+t*.015).b,texture2D(nz,p*.5+q*.9+vec2(.83,.28)).r);' +
     'float f=texture2D(nz,p*.5+w*1.1+vec2(t*.01)).g;if(lq<.5){f=f*.75+texture2D(nz,p*1.3+w*.6).b*.25;}' +
@@ -249,7 +253,7 @@ function makeForge(host){
     'vec3 col=mix(texture2D(rp,vec2(v,RW)).rgb,vt,clamp(length(w)*.6-.2,0.,.6));a=clamp(a,0.,1.)*va.x;gl_FragColor=vec4(col*a,a*(1.-va.y));return;}' +
     // 18 — плазма в форме: внутри маски (или круга) течёт шум, искажённый шумом, искажённым шумом; воронка — закручивает к центру
     // (быстрее у центра). vf.y — растворение (края рвутся по плазме), vf.z — жар, vf.w — зерно; цвет — градиент частицы
-    'if(vf.x>17.9&&vf.x<18.6){float t=tm*gp.z;float md=floor(fract(vf.x+.001)*10.+.5);float m;' +
+    '§9§if(vf.x>17.9&&vf.x<18.6){float t=tm*gp.z;float md=floor(fract(vf.x+.001)*10.+.5);float m;' +
     'if(md>3.5){m=smoothstep(1.,.62,length(vq*2.-1.));}else{vec4 tc=texture2D(tx,vu);m=tc.r*clamp(tc.a*4.,0.,1.);}' +
     'if(m<.004){gl_FragColor=vec4(0.);return;}' +
     'vec2 u=vq;vec2 fl=vec2(0.,t*.09);if(md>1.5&&md<2.5||md>4.5){vec2 c=vq-.5;float r=length(c);float an=atan(c.y,c.x)+t*.5+.55/(r+.12);u=vec2(cos(an),sin(an))*r+.5;fl=vec2(0.);}' +
@@ -262,7 +266,7 @@ function makeForge(host){
     // 15 — объёмное пламя из шума (принцип симуляций): одно сплошное тело, шум течёт вверх с искажением (domain warp),
     // к верху шума больше — пламя рвётся на языки; цвет — по «температуре» = яркость, которая падает с высотой.
     // vq.y=1 — низ. vf.y — ветер (изгиб к верху), vf.z — жар, vf.w — зерно
-    'if(vf.x>14.9&&vf.x<15.5){float t=tm*gp.z;float h=1.-vq.y;float sd=vf.w;' +
+    '§6§if(vf.x>14.9&&vf.x<15.5){float t=tm*gp.z;float h=1.-vq.y;float sd=vf.w;' +
     // за пределами возможного тела — сразу пусто, без чтения шума
     'if(abs(vq.x-.5-vf.y*h*h)>mix(.34,.08,pow(h,.75))+.22){gl_FragColor=vec4(0.);return;}' +
     // плазма внутри: шум q искажает шум w, w искажает основной — пламя течёт и закручивается, как жидкость (на экономе — одно искажение)
@@ -281,21 +285,51 @@ function makeForge(host){
     'float pv=lq>.5?.5:texture2D(nz,vec2(vq.x*.9+sd*1.3,vq.y*.8+t*.42)+w*.55+q*1.2).r;float x=clamp(i*(.5+pv*.8),0.,1.);if(gp.x>0.){x=mix(x,floor(x*gp.x+.5)/gp.x,.55);}' +
     'vec3 col=texture2D(rp,vec2(x,RW)).rgb*vt;a*=va.x;gl_FragColor=vec4(col*a,a*(1.-va.y));return;}' +
     // 13 — лента хвоста: внутри бежит полоса (строка vf.y текстуры полос), к голове ярче и шире, белое ядро по оси
-    'if(vf.x>12.9&&vf.x<13.5){float t=tm*gp.z;float ac=abs(vq.y*2.-1.);float tp=vq.x;float n=texture2D(nz,vec2(vc.x*.2-t*.3,vq.y*.5)).r;' +
+    '§4§if(vf.x>12.9&&vf.x<13.5){float t=tm*gp.z;float ac=abs(vq.y*2.-1.);float tp=vq.x;float n=texture2D(nz,vec2(vc.x*.2-t*.3,vq.y*.5)).r;' +
     'vec2 su=vec2(vc.x*.32+t*vf.w,(vf.y+.08+clamp(vq.y+(n-.5)*.25*(1.-tp),0.,1.)*.84)/8.);float st=texture2D(sp,su).r;' +
     'float ed=smoothstep(1.,.5,ac);float core=exp(-ac*ac*14.)*pow(tp,1.6);float body=ed*pow(tp,1.1)*.45;float a=(st*ed*pow(tp,.45)*1.6+core*.75+body)*vf.z;' +
     'vec3 col=mix(vt,vec3(1.),clamp(core*1.1+st*st*.3,0.,1.));a=clamp(a,0.,1.)*va.x;gl_FragColor=vec4(col*a,a*(1.-va.y));return;}' +
     // 14 — маска × бегущая полоса: силуэт стоит, внутри течёт рисунок (огонь вверх); vf.y — растворение, vf.z — жар, vf.w — строка полос
-    'if(vf.x>13.9&&vf.x<14.5){float t=tm*gp.z;vec4 tc=texture2D(tx,vu);float m=tc.r*clamp(tc.a*4.,0.,1.);if(m<.004){gl_FragColor=vec4(0.);return;}' +
+    '§5§if(vf.x>13.9&&vf.x<14.5){float t=tm*gp.z;vec4 tc=texture2D(tx,vu);float m=tc.r*clamp(tc.a*4.,0.,1.);if(m<.004){gl_FragColor=vec4(0.);return;}' +
     'float n=texture2D(nz,vq*.7+vec2(vf.w*.37,t*.4)).g;float st=texture2D(sp,vec2(vq.y*.55+t*.55+vf.w*.21,(floor(vf.w)+.1+fract(vq.x+(n-.5)*.3)*.8)/8.)).r;' +
     'float v=m*(.62+st*.6)+(n-.5)*.12;float e=vf.y;float a=smoothstep(e,e+.05,v);float x=clamp(pow(v,.75)*vf.z,0.,1.);if(gp.x>0.){x=floor(x*gp.x+.5)/gp.x;}' +
     'vec3 col=texture2D(rp,vec2(x,RW)).rgb*vt;a*=va.x;gl_FragColor=vec4(col*a,a*(1.-va.y));return;}' +
     // 21 — мягкая лента следа: поперёк — мягкий профиль с белым ядром (vf.y), вдоль — к хвосту (vq.x=0) гаснет; vf.z — яркость
-    'if(vf.x>20.9&&vf.x<21.5){float ac=abs(vq.y*2.-1.);float a=(1.-ac)*(1.-ac)*pow(vq.x,1.4)*vf.z*va.x;vec3 col=mix(vt,vec3(1.),exp(-ac*ac*10.)*vf.y*vq.x);gl_FragColor=vec4(col*a,a*(1.-va.y));return;}' +
-    'if(vf.x<.5){vec4 c=texture2D(tx,vu);float a=c.a*va.x;gl_FragColor=vec4(c.rgb*vt*a,a*(1.-va.y));return;}' +
+    '§12§if(vf.x>20.9&&vf.x<21.5){float ac=abs(vq.y*2.-1.);float a=(1.-ac)*(1.-ac)*pow(vq.x,1.4)*vf.z*va.x;vec3 col=mix(vt,vec3(1.),exp(-ac*ac*10.)*vf.y*vq.x);gl_FragColor=vec4(col*a,a*(1.-va.y));return;}' +
+    // 22 — картинка и что с ней делать (дробная часть — вариант): .0 как есть · .1 глитч · .2 помехи · .3 стекло · .4 изморозь · .5 волна ·
+    // .6 воронка · .7 линза · .8 марево · .9 пиксели. vq — место в картинке (0…1, за краями пусто), vf.y — сила, vf.z — ход (0…1), vf.w — частота/фаза
+    '§13§if(vf.x>21.9&&vf.x<22.95){float t=tm*gp.z;float md=floor(fract(vf.x+.001)*10.+.5);vec2 u=vq;float k=vf.y;vec4 c;vec3 ad=vec3(0.);' +
+    'if(md<.5){c=IM(u);}' +
+    // глитч: полосы рвутся вбок рывками (смена раз в 1/vf.w с), каналы цвета разъезжаются, строки темнее, в сорванных полосах — шум
+    'else if(md<1.5){float st=floor(t*vf.w);float row=floor(u.y*(14.+H1(st)*20.));float h=H1(row*12.99+st*78.23);float bk=step(1.-k*.5,h);' +
+    'u.x+=(H1(row*3.1+st*9.7)-.5)*.3*k*bk+(H1(st)-.5)*.02*k;float sp=k*.022*(1.+bk*2.5);vec4 r=IM(u+vec2(sp,0.)),g=IM(u),b=IM(u-vec2(sp,0.));' +
+    'c=vec4(r.r,g.g,b.b,max(g.a,max(r.a,b.a)));c.rgb*=mix(1.,.82+.18*sin(gl_FragCoord.y*2.1),k);float n=H2(floor(gl_FragCoord.xy*.33)+st);c.rgb=mix(c.rgb,vec3(n),bk*k*.35);}' +
+    // помехи: зерно 30 раз/с, бегущая полоса, строки дрожат, цвет выцветает
+    'else if(md<2.5){float st=floor(t*30.);float row=floor(u.y*90.);u.x+=(H1(row+st*7.)-.5)*.012*k;c=IM(u);float n=H2(floor(gl_FragCoord.xy*.5)+st*1.37);' +
+    'float bar=smoothstep(.06,0.,abs(fract(u.y*.7-t*.35)-.5)-.38);float gr=dot(c.rgb,vec3(.3,.59,.11));c.rgb=mix(c.rgb,vec3(gr),k*.6);' +
+    'c.rgb=mix(c.rgb,vec3(n),k*(.35+bar*.3))*(1.-k*.15*sin(gl_FragCoord.y*3.));c.rgb+=bar*k*.12;}' +
+    // стекло: по краю скруглённого стекла картинка преломляется к центру, каналы — с разным сдвигом (радуга), по стеклу бежит блик, кромка светится
+    'else if(md<3.5){vec2 p=u-.5;vec2 q=abs(p)-.5+.12;float d=length(max(q,0.))+min(max(q.x,q.y),0.)-.12;float e=1.-smoothstep(0.,.16,-d);vec2 nr=normalize(p+1e-4)*e*e;' +
+    'float s=.06*k;c=IM(u-nr*s);c.r=IM(u-nr*s*.75).r;c.b=IM(u-nr*s*1.3).b;float gl=exp(-pow((p.x+p.y)*1.2-(fract(t*.18+vf.w)*3.-1.5),2.)*30.)*.32;' +
+    'float rim=(1.-smoothstep(0.,.025,abs(d)))*.55+e*e*.12;ad=vec3(gl+rim)*step(d,0.);c.a=max(c.a,step(d,0.)*.12);}' +
+    // изморозь: размытие по 8 точкам с поворотом от шума (иней), светлее и холоднее; vf.y — сколько инея
+    'else if(md<4.5){float a=H2(floor(gl_FragCoord.xy))*6.2832;vec4 s=IM(u);float r=k*.035;for(int i=0;i<8;i++){float b=a+float(i)*2.3998;float rr=r*sqrt((float(i)+.5)/8.);s+=IM(u+vec2(cos(b),sin(b))*rr);}' +
+    'c=s/9.;c.rgb=mix(c.rgb,vec3(.86,.93,1.),k*.28);ad=vec3(H2(floor(gl_FragCoord.xy*.5))*k*.06);}' +
+    // волна от центра: фронт на радиусе vf.z, картинка сдвигается по радиусу, гребень светлее
+    'else if(md<5.5){vec2 p=u-.5;float r=length(p);float w=sin((r-vf.z*.75)*48.)*exp(-abs(r-vf.z*.75)*14.);u+=p/(r+1e-3)*w*k*.025;c=IM(u);ad=vec3(max(w,0.)*k*.22);}' +
+    // воронка: закрутка к центру (сильнее у центра) и втягивание по ходу vf.z
+    'else if(md<6.5){vec2 p=u-.5;float r=length(p);float a=k*pow(max(0.,1.-r*1.6),2.)*7.;float cs=cos(a),sn=sin(a);p=mat2(cs,-sn,sn,cs)*p*(1.+vf.z*vf.z*5.);c=IM(p+.5);}' +
+    // линза: выпуклость (k > 0) или вдавленность (k < 0)
+    'else if(md<7.5){vec2 p=u-.5;float r=length(p)*2.;float f=pow(clamp(r,1e-3,1.),k);c=IM(p*f+.5);}' +
+    // марево (жар над огнём): шум течёт вверх, сильнее внизу
+    'else if(md<8.5){vec2 n=texture2D(nz,u*vec2(1.6,1.1)+vec2(0.,-t*.5)).rg-.5;u+=n*k*.05*(.35+u.y);c=IM(u);}' +
+    // пиксели: блоки растут с силой
+    'else{float n=mix(96.,5.,k);c=IM((floor(u*n)+.5)/n);}' +
+    'float A=c.a*va.x;gl_FragColor=vec4((c.rgb*vt+ad)*A,A*(1.-va.y));return;}' +
+    '§0§if(vf.x<.5){vec4 c=texture2D(tx,vu);float a=c.a*va.x;gl_FragColor=vec4(c.rgb*vt*a,a*(1.-va.y));return;}' +
     // 4 — лучи света веером (шум по углу), 5 — радужный обод (форма из атласа, цвет по углу и времени),
     // 6 — серп-взмах (дуга с утончёнными концами и белым ядром), 7 — поток внутри скруглённой кнопки (бегущие прожилки + блик)
-    'if(vf.x>3.9){vec2 cc=vq*2.-1.;float r=length(cc);float an=atan(cc.y,cc.x);float t=tm*gp.z;vec3 col=vt;float a=0.;' +
+    '§3§if(vf.x>3.9){vec2 cc=vq*2.-1.;float r=length(cc);float an=atan(cc.y,cc.x);float t=tm*gp.z;vec3 col=vt;float a=0.;' +
     'if(vf.x<4.5){float n=texture2D(nz,vec2(an/6.2832*vf.y+t*.03+vf.w,.37)).r;float n2=texture2D(nz,vec2(an/6.2832*vf.y*2.-t*.05+vf.w,.71)).g;' +
     'a=pow(clamp(n*.6+n2*.5,0.,1.),3.)*2.2*(1.-smoothstep(.15,1.,r))*smoothstep(0.,.12,r)*vf.z;}' +
     'else if(vf.x<5.5){float m=texture2D(tx,vu).a;float h=fract(an/6.2832+t*.15+vf.w);col=mix(.5+.5*cos(6.2832*(h+vec3(0.,.33,.67))),vec3(1.),.3)*vt;a=m*vf.z;}' +
@@ -323,14 +357,14 @@ function makeForge(host){
     'if(vf.z<.001){cr=smoothstep(.015,-.015,d);gd=max(d,0.);}else{cr=smoothstep(vf.z,vf.z-.03,abs(d));gd=max(abs(d)-vf.z,0.);}a=max(cr,exp(-gd/.07)*.5);col=mix(vt,vec3(1.),cr*.6);}' +
     'a=clamp(a,0.,1.)*va.x;gl_FragColor=vec4(col*a,a*(1.-va.y));return;}' +
     // 2 — туманность, 3 — нити: рисуются целиком из шума, без маски атласа (круглое мягкое пятно, цвет — из градиента)
-    'if(vf.x>1.9){vec2 cc=vq*2.-1.;float rr=length(cc);float mk=smoothstep(1.,.45,rr);float t=tm*gp.z;' +
+    '§2§if(vf.x>1.9){vec2 cc=vq*2.-1.;float rr=length(cc);float mk=smoothstep(1.,.45,rr);float t=tm*gp.z;' +
     'float n1=texture2D(nz,vq*.9+vec2(vf.w,0.)+vec2(t*.03,t*.02)).r;float n2=texture2D(nz,vq*1.6+vec2(0.,vf.w)-vec2(t*.025,-t*.035)).g;' +
     'vec2 w=vec2(n1,n2)-.5;float v;' +
     'if(vf.x<2.5){float n3=texture2D(nz,vq*1.3+w*.7+vec2(t*.02,-t*.015)).b;v=smoothstep(.3,.8,n3*.75+n1*.45-.12);float rd=1.-abs(n2*2.-1.);v+=pow(rd,7.)*.7;}' +
     'else{float n3=texture2D(nz,vq*1.15+w*.55+vec2(-t*.03,t*.02)).b;float rd=1.-abs(n3*2.-1.);v=pow(rd,20.)*1.2+pow(rd,4.)*.1;}' +
     'v*=mk*vf.z;float a=clamp(v,0.,1.)*va.x;vec3 col=texture2D(rp,vec2(clamp(v,0.,1.),RW)).rgb;gl_FragColor=vec4(col*vt*a,a*(1.-va.y));return;}' +
     // шум бежит вверх по частице; у каждой частицы свой участок (зерно)
-    'vec2 nu=vq*vec2(.7,.55)+vec2(vf.w,vf.w*1.37)+vec2(0.,tm*gp.z);' +
+    '§1§vec2 nu=vq*vec2(.7,.55)+vec2(vf.w,vf.w*1.37)+vec2(0.,tm*gp.z);' +
     'vec3 n=texture2D(nz,nu).rgb;' +
     // искажение: кончик (верх, vq.y=0) колышется, основание стоит; не выходим за свою ячейку атласа
     'float tip=pow(1.-vq.y,1.6);' +
@@ -342,20 +376,56 @@ function makeForge(host){
     // цвет по температуре: яркость маски × жар → градиент; ступени — мультяшные полосы
     'float x=clamp(pow(m,.6)*vf.z,0.,1.);if(gp.x>0.){x=mix(x,floor(x*gp.x+.5)/gp.x,.6);}' +
     'vec3 col=texture2D(rp,vec2(x,RW)).rgb;' +
-    'a*=va.x;gl_FragColor=vec4(col*vt*a,a*(1.-va.y));}';
+    'a*=va.x;gl_FragColor=vec4(col*vt*a,a*(1.-va.y));§E§}';
 
-  // шум: бесшовный 128×128, три независимых слоя (r, g — искажение, b — растворение)
-  function noiseTex(){
+  /* ── шейдер по частям: в общем тексте FS каждый режим — свой кусок (метка §семья§). Программа эффекта собирается только из семей,
+     которые он рисует: видеокарта меньше компилирует (первый кадр без рывка) и держит меньше регистров на пиксель — все пиксели считаются быстрее.
+     Семьи: 0 — готовый цвет, 1 — по температуре, 2 — туманность/нити, 3 — режимы 4–12, дальше по одной: 13…21 → 4…12 */
+  const fam = m => m < .5 ? 0 : m < 1.9 ? 1 : m < 3.9 ? 2 : m < 12.9 ? 3 : Math.floor(m + .1) - 9;
+  const FSP = (() => { const a = FS.split(/§(\d+|E)§/), parts = { head: a[0], tail: '' }, order = [];
+    for (let i = 1; i < a.length; i += 2){ if (a[i] === 'E'){ parts.tail = a[i + 1]; continue; } parts[a[i]] = a[i + 1]; order.push(+a[i]); } return { parts, order }; })();
+  const fsFor = mask => FSP.parts.head + FSP.order.map(b => mask & 1 << b ? FSP.parts[b] : b === 1 ? 'gl_FragColor=vec4(0.);' : '').join('') + FSP.parts.tail;
+  const AT = ['p', 'uv', 'aa', 'tn', 'q', 'fx', 'cr', 'rw'];
+  let progs = {}, cur = null, fid = 0, mask = 0;
+  function program(m){
+    if (progs[m]) return progs[m];
+    const sh = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+    const p = gl.createProgram(), vs = sh(gl.VERTEX_SHADER, VS), fs = sh(gl.FRAGMENT_SHADER, fsFor(m));
+    gl.attachShader(p, vs); gl.attachShader(p, fs); AT.forEach((n, i) => gl.bindAttribLocation(p, i, n)); gl.linkProgram(p);   // места атрибутов общие — указатели ставим один раз
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)){ console.error('fx shader', m, gl.getProgramInfoLog(p), gl.getShaderInfoLog(fs)); return progs[m] = null; }
+    gl.deleteShader(vs); gl.deleteShader(fs); gl.useProgram(p); cur = null;
+    const u = n => gl.getUniformLocation(p, n);
+    gl.uniform1i(u('tx'), 0); gl.uniform1i(u('nz'), 1); gl.uniform1i(u('rp'), 2); gl.uniform1i(u('sp'), 3); gl.uniform1i(u('im'), 4);
+    return progs[m] = { p, f: -1, loc: { mb: u('mb'), mbn: u('mbn'), res: u('res'), lq: u('lq'), tm: u('tm'), gp: u('gp') } };
+  }
+  // шум: бесшовный 128×128, три независимых слоя (r, g — искажение, b — растворение).
+  // Узлы решётки каждой октавы считаются один раз (раньше — 4 хеша на каждый пиксель × октаву × слой: ~80 мс на слабом телефоне),
+  // результат тот же до бита; данные живут и после destroy — пересборка холста их не пересчитывает
+  let noiseD = null;
+  function noiseData(){
+    if (noiseD) return noiseD;
     const N = 128, d = new Uint8Array(N * N * 4), hash = (x, y, s) => { const h = Math.sin(x * 127.1 + y * 311.7 + s * 74.7) * 43758.5453; return h - Math.floor(h); };
-    const vn = (x, y, per, s) => { const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, u = fx * fx * (3 - 2 * fx), w = fy * fy * (3 - 2 * fy);
-      const g = (a, b) => hash(((a % per) + per) % per, ((b % per) + per) % per, s);
-      return g(xi, yi) * (1 - u) * (1 - w) + g(xi + 1, yi) * u * (1 - w) + g(xi, yi + 1) * (1 - u) * w + g(xi + 1, yi + 1) * u * w; };
+    const L = [];   // L[слой][октава] — значения узлов per×per
+    for (let ch = 0; ch < 3; ch++){ L.push([]); for (let o = 0, per = 4; o < 4; o++, per *= 2){ const g = new Float64Array(per * per); for (let j = 0; j < per; j++) for (let i = 0; i < per; i++) g[j * per + i] = hash(i, j, ch * 9 + o); L[ch].push(g); } }
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) for (let ch = 0; ch < 3; ch++){
-      let v = 0, amp = .5, tot = 0; for (let o = 0, per = 4; o < 4; o++, per *= 2){ v += vn(x / N * per, y / N * per, per, ch * 9 + o) * amp; tot += amp; amp *= .5; }
+      let v = 0, amp = .5, tot = 0;
+      for (let o = 0, per = 4; o < 4; o++, per *= 2){ const X = x / N * per, Y = y / N * per, xi = Math.floor(X), yi = Math.floor(Y), fx = X - xi, fy = Y - yi, u = fx * fx * (3 - 2 * fx), w = fy * fy * (3 - 2 * fy);
+        const g = L[ch][o], x1 = (xi + 1) % per, y1 = (yi + 1) % per;
+        v += (g[yi * per + xi] * (1 - u) * (1 - w) + g[yi * per + x1] * u * (1 - w) + g[y1 * per + xi] * (1 - u) * w + g[y1 * per + x1] * u * w) * amp; tot += amp; amp *= .5; }
       d[(y * N + x) * 4 + ch] = v / tot * 255; d[(y * N + x) * 4 + 3] = 255;
     }
-    const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, N, N, 0, gl.RGBA, gl.UNSIGNED_BYTE, d);
+    return noiseD = d;
+  }
+  // запечённый шум (tools/fx-noise.mjs → assets/fx/fx-noise.png) — телефон его не считает; не загрузился — считаем сами
+  function noiseTex(){
+    const t = gl.createTexture(), g0 = gl, put = src => { gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);   // байты как есть: без цветовой поправки браузера
+      if (src) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src); else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 128, 128, 0, gl.RGBA, gl.UNSIGNED_BYTE, noiseData());
+      gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.BROWSER_DEFAULT_WEBGL); gl.activeTexture(gl.TEXTURE0); };
+    gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([128, 128, 128, 255]));
     for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.REPEAT], [gl.TEXTURE_WRAP_T, gl.REPEAT]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+    if (noiseD) put(null);
+    else { const im = new Image(); im.onload = () => { if (gl === g0) put(im); }; im.onerror = () => { if (gl === g0) put(null); }; im.src = base + 'fx-noise.png'; }
     return t;
   }
   // градиенты температуры: строка на эффект, [доля, цвет]
@@ -384,13 +454,16 @@ function makeForge(host){
     potion: [[0, '0f5a22'], [.25, '1c9a2c'], [.5, '3fd43a'], [.7, '8ef04a'], [.88, 'd6ff7a'], [1, 'f6ffd6']],
   };
   const RAMP_ROW = {}, RAMP_N = 32;   // строк с запасом: градиентов уже больше 16
+  let rampD = null;
   function rampTex(){
-    const d = new Uint8Array(256 * RAMP_N * 4);
-    Object.entries(RAMPS).forEach(([name, st], row) => { RAMP_ROW[name] = (row + .5) / RAMP_N;
+    // цвета ключей разбираем один раз (раньше — parseInt на каждый пиксель и канал); данные переживают destroy
+    const d = rampD || (rampD = new Uint8Array(256 * RAMP_N * 4));
+    if (!rampD.done){ rampD.done = 1; Object.entries(RAMPS).forEach(([name, st], row) => { RAMP_ROW[name] = (row + .5) / RAMP_N;
+      const C = st.map(([, c]) => [0, 2, 4].map(k => parseInt(c.slice(k, k + 2), 16)));
       for (let i = 0; i < 256; i++){ const x = i / 255; let j = 1; while (j < st.length - 1 && st[j][0] < x) j++;
-        const [a, ca] = st[j - 1], [b, cb] = st[j], t = Math.min(1, Math.max(0, (x - a) / (b - a)));
-        for (let ch = 0; ch < 3; ch++){ const A = parseInt(ca.slice(ch * 2, ch * 2 + 2), 16), B = parseInt(cb.slice(ch * 2, ch * 2 + 2), 16); d[(row * 256 + i) * 4 + ch] = A + (B - A) * t; }
-        d[(row * 256 + i) * 4 + 3] = 255; } });
+        const a = st[j - 1][0], b = st[j][0], A = C[j - 1], B = C[j], t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+        for (let ch = 0; ch < 3; ch++) d[(row * 256 + i) * 4 + ch] = A[ch] + (B[ch] - A[ch]) * t;
+        d[(row * 256 + i) * 4 + 3] = 255; } }); }
     const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, RAMP_N, 0, gl.RGBA, gl.UNSIGNED_BYTE, d);
     for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
     return t;
@@ -404,18 +477,12 @@ function makeForge(host){
     // телефон может отнять контекст (мало памяти, долго в фоне) — тогда всё освобождаем, следующий эффект соберёт холст заново
     cv.addEventListener('webglcontextlost', release);
     document.addEventListener('visibilitychange', kick);
-    const sh = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); return s; };
-    prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)){ console.error('fx shader', gl.getProgramInfoLog(prog), gl.getShaderInfoLog(gl.getAttachedShaders(prog)[1])); return false; }
-    gl.useProgram(prog);
-    loc = { mb: gl.getUniformLocation(prog, 'mb'), mbn: gl.getUniformLocation(prog, 'mbn'), res: gl.getUniformLocation(prog, 'res'), lq: gl.getUniformLocation(prog, 'lq'), tm: gl.getUniformLocation(prog, 'tm'), gp: gl.getUniformLocation(prog, 'gp') };
-    gl.uniform1i(gl.getUniformLocation(prog, 'tx'), 0); gl.uniform1i(gl.getUniformLocation(prog, 'nz'), 1); gl.uniform1i(gl.getUniformLocation(prog, 'rp'), 2); gl.uniform1i(gl.getUniformLocation(prog, 'sp'), 3);
+    if (!program(1)) return false;   // самая частая программа (готовый цвет из атласа: искры молота) — сразу; остальные — по первому эффекту
     vbo = gl.createBuffer(); ibo = gl.createBuffer();
     const idx = new Uint16Array(6 * 16000); for (let i = 0, v = 0; i < idx.length; i += 6, v += 4) idx.set([v, v + 1, v + 2, v, v + 2, v + 3], i);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-    [['p', 2, 0], ['uv', 2, 2], ['aa', 2, 4], ['tn', 3, 6], ['q', 2, 9], ['fx', 4, 11], ['cr', 4, 15], ['rw', 1, 19]].forEach(([n, size, off]) => {
-      const l = gl.getAttribLocation(prog, n); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, size, gl.FLOAT, false, VF * 4, off * 4); });
+    [[2, 0], [2, 2], [2, 4], [3, 6], [2, 9], [4, 11], [4, 15], [1, 19]].forEach(([size, off], l) => { gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, size, gl.FLOAT, false, VF * 4, off * 4); });
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     gl.activeTexture(gl.TEXTURE1); noiseT = noiseTex();
@@ -428,6 +495,19 @@ function makeForge(host){
       gl.activeTexture(gl.TEXTURE0); }; im.src = base + 'fx-strips.webp'; }
     gl.activeTexture(gl.TEXTURE0);
     return true;
+  }
+  // картинка для слоя картинки (семья 22): по адресу или <img>; чужой сервер без CORS — не загрузится (err), эффект молча снимается.
+  // Хранится, пока нужна: в простое выгружается вместе с атласами
+  const imgs = {};
+  function imgTex(src){
+    const key = src.src || src; if (imgs[key]) return imgs[key];
+    const t = imgs[key] = { ok: false, t: gl.createTexture(), w: 1, h: 1 }, g0 = gl;
+    const im = typeof src === 'string' ? Object.assign(new Image(), { crossOrigin: 'anonymous', src }) : src;
+    const go = () => { if (gl !== g0) return; try { gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, t.t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, im);
+        for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+        t.w = im.naturalWidth; t.h = im.naturalHeight; t.ok = true; } catch (_){ t.err = true; } gl.activeTexture(gl.TEXTURE0); };
+    if (im.complete && im.naturalWidth) go(); else { im.addEventListener('load', go); im.addEventListener('error', () => { t.err = true; }); }
+    return t;
   }
   function texture(name){
     if (tex[name]) return tex[name];
@@ -1466,6 +1546,9 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
      Затухание — угольки медленно всплывают и краснеют, на месте удара тлеет пятно. Кольцо и жар — в разметке (.fi-ring, .fi-heat).
      Цвет свечения — s.tint (ранг / огонь арены), искр — s.pal (Ставки — розовая). Эффект задуман в px: size = 360 → 1 ед. = 1 px */
   DEF.anvil = { atlas: 'aura', period: 2,
+    // цвета искр (pal: [горячий, тёплый]) и свечения (tint)
+    presets: { gold: { s: { pal: [[1, .95, .7], [1, .75, .25]], tint: [1, .8, .35] } }, pink: { s: { pal: [[1, .8, .95], [1, .35, .75]], tint: [1, .4, .8] } },
+      ice: { s: { pal: [[.85, .97, 1], [.35, .75, 1]], tint: [.4, .75, 1] } }, toxic: { s: { pal: [[.9, 1, .7], [.45, 1, .3]], tint: [.4, 1, .35] } } },
     init: s => Object.assign(s, { sp: [], em: [], fired: false, tint: [1, .75, .35] }),
     update(s, dt, at){
       if (!s.fired){ s.fired = true; s.shake = 6; const N = n => Math.round(n * EMIT[quality]), hot = s.pal?.[0] || [1, .88, .55], warm = s.pal?.[1] || [1, .58, .2], G = at.map['glow:W0'];
@@ -1489,7 +1572,7 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
     },
     render(s, c){ const at = c.at, t = s.cycle, T = s.tint, G = at.map['glow:W0'];
       // тлеющее пятно на месте удара: остывает дольше вспышки
-      if (t < 1.2){ const k = t / 1.2; sprite(c, 180, 180, 70 + 30 * k, 0, (1 - k) ** 2 * .7, 1, at.map['sglow:W0'], .6, [1, .5, .2]); }
+      if (t < 1.2){ const k = t / 1.2; sprite(c, 180, 180, 70 + 30 * k, 0, (1 - k) ** 2 * .7, 1, at.map['sglow:W0'], .6, s.pal?.[1] || [1, .5, .2]); }
       if (t < .32){ const k = t / .32;
         sprite(c, 180, 180, 200 + 200 * easeOut(k), 0, (1 - k) ** 2 * .85, 1, at.map['sglow:W0'], 1, T);                   // свечение цветом ранга
         sprite(c, 180, 180, 420 * easeOut(Math.min(1, k * 2)), 0, (1 - k) ** 3 * .9, 1, G, .07, [1, .92, .8]); }            // блик-полоса удара
@@ -1567,6 +1650,7 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
   // 'in' — частицы слетаются вихрем и пружиной встают на место, волной слева направо, в конце — вспышка.
   // Forge.play('dust', { x, y, size, img: адрес или <img>, dir: 'out' | 'in', box: сторона картинки в ед. эффекта (220), tint: цвет кромки })
   DEF.dust = { atlas: 'aura', period: 2.6,
+    presets: { in: { dir: 'in' }, gold: { tint: [1, .8, .3] }, ice: { tint: [.5, .85, 1] } },
     init(s){ const o = s.o || {}; Object.assign(s, { p: [], made: false, dir: o.dir || 'out', box: o.box || 220, T: o.tint || [1, .62, .25], px: pixels(o.img || base + '../hero-gem.webp', [32, 44, 52][quality]) }); },
     update(s, dt, at){
       if (!s.made){ if (!s.px.ok) { s.cycle = 0; return; } s.made = true; s.cycle = 0;
@@ -1588,32 +1672,37 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
 
   // Огоньки (поток): частицы текут по вихревому полю и тянут за собой след — живое движение без ручных траекторий
   DEF.wisps = { atlas: 'aura',
-    init: s => Object.assign(s, { p: [] }),
+    presets: { ember: { s: { tc: [[0, [1, .95, .7]], [.5, [1, .55, .15]], [1, [.6, .12, .05]]] } }, frost: { s: { tc: [[0, [1, 1, 1]], [.5, [.6, .85, 1]], [1, [.3, .5, 1]]] } },
+      toxic: { s: { tc: [[0, [.9, 1, .7]], [.5, [.4, 1, .35]], [1, [.1, .5, .2]]] } } },
+    init: s => Object.assign(s, { p: [], tc: [[0, [.7, 1, 1]], [.5, [.5, .55, 1]], [1, [.45, .2, .85]]] }),
     update(s, dt, at){
       emit(s.acc, 1, 18, dt, () => spawn(s.p, { x: 180 + R(-140, 140), y: R(120, 340), vy: -40, flow: 85, fz: 1.4, grav: -45, trail: 14, size: R(14, 22), life: R(2.2, 3.2), cells: [at.map['glow:W0']], add: 1,
-        tc: [[0, [.7, 1, 1]], [.5, [.5, .55, 1]], [1, [.45, .2, .85]]], fadeIn: .12, fadeOut: .4, pul: .2, pf: R(5, 9) }));
+        tc: s.tc, fadeIn: .12, fadeOut: .4, pul: .2, pf: R(5, 9) }));
       step(s.p, dt);
     },
     render(s, c){ draw(c, s.p); } };
 
   // Воронка (притяжение + закрутка): частицы со всех сторон затягивает по спирали в центр, где копится заряд
   DEF.vortex = { atlas: 'aura',
-    init: s => Object.assign(s, { p: [] }),
+    presets: { gold: { s: { tc: [[0, [1, .6, .2]], [.5, [1, .85, .4]], [1, [1, 1, .9]]], core: [1, .75, .3] } }, blood: { s: { tc: [[0, [.6, .05, .1]], [.5, [1, .25, .2]], [1, [1, .85, .8]]], core: [1, .2, .15] } },
+      teal: { s: { tc: [[0, [.1, .6, .6]], [.5, [.3, 1, .9]], [1, [.9, 1, 1]]], core: [.3, 1, .85] } } },
+    init: s => Object.assign(s, { p: [], tc: [[0, [.55, .4, 1]], [.5, [.8, .6, 1]], [1, [1, .95, 1]]], core: [.6, .45, 1] }),
     update(s, dt, at){
       emit(s.acc, 1, 45, dt, () => { const a = R(0, 6.28), r = R(150, 175);
         spawn(s.p, { x: 180 + Math.cos(a) * r, y: 180 + Math.sin(a) * r, vx: -Math.sin(a) * 140, vy: Math.cos(a) * 140, ax: 180, ay: 180, pull: 900, swirl: 230, kr: 12, drag: 1.6, trail: 8,
-          size: R(8, 13), life: 3, cells: [at.map['glow:W0']], add: 1, tc: [[0, [.55, .4, 1]], [.5, [.8, .6, 1]], [1, [1, .95, 1]]], fadeIn: .15, fadeOut: .1, pul: 0 }); });
+          size: R(8, 13), life: 3, cells: [at.map['glow:W0']], add: 1, tc: s.tc, fadeIn: .15, fadeOut: .1, pul: 0 }); });
       step(s.p, dt);
     },
     render(s, c){ const at = c.at, w = wob(s.t * 3, 1);
-      sprite(c, 180, 180, 150 + 20 * w, 0, .55, 1, at.map['sglow:W0'], 1, [.6, .45, 1]); sprite(c, 180, 180, 60 + 8 * w, s.t * .8, .9, 1, at.map['star:W0'], 1, [1, .95, 1]);
+      sprite(c, 180, 180, 150 + 20 * w, 0, .55, 1, at.map['sglow:W0'], 1, s.core); sprite(c, 180, 180, 60 + 8 * w, s.t * .8, .9, 1, at.map['star:W0'], 1, [1, .95, 1]);
       draw(c, s.p); } };
 
   // Салют (дочерние частицы): ракета со следом гаснет → из неё вылетает шар искр со следами, часть искр ещё раз трещит мелкими белыми
   const FW = [[1, .45, .3], [.45, .8, 1], [1, .85, .35], [.75, .45, 1], [.45, 1, .6]];
   DEF.fireworks = { atlas: 'aura',
     init: s => { Object.assign(s, { p: [], fl: [] }); s.acc[1] = .95; },   // первая ракета — сразу
-    burst(s, at, p){ const col = FW[(Math.random() * FW.length) | 0], G = at.map['glow:W0'], n = Math.round(46 * EMIT[quality]);
+    presets: { gold: { s: { pal: [[1, .85, .35], [1, .7, .25], [1, .95, .6]] } }, ice: { s: { pal: [[.5, .85, 1], [.8, .95, 1], [.45, .6, 1]] } }, party: {} },
+    burst(s, at, p){ const P = s.pal || FW, col = P[(Math.random() * P.length) | 0], G = at.map['glow:W0'], n = Math.round(46 * EMIT[quality]);
       s.fl.push({ x: p.x, y: p.y, t: 0, col });
       const crack = (q, L) => { for (let i = 0; i < 3; i++){ const a = R(0, 6.28); spawn(L, { x: q.x, y: q.y, vx: Math.cos(a) * 90, vy: Math.sin(a) * 90, size: 8, life: R(.08, .16), cells: [G], add: 1, tint: [1, 1, 1], fadeIn: .01, fadeOut: .6, pul: 0 }); } };
       for (let i = 0; i < n; i++){ const a = i / n * 6.28 + R(-.05, .05), v = R(260, 400) * Math.sqrt(R(.35, 1));
@@ -1626,6 +1715,117 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
     },
     render(s, c){ for (const f of s.fl){ const k = f.t / .35; sprite(c, f.x, f.y, 90 + 140 * easeOut(k), 0, (1 - k) ** 2 * .8, 1, c.at.map['sglow:W0'], 1, f.col); }
       draw(c, s.p); } };
+
+  /* ── слой картинки: Горн сам рисует картинку (подарок, карточку) и делает с ней то, чего не умеет CSS: глитч, помехи, стекло,
+     изморозь, волна, воронка, линза, марево, пиксели, желе, осколки. Forge.play('glitch', { x, y, size, img, box, … }) — img: адрес или <img>
+     (с чужого сервера — только с CORS), box — длинная сторона картинки в ед. эффекта (240). Настоящую картинку на время эффекта прятать:
+     разовые эффекты начинаются и кончаются обычной картинкой (кроме «втянуть», «рассыпать» и hold: true — замереть на последнем кадре до stop) */
+  const PR = [0, 0, 1, 1], P4 = [[0, 0], [0, 0], [0, 0], [0, 0]], Q4 = [[0, 0], [0, 0], [0, 0], [0, 0]], A4 = [0, 0, 0, 0], F22 = [22, 0, 0, 0];
+  // картинка квадратом: fx = [22.вариант, сила, ход, частота]; m — запас за краями (глитч, волна выходят за картинку)
+  function pic(c, x, y, w, h, fx, m, alpha, rot){
+    const cell = c.at.cell, cs = rot ? Math.cos(rot) : 1, sn = rot ? Math.sin(rot) : 0; m = m || 0; PR[0] = PR[1] = -m; PR[2] = PR[3] = 1 + m;
+    quad(c, 0, cs * w / cell, sn * w / cell, -sn * h / cell, cs * h / cell, x, y, alpha == null ? 1 : alpha, 0, null, 0, fx, PR);
+  }
+  // кусок картинки: треугольник/четырёхугольник по точкам P с местами в картинке Q (желе, осколки)
+  const WHITE = [1, 1, 1], piece = (c, alpha) => quad4(c, P4, Q4, A4, alpha, 0, WHITE, F22);
+  const IMGFX = (md, k, z, f) => { F22b[0] = 22 + md / 10; F22b[1] = k; F22b[2] = z; F22b[3] = f; return F22b; }, F22b = [22, 0, 0, 0];
+
+  // глитч: в покое лёгкая рябь, раз в 0.5–1.6 с — срыв на 0.12–0.3 с (полосы рвутся, цвета разъезжаются)
+  DEF.glitch = { atlas: 'aura', img: true,
+    presets: { soft: { power: .35, base: .12 }, hard: { power: 1, base: .3, hz: 18 }, signal: { power: .8, base: .03, hz: 10 } },
+    init(s){ const o = s.o; Object.assign(s, { pw: o.power ?? .6, base: o.base ?? .12, hz: o.hz ?? 14, next: .25, spk: 0, amp: 0, k: 0 }); },
+    update(s, dt){ s.next -= dt; s.spk -= dt; if (s.next <= 0){ s.spk = R(.12, .3); s.amp = R(.6, 1) * s.pw; s.next = R(.5, 1.6); }
+      s.k = s.base * s.pw + (s.spk > 0 ? s.amp : 0); },
+    render(s, c){ pic(c, 180, 180, s.W, s.H, IMGFX(1, s.k, 0, s.hz), .14); } };
+
+  // помехи: зерно, бегущая полоса, дрожь строк; сила плавно выходит на power
+  DEF.static = { atlas: 'aura', img: true,
+    presets: { weak: { power: .35 }, lost: { power: 1 } },
+    init(s){ s.pw = s.o.power ?? .6; s.k = 0; },
+    update(s, dt){ s.k += (s.pw - s.k) * Math.min(1, dt * 4); },
+    render(s, c){ pic(c, 180, 180, s.W, s.H, IMGFX(2, s.k, 0, 0), .02); } };
+
+  // стекло: картинка под скруглённым стеклом — преломление и радуга по краю, бегущий блик
+  DEF.glass = { atlas: 'aura', img: true,
+    presets: { clear: { power: .45 }, prism: { power: 1.3 } },
+    init(s){ s.pw = s.o.power ?? .8; },
+    update(){},
+    render(s, c){ pic(c, 180, 180, s.W, s.H, IMGFX(3, s.pw, 0, s.o.phase || 0)); } };
+
+  // изморозь: иней тает (thaw, по умолчанию) или нарастает (freeze — с hold, чтобы остаться замёрзшей)
+  DEF.frost = { atlas: 'aura', img: true, period: 1.6,
+    presets: { thaw: {}, freeze: { dir: 'in', hold: true } },
+    init(){}, update(){},
+    render(s, c){ const k = Math.min(1, s.cycle / 1.4), v = s.o.dir === 'in' ? easeOut(k) : 1 - easeOut(k); pic(c, 180, 180, s.W, s.H, IMGFX(4, v * (s.o.power ?? 1), 0, 0)); } };
+
+  // волна от центра (тап, удар): фронт расходится, сила затухает
+  DEF.ripple = { atlas: 'aura', img: true, period: 1.3,
+    presets: { soft: { power: .6 }, strong: { power: 1.7 } },
+    init(){}, update(){},
+    render(s, c){ const t = s.cycle / 1.3; pic(c, 180, 180, s.W, s.H, IMGFX(5, (s.o.power ?? 1) * (1 - t) ** 1.5, easeOut(Math.min(1, s.cycle / 1.2)) * 1.1, 0), .05); } };
+
+  // воронка: картинку закручивает и втягивает в точку (in) или она раскручивается из точки (out)
+  DEF.twirl = { atlas: 'aura', img: true, period: 1.1,
+    presets: { in: {}, out: { dir: 'out' } },
+    init(){}, update(){},
+    render(s, c){ let t = Math.min(1, s.cycle / 1.05); if (s.o.dir === 'out') t = 1 - t; const z = t ** 1.6;
+      pic(c, 180, 180, s.W, s.H, IMGFX(6, z * 8, z, 0), 0, 1 - Math.max(0, (t - .75) / .25)); } };
+
+  // линза: картинка вздувается и опадает (пульс выигрыша) или втягивается (pinch)
+  DEF.lens = { atlas: 'aura', img: true, period: .7,
+    presets: { bulge: {}, pinch: { power: -.5 } },
+    init(){}, update(){},
+    render(s, c){ const t = s.cycle / .7; pic(c, 180, 180, s.W, s.H, IMGFX(7, Math.sin(PI * Math.min(1, t)) * (s.o.power ?? .55), 0, 0)); } };
+
+  // марево: дрожащий жар над огнём / раскалённым
+  DEF.heat = { atlas: 'aura', img: true,
+    presets: { soft: { power: .3 }, hot: { power: .8 } },
+    init(s){ s.pw = s.o.power ?? .5; }, update(){},
+    render(s, c){ pic(c, 180, 180, s.W, s.H, IMGFX(8, s.pw, 0, 0), .03); } };
+
+  // пиксели: картинка распадается на крупные блоки и гаснет (out) или собирается из блоков (in)
+  DEF.pixel = { atlas: 'aura', img: true, period: 1,
+    presets: { out: {}, in: { dir: 'in' } },
+    init(){}, update(){},
+    render(s, c){ let t = Math.min(1, s.cycle / .95); if (s.o.dir === 'in') t = 1 - t; pic(c, 180, 180, s.W, s.H, IMGFX(9, t * t, 0, 0), 0, 1 - Math.max(0, (t - .7) / .3)); } };
+
+  // желе: картинка сетью 8×8 приплющивается и пружинит — колебание бежит снизу вверх (верх отстаёт), ширина в противофазе
+  DEF.jelly = { atlas: 'aura', img: true, period: 1.4,
+    presets: { soft: { power: .6 }, bouncy: { power: 1.4 } },
+    init(){}, update(){},
+    render(s, c){ const G = 8, W = s.W, H = s.H, bot = 180 + H / 2, t = s.cycle, A = .2 * (s.o.power ?? 1);
+      const osc = v => -A * Math.exp(-3.2 * t) * Math.cos(15 * t - (1 - v) * 1.1), X = (u, v) => 180 + (u - .5) * W * (1 - .7 * osc(v)), Y = v => bot - (1 - v) * H * (1 + osc(v));
+      for (let j = 0; j < G; j++) for (let i = 0; i < G; i++){ const u0 = i / G, u1 = (i + 1) / G, v0 = j / G, v1 = (j + 1) / G, y0 = Y(v0), y1 = Y(v1);
+        P4[0][0] = X(u0, v0); P4[0][1] = y0; P4[1][0] = X(u1, v0); P4[1][1] = y0; P4[2][0] = X(u1, v1); P4[2][1] = y1; P4[3][0] = X(u0, v1); P4[3][1] = y1;
+        Q4[0][0] = u0; Q4[0][1] = v0; Q4[1][0] = u1; Q4[1][1] = v0; Q4[2][0] = u1; Q4[2][1] = v1; Q4[3][0] = u0; Q4[3][1] = v1; piece(c, 1); } } };
+
+  // разбить стекло: трещины от точки удара (at — доля картинки) 0.18 с → вспышка → осколки-треугольники разлетаются, крутятся и падают
+  DEF.shatter = { atlas: 'aura', img: true, period: 1.8,
+    presets: { slow: { power: .6 } },
+    init(s){ s.sh = null; s.cr = null; },
+    update(s, dt){
+      if (!s.sh){ const G = 6, at = s.o.at || [.5, .42], J = [], pt = (i, j) => J[j * (G + 1) + i]; s.sh = [];
+        for (let j = 0; j <= G; j++) for (let i = 0; i <= G; i++){ const e = i === 0 || j === 0 || i === G || j === G; J.push([i / G + (e ? 0 : R(-.3, .3) / G), j / G + (e ? 0 : R(-.3, .3) / G)]); }
+        for (let j = 0; j < G; j++) for (let i = 0; i < G; i++){ const a = pt(i, j), b = pt(i + 1, j), c = pt(i + 1, j + 1), d = pt(i, j + 1), f = Math.random() < .5;
+          for (const T of f ? [[a, b, c], [a, c, d]] : [[a, b, d], [b, c, d]]){ const cx = (T[0][0] + T[1][0] + T[2][0]) / 3, cy = (T[0][1] + T[1][1] + T[2][1]) / 3, dx = cx - at[0], dy = cy - at[1], l = Math.hypot(dx, dy) + .05;
+            const v = R(110, 280) * (s.o.power ?? 1) * (.6 + .6 / (l + .3));
+            s.sh.push({ T, cx, cy, x: 0, y: 0, vx: dx / l * v, vy: dy / l * v - R(60, 200), r: 0, vr: R(-7, 7), d: l * .12 }); } }
+        s.cr = [.2, 1.3, 2.4, 3.6, 4.7, 5.6].flatMap(a => branch(at[0], at[1], at[0] + Math.cos(a + R(-.2, .2)) * R(.28, .4), at[1] + Math.sin(a + R(-.2, .2)) * R(.28, .4), .3, 3, 1, 1, [])); }
+      if (s.cycle > .18) for (const p of s.sh){ const t = s.cycle - .18 - p.d; if (t < 0) continue; p.vy += 1000 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.vr * dt; } },
+    render(s, c){ const W = s.W, H = s.H, x0 = 180 - W / 2, y0 = 180 - H / 2, t = s.cycle, G = c.at.map['glow:W0'];
+      if (t < .18){ pic(c, 180, 180, W, H, IMGFX(0, 0, 0, 0)); const k = t / .18;
+        // трещина: тонкая сплошная линия + мягкое свечение вокруг; растёт от точки удара
+        const L = c.at.map['solid:W0'];
+        for (const [pts, w, b] of s.cr){ const n = Math.max(2, Math.ceil(pts.length * Math.min(1, k * 1.6)));
+          for (let i = 1; i < n; i++){ const ax = x0 + pts[i - 1][0] * W, ay = y0 + pts[i - 1][1] * H, bx = x0 + pts[i][0] * W, by = y0 + pts[i][1] * H;
+            seg(c, ax, ay, bx, by, 10 * w, .35 * b, 1, G, [.8, .9, 1]); seg(c, ax, ay, bx, by, 1.6 * w, b, 1, L, [1, 1, 1]); } }
+        return; }
+      const k = (t - .18) / .3; if (k < 1) sprite(c, 180, 180, Math.max(W, H) * (.6 + k), 0, (1 - k) ** 3 * .45, 1, c.at.map['sglow:W0'], 1, [.85, .95, 1]);
+      const fa = 1 - Math.max(0, (t - 1.2) / .6);
+      for (const p of s.sh){ const cs = Math.cos(p.r), sn = Math.sin(p.r), cx = x0 + p.cx * W, cy = y0 + p.cy * H;
+        for (let i = 0; i < 4; i++){ const v = p.T[Math.min(2, i)], lx = (v[0] - p.cx) * W, ly = (v[1] - p.cy) * H;
+          P4[i][0] = cx + p.x + lx * cs - ly * sn; P4[i][1] = cy + p.y + lx * sn + ly * cs; Q4[i][0] = v[0]; Q4[i][1] = v[1]; }
+        piece(c, fa); } } };
 
   /* ── запуск и цикл ── */
   const live = new Set();
@@ -1651,55 +1851,77 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
     if (w !== W || h !== H || d !== dpr){ W = w; H = h; dpr = d; cv.width = Math.round(w * d); cv.height = Math.round(h * d); gl.viewport(0, 0, cv.width, cv.height); }
     gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
     FT = (now / 1000) % 1000;
-    gl.uniform2f(loc.res, cv.width, cv.height); gl.uniform1f(loc.tm, (now / 1000) % 200); gl.uniform1f(loc.lq, quality < 2 ? 1 : 0);   // время по кругу: большие числа в шейдере теряют точность — шум «ступенится»
+    fid++;
     for (const e of live){
       if (e.el){ if (!e.el.isConnected){ live.delete(e); continue; }
         let r = e.el.getBoundingClientRect(); if (HR) r = { left: r.left - HR.left, top: r.top - HR.top, right: r.right - HR.left, bottom: r.bottom - HR.top, width: r.width, height: r.height };
         e.ox = r.left + r.width / 2; e.oy = r.top + r.height / 2; e.k = r.width / 360; e.clip = r; }
       const vis = !e.clip || (e.clip.bottom > 0 && e.clip.top < h && e.clip.right > 0 && e.clip.left < w);
       if (!vis) continue;                                                      // за экраном — не считаем и не рисуем
+      if (e.img){ if (e.img.err){ live.delete(e); continue; } if (!e.img.ok) continue;   // картинка ещё грузится — эффект ждёт, время не идёт
+        if (!e.s.W){ const r = e.img.w / e.img.h, B = e.s.o.box || 240; e.s.W = r >= 1 ? B : B * r; e.s.H = r >= 1 ? B / r : B; } }
       const edt = dt * (e.def.rate || 1); e.s.t += edt; e.s.cycle += edt;   // rate — своя скорость времени эффекта (1.5 — в полтора раза быстрее)
       if (e.stopping){ e.fade = Math.max(0, e.fade - dt / .4); if (!e.fade){ live.delete(e); continue; } }
-      if (e.def.period && !e.loop && e.s.cycle >= e.def.period){ live.delete(e); continue; }   // разовый эффект отыграл
+      if (e.def.period && !e.loop && e.s.cycle >= e.def.period){ if (!e.s.o.hold){ live.delete(e); continue; } e.s.cycle = e.def.period - 1e-3; }   // разовый эффект отыграл (hold — замирает на последнем кадре до stop)
       const j0 = performance.now();
       e.def.update(e.s, edt, e.at);
       if (!e.tex.ok) continue;
       e.dt = dt; const sh = e.s.shake || 0; if (sh > .1){ e.s.shake *= Math.pow(.02, dt); } const bx = e.ox, by = e.oy; e.ox += (Math.random() - .5) * sh * e.k; e.oy += (Math.random() - .5) * sh * e.k;
-      nq = 0; e.def.render(e.s, e); js += performance.now() - j0; e.ox = bx; e.oy = by;
+      nq = 0; mask = 0; e.def.render(e.s, e); js += performance.now() - j0; e.ox = bx; e.oy = by;
       if (!nq) continue;
+      // программа — из семей, которые эффект рисовал (запоминаем на эффект: новая семья позже — одна перекомпиляция, а не каждый кадр)
+      const pr = program(e.def.fm = (e.def.fm | 0) | mask); if (!pr) continue;
+      if (cur !== pr){ gl.useProgram(pr.p); cur = pr; }
+      const loc = pr.loc;
+      if (pr.f !== fid){ pr.f = fid; gl.uniform2f(loc.res, cv.width, cv.height); gl.uniform1f(loc.tm, (now / 1000) % 200); gl.uniform1f(loc.lq, quality < 2 ? 1 : 0); }   // время по кругу: большие числа в шейдере теряют точность — шум «ступенится»
       if (e.clip){ gl.enable(gl.SCISSOR_TEST); gl.scissor(Math.round(e.clip.left * dpr), Math.round((h - e.clip.bottom) * dpr), Math.round(e.clip.width * dpr), Math.round(e.clip.height * dpr)); }
       else gl.disable(gl.SCISSOR_TEST);
       const g = e.def.gfx || {};   // параметры шейдера эффекта: мультяшные ступени, сила искажения, скорость шума, градиент
       gl.uniform4f(loc.gp, g.bands || 0, g.dist || 0, g.speed || .8, RAMP_ROW[g.ramp] || .5 / RAMP_N);
       gl.uniform1f(loc.mbn, e.s.mbn || 0); if (e.s.mbn) gl.uniform3fv(loc.mb, e.s.mb);   // шарики жижи эффекта (метаболы)
+      if (e.img){ gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, e.img.t); gl.activeTexture(gl.TEXTURE0); }
       gl.bindTexture(gl.TEXTURE_2D, e.tex.t);
       gl.bufferData(gl.ARRAY_BUFFER, buf.subarray(0, nq * VF * 4), gl.STREAM_DRAW);
-      gl.drawElements(gl.TRIANGLES, nq * 6, gl.UNSIGNED_SHORT, 0); q += nq;
+      gl.drawElements(gl.TRIANGLES, Math.min(nq, 16000) * 6, gl.UNSIGNED_SHORT, 0); q += nq;   // индексов — на 16 000 квадратов
     }
     stats.ms = stats.ms * .95 + (performance.now() - t0) * .05; stats.js = stats.js * .95 + js * .05; stats.quads = q; stats.fps = 1000 / gap; stats.q = quality; stats.over = stats.over * .9 + fill / (w * h) * .1;   // перерисовка: сколько раз в среднем закрашен каждый пиксель экрана
     if (live.size && !document.hidden) raf = requestAnimationFrame(frame);
-    else { gl.clear(gl.COLOR_BUFFER_BIT); if (!live.size) cv.style.display = 'none'; }   // простой: холст убираем совсем — пустой слой на весь экран iPhone всё равно склеивает каждый кадр
+    else { gl.clear(gl.COLOR_BUFFER_BIT); if (!live.size) rest(); }
+  }
+  // простой: холст убираем совсем (пустой слой на весь экран iPhone всё равно склеивает каждый кадр) и сжимаем до 1×1 —
+  // отдаём буфер кадра (на iPhone ≈3–6 МБ); через минуту простоя выгружаем атласы, кроме заранее подготовленных (preload)
+  let idleT = 0;
+  const pinned = new Set();
+  function rest(){
+    cv.style.display = 'none'; clearTimeout(idleT);
+    // сжатие — через 3 с простоя: крафты подряд не перевыделяют буфер каждый раз
+    idleT = setTimeout(() => { if (live.size || !gl) return; cv.width = cv.height = 1; W = H = 0;
+      idleT = setTimeout(() => { if (live.size || !gl) return; for (const k in tex) if (!pinned.has(k) && tex[k].ok){ gl.deleteTexture(tex[k].t); delete tex[k]; }
+        for (const k in imgs){ gl.deleteTexture(imgs[k].t); delete imgs[k]; } }, 57000); }, 3000);
   }
   const kick = () => { if (!raf && live.size){ last = performance.now(); raf = requestAnimationFrame(frame); } };
   // освободить всё: цикл, эффекты, текстуры и буферы видеокарты, сам контекст WebGL и холст, запасы частиц и точек картинок.
   // Движок не умирает: следующий play/preload соберёт всё заново
   function release(){
-    if (raf) cancelAnimationFrame(raf); raf = 0; live.clear();
+    if (raf) cancelAnimationFrame(raf); raf = 0; live.clear(); clearTimeout(idleT);
     document.removeEventListener('visibilitychange', kick);
     if (gl && !gl.isContextLost()){
-      for (const k in tex) gl.deleteTexture(tex[k].t);
+      for (const k in tex) gl.deleteTexture(tex[k].t); for (const k in imgs) gl.deleteTexture(imgs[k].t);
       for (const t of [noiseT, rampT, stripT]) if (t) gl.deleteTexture(t);
-      gl.deleteBuffer(vbo); gl.deleteBuffer(ibo); gl.deleteProgram(prog);
+      gl.deleteBuffer(vbo); gl.deleteBuffer(ibo); for (const k in progs) if (progs[k]) gl.deleteProgram(progs[k].p);
       gl.getExtension('WEBGL_lose_context')?.loseContext();   // контекст отдаём сразу, не ждём сборщика (в Telegram на iOS их число ограничено)
     }
     if (cv){ cv.removeEventListener('webglcontextlost', release); cv.remove(); }
-    for (const k in tex) delete tex[k]; for (const k in PIX) delete PIX[k];
-    cv = gl = prog = vbo = ibo = noiseT = rampT = stripT = null; ok = null; W = H = 0;
+    for (const k in tex) delete tex[k]; for (const k in PIX) delete PIX[k]; for (const k in imgs) delete imgs[k];
+    cv = gl = vbo = ibo = noiseT = rampT = stripT = null; progs = {}; cur = null; ok = null; W = H = 0;
+    for (const k in DEF) delete DEF[k].fm;
     POOL.length = 0; buf = new Float32Array(VF * 4 * 512);
   }
 
   return {
     names: Object.keys(DEF), stats,
+    // для витрины: пресеты эффекта, нужна ли картинка, разовый ли (длина)
+    meta: n => ({ presets: Object.keys(DEF[n]?.presets || {}), img: !!DEF[n]?.img, period: DEF[n]?.period || 0 }),
     set base(v){ base = v; },
     set maxDpr(v){ maxDpr = v; },
     // качество: 0 эконом · 1 среднее · 2 полное; auto — снижать само при тормозах
@@ -1708,13 +1930,16 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
     set idle30(v){ idle30 = !!v; },
     // x, y — центр квадрата эффекта на экране (px), size — его сторона; el — привязать к элементу
     play(name, o = {}){
-      const def = DEF[name]; if (!def) return null;
+      // пресет — имя:вариант ('glitch:hard'): готовый набор настроек; s — поправки состояния эффекта после init (цвета, палитры)
+      const [nm, pv] = name.split(':'), def = DEF[nm]; if (!def) return null;
+      const pre = pv && def.presets?.[pv]; if (pre) o = Object.assign({}, pre, o);
       if (ok === null){ ok = setup(); if (typeof S !== 'undefined' && S.lite) quality = 0; } if (!ok) return null;
       const a = FX_ATLAS[def.atlas];
       const e = { def, at: a, tex: texture(def.atlas), s: { t: 0, cycle: 0, acc: {}, o }, loop: !!o.loop, el: o.el || null, fade: 1, stopping: false,
         ox: o.x ?? (host ? host.clientWidth : innerWidth) / 2, oy: o.y ?? (host ? host.clientHeight : innerHeight) / 2, k: (o.size || Math.min(innerWidth, innerHeight)) / 360, clip: null };
-      def.init.call(def, e.s, a);
-      cv.style.display = ''; live.add(e); kick();
+      def.init.call(def, e.s, a); if (o.s) Object.assign(e.s, o.s);
+      if (def.img){ if (!o.img) return null; e.img = imgTex(o.img); }
+      clearTimeout(idleT); cv.style.display = ''; live.add(e); kick();
       return { stop(){ e.stopping = true; }, kill(){ live.delete(e); }, alive: () => live.has(e), set(k, v){ e.s[k] = v; } };
     },
     stopAll(){ live.forEach(e => e.stopping = true); },
@@ -1723,10 +1948,11 @@ const PL = (row, ero, heat, seed, md) => [18 + (md || 0), ero, heat, seed, RAMP_
     // диагностика для Дебага: есть ли WebGL, загрузились ли атласы, видеокарта, сколько частиц в последнем кадре
     info(){ if (ok === null) return 'fx: —'; if (!ok) return 'fx: нет WebGL';
       const T = Object.entries(tex), bad = T.filter(([, v]) => v.err).map(([k]) => k), di = gl.getExtension('WEBGL_debug_renderer_info');
-      return `fx: ${T.filter(([, v]) => v.ok).length}/${T.length}${bad.length ? ' ошибка ' + bad.join(',') : ''} · q${quality} · ${stats.quads | 0} · ${di ? String(gl.getParameter(di.UNMASKED_RENDERER_WEBGL)).slice(0, 40) : 'gpu ?'}${gl.isContextLost() ? ' · контекст потерян' : ''}`; },
+      return `fx: ${T.filter(([, v]) => v.ok).length}/${T.length}${bad.length ? ' ошибка ' + bad.join(',') : ''} · q${quality} · ${stats.quads | 0} · прогр. ${Object.keys(progs).length} · ${di ? String(gl.getParameter(di.UNMASKED_RENDERER_WEBGL)).slice(0, 40) : 'gpu ?'}${gl.isContextLost() ? ' · контекст потерян' : ''}`; },
     // заранее: холст и атлас — чтобы первый эффект (удар молота на первом крафте) не пропал, пока грузится картинка
+    _noise: () => noiseData(),   // для tools/fx-noise.mjs
     preload(atlas){ if (typeof S !== 'undefined' && S.lite) return;   // в экономном режиме эффектов нет — контекст и атлас не заводим
-      if (ok === null){ ok = setup(); if (typeof S !== 'undefined' && S.lite) quality = 0; } if (ok) texture(atlas); },
+      if (ok === null){ ok = setup(); if (typeof S !== 'undefined' && S.lite) quality = 0; } if (ok){ pinned.add(atlas); texture(atlas); } },
   };
 }
 const Forge = makeForge(null);

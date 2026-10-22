@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Горн — витрина</title>
+<!-- Витрина эффектов Горна: `npm run serve` → http://localhost:8765/design/forge/
+     Движок грузится прямо из src/app (тот же код, что в игре). Тап по карточке — повтор, под карточкой — пресет. -->
+<style>
+  :root{ --bg:#0d0c14; --card:#16151f; --line:#26243a; --text:#f2f1f7; --dim:rgba(242,241,247,.72); --blue:#4aa8ff; --acc:#ffb347 }
+  *{ box-sizing:border-box }
+  body{ margin:0; background:var(--bg); color:var(--text); font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; padding:16px 16px 90px }
+  h1{ font-size:20px; margin:0 0 4px }
+  .sub{ color:var(--dim); font-size:13px; margin:0 0 16px }
+  .bar{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; align-items:center }
+  .chip{ border:1px solid var(--line); background:var(--card); color:var(--text); border-radius:999px; padding:7px 14px; font:inherit; font-size:13px; cursor:pointer }
+  .chip.on{ background:var(--text); color:var(--bg); border-color:var(--text) }
+  select{ background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:10px; padding:6px 8px; font:inherit; font-size:13px; max-width:100% }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:8px }
+  .card{ background:var(--card); border-radius:22px; padding:16px; display:flex; flex-direction:column; gap:8px; min-width:0 }
+  .stage{ position:relative; aspect-ratio:1; border-radius:14px; background:radial-gradient(circle at 50% 55%,#1d1b2b,#0d0c14 70%); cursor:pointer; overflow:hidden }
+  .name{ font-weight:600; font-size:13.5px; display:flex; justify-content:space-between; gap:8px }
+  .name small{ color:var(--dim); font-weight:400; font-size:12.5px }
+  .stats{ position:fixed; left:0; right:0; bottom:0; background:rgba(13,12,20,.92); border-top:1px solid var(--line); padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    font:12.5px/1.4 ui-monospace,Menlo,Consolas,monospace; color:var(--dim); display:flex; flex-wrap:wrap; gap:4px 16px; z-index:9100 }
+  .stats b{ color:var(--text); font-weight:600 }
+</style>
+</head>
+<body>
+<h1>Горн — витрина</h1>
+<p class="sub">Все эффекты движка вживую. Тап по карточке — повторить, под ней — пресет. Внизу — нагрузка.</p>
+<div class="bar" id="cats"></div>
+<div class="bar">
+  <label>Качество <select id="q"><option value="2">полное</option><option value="1">среднее</option><option value="0">эконом</option></select></label>
+  <label>Картинка <select id="img"></select></label>
+</div>
+<div class="grid" id="grid"></div>
+<div class="stats" id="st"></div>
+
+<script src="../../src/app/16e-forge-atlas.js"></script>
+<script src="../../src/app/16e-forge.js"></script>
+<script>
+Forge.base = '../../assets/fx/'; Forge.auto = false;
+const NFT = ['agent', 'cat-globe', 'magic-ball', 'jelly-bunny', 'genesis', 'honey-bee', 'cheshire', 'bday'];
+// разделы: что для чего
+const CATS = {
+  'В игре': ['anvil', 'potion', 'arena'],
+  'Картинка': ['glitch', 'static', 'glass', 'frost', 'ripple', 'twirl', 'lens', 'heat', 'pixel', 'jelly', 'shatter', 'dust'],
+  'Сложные частицы': ['wisps', 'vortex', 'fireworks', 'dust'],
+  'Удары и взрывы': ['boom', 'toonboom', 'mushroom', 'eruption', 'shock', 'hit', 'slash', 'starwave', 'cracks', 'bolt', 'fbolt'],
+  'Огонь и магия': ['fire', 'firetoon', 'portal', 'plasma', 'julia', 'sphere', 'charge', 'swirl', 'bubble', 'crystal'],
+  'Награды': ['reveal', 'hexreveal', 'combo', 'coins', 'confetti', 'sparkle', 'starburst', 'firering', 'sparkring', 'button'],
+  'Ауры': ['twinkle', 'spirit', 'cloud', 'threads', 'nebula', 'ring', 'smoke', 'comets'],
+};
+const all = Forge.names; CATS['Все'] = all;
+const LS = k => { try { return localStorage.getItem('forge-' + k); } catch (_){ return null; } }, LSset = (k, v) => { try { localStorage.setItem('forge-' + k, v); } catch (_){} };
+let cat = LS('cat') || 'Картинка'; if (!CATS[cat]) cat = 'Картинка';
+const $ = id => document.getElementById(id), grid = $('grid'), live = new Map();
+$('img').innerHTML = NFT.map(n => `<option value="${n}">${n}</option>`).join('');
+$('q').onchange = e => { Forge.quality = +e.target.value; };
+$('img').onchange = () => draw();
+$('cats').innerHTML = Object.keys(CATS).map(c => `<button class="chip${c === cat ? ' on' : ''}" data-c="${c}">${c}</button>`).join('');
+$('cats').onclick = e => { const c = e.target.dataset.c; if (!c) return; cat = c; LSset('cat', c); [...$('cats').children].forEach(b => b.classList.toggle('on', b.dataset.c === c)); draw(); };
+
+function start(card){
+  const n = card.dataset.n, pv = card.querySelector('select')?.value, m = Forge.meta(n), st = card.querySelector('.stage');
+  live.get(card)?.kill();
+  const h = Forge.play(pv ? n + ':' + pv : n, { el: st, loop: !m.period, img: m.img || n === 'dust' ? '../../assets/nft/' + $('img').value + '.webp' : undefined });
+  live.set(card, h);
+}
+function draw(){
+  Forge.stopAll(); live.clear();
+  grid.innerHTML = CATS[cat].filter(n => all.includes(n)).map(n => { const m = Forge.meta(n);
+    return `<div class="card" data-n="${n}"><div class="stage"></div>
+      <div class="name">${n}<small>${m.period ? m.period + ' с' : 'цикл'}${m.img ? ' · картинка' : ''}</small></div>
+      ${m.presets.length ? `<select><option value="">обычный</option>${m.presets.map(p => `<option>${p}</option>`).join('')}</select>` : ''}</div>`; }).join('');
+  for (const card of grid.children){ card.querySelector('.stage').onclick = () => start(card); card.querySelector('select')?.addEventListener('change', () => start(card)); start(card); }
+}
+// разовые — повторяем сами, когда отыграли
+setInterval(() => { for (const [card, h] of live) if (h && !h.alive()) start(card); }, 700);
+setInterval(() => { const s = Forge.stats;
+  $('st').innerHTML = `<span>к/с <b>${(s.fps || 0).toFixed(0)}</b></span><span>кадр Горна <b>${s.ms.toFixed(2)} мс</b></span><span>частиц <b>${s.quads}</b></span><span>перерисовка <b>×${s.over.toFixed(2)}</b></span><span>${Forge.info()}</span>`; }, 400);
+draw();
+</script>
+</body>
+</html>

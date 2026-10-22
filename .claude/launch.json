@@ -1,6 +1,23 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "serve", "runtimeExecutable": "npm", "runtimeArgs": ["run", "serve"], "port": 8765 }
+    {
+      "name": "serve",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "serve"
+      ],
+      "port": 8765
+    },
+    {
+      "name": "forge",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set PORT=8766&& node tools/serve.mjs"
+      ],
+      "port": 8766
+    }
   ]
 }
