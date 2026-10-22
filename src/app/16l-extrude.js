@@ -31,6 +31,8 @@ function makeExtrude(){
     shine: { color: '#ffffff', width: .22, time: .9 },   // пробегающий блик: t.shine() — один проход; shineEvery — сам раз в N секунд
     shineEvery: 0,
     skew: 0,                         // наклон букв (курсив), доля высоты: .2 — заметно
+    charset: '',                     // знаки, заранее положенные в атлас: смена текста из них — без пересборки (счётчик: '0123456789.')
+    fit: '',                         // по какой строке подбирать размер (счётчик: '0000.00' — размер не скачет, пока растёт число)
     lite: false,                     // слабый телефон: один неподвижный кадр
     onMove: null,                    // (yaw, pitch) — для звука/вибрации снаружи
   };
@@ -123,7 +125,7 @@ void main(){
     el.appendChild(cv);
     const gl = cv.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false });   // края и так гладкие за счёт маски — сглаживание холста только тратит видеопамять
     let yaw = o.yaw, pitch = o.pitch, vy = 0, vp = 0, held = false, raf = 0, last = 0, dead = false;
-    let N = 0, n = 0, frames = 0, sdf = null, inset = [0, 0], dr = [1, 1], G = [], cellH = 0, AW = 1, AH = 1, gpx = 0, boost = 0, anim = null, tx = [0, 0], shT = -1, shTimer = 0, sz = [1, 1], cw = 1, ch = 1, dpr = 1, tex = null, bufF = null, bufB = null, prog = null, U = {};
+    let N = 0, n = 0, frames = 0, sdf = null, inset = [0, 0], dr = [1, 1], G = [], cellH = 0, AW = 1, AH = 1, CELLS = {}, LH = 1, EX = 0, GW = 0, MX = null, gpx = 0, boost = 0, anim = null, tx = [0, 0], shT = -1, shTimer = 0, sz = [1, 1], cw = 1, ch = 1, dpr = 1, tex = null, bufF = null, bufB = null, prog = null, U = {};
 
     if (!gl){ el.textContent = o.text; return { set(){}, rotate(){}, destroy(){ cv.remove(); } }; }   // без WebGL — просто текст
     const sh = (t, s) => { const h = gl.createShader(t); gl.shaderSource(h, s); gl.compileShader(h); if (!gl.getShaderParameter(h, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(h)); return h; };
@@ -162,11 +164,11 @@ void main(){
       let fs = o.size;
       if (!fs){   // подгонка: надпись с запасом под боковины и свечение
         const x = document.createElement('canvas').getContext('2d'); x.font = o.font.replace('{s}', 100);
-        const ls = String(o.text).split('\n'), tw = Math.max(1, ...ls.map(l => x.measureText(l).width)) + 105 * ls.length * Math.abs(o.skew || 0) + (o.grow || 0) * 2;
+        const ls = String(o.fit || o.text).split('\n'), tw = Math.max(1, ...ls.map(l => x.measureText(l).width)) + 105 * ls.length * Math.abs(o.skew || 0) + (o.grow || 0) * 2;
         fs = Math.max(8, Math.min((cw - room) / tw * 100, (ch - room) / (1.05 * ls.length)));
       }
       const m = maskData(fs);
-      G = m.glyphs; cellH = m.cellH; AW = m.W; AH = m.H; gpx = m.gp; sz = [m.tw / dpr, m.th / dpr];
+      CELLS = m.cells; cellH = m.cellH; AW = m.W; AH = m.H; gpx = m.gp; LH = m.lh; EX = m.ex; GW = m.gw; layout();
       inset = [m.gp / m.W, m.gp / m.H]; dr = [m.rIn * 2 / dpr, m.rOut * 2 / dpr]; tx = [1.5 / m.W, 1.5 / m.H];
       N = o.layers || Math.max(8, Math.min(128, Math.round(o.depth * dpr * .9)));
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
@@ -198,20 +200,18 @@ void main(){
       const rr0 = o.round ? Math.max(r, Math.round((o.bevel || 8) * dpr / 2)) : r;
       const pad = Math.max(r * 2 + 2, o.round ? rr0 * 3 + 2 : 0) + gp + gw + 2;   // поле ячейки: размытие, свечение и утолщение не задевают соседей
       const cellH = Math.ceil(lh + pad * 2), ex = Math.abs(sk) * lh / 2;
-      // раскладка: позиция буквы — по ширине всего, что левее (сохраняет кернинг), ячейка — по её собственным краям
-      const glyphs = []; let tw = 1;
-      lines.forEach((l, li) => { const lw = x.measureText(l).width, cy = ((lines.length - 1) / 2 - li) * lh; tw = Math.max(tw, lw);
-        let pre = '';
-        for (const ch of l){ const x0 = x.measureText(pre).width; pre += ch; if (!ch.trim()) continue;
-          const mt = x.measureText(ch), L = Math.max(0, mt.actualBoundingBoxLeft || 0) + ex + pad, Rt = Math.max(mt.width, mt.actualBoundingBoxRight || 0) + ex + pad;
-          glyphs.push({ ch, pen: -lw / 2 + x0, cy, adv: mt.width, l: L, w: Math.ceil(L + Rt) }); } });
+      MX = document.createElement('canvas').getContext('2d'); MX.font = font;   // для раскладки без пересборки
+      // ячейка на каждый знак — из текста и charset; одинаковые буквы делят одну ячейку
+      const glyphs = [...new Set([...String(o.text) + (o.charset || '')].filter(ch => ch.trim()))].map(ch => {
+        const mt = x.measureText(ch), L = Math.max(0, mt.actualBoundingBoxLeft || 0) + ex + pad, Rt = Math.max(mt.width, mt.actualBoundingBoxRight || 0) + ex + pad;
+        return { ch, adv: mt.width, l: L, w: Math.ceil(L + Rt) }; });
       // ячейки — рядами в атлас до 2048 px
       let W = 0, H = cellH, cx = 0;
       glyphs.forEach(g => { if (cx + g.w > 2048){ cx = 0; H += cellH; } g.ux = cx; g.uy = H - cellH; cx += g.w; W = Math.max(W, cx); });
       W = Math.max(1, W); H = Math.min(2048, H);
       c.width = W; c.height = H; x.font = font; x.fillStyle = '#fff'; x.textAlign = 'left'; x.textBaseline = 'middle';
       if (gw){ x.strokeStyle = '#fff'; x.lineWidth = gw * 2; x.lineJoin = 'round'; }
-      glyphs.forEach(g => { const y = g.uy + cellH / 2;
+      glyphs.forEach(g => { const y = g.uy + cellH / 2;   // знак — в свою ячейку
         x.setTransform(1, 0, -sk, 1, sk * y, 0);   // курсив: верх уходит вправо, середина строки на месте
         x.fillText(g.ch, g.ux + g.l, y); if (gw) x.strokeText(g.ch, g.ux + g.l, y); });
       x.setTransform(1, 0, 0, 1, 0, 0);
@@ -249,8 +249,22 @@ void main(){
         for (let i = 0; i < n; i++){ const dd = F[i];
           sdf[i] = Math.max(0, Math.min(255, Math.round((.5 + dd / (2 * (dd < 0 ? rIn : rOut))) * 255))); }
       }
-      return { W, H, img, sdf, gp, rIn, rOut, glyphs, cellH, tw: tw + ex * 2 + gw * 2, th: lh * lines.length };
+      return { W, H, img, sdf, gp, rIn, rOut, cells: Object.fromEntries(glyphs.map(g => [g.ch, g])), cellH, lh, ex, gw };
     }
+    // раскладка текста по ячейкам атласа: позиция буквы — по ширине всего, что левее (кернинг); с charset — по ширинам знаков (цифры не пляшут)
+    function layout(){
+      const lines = String(o.text).split('\n'); let tw = 1; G = [];
+      lines.forEach((l, li) => { const cy = ((lines.length - 1) / 2 - li) * LH, ch = [...l];
+        const pens = []; let acc = 0, pre = '';
+        ch.forEach(c => { pens.push(o.charset ? acc : MX.measureText(pre).width); pre += c; acc += CELLS[c]?.adv ?? MX.measureText(c).width; });
+        const lw = o.charset ? acc : MX.measureText(l).width; tw = Math.max(tw, lw);
+        ch.forEach((c, i) => { const k = CELLS[c]; if (k) G.push({ ...k, pen: -lw / 2 + pens[i], cy }); }); });
+      sz = [(tw + EX * 2 + GW * 2) / dpr, LH * lines.length / dpr];
+    }
+    // текст из уже готовых ячеек — только переложить квадраты (дёшево); есть новый знак — пересобрать атлас
+    const covered = t => [...String(t)].every(c => !c.trim() || CELLS[c]);
+    function retext(){ layout(); geom(); }
+
     function colors(){
       const a = o.faceAngle * Math.PI / 180, L = o.light, ll = Math.hypot(...L) || 1;
       gl.uniform3fv(U.uF, ramp(o.face)); gl.uniform1f(U.uFc, Math.min(4, o.face.length));
@@ -351,18 +365,33 @@ void main(){
       wave: (A, t) => { const du = A.o.time ?? 2.4, env = Math.sin(Math.PI * clamp(t / du));
         G.forEach((g, i) => { const w = Math.sin(t * 7 - i * .7); put(i, 0, w * 8 * env, 0, 1 + w * .05 * env, w * .04 * env, 1); });
         return t < du; },
+      // счётчик: число накручивается до суммы (только вверх, до настоящего выигрыша), сменившаяся цифра подпрыгивает, в конце — удар и вспышка
+      count: (A, t) => { const { from, to, fmt } = A.o, du = A.o.time ?? 2, p = clamp(t / du), q = clamp((t - du) / .45);
+        const txt = fmt(p >= 1 ? to : from + (to - from) * (1 - (1 - p) ** 3));
+        if (txt !== o.text){ const old = [...String(o.text)].reverse(), now = [...txt].reverse();
+          o.text = txt; if (covered(txt)) retext(); else build();
+          now.forEach((c, j) => { if (c !== old[j]) A.pop[j] = t; });   // счёт позиций справа: разряды не сдвигаются, когда число растёт
+          if (t - A.tick > .06){ A.tick = t; A.o.onTick?.(txt); } }
+        if (p >= 1) land(A, -1);
+        const fin = p >= 1 ? Math.sin(q * Math.PI) * .16 : 0, L = G.length;
+        G.forEach((g, i) => { const u = clamp((t - (A.pop[L - 1 - i] ?? -9)) / .2), b = (1 - u) ** 2 * .22, k = 1 + b + fin;
+          put(i, (g.pen + g.adv / 2) / dpr * fin, b * 9 + g.cy / dpr * fin, 0, k, 0, 1); });
+        boost = p >= 1 ? (1 - q) ** 2 : 0;
+        return q < 1; },
       // уход: буквы съёживаются и гаснут
       out: (A, t) => { const st = A.o.stagger ?? .03, du = A.o.time ?? .32;
         G.forEach((g, i) => { const p = clamp((t - i * st) / du); put(i, 0, p * 14, 0, 1 - p * p * .9, 0, 1 - p); });
         A.keep = true; return t < (G.length - 1) * st + du; },
     };
+    // t.count(до, { from, time, format(v) → строка, onTick(текст), onLand }) — накрутка суммы
+    const count = (to, opt = {}) => play('count', { from: 0, ...opt, to, fmt: opt.format || (v => v.toFixed(2)) });
     let done = null;
     function finish(){ const A = anim; anim = null; if (!A?.keep) still0(); boost = 0; draw(); const d = done; done = null; d?.(); }
     function play(name, opt = {}){
       const f = ANIM[name]; if (!f) return Promise.resolve();
       if (anim) finish();
       return new Promise(res => { done = res;
-        const A = { t: 0, o: opt, hit: new Set(), keep: false }; A.f = t => f(A, t); anim = A;
+        const A = { t: 0, o: opt, hit: new Set(), keep: false, pop: [], tick: -1 }; A.f = t => f(A, t); anim = A;
         if (o.lite || calm){ A.f(1e3); if (name !== 'out') G.forEach((g, i) => land(A, i)); finish(); return; }
         A.f(0); draw(); wake(); });
     }
@@ -377,13 +406,15 @@ void main(){
     if (o.spin) wake();
     return {
       set(p){ if ('shineEvery' in p && p.shineEvery !== o.shineEvery) setTimeout(shLoop);
-        const re = ['text', 'font', 'size', 'depth', 'layers', 'pad', 'skew', 'strokes', 'innerGlow', 'glow', 'bevel', 'grow'].some(k => k in p && p[k] !== o[k]);
+        let re = ['font', 'size', 'depth', 'layers', 'pad', 'skew', 'strokes', 'innerGlow', 'glow', 'bevel', 'grow', 'charset', 'fit'].some(k => k in p && p[k] !== o[k]);
+        const tx = 'text' in p && p.text !== o.text;
+        if (tx && !re && !covered(p.text)) re = true;
         Object.assign(o, p); yaw = o.yaw + ((yaw - o.yaw) % 360 + 540) % 360 - 180;   // после вращения — к позе ближним путём
-        if (re) build(); else { colors(); draw(); }
+        if (re) build(); else { if (tx) retext(); colors(); draw(); }
         cv.style.touchAction = o.drag && !o.lite ? 'none' : ''; cv.style.cursor = o.drag && !o.lite ? 'grab' : ''; wake(); },
       // повернуть программно (например, «встряхнуть» надпись при выигрыше); с пружиной сама вернётся
       rotate(dy, dp = 0, kick = false){ if (kick){ vy += dy; vp += dp; } else { yaw = dy; pitch = dp; } wake(); },
-      shine, play,
+      shine, play, count,
       get pose(){ return { yaw, pitch }; },
       get stats(){ return { layers: n, max: N, frames }; },   // для замера: копий в последнем кадре, сколько всего, кадров нарисовано
       destroy(){ dead = true; cancelAnimationFrame(raf); clearTimeout(rt); clearTimeout(shTimer); ro.disconnect(); gl.getExtension('WEBGL_lose_context')?.loseContext(); cv.remove(); },

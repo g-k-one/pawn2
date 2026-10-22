@@ -18,16 +18,17 @@ label.chk{grid-column:1/4;display:flex;gap:8px;align-items:center}
 #stres{width:100%}
 .meter label{display:flex;gap:6px;align-items:center}
 .anims{display:flex;flex-wrap:wrap;gap:8px;width:100%}
+.anims input{width:90px;background:transparent;border:1px solid currentColor;border-radius:10px;color:inherit;padding:8px 10px;font:inherit}
 .anims button{background:transparent;border:1px solid currentColor;color:inherit}
 </style></head><body>
 <div id="stage"></div>
-<div class="meter"><span id="fps">—</span><label><input type="checkbox" id="lt"> Lite</label><button type="button" id="st">Тест вращения</button><button type="button" id="sh">Блик</button><span class="anims" id="an"><button type="button" data-a="drop">Падение</button><button type="button" data-a="pop">Выскок</button><button type="button" data-a="slam">Удар</button><button type="button" data-a="wave">Волна</button><button type="button" data-a="out">Уход</button></span><span id="stres"></span></div>
+<div class="meter"><span id="fps">—</span><label><input type="checkbox" id="lt"> Lite</label><button type="button" id="st">Тест вращения</button><button type="button" id="sh">Блик</button><span class="anims" id="an"><button type="button" data-a="drop">Падение</button><button type="button" data-a="pop">Выскок</button><button type="button" data-a="slam">Удар</button><button type="button" data-a="wave">Волна</button><button type="button" data-a="out">Уход</button></span><span class="anims"><input type="number" id="sum" value="125.4" min="0" step="0.1" aria-label="Сумма"><button type="button" id="cnt">Счётчик</button></span><span id="stres"></span></div>
 <div class="pre" id="pre"></div>
 <div class="ctl" id="ctl"></div>
 <script src="../../src/app/16l-extrude.js"></script>
 <script>
 // у наборов без отделки — сброс отделки и позы, чтобы после «Казино» не оставались обводки
-const BASE = { strokes: [], innerGlow: null, glow: null, sideEmit: 0, skew: 0, bevel: 0, round: false, grow: 0, metal: 0, curve: 0, gloss: .55, ambient: .45, yaw: -22, pitch: 12, persp: 900, depth: 36, faceAngle: 90 };
+const BASE = { strokes: [], innerGlow: null, glow: null, sideEmit: 0, skew: 0, bevel: 0, round: false, grow: 0, charset: '', fit: '', metal: 0, curve: 0, gloss: .55, ambient: .45, yaw: -22, pitch: 12, persp: 900, depth: 36, faceAngle: 90 };
 const PRE = {
   'Пузырь':  { face: ['#ffd1f0', '#ff6ec7', '#b02ce0'], side: ['#9a20c8', '#3a0758'], round: true, bevel: 16, grow: 4, curve: .2, gloss: .9, ambient: .5,
     strokes: [{ color: '#3a0758', width: 2, inset: 0 }], depth: 18, yaw: -14, pitch: 10, text: 'WIN!' },
@@ -70,6 +71,13 @@ document.getElementById('sh').onclick = () => t.shine();
 // появления: после удара и падения — блик; каждое приземление буквы — короткая вибрация (на телефоне)
 document.getElementById('an').onclick = e => { const a = e.target.dataset.a; if (!a) return;
   t.play(a, { onLand: () => navigator.vibrate?.(8) }).then(() => { if (a === 'slam' || a === 'drop') t.shine(); }); };
+// счётчик: цифры — готовые ячейки атласа, число растёт до суммы без пересборки; щелчок на шаг, в конце удар и блик
+let ac = null;
+const click = () => { try { ac ||= new AudioContext(); const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 1500; g.gain.setValueAtTime(.06, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + .03); o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + .04); } catch (_){} };
+document.getElementById('cnt').onclick = () => { const v = Math.max(0, +document.getElementById('sum').value || 0);
+  t.set({ charset: '0123456789.', fit: '0000.00', text: '0.00' });
+  t.count(v, { time: 2.2, onTick: click, onLand: () => navigator.vibrate?.(20) }).then(() => t.shine()); };
 document.getElementById('lt').onchange = e => t.set({ lite: e.target.checked });
 
 window.T = t;
